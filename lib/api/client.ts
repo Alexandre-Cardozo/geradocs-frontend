@@ -5,7 +5,6 @@ import "client-only"
 
 import {
   conteudoDemoETP,
-  credenciais as credenciaisFixture,
   documentos as documentosFixture,
   estatisticas as estatisticasFixture,
   parecerDFDBase,
@@ -17,6 +16,13 @@ import {
 import { CATALOGO, REGRA_MODALIDADE, ordenar, secoesPorTipoBase } from "@/lib/documentos"
 import { proximoStatus, transicaoDe } from "@/lib/processos/fluxo"
 import { limpaCPF, validaCPF } from "@/lib/auth/cpf"
+import {
+  autenticar,
+  encerrarSessao,
+  obterSessao,
+  redefinirSenha,
+  solicitarRedefinicao,
+} from "@/lib/api/auth-client"
 import { dataBrasiliaISO, dataHoraBrasiliaISO } from "@/lib/format"
 import type {
   ApontamentoRetificacao,
@@ -44,10 +50,9 @@ import type {
 } from "@/lib/types"
 
 /**
- * Cliente de API do GeraDocs — hoje resolve contra mocks em memória com
- * latência simulada; as assinaturas são as mesmas que o cliente gerado do
- * OpenAPI do backend Spring Boot terá. A integração real substitui apenas o
- * corpo destas funções (fetch/axios), tela nenhuma muda.
+ * Fachada de dados do GeraDocs. Autenticação e recuperação usam a API Spring;
+ * os módulos ainda não implementados no backend permanecem em memória sem
+ * alterar as assinaturas consumidas pelas telas e hooks.
  */
 
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T
@@ -59,16 +64,12 @@ function delay(ms = 350 + Math.random() * 350): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-/** Chave da sessão persistida no navegador (id do usuário logado). */
-const CHAVE_SESSAO = "geradocs.sessao"
-
 /* ── Estado em memória (persiste durante a sessão) ─────────────────────────── */
 const db = {
   usuarios: clone(usuariosFixture),
-  credenciais: { ...credenciaisFixture },
   prefeituras: clone(prefeiturasFixture),
-  /** Id do usuário logado; null = deslogado. Espelhado no localStorage. */
-  sessaoUsuarioId: null as string | null,
+  /** Sessão real usada como identidade pelos módulos ainda mockados. */
+  sessao: null as Sessao | null,
   processos: clone(processosFixture),
   /** Seções por documento — chave `${processoId}:${tipo}`. */
   secoes: new Map<string, SecaoDocumento[]>(),
@@ -88,15 +89,9 @@ const db = {
   seqPrefeitura: prefeiturasFixture.length,
 }
 
-// Restaura a sessão persistida (id do usuário logado) ao carregar o módulo.
-if (typeof window !== "undefined") {
-  const salvo = window.localStorage.getItem(CHAVE_SESSAO)
-  if (salvo && db.usuarios.some((u) => u.id === salvo)) db.sessaoUsuarioId = salvo
-}
-
 /** Usuário logado, ou null. */
 function usuarioLogado(): Usuario | null {
-  return db.usuarios.find((u) => u.id === db.sessaoUsuarioId) ?? null
+  return db.sessao?.usuario ?? null
 }
 
 /** Usuário logado ou erro (para operações que exigem sessão). */
@@ -108,6 +103,7 @@ function exigeSessao(): Usuario {
 
 /** Prefeitura de um usuário (null para admin geral). */
 function prefeituraDo(usuario: Usuario): Tenant | null {
+  if (db.sessao?.usuario.id === usuario.id) return db.sessao.prefeitura
   return usuario.prefeituraId ? db.prefeituras.find((p) => p.id === usuario.prefeituraId) ?? null : null
 }
 
@@ -147,39 +143,26 @@ function montarSessao(usuario: Usuario): Sessao {
   return { usuario: clone(usuario), prefeitura: clone(prefeituraDo(usuario)) }
 }
 
-function persistirSessao(id: string | null): void {
-  db.sessaoUsuarioId = id
-  if (typeof window === "undefined") return
-  if (id) window.localStorage.setItem(CHAVE_SESSAO, id)
-  else window.localStorage.removeItem(CHAVE_SESSAO)
-}
-
 /**
- * Login por CPF + senha. Valida o CPF, busca o usuário e compara a senha.
- * Erro **genérico** — não revela se o CPF existe (evita enumeração de contas).
+ * Login real por CPF + senha. O access token fica somente em memória e o
+ * refresh token permanece no cookie HttpOnly emitido pelo backend.
  */
 export async function login(cpf: string, senha: string): Promise<Sessao> {
-  await delay(600)
-  const cpfLimpo = limpaCPF(cpf)
-  const invalido = new Error("CPF ou senha inválidos.")
-  if (!validaCPF(cpfLimpo)) throw invalido
-  const usuario = db.usuarios.find((u) => u.cpf === cpfLimpo && u.ativo)
-  if (!usuario || db.credenciais[cpfLimpo] !== senha) throw invalido
-  usuario.ultimoAcesso = dataHoraBrasiliaISO()
-  persistirSessao(usuario.id)
-  return montarSessao(usuario)
+  const sessao = await autenticar(limpaCPF(cpf), senha)
+  db.sessao = clone(sessao)
+  return clone(sessao)
 }
 
 export async function logout(): Promise<void> {
-  await delay(150)
-  persistirSessao(null)
+  await encerrarSessao()
+  db.sessao = null
 }
 
 /** Sessão atual, ou null se ninguém está logado. */
 export async function getSessao(): Promise<Sessao | null> {
-  await delay(120)
-  const u = usuarioLogado()
-  return u ? montarSessao(u) : null
+  const sessao = await obterSessao()
+  db.sessao = sessao ? clone(sessao) : null
+  return sessao ? clone(sessao) : null
 }
 
 /**
@@ -187,8 +170,11 @@ export async function getSessao(): Promise<Sessao | null> {
  * está cadastrado). A integração real dispara o e-mail de redefinição.
  */
 export async function recuperarSenha(email: string): Promise<void> {
-  await delay(500)
-  void email // resposta genérica no mock; a integração dispara o e-mail de redefinição
+  await solicitarRedefinicao(email.trim())
+}
+
+export async function resetarSenha(token: string, senha: string): Promise<void> {
+  await redefinirSenha(token, senha)
 }
 
 /** Atualiza a foto de perfil do usuário logado (data URL ou null para o padrão). */
@@ -860,7 +846,6 @@ export async function criarUsuario(input: NovoUsuarioInput): Promise<Usuario> {
     ativo: true,
   }
   db.usuarios.push(usuario)
-  db.credenciais[cpf] = "geradocs123"
   return clone(usuario)
 }
 
@@ -895,7 +880,5 @@ export async function atualizarUsuario(input: AtualizarUsuarioInput): Promise<Us
 
 export async function removerUsuario(id: string): Promise<void> {
   await delay(400)
-  const usuario = db.usuarios.find((u) => u.id === id)
-  if (usuario) delete db.credenciais[usuario.cpf]
   db.usuarios = db.usuarios.filter((u) => u.id !== id)
 }

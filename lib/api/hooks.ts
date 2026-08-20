@@ -61,6 +61,12 @@ export function useRecuperarSenha() {
   return useMutation({ mutationFn: (email: string) => api.recuperarSenha(email) })
 }
 
+export function useRedefinirSenha() {
+  return useMutation({
+    mutationFn: (input: { token: string; senha: string }) => api.resetarSenha(input.token, input.senha),
+  })
+}
+
 /** Perfil de acesso do usuário logado (ou undefined enquanto carrega/deslogado). */
 export function usePerfil() {
   const { data } = useSessao()

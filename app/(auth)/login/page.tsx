@@ -12,15 +12,6 @@ import { IconArrowRight, IconCheckCircle } from "@/components/ui/icons";
 import { useLogin, useRecuperarSenha, useSessao } from "@/lib/api/hooks";
 import { formatCPF } from "@/lib/auth/cpf";
 
-/** Contas de demonstração (Fase 1 mockada). */
-const DEMO = [
-  { cpf: "111.111.111-11", label: "Administrador Geral", desc: "LAHHM" },
-  { cpf: "222.222.222-22", label: "Coordenador", desc: "Ecoporanga" },
-  { cpf: "333.333.333-33", label: "Servidor", desc: "Ecoporanga" },
-  { cpf: "444.444.444-44", label: "Coordenadora", desc: "São Paulo" },
-  { cpf: "555.555.555-55", label: "Servidor", desc: "São Paulo" },
-];
-
 export default function Login() {
   const router = useRouter();
   const sessao = useSessao();
@@ -50,12 +41,6 @@ export default function Login() {
           setErro(e instanceof Error ? e.message : "CPF ou senha inválidos."),
       },
     );
-  };
-
-  const preencherDemo = (cpfDemo: string) => {
-    setCpf(cpfDemo);
-    setSenha("geradocs123");
-    setErro("");
   };
 
   return (
@@ -149,32 +134,6 @@ export default function Login() {
                 </Button>
               </div>
 
-              {/* Acessos de demonstração (fase mockada) — lista compacta */}
-              <div className="mt-4 border-t border-border-soft pt-3.5">
-                <div className="mb-2 text-2xs font-semibold tracking-caps text-text-muted uppercase">
-                  Acessos de demonstração · senha geradocs123
-                </div>
-                <div className="divide-y divide-border-soft overflow-hidden rounded-md border border-border">
-                  {DEMO.map((d) => (
-                    <button
-                      key={d.cpf}
-                      type="button"
-                      onClick={() => preencherDemo(d.cpf)}
-                      className="flex w-full items-center justify-between gap-3 bg-surface px-3 py-1.5 text-left transition-colors hover:bg-ice"
-                    >
-                      <span className="min-w-0 truncate text-sm text-text-2">
-                        <span className="font-semibold text-text-1">
-                          {d.label}
-                        </span>
-                        <span className="text-text-muted"> · {d.desc}</span>
-                      </span>
-                      <span className="shrink-0 font-mono text-2xs text-text-3">
-                        {d.cpf}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
             </>
           ) : recuperado ? (
             <div className="flex flex-col items-center py-4 text-center">
@@ -221,11 +180,18 @@ export default function Login() {
                   onClick={() =>
                     recuperar.mutate(emailRecuperar, {
                       onSuccess: () => setRecuperado(true),
+                      onError: (e) =>
+                        setErro(
+                          e instanceof Error
+                            ? e.message
+                            : "Não foi possível solicitar a recuperação.",
+                        ),
                     })
                   }
                 >
                   {recuperar.isPending ? "Enviando..." : "Enviar instruções"}
                 </Button>
+                {erro && <ValidationMsg type="error" msg={erro} />}
                 <button
                   type="button"
                   onClick={() => setModoRecuperar(false)}

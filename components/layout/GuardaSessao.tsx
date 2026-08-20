@@ -3,13 +3,14 @@
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, type ReactNode } from "react"
 
+import { Button } from "@/components/ui"
 import { useSessao } from "@/lib/api/hooks"
 import { rotaPermitida } from "@/lib/auth/acesso"
 
 /**
  * Guarda do shell autenticado. Sem sessão → /login. Com sessão mas sem acesso à
  * rota (RBAC) → volta para "/". Enquanto resolve a sessão, mostra um splash.
- * É client-side porque a sessão vive no navegador (mock da Fase 1).
+ * É client-side porque o access token vive somente na memória do navegador.
  */
 export default function GuardaSessao({ children }: { children: ReactNode }) {
   const router = useRouter()
@@ -31,6 +32,20 @@ export default function GuardaSessao({ children }: { children: ReactNode }) {
         <div className="flex flex-col items-center gap-3">
           <span className="size-8 animate-spin rounded-full border-2 border-border border-t-royal" />
           <span className="text-sm text-text-3">Carregando…</span>
+        </div>
+      </div>
+    )
+  }
+
+  if (sessao.isError) {
+    return (
+      <div className="flex h-dvh items-center justify-center bg-ice px-4">
+        <div className="flex max-w-md flex-col items-center gap-3 text-center">
+          <h1 className="m-0 font-display text-lg font-extrabold text-text-1">Servidor Indisponível</h1>
+          <p className="m-0 text-sm text-text-3">
+            Não foi possível validar sua sessão. Verifique se o backend está em execução e tente novamente.
+          </p>
+          <Button variant="secondary" onClick={() => void sessao.refetch()}>Tentar Novamente</Button>
         </div>
       </div>
     )
