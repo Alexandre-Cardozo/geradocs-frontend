@@ -13,6 +13,9 @@ const config = defineConfig([
     // Lintá-las mistura aviso alheio com aviso nosso e esconde o que importa.
     ".claude/**",
     ".agents/**",
+    // Tipos gerados do contrato OpenAPI: alterá-los à mão é o que este arquivo
+    // existe para impedir, então lintá-los não muda nada.
+    "lib/api/gerado/**",
   ]),
   ...nextCoreWebVitals,
   ...nextTypescript,

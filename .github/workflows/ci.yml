@@ -27,6 +27,15 @@ jobs:
       - name: Lint de aderência (oxlint)
         run: npm run lint:ds
 
+      # Os tipos são gerados do contrato e commitados. Dessincronizados, o build
+      # passaria com um tipo que envelheceu em silêncio — que é justamente o que
+      # gerar do contrato evita. O contrato em si é conferido no CI do back-end.
+      - name: Tipos em dia com o contrato
+        run: |
+          npm run tipos
+          git diff --exit-code lib/api/gerado/ \
+            || { echo "::error::Tipos dessincronizados. Rode 'npm run contrato:sync && npm run tipos' e commite."; exit 1; }
+
       - name: Type-check (tsc --noEmit, strict)
         run: npm run typecheck
 

@@ -12,6 +12,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
+    "contrato:sync": "cp ../geradocs-backend/docs/reference/openapi_v1.json contracts/openapi_v1.json",
+    "tipos": "openapi-typescript contracts/openapi_v1.json -o lib/api/gerado/v1.d.ts",
     "check": "npm run lint && npm run lint:ds && npm run typecheck && npm test",
     "prepare": "git config core.hooksPath .githooks || true"
   },
@@ -36,6 +38,7 @@
     "eslint-config-next": "^16.2.10",
     "jsdom": "^30.0.1",
     "msw": "^2.15.0",
+    "openapi-typescript": "^7.13.0",
     "oxlint": "^1.49.0",
     "typescript": "^5.9.3",
     "vitest": "^4.1.11"

@@ -1,5 +1,6 @@
 import "client-only"
 
+import type { components } from "@/lib/api/gerado/v1"
 import type { PapelUsuario, PerfilAcesso, Sessao, Tenant, Usuario } from "@/lib/types"
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1").replace(/\/$/, "")
@@ -10,43 +11,19 @@ interface ApiProblem {
   code?: string
 }
 
-interface BackendOrganization {
-  id: string
-  name: string
-  unit: string
-  status: "ACTIVE" | "INACTIVE"
-}
+/**
+ * A forma do payload vem do contrato gerado (`npm run tipos`), não da mão: a
+ * integração de autenticação nasceu com 252 linhas de DTO digitado, e um contrato
+ * escrito à mão só diverge do servidor em produção.
+ *
+ * O **mapeamento** abaixo continua manual de propósito — é camada anticorrupção,
+ * o lugar onde o vocabulário do backend vira o vocabulário da interface.
+ */
+type Schemas = components["schemas"]
 
-interface BackendMembership {
-  organizationId: string
-  departmentId: string | null
-  workflowRoles: string[]
-  active: boolean
-}
-
-interface BackendSession {
-  user: {
-    id: string
-    name: string
-    cpf: string
-    email: string
-    jobTitle: string
-    profileAccess: "ADMIN_GERAL" | "COORDENADOR" | "SERVIDOR"
-    status: "PENDING_ACTIVATION" | "ACTIVE" | "INACTIVE"
-    lastAccessAt: string | null
-  }
-  organization: BackendOrganization | null
-  activeMembership: BackendMembership | null
-  permissions: string[]
-}
-
-interface AuthenticationResponse {
-  accessToken: string
-  tokenType: "Bearer"
-  expiresIn: number
-  expiresAt: string
-  session: BackendSession
-}
+type BackendOrganization = Schemas["OrganizationResponse"]
+type BackendSession = Schemas["SessionResponse"]
+type AuthenticationResponse = Schemas["AuthenticationResponse"]
 
 export class ApiError extends Error {
   constructor(
@@ -101,7 +78,7 @@ async function renovarToken(): Promise<AuthenticationResponse> {
   if (!refreshEmAndamento) {
     refreshEmAndamento = requisicaoPublica<AuthenticationResponse>("/auth/refresh", { method: "POST" })
       .then((authentication) => {
-        accessToken = authentication.accessToken
+        accessToken = authentication.accessToken ?? null
         return authentication
       })
       .finally(() => {
@@ -138,7 +115,9 @@ async function requisicaoAutenticada<T>(path: string, init: RequestInit = {}, pe
   return (await response.json()) as T
 }
 
-const perfis: Record<BackendSession["user"]["profileAccess"], PerfilAcesso> = {
+type PerfilBackend = NonNullable<NonNullable<BackendSession["user"]>["profileAccess"]>
+
+const perfis: Record<PerfilBackend, PerfilAcesso> = {
   ADMIN_GERAL: "admin_geral",
   COORDENADOR: "coordenador",
   SERVIDOR: "servidor",
@@ -158,44 +137,58 @@ function iniciaisDe(nome: string): string {
 }
 
 function papelDa(session: BackendSession): PapelUsuario {
-  if (session.user.profileAccess === "ADMIN_GERAL") return "admin_lahhm"
-  const role = session.activeMembership?.workflowRoles.find((item) => papeis[item])
+  if (session.user?.profileAccess === "ADMIN_GERAL") return "admin_lahhm"
+  const role = session.activeMembership?.workflowRoles?.find((item) => papeis[item])
   return role ? (papeis[role] ?? "servidor_compras") : "servidor_compras"
 }
 
-function tenantDa(organization: BackendOrganization | null): Tenant | null {
-  if (!organization) return null
+function tenantDa(organization: BackendOrganization | null | undefined): Tenant | null {
+  if (!organization?.id) return null
   return {
     id: organization.id,
-    orgao: organization.name,
-    unidade: organization.unit,
+    orgao: organization.name ?? "",
+    unidade: organization.unit ?? "",
     secretarias: [],
     logoArquivo: null,
     logoDataUrl: null,
     timbrado: true,
-    cabecalho: `${organization.name.toUpperCase()}\n${organization.unit}`,
+    cabecalho: `${(organization.name ?? "").toUpperCase()}\n${organization.unit ?? ""}`,
     rodape: "Documento gerado eletronicamente pela plataforma GeraDocs · {data} · Processo nº {numero}",
     pca: { ano: String(new Date().getFullYear()), arquivo: null, itensIndexados: 0 },
   }
 }
 
+/**
+ * O contrato gerado declara **todo** campo como opcional, porque os DTOs de
+ * resposta do backend não anunciam obrigatoriedade na especificação. Enquanto
+ * for assim, o mapeamento decide explicitamente o que fazer com a ausência em
+ * vez de fingir que ela não existe.
+ *
+ * A correção está registrada como pendência do contrato: quando a spec passar a
+ * declarar `required`, estes `??` viram type error e somem — que é o sinal certo.
+ */
 function mapearSessao(session: BackendSession): Sessao {
+  const user = session.user
+  if (!user?.id || !user.name) {
+    throw new ApiError("Resposta de sessão incompleta: o servidor não identificou o usuário.", 502)
+  }
+  const nome = user.name
   const usuario: Usuario = {
-    id: session.user.id,
-    nome: session.user.name,
-    primeiroNome: session.user.name.trim().split(/\s+/)[0] ?? session.user.name,
-    iniciais: iniciaisDe(session.user.name),
-    cpf: session.user.cpf,
-    email: session.user.email,
-    cargo: session.user.jobTitle,
-    perfilAcesso: perfis[session.user.profileAccess],
+    id: user.id,
+    nome,
+    primeiroNome: nome.trim().split(/\s+/)[0] ?? nome,
+    iniciais: iniciaisDe(nome),
+    cpf: user.cpf ?? "",
+    email: user.email ?? "",
+    cargo: user.jobTitle ?? "",
+    perfilAcesso: perfis[user.profileAccess ?? "SERVIDOR"] ?? "servidor",
     papel: papelDa(session),
     prefeituraId: session.organization?.id ?? null,
     avatarDataUrl: null,
-    ultimoAcesso: session.user.lastAccessAt ?? "",
-    ativo: session.user.status === "ACTIVE",
+    ultimoAcesso: user.lastAccessAt ?? "",
+    ativo: user.status === "ACTIVE",
   }
-  return { usuario, prefeitura: tenantDa(session.organization) }
+  return { usuario, prefeitura: tenantDa(session.organization ?? null) }
 }
 
 export async function autenticar(cpf: string, password: string): Promise<Sessao> {
@@ -204,8 +197,8 @@ export async function autenticar(cpf: string, password: string): Promise<Sessao>
       method: "POST",
       body: JSON.stringify({ cpf, password, organizationId: null }),
     })
-    accessToken = authentication.accessToken
-    return mapearSessao(authentication.session)
+    accessToken = authentication.accessToken ?? null
+    return mapearSessao(authentication.session ?? {})
   } catch (error) {
     if (error instanceof ApiError && error.status !== 0 && error.status !== 429) {
       throw new ApiError("CPF ou senha inválidos.", error.status, error.code)
