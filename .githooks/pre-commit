@@ -1,0 +1,47 @@
+#!/bin/sh
+# Guarda-corpo local do GeraDocs Front-end.
+# Ativado automaticamente pelo `npm install` (script "prepare").
+# Pular em emergência: GERADOCS_SKIP_HOOKS=1 git commit ...
+# O gate definitivo é o CI; este hook existe para o erro não chegar lá.
+
+[ "$GERADOCS_SKIP_HOOKS" = "1" ] && exit 0
+
+falhou=0
+branch=$(git rev-parse --abbrev-ref HEAD)
+
+if [ "$branch" = "HEAD" ]; then
+    echo "erro: HEAD destacado — o commit não pertenceria a branch nenhuma." >&2
+    falhou=1
+fi
+
+# Aviso, não bloqueio: este repositório ainda não adotou 'develop' como branch de
+# integração. Se adotar, trocar este aviso por erro (como no back-end).
+if [ "$branch" = "main" ]; then
+    echo "aviso: commit direto em 'main'." >&2
+fi
+
+# Segredos nas mudanças em stage.
+if command -v gitleaks >/dev/null 2>&1; then
+    if ! gitleaks protect --staged --redact --no-banner; then
+        echo "erro: possível segredo nas mudanças em stage." >&2
+        falhou=1
+    fi
+else
+    echo "aviso: gitleaks não instalado — varredura local pulada (o CI ainda barra)." >&2
+    echo "       Instale com: brew install gitleaks" >&2
+fi
+
+# Lint e tipos apenas quando há código alterado.
+alterados=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx|mjs|js)$' || true)
+if [ -n "$alterados" ]; then
+    if ! npx --no-install eslint $alterados; then
+        echo "erro: ESLint reprovou os arquivos em stage." >&2
+        falhou=1
+    fi
+    if ! npx --no-install tsc --noEmit; then
+        echo "erro: type-check reprovou." >&2
+        falhou=1
+    fi
+fi
+
+exit $falhou

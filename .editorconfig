@@ -1,0 +1,23 @@
+# Fonte única de estilo do repositório. Complementa o ESLint/oxlint de aderência
+# ao Design System (docs/estilizacao.md), que cuida de tokens e imports.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+max_line_length = 120
+
+[*.{ts,tsx,js,mjs,jsx}]
+indent_size = 2
+quote_type = double
+
+[*.{json,css,yml,yaml}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+max_line_length = off

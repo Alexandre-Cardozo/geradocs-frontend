@@ -9,7 +9,8 @@
     "lint": "eslint app components lib",
     "lint:ds": "oxlint -c .oxlintrc.json app components lib",
     "typecheck": "tsc --noEmit",
-    "check": "npm run lint && npm run lint:ds && npm run typecheck"
+    "check": "npm run lint && npm run lint:ds && npm run typecheck",
+    "prepare": "git config core.hooksPath .githooks || true"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.3.2",
