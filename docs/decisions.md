@@ -198,3 +198,13 @@ Correção: o id do processo (e o `tipo` do documento) deixaram de ser **segment
 - **Não recrie rotas `[id]`/`[tipo]` para conteúdo de runtime.** Qualquer tela nova que dependa de um id gerado em runtime segue este padrão (query param + página estática).
 - **DFD continua separado de `documento/`** de propósito: o DFD é *insumo* (Art. 6º — anexo + verificação por IA que emite `ParecerDFD`), **não** um dos seis `TipoDocumento` geráveis (Cotação, ETP, Mapa, TR, Edital, Contrato). Ver §19 e [`fluxo-contratacao.md`](fluxo-contratacao.md#insumos-que-não-são-documentos-gerados). Unificar as duas rotas seria misturar um insumo com os documentos gerados.
 - Limitação conhecida do mock: o "db" em memória reseta a cada carregamento de página, então um processo recém-criado só existe na sessão que o criou — hard refresh/deep-link de um id novo mostra "não encontrado" (esperado; processos das fixtures sobrevivem). Persistir em `localStorage` fica para quando fizer sentido.
+
+## 23. Primeira integração real: autenticação e recuperação de conta
+
+A decisão de autenticação mockada registrada no §21 foi substituída para o fluxo de identidade. Login, refresh, `/me`, logout, solicitação e conclusão da redefinição de senha agora usam o backend Spring Boot em `/api/v1`; os demais módulos continuam mockados até possuírem contratos implementados no backend.
+
+- `lib/api/auth-client.ts` concentra transporte, Problem Details, renovação deduplicada e mapeamento dos enums/DTOs Java para o modelo da interface.
+- O access token JWT existe somente em memória. O refresh token rotativo é enviado pelo backend em cookie `HttpOnly` e nunca fica disponível ao JavaScript ou ao `localStorage`.
+- `getSessao` tenta renovar o token após reload e confirma a identidade em `GET /me`. Requisições autenticadas repetem uma única vez após `401`, evitando ciclos infinitos.
+- A rota estática `/redefinir-senha?token=` completa o link enviado por e-mail. O backend deve usar a URL com o `basePath`: `http://localhost:3000/GeraDocsFrontend/redefinir-senha` no ambiente local.
+- A sessão real alimenta temporariamente os módulos mockados pela fachada existente. Isso preserva telas e hooks, mas dados de processos/configurações ainda não representam persistência real.

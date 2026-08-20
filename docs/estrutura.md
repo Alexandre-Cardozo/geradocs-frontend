@@ -79,8 +79,8 @@ GeraDocs/
 │   │   ├── cpf.ts               # validaCPF (dígitos), formatCPF, CPFS_DEMO
 │   │   └── acesso.ts            # RBAC: rotaPermitida, navPrincipal, navSistema (fonte única)
 │   ├── api/
-│   │   ├── client.ts             # Cliente de API — hoje resolve contra mocks em memória com latência
-│   │   │                         #   simulada; as assinaturas espelham o futuro cliente OpenAPI (Spring)
+│   │   ├── auth-client.ts        # Transporte HTTP da autenticação, refresh e mapeamento da sessão
+│   │   ├── client.ts             # Fachada híbrida: auth real; demais módulos ainda mockados
 │   │   └── hooks.ts              # Hooks TanStack Query (useProcessos, useCriarProcesso, ...) —
 │   │                             #   ÚNICA porta de entrada de dados para as telas
 │   └── mocks/
@@ -140,7 +140,8 @@ Componentes reutilizáveis que **não são primitivos do DS** nem moldura: estad
 TypeScript puro, testável sem browser:
 
 - **`types.ts`** — o contrato do domínio (congelado nesta fase). Toda entidade que a UI exibe está tipada aqui, com os vocabulários fixos de status.
-- **`api/client.ts`** — as funções de acesso a dados. Hoje operam sobre um banco em memória (mocks com latência simulada); na integração, **só os corpos** destas funções trocam por HTTP — assinaturas e tipos ficam.
+- **`api/auth-client.ts`** — transporte HTTP da autenticação real. Mantém o JWT somente em memória, envia o cookie HttpOnly com `credentials: "include"`, serializa o contrato Spring e converte a sessão para os tipos da interface.
+- **`api/client.ts`** — fachada estável consumida pelos hooks. Autenticação e recuperação já delegam à API real; os módulos sem implementação correspondente no backend continuam no banco em memória até sua migração.
 - **`api/hooks.ts`** — envelopa o client em hooks do TanStack Query com cache e invalidação. **É a única forma de uma tela obter dados.**
 - **`mocks/fixtures.ts`** — os dados de exemplo. Importado **apenas** por `api/client.ts`; nunca por componente (o objetivo é que apagar esta pasta, na integração, não quebre nenhuma tela).
 - **`format.ts`** — formatação pt-BR de moeda e datas (IDs e valores em monospace com formato exato).

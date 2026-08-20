@@ -4,13 +4,13 @@ Aplicação web do **GeraDocs**, SaaS GovTech da **LAHHM** que automatiza, com I
 
 > Que documentos existem, em que ordem, com que fundamento legal e quais são as lacunas conhecidas: **[docs/fluxo-contratacao.md](docs/fluxo-contratacao.md)** — leia antes de mexer em documentos, wizard ou hub do processo.
 
-Esta é a **Fase 1 (somente interface)**: a industrialização do protótipo Vite como aplicação **Next.js (App Router)** de produção. Não há backend — toda a interface funciona de ponta a ponta sobre uma camada de dados mockada, arquitetada para a integração com o backend Spring Boot (via OpenAPI) ser plugada tela a tela, sem retrabalho.
+O projeto está em integração progressiva com o backend Spring Boot. Autenticação, sessão, refresh, logout e recuperação/redefinição de senha já usam a API real; processos, documentos, aprovações e configurações ainda operam sobre a camada mockada até seus módulos existirem no backend.
 
 ## Stack
 
 - **Next.js 16** (App Router, Turbopack) · **React 19** · **TypeScript strict**
 - **Tailwind CSS v4** utility-first — tokens do DS mapeados via `@theme` (fonte única de verdade); ver [docs/estilizacao.md](docs/estilizacao.md)
-- **TanStack Query 5** — dados via hooks, mocks com latência simulada
+- **TanStack Query 5** — dados via hooks, com integração HTTP progressiva e mocks para módulos ainda não migrados
 - **Design System LAHHM/GeraDocs** — componentes portados a TSX (sem bibliotecas de UI de terceiros)
 - Fontes via `next/font`: Plus Jakarta Sans (display), Inter (UI), JetBrains Mono (IDs/valores)
 
@@ -18,7 +18,7 @@ Esta é a **Fase 1 (somente interface)**: a industrialização do protótipo Vit
 
 ```bash
 npm install
-npm run dev        # desenvolvimento (http://localhost:3000)
+npm run dev        # desenvolvimento (http://localhost:3000/GeraDocsFrontend)
 npm run build      # build de produção
 npm start          # servir o build
 npm run lint       # eslint-config-next + regras de aderência ao DS (hex/px/fonte)
@@ -36,7 +36,7 @@ app/                    # ROTAS (App Router) — cada pasta = um segmento de URL
   layout.tsx            # fonts (next/font), metadata, Providers (Query + Toast)
   globals.css           # tokens do DS + extensões + reset + focus ring + classes gd-*
   not-found.tsx         # 404
-  (auth)/               # sem shell — tela de login (CPF + senha)   /login
+  (auth)/               # login e redefinição de senha, sem shell
   (app)/                # shell autenticado (guarda de sessão + RBAC)
     page.tsx            # Dashboard (ou Painel do Sistema p/ admin)  /
     processos/          # Lista, wizard (novo/), hub (detalhe/), DFD (dfd/) e
@@ -59,7 +59,8 @@ lib/                    # DADOS E DOMÍNIO (TypeScript puro)
   auth/                 # cpf.ts (validação) + acesso.ts (RBAC — fonte única)
   format.ts             # formatBRL ("R$ 485.000,00"), formatData, formatDataHora
   mocks/fixtures.ts     # dados — nunca importar em componentes
-  api/client.ts         # client mock (assinaturas = futuro cliente OpenAPI)
+  api/auth-client.ts    # transporte HTTP, token em memória, refresh HttpOnly
+  api/client.ts         # fachada híbrida: auth real + módulos ainda mockados
   api/hooks.ts          # hooks TanStack Query (única porta das views)
 design_system/          # DS fonte (tokens, .prompt.md, guidelines) — normativo
 docs/                   # estrutura.md · decisions.md · fluxo-contratacao.md (domínio)
@@ -75,28 +76,17 @@ docs/                   # estrutura.md · decisions.md · fluxo-contratacao.md (
 - **Zero emoji**: ícones de linha estilo Lucide em `components/ui/icons.tsx`.
 - **Responsivo mobile-first**: variantes Tailwind `xs`(480)/`sm`(640)/`md`(768)/`lg`(1024) no `className`. Sidebar vira drawer abaixo de `lg`; tabelas largas rolam dentro de `overflow-x-auto` com `min-w-[...]`; nunca deixe a página estourar horizontalmente.
 
-## Como plugar o backend depois
+## Integração local com o backend
 
-1. Gere o cliente TypeScript do OpenAPI do Spring Boot.
-2. Substitua **apenas os corpos** das funções de `lib/api/client.ts` por chamadas HTTP — as assinaturas e os tipos de `lib/types.ts` já espelham o contrato.
-3. Os hooks, as views e os estados de loading/erro continuam intactos; remova as fixtures quando a última função migrar.
-4. Autenticação/middleware e exportação DOCX/PDF real entram em fases seguintes (os botões já existem com toasts explicativos).
+1. Inicie o PostgreSQL/Mailpit e o Spring Boot conforme o README do backend.
+2. Copie `.env.example` para `.env.local` somente se a API não estiver em `http://localhost:8080/api/v1`.
+3. Execute `npm run dev` e acesse `http://localhost:3000/GeraDocsFrontend/login`.
+
+O access token JWT fica somente em memória. O refresh token é rotativo e permanece em cookie `HttpOnly`; ao recarregar a página, o frontend renova a sessão e consulta `GET /api/v1/me`. Não armazene tokens no `localStorage`.
 
 ## Login e perfis de acesso
 
-O app exige login (CPF + senha). Três perfis: **Administrador Geral** (LAHHM — gere prefeituras e servidores), **Coordenador** (gere a sua prefeitura + faz o fluxo de servidor) e **Servidor** (processos e documentos). Os dados são escopados por prefeitura. Detalhe e matriz RBAC: [docs/perfis-acesso.md](docs/perfis-acesso.md).
-
-Acessos de demonstração (senha `geradocs123`, listados na tela de login):
-
-| CPF | Perfil | Prefeitura |
-|---|---|---|
-| `111.111.111-11` | Administrador Geral | — (LAHHM) |
-| `222.222.222-22` | Coordenador | Ecoporanga |
-| `333.333.333-33` | Servidor | Ecoporanga |
-| `444.444.444-44` | Coordenadora | São Paulo |
-| `555.555.555-55` | Servidor | São Paulo |
-
-> Auth mockada (Fase 1): sessão em `localStorage`, sem backend real. Os CPFs de atalho são exceções de validação só nesta fase.
+O app exige uma conta ativa cadastrada no backend e login por CPF + senha. Três perfis: **Administrador Geral** (LAHHM — gere prefeituras e servidores), **Coordenador** (gere a sua prefeitura + faz o fluxo de servidor) e **Servidor** (processos e documentos). A API define o perfil, a organização ativa, os papéis de workflow e as permissões da sessão. Detalhe e matriz RBAC: [docs/perfis-acesso.md](docs/perfis-acesso.md).
 
 ## Fluxo completo simulável com mocks
 
