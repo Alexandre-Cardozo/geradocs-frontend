@@ -7,8 +7,9 @@ on:
 
 jobs:
   verificar:
-    name: Lint · Type-check · Build
+    name: Lint · Type-check · Testes · Build
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
@@ -29,5 +30,49 @@ jobs:
       - name: Type-check (tsc --noEmit, strict)
         run: npm run typecheck
 
+      # O gate de cobertura é uma catraca: os limiares em vitest.config.mts são a
+      # medição do dia, não uma meta. Sobem a cada bloco da ordem de implementação
+      # e nunca descem — remover teste reprova aqui.
+      - name: Testes e gate de cobertura
+        run: npm run coverage
+
+      - name: Publicar relatório de cobertura
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cobertura
+          path: coverage
+          if-no-files-found: ignore
+          retention-days: 7
+
       - name: Build de produção
         run: npm run build
+
+      # O app é static export servido pelo GitHub Pages. Sem 404.html, recarregar
+      # qualquer rota que não seja a raiz devolve erro — e isso só apareceria em
+      # produção, depois do deploy.
+      - name: Export estático íntegro
+        run: |
+          test -f out/index.html || { echo "::error::out/index.html ausente"; exit 1; }
+          test -f out/404.html   || { echo "::error::out/404.html ausente — rota recarregada devolveria 404"; exit 1; }
+
+  scan-de-segredos:
+    name: Scan de segredos
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # fetch-depth 0: o gitleaks varre todo o histórico, não só o último commit.
+      # Segredo removido num commit posterior continua no histórico e continua vazado.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Instalar gitleaks
+        run: |
+          VERSAO=8.30.1
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${VERSAO}/gitleaks_${VERSAO}_linux_x64.tar.gz" \
+            | tar -xz -C /usr/local/bin gitleaks
+          gitleaks version
+
+      - name: Detectar segredos versionados
+        run: gitleaks detect --source . --redact --verbose --no-banner
