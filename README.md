@@ -84,6 +84,8 @@ docs/                   # estrutura.md · decisions.md · fluxo-contratacao.md (
 
 O access token JWT fica somente em memória. O refresh token é rotativo e permanece em cookie `HttpOnly`; ao recarregar a página, o frontend renova a sessão e consulta `GET /api/v1/me`. Não armazene tokens no `localStorage`.
 
+> ⚠️ **A autenticação está validada apenas em ambiente local.** O refresh token usa `SameSite=Lax`, que funciona entre `localhost:3000` e `localhost:8080` porque a porta não separa *sites*. Publicado o front em `github.io` e a API em outro domínio, a renovação da sessão deixa de receber o cookie e o usuário cai no `/login` a cada recarga. A decisão que resolve isso — publicar as duas pontas sob o mesmo domínio registrável — está em [ADR-013](../geradocs-backend/docs/architecture-decisions.md) e precisa ser executada antes da primeira publicação.
+
 ## Login e perfis de acesso
 
 O app exige uma conta ativa cadastrada no backend e login por CPF + senha. Três perfis: **Administrador Geral** (LAHHM — gere prefeituras e servidores), **Coordenador** (gere a sua prefeitura + faz o fluxo de servidor) e **Servidor** (processos e documentos). A API define o perfil, a organização ativa, os papéis de workflow e as permissões da sessão. Detalhe e matriz RBAC: [docs/perfis-acesso.md](docs/perfis-acesso.md).
