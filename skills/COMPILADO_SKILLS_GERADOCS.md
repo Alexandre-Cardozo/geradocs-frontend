@@ -14,7 +14,10 @@ Há **dois** diretórios, por histórico:
 | Diretório | Conteúdo | Origem |
 |---|---|---|
 | `.agents/skills/` | 14 skills de conteúdo, design e stack (`frontend-design`, `shadcn`, `web-design-guidelines`, `vercel-react-best-practices`, `copywriting`, `seo-audit`, `docx`, `pdf`, …) | instaladas antes, com alvo universal |
-| `.claude/skills/` | as skills de engenharia desta curadoria | instaladas com `-a claude-code` |
+| `.claude/skills/` | 21 skills de engenharia desta curadoria + `geradocs-ui-guardrails` | instaladas com `-a claude-code` |
+
+O `skills-lock.json` trava as 34 skills instaladas por ferramenta; as duas skills
+próprias do projeto não entram nele porque não vêm de repositório externo.
 
 Consolidar em um único diretório é desejável, mas é mudança de convenção — fica
 como decisão pendente, não como pendência técnica.

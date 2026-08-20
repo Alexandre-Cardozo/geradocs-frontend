@@ -14,8 +14,15 @@ if [ "$branch" = "HEAD" ]; then
     falhou=1
 fi
 
-# Aviso, não bloqueio: este repositório ainda não adotou 'develop' como branch de
-# integração. Se adotar, trocar este aviso por erro (como no back-end).
+# Aviso, não bloqueio — exceção deliberada e registrada.
+#
+# O back-end barra commit em 'main' porque tem 'develop' como branch de
+# integração (docs/development-standards.md). Este repositório não tem: todo o
+# histórico é commit direto em 'main'. Barrar aqui quebraria o fluxo em uso sem
+# que ninguém tenha decidido trocá-lo.
+#
+# Para fechar a lacuna: criar 'develop', apontar o CI para ela e trocar este
+# aviso por erro. É decisão de fluxo da equipe, não ajuste técnico.
 if [ "$branch" = "main" ]; then
     echo "aviso: commit direto em 'main'." >&2
 fi

@@ -208,3 +208,15 @@ A decisão de autenticação mockada registrada no §21 foi substituída para o 
 - `getSessao` tenta renovar o token após reload e confirma a identidade em `GET /me`. Requisições autenticadas repetem uma única vez após `401`, evitando ciclos infinitos.
 - A rota estática `/redefinir-senha?token=` completa o link enviado por e-mail. O backend deve usar a URL com o `basePath`: `http://localhost:3000/GeraDocsFrontend/redefinir-senha` no ambiente local.
 - A sessão real alimenta temporariamente os módulos mockados pela fachada existente. Isso preserva telas e hooks, mas dados de processos/configurações ainda não representam persistência real.
+
+## 24. Vocabulário de status reduzido a três
+
+O fluxo de aprovação entre setores sai do produto: na Prefeitura de Ecoporanga ele acontece no GPI da E&L, e a plataforma termina na elaboração do documento (ver [`fluxo-contratacao.md`](fluxo-contratacao.md) e o [plano das diretrizes](plano-diretrizes-reuniao.md)). Com isso, quatro dos seis status de `StatusProcesso` passariam a existir sem nada que os produza.
+
+**Decisão (20/08/2026):** `StatusProcesso` passa a ser `rascunho` → `em_elaboracao` → `concluido`. `em_revisao`, `aguardando`, `aprovado` e `rejeitado` são removidos.
+
+- **Por que remover em vez de deixar inertes:** vocabulário é contrato de leitura. Um status que ninguém alcança continua aparecendo em tipo, em filtro e em `switch`, e quem chegar depois vai tentar usá-lo — a alternativa "custo zero agora" cobra juros em cada tela nova.
+- **Custo aceito:** filtros, badges, dashboard e fixtures mudam junto. Os testes do Bloco 3 da [ordem de implementação](../../geradocs-backend/docs/ordem-de-implementacao.md) entram antes justamente para tornar essa mudança verificável.
+- **O que sobrevive:** a trilha de auditoria. `TransicaoAprovacao` vira `EventoProcesso` (criação, troca de modalidade, geração de documento, retificação, encerramento, reabertura) — é o único registro do que aconteceu **dentro** da plataforma, já que o GPI só registra o que vem depois.
+- **Encerramento:** ocorre quando todos os documentos do processo foram gerados, com a válvula de escape padrão do produto — encerrar mesmo assim, mediante justificativa registrada.
+- **Reversão:** se um dia um ente sem sistema de protocolo precisar do fluxo interno, ele volta como módulo próprio de workflow, não como ressurreição destes status. Ver ADR §20, que esta decisão substitui no que toca ao vocabulário.
