@@ -9,6 +9,10 @@ const config = defineConfig([
     "out/**",
     "design_system/**",
     "next-env.d.ts",
+    // Skills instaladas por terceiros: código de agente, não do produto.
+    // Lintá-las mistura aviso alheio com aviso nosso e esconde o que importa.
+    ".claude/**",
+    ".agents/**",
   ]),
   ...nextCoreWebVitals,
   ...nextTypescript,

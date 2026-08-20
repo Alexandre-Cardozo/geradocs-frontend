@@ -32,7 +32,10 @@ else
 fi
 
 # Lint e tipos apenas quando há código alterado.
-alterados=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx|mjs|js)$' || true)
+# Skills de terceiros (.claude/, .agents/) ficam fora: são código de agente.
+alterados=$(git diff --cached --name-only --diff-filter=ACM \
+    | grep -E '\.(ts|tsx|mjs|js)$' \
+    | grep -vE '^\.(claude|agents)/' || true)
 if [ -n "$alterados" ]; then
     if ! npx --no-install eslint $alterados; then
         echo "erro: ESLint reprovou os arquivos em stage." >&2
