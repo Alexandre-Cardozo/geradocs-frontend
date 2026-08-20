@@ -9,7 +9,10 @@
     "lint": "eslint app components lib",
     "lint:ds": "oxlint -c .oxlintrc.json app components lib",
     "typecheck": "tsc --noEmit",
-    "check": "npm run lint && npm run lint:ds && npm run typecheck",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage",
+    "check": "npm run lint && npm run lint:ds && npm run typecheck && npm test",
     "prepare": "git config core.hooksPath .githooks || true"
   },
   "dependencies": {
@@ -22,12 +25,19 @@
     "tailwindcss": "^4.3.2"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.5",
     "@types/node": "^24.10.9",
     "@types/react": "^19.2.9",
     "@types/react-dom": "^19.2.3",
+    "@vitest/coverage-v8": "^4.1.11",
     "eslint": "^9.39.1",
     "eslint-config-next": "^16.2.10",
+    "jsdom": "^30.0.1",
+    "msw": "^2.15.0",
     "oxlint": "^1.49.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.11"
   }
 }
