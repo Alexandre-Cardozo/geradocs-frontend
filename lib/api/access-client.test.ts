@@ -392,7 +392,7 @@ describe("mapeamento de usuário", () => {
     expect(usuario?.ativo).toBe(false)
   })
 
-  it("usa servidor_compras quando nenhum papel de workflow é reconhecido", async () => {
+  it("mapeia usuário cujo vínculo não tem papel de workflow", async () => {
     servidor.use(
       http.get(`${urlDaApi}/users`, () =>
         HttpResponse.json([
@@ -404,8 +404,10 @@ describe("mapeamento de usuário", () => {
 
     const [usuario] = await listarUsuarios()
 
-    // É o fallback que o Bloco 4 vai reavaliar: sem workflow, o papel deixa de
-    // ter origem e passa a valer para todo mundo.
+    // Papel de workflow virou opcional (ADR §26): vínculo sem papel é o caso
+    // comum, e quem define o que a pessoa pode fazer é o perfil de acesso.
+    expect(usuario?.perfilAcesso).toBe("servidor")
+    expect(usuario?.prefeituraId).toBe(organizacao.id)
   })
 
   it("ignora vínculo revogado ao descobrir a prefeitura", async () => {
