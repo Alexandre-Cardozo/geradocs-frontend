@@ -1,6 +1,7 @@
 import "client-only"
 
 import type { components } from "@/lib/api/gerado/v1"
+import { iniciaisDe, primeiroNome } from "@/lib/dominio"
 import type { PerfilAcesso, Sessao, Tenant, Usuario } from "@/lib/types"
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1").replace(/\/$/, "")
@@ -128,11 +129,6 @@ const perfis: Record<PerfilBackend, PerfilAcesso> = {
   SERVIDOR: "servidor",
 }
 
-function iniciaisDe(nome: string): string {
-  const partes = nome.trim().split(/\s+/).filter(Boolean)
-  return `${partes[0]?.[0] ?? ""}${partes.at(-1)?.[0] ?? ""}`.toUpperCase() || "?"
-}
-
 function tenantDa(organization: BackendOrganization | null | undefined): Tenant | null {
   if (!organization?.id) return null
   return {
@@ -167,7 +163,7 @@ function mapearSessao(session: BackendSession): Sessao {
   const usuario: Usuario = {
     id: user.id,
     nome,
-    primeiroNome: nome.trim().split(/\s+/)[0] ?? nome,
+    primeiroNome: primeiroNome(nome),
     iniciais: iniciaisDe(nome),
     cpf: user.cpf ?? "",
     email: user.email ?? "",

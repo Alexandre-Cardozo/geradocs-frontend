@@ -340,7 +340,10 @@ describe("criarUsuario", () => {
 
     const [usuario] = await listarUsuarios()
 
-    expect(usuario?.iniciais).toBe("MM")
+    // Uma inicial, não a mesma letra repetida. Este teste afirmava "MM" e
+    // passava porque exercitava uma de três implementações divergentes da mesma
+    // regra; a unificação em lib/dominio o corrigiu.
+    expect(usuario?.iniciais).toBe("M")
   })
 
   it("cai para interrogação quando o nome vem vazio", async () => {

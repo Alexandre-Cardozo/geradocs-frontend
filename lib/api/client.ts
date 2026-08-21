@@ -20,6 +20,10 @@ import {
   documentosPendentes,
   empilharVersao,
   entradaDeHistorico,
+  iniciaisDe,
+  numeroDeDocumento,
+  numeroDeProcesso,
+  primeiroNome,
   exigeJustificativaParaEncerrar,
   motivoDoEncerramento,
   noEscopo,
@@ -27,6 +31,8 @@ import {
   resumirDocumentos,
   proximaVersao,
   statusAposEditar,
+  statusDoDocumentoNoProcesso,
+  tituloDoDocumento,
 } from "@/lib/dominio"
 import { limpaCPF } from "@/lib/auth/cpf"
 import {
@@ -216,7 +222,7 @@ export async function atualizarMeuPerfil(input: MeuPerfilInput): Promise<Sessao>
   const usuario = exigeSessao()
   if (input.nome != null && input.nome.trim() !== "") {
     usuario.nome = input.nome.trim()
-    usuario.primeiroNome = usuario.nome.split(" ")[0] ?? usuario.nome
+    usuario.primeiroNome = primeiroNome(usuario.nome)
     usuario.iniciais = iniciaisDe(usuario.nome)
   }
   if (input.email != null) usuario.email = input.email.trim()
@@ -226,13 +232,6 @@ export async function atualizarMeuPerfil(input: MeuPerfilInput): Promise<Sessao>
   return montarSessao(usuario)
 }
 
-/** Iniciais a partir do nome (2 primeiras palavras). */
-function iniciaisDe(nome: string): string {
-  const partes = nome.trim().split(/\s+/).filter(Boolean)
-  const primeira = partes[0]?.[0] ?? ""
-  const ultima = partes.length > 1 ? (partes[partes.length - 1]?.[0] ?? "") : ""
-  return (primeira + ultima).toUpperCase() || "?"
-}
 
 /** Estatísticas do dashboard, escopadas à prefeitura do usuário logado. */
 export async function getEstatisticas(): Promise<EstatisticasDashboard> {
@@ -278,7 +277,7 @@ export async function getProcesso(id: string): Promise<Processo> {
 
 export async function getProximoNumeroProcesso(): Promise<string> {
   await delay(150)
-  return `PROC-${ANO_SERIE}-${String(db.seqProcesso).padStart(3, "0")}`
+  return numeroDeProcesso(ANO_SERIE, db.seqProcesso)
 }
 
 export async function criarProcesso(input: NovoProcessoInput): Promise<Processo> {
@@ -488,7 +487,7 @@ export async function gerarDocumento(input: GerarDocumentoInput): Promise<Docume
   if (existente) {
     // Regeração — nova versão. A anterior fica registrada no histórico.
     existente.versao = proximaVersao(existente.versao)
-    existente.titulo = `${input.tipo} — ${objeto}`
+    existente.titulo = tituloDoDocumento(input.tipo, objeto)
     existente.geradoEm = geradoEm
     existente.tamanho = `${tamanhoKB} KB`
     existente.status = "final"
@@ -504,10 +503,10 @@ export async function gerarDocumento(input: GerarDocumentoInput): Promise<Docume
   }
 
   const doc: DocumentoGerado = {
-    id: `DOC-${ANO_SERIE}-${String(++db.seqDocumento).padStart(4, "0")}`,
+    id: numeroDeDocumento(ANO_SERIE, ++db.seqDocumento),
     prefeituraId: processo?.prefeituraId ?? escopoPrefeituras()?.[0] ?? "PREF-001",
     processoId: input.processoId,
-    titulo: `${input.tipo} — ${objeto}`,
+    titulo: tituloDoDocumento(input.tipo, objeto),
     tipo: input.tipo,
     formato: meta.formato,
     geradoEm,
@@ -528,8 +527,7 @@ export async function gerarDocumento(input: GerarDocumentoInput): Promise<Docume
 
   // Reflete a conclusão no processo de origem.
   if (processo) {
-    if (input.tipo === "ETP") processo.etpStatus = "Completo"
-    if (input.tipo === "TR") processo.trStatus = "Completo"
+    Object.assign(processo, statusDoDocumentoNoProcesso(input.tipo))
     processo.atualizadoEm = dataBrasiliaISO()
   }
   return clone(doc)
@@ -623,7 +621,7 @@ export async function atualizarUsuario(input: AtualizarUsuarioInput): Promise<Us
   if (!usuario) throw new Error(`Usuário ${input.id} não encontrado`)
   if (input.nome != null && input.nome.trim() !== "") {
     usuario.nome = input.nome.trim()
-    usuario.primeiroNome = usuario.nome.split(" ")[0] ?? usuario.nome
+    usuario.primeiroNome = primeiroNome(usuario.nome)
     usuario.iniciais = iniciaisDe(usuario.nome)
   }
   if (input.email != null) usuario.email = input.email.trim()

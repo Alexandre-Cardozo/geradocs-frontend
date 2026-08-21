@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import {
   documentosPendentes,
+  statusDoDocumentoNoProcesso,
   exigeJustificativaParaEncerrar,
   motivoDoEncerramento,
   tiposGerados,
@@ -92,5 +93,22 @@ describe("encerramento", () => {
 
   it("registra a conclusão normal quando não há pendência", () => {
     expect(motivoDoEncerramento([], "")).toBe("Todos os documentos foram gerados.")
+  })
+})
+
+describe("statusDoDocumentoNoProcesso", () => {
+  it("gerar o ETP marca o status do ETP no processo", () => {
+    // ETP e TR têm coluna própria na listagem: o servidor precisa ver, sem abrir
+    // o processo, se os dois documentos centrais já existem.
+    expect(statusDoDocumentoNoProcesso("ETP")).toEqual({ etpStatus: "Completo" })
+  })
+
+  it("gerar o TR marca o status do TR", () => {
+    expect(statusDoDocumentoNoProcesso("TR")).toEqual({ trStatus: "Completo" })
+  })
+
+  it("os demais tipos não mexem em status nenhum", () => {
+    expect(statusDoDocumentoNoProcesso("Edital")).toEqual({})
+    expect(statusDoDocumentoNoProcesso("Cotação")).toEqual({})
   })
 })

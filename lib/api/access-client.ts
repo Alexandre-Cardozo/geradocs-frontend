@@ -1,6 +1,7 @@
 import "client-only"
 
 import { requisicaoProtegida } from "@/lib/api/auth-client"
+import { iniciaisDe, primeiroNome } from "@/lib/dominio"
 import type { PerfilAcesso, Secretaria, Tenant, Usuario } from "@/lib/types"
 
 type BackendProfile = "ADMIN_GERAL" | "COORDENADOR" | "SERVIDOR"
@@ -53,11 +54,6 @@ function ifMatch(version: number): string {
   return `"${version}"`
 }
 
-function iniciaisDe(nome: string): string {
-  const partes = nome.trim().split(/\s+/).filter(Boolean)
-  return `${partes[0]?.[0] ?? ""}${partes.at(-1)?.[0] ?? ""}`.toUpperCase() || "?"
-}
-
 function tenantDa(organization: BackendOrganization, secretarias: Secretaria[] = []): Tenant {
   return {
     id: organization.id,
@@ -78,7 +74,7 @@ function usuarioDa(user: BackendUser): Usuario {
   return {
     id: user.id,
     nome: user.name,
-    primeiroNome: user.name.trim().split(/\s+/)[0] ?? user.name,
+    primeiroNome: primeiroNome(user.name),
     iniciais: iniciaisDe(user.name),
     cpf: user.cpf,
     email: user.email,

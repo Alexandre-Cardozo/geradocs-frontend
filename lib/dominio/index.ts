@@ -8,7 +8,9 @@
  */
 
 export * from "@/lib/dominio/escopo"
+export * from "@/lib/dominio/identidade"
 export * from "@/lib/dominio/indicadores"
+export * from "@/lib/dominio/numeracao"
 export * from "@/lib/dominio/processo"
 export * from "@/lib/dominio/secoes"
 export * from "@/lib/dominio/versionamento"

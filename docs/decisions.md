@@ -295,6 +295,20 @@ Isso quebrava a promessa registrada em [`estrutura.md`](estrutura.md) de que, na
 | `processo.ts` | Pendências do processo e regra de encerramento |
 | `secoes.ts` | Progresso, seções indispensáveis e quando o documento pode ser gerado |
 | `versionamento.ts` | Incremento de versão, histórico e o rótulo `RETIFICADO` |
+| `identidade.ts` | Primeiro nome e iniciais do avatar |
+| `numeracao.ts` | `PROC-AAAA-NNN`, `DOC-AAAA-NNNN` e o título do arquivo gerado |
+
+### O defeito que a extração revelou
+
+`iniciaisDe` existia em **três cópias** — no mock, no cliente de autenticação e
+no de acesso — e elas **divergiam**: para um nome de uma palavra só, duas
+devolviam `"MM"` e a terceira devolvia `"M"`. O mesmo servidor aparecia com
+avatares diferentes conforme a tela que tivesse carregado o dado.
+
+Pior: havia um teste afirmando `"MM"`. Ele passava porque exercitava uma das três
+implementações, sem que nada indicasse que existiam outras duas. A unificação o
+derrubou, e a correção do teste é a prova de que a regra passou a ter um dono
+só — `"M"`, porque repetir a mesma letra não é inicial de nada.
 
 ### A natureza da cópia
 

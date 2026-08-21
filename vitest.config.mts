@@ -64,7 +64,7 @@ export default defineConfig({
         // pública — testá-las seria escrever teste que executa sem afirmar. Elas
         // desaparecem quando o contrato passar a declarar `required`, correção já
         // registrada como pendência do Bloco 2.
-        branches: 95,
+        branches: 96,
       },
     },
   },

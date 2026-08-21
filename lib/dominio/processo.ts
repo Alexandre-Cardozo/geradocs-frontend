@@ -39,3 +39,16 @@ export function motivoDoEncerramento(pendentes: TipoDocumento[], justificativa: 
     ? `Encerrado com pendências. ${justificativa.trim()}`
     : "Todos os documentos foram gerados."
 }
+
+/**
+ * Reflexo da geração de um documento no processo.
+ *
+ * ETP e TR têm status próprio no processo porque são os dois que a listagem
+ * exibe como coluna — o servidor precisa ver, sem abrir o processo, se os dois
+ * documentos centrais já existem.
+ */
+export function statusDoDocumentoNoProcesso(tipo: TipoDocumento): Partial<Pick<Processo, "etpStatus" | "trStatus">> {
+  if (tipo === "ETP") return { etpStatus: "Completo" }
+  if (tipo === "TR") return { trStatus: "Completo" }
+  return {}
+}
