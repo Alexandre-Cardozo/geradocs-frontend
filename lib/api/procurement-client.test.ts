@@ -90,6 +90,54 @@ describe("listarProcessos", () => {
     expect(recebida?.searchParams.get("search")).toBe("material")
   })
 
+  it("filtra por rascunho quando é esse o status pedido", async () => {
+    let recebida: URL | undefined
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes`, ({ request }) => {
+        recebida = new URL(request.url)
+        return HttpResponse.json(pagina())
+      }),
+    )
+    const { listarProcessos } = await carregarClienteLimpo()
+
+    await listarProcessos({ status: "rascunho" })
+
+    expect(recebida?.searchParams.get("status")).toBe("DRAFT")
+  })
+
+  it("consulta sem filtro de status quando a tela pede todos", async () => {
+    let recebida: URL | undefined
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes`, ({ request }) => {
+        recebida = new URL(request.url)
+        return HttpResponse.json(pagina())
+      }),
+    )
+    const { listarProcessos } = await carregarClienteLimpo()
+
+    await listarProcessos({ status: "todos", busca: "   " })
+
+    expect(recebida?.searchParams.has("status")).toBe(false)
+    expect(recebida?.searchParams.has("search")).toBe(false)
+  })
+
+  it("nunca pede página negativa", async () => {
+    let recebida: URL | undefined
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes`, ({ request }) => {
+        recebida = new URL(request.url)
+        return HttpResponse.json({ ...pagina(), totalPages: 0 })
+      }),
+    )
+    const { listarProcessos } = await carregarClienteLimpo()
+
+    const resultado = await listarProcessos({ pagina: 0 })
+
+    expect(recebida?.searchParams.get("page")).toBe("0")
+    // Uma lista vazia ainda tem uma página; zero quebraria a paginação da tela.
+    expect(resultado.totalPaginas).toBe(1)
+  })
+
   it("não consulta a API para status que o backend ainda não persiste", async () => {
     let chamou = false
     servidor.use(
@@ -147,6 +195,26 @@ describe("criarProcessoReal", () => {
     expect(corpo.modality).toBe("DIRECT_AWARD_ARTICLE_75")
     expect(corpo.departmentId).toBe(DEPARTAMENTO_ID)
     expect(corpo.estimatedValue).toBe(12000)
+  })
+
+  it("preserva o objeto da demanda e o fundamento legal quando existem", async () => {
+    servidor.use(http.post(`${urlDaApi}/procurement-processes`, () => HttpResponse.json(processoApi)))
+    const { criarProcessoReal } = await carregarClienteLimpo()
+
+    const processo = await criarProcessoReal({
+      objeto: "Aquisição de material de expediente",
+      objetoDemanda: "Papel A4, canetas e pastas",
+      modalidade: "Pregão Eletrônico",
+      secretaria: DEPARTAMENTO_ID,
+      fundamentoLegal: "Art. 28, I, Lei 14.133/21",
+      documentos: ["ETP"],
+      fases: { verificacaoDFD: false, retificacao: false },
+    })
+
+    expect(processo.objetoDemanda).toBe("Papel A4, canetas e pastas")
+    expect(processo.fundamentoLegal).toBe("Art. 28, I, Lei 14.133/21")
+    expect(processo.urgente).toBe(false)
+    expect(processo.status).toBe("rascunho")
   })
 
   it("envia valor zero quando o processo nasce sem estimativa", async () => {

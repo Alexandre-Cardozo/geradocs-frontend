@@ -52,6 +52,157 @@ describe("listarPrefeituras", () => {
   })
 })
 
+const departamento = {
+  id: "8a7b6c5d-4e3f-4a2b-9c8d-7e6f5a4b3c2d",
+  organizationId: organizacao.id,
+  name: "Secretaria de Administração",
+  acronym: "SMA",
+  active: true,
+  version: 2,
+}
+
+describe("criarPrefeitura", () => {
+  it("apara os nomes antes de enviar", async () => {
+    let corpo: Record<string, unknown> = {}
+    servidor.use(
+      http.post(`${urlDaApi}/organizations`, async ({ request }) => {
+        corpo = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json(organizacao)
+      }),
+    )
+    const { criarPrefeitura } = await carregarClienteLimpo()
+
+    const prefeitura = await criarPrefeitura({ orgao: "  Prefeitura de Ecoporanga  ", unidade: "  Sede  " })
+
+    expect(corpo.name).toBe("Prefeitura de Ecoporanga")
+    expect(corpo.unit).toBe("Sede")
+    expect(prefeitura.orgao).toBe(organizacao.name)
+  })
+
+  it("envia unidade nula quando ela não é informada", async () => {
+    let corpo: Record<string, unknown> = {}
+    servidor.use(
+      http.post(`${urlDaApi}/organizations`, async ({ request }) => {
+        corpo = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json(organizacao)
+      }),
+    )
+    const { criarPrefeitura } = await carregarClienteLimpo()
+
+    await criarPrefeitura({ orgao: "Prefeitura", unidade: "   " })
+
+    // String vazia e ausência são coisas diferentes para o backend: "" passaria
+    // na validação de obrigatoriedade e gravaria unidade em branco.
+    expect(corpo.unit).toBeNull()
+  })
+})
+
+describe("listarPrefeituras", () => {
+  it("esconde organização desativada", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/organizations`, () =>
+        HttpResponse.json([organizacao, { ...organizacao, id: "outra", status: "INACTIVE" }]),
+      ),
+    )
+    const { listarPrefeituras } = await carregarClienteLimpo()
+
+    expect(await listarPrefeituras()).toHaveLength(1)
+  })
+})
+
+describe("desativarPrefeitura", () => {
+  it("lê a versão atual e a envia em If-Match", async () => {
+    let ifMatch: string | null = null
+    servidor.use(
+      http.get(`${urlDaApi}/organizations/:id`, () => HttpResponse.json(organizacao)),
+      http.post(`${urlDaApi}/organizations/:id/deactivate`, ({ request }) => {
+        ifMatch = request.headers.get("If-Match")
+        return new HttpResponse(null, { status: 204 })
+      }),
+    )
+    const { desativarPrefeitura } = await carregarClienteLimpo()
+
+    await desativarPrefeitura(organizacao.id)
+
+    expect(ifMatch).toContain("3")
+  })
+})
+
+describe("obterTenant", () => {
+  it("junta a organização e as secretarias ativas", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/organizations/:id`, () => HttpResponse.json(organizacao)),
+      http.get(`${urlDaApi}/organizations/:id/departments`, () =>
+        HttpResponse.json([departamento, { ...departamento, id: "inativa", name: "Extinta", active: false }]),
+      ),
+    )
+    const { obterTenant } = await carregarClienteLimpo()
+
+    const tenant = await obterTenant(organizacao.id)
+
+    // Secretaria extinta não pode continuar aparecendo como opção de lotação.
+    expect(tenant.secretarias).toEqual([{ id: departamento.id, nome: "Secretaria de Administração", sigla: "SMA" }])
+  })
+})
+
+describe("criarDepartamento", () => {
+  it("apara nome e sigla", async () => {
+    let corpo: Record<string, unknown> = {}
+    servidor.use(
+      http.post(`${urlDaApi}/organizations/:id/departments`, async ({ request }) => {
+        corpo = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json(departamento)
+      }),
+    )
+    const { criarDepartamento } = await carregarClienteLimpo()
+
+    await criarDepartamento(organizacao.id, "  Secretaria de Educação  ", "  SME  ")
+
+    expect(corpo.name).toBe("Secretaria de Educação")
+    expect(corpo.acronym).toBe("SME")
+  })
+
+  it("aceita secretaria sem sigla", async () => {
+    servidor.use(
+      http.post(`${urlDaApi}/organizations/:id/departments`, () =>
+        HttpResponse.json({ ...departamento, acronym: null }),
+      ),
+    )
+    const { criarDepartamento } = await carregarClienteLimpo()
+
+    const secretaria = await criarDepartamento(organizacao.id, "Secretaria de Saúde")
+
+    expect(secretaria.sigla).toBeUndefined()
+  })
+})
+
+describe("desativarDepartamento", () => {
+  it("localiza a secretaria na lista para descobrir a versão", async () => {
+    let ifMatch: string | null = null
+    servidor.use(
+      http.get(`${urlDaApi}/organizations/:id/departments`, () => HttpResponse.json([departamento])),
+      http.post(`${urlDaApi}/organizations/:id/departments/:dep/deactivate`, ({ request }) => {
+        ifMatch = request.headers.get("If-Match")
+        return new HttpResponse(null, { status: 204 })
+      }),
+    )
+    const { desativarDepartamento } = await carregarClienteLimpo()
+
+    await desativarDepartamento(organizacao.id, departamento.id)
+
+    expect(ifMatch).toContain("2")
+  })
+
+  it("recusa desativar secretaria que não está na organização", async () => {
+    servidor.use(http.get(`${urlDaApi}/organizations/:id/departments`, () => HttpResponse.json([departamento])))
+    const { desativarDepartamento } = await carregarClienteLimpo()
+
+    await expect(desativarDepartamento(organizacao.id, "de-outra-prefeitura")).rejects.toThrow(
+      /Secretaria não encontrada/i,
+    )
+  })
+})
+
 describe("listarUsuarios", () => {
   it("filtra por organização quando ela é informada", async () => {
     let recebida: URL | undefined
@@ -126,6 +277,55 @@ describe("criarUsuario", () => {
     expect(corpo.profileAccess).toBe("ADMIN_GERAL")
   })
 
+  it("envia cargo nulo quando ele vem vazio", async () => {
+    let corpo: Record<string, unknown> = {}
+    servidor.use(
+      http.post(`${urlDaApi}/users`, async ({ request }) => {
+        corpo = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json(usuarioApi)
+      }),
+    )
+    const { criarUsuario } = await carregarClienteLimpo()
+
+    await criarUsuario({
+      nome: "Maria Costa Andrade",
+      cpf: "33333333333",
+      email: "maria@ecoporanga.es.gov.br",
+      cargo: "   ",
+      senha: "UmaSenhaSegura!2026",
+      perfilAcesso: "servidor",
+      prefeituraId: organizacao.id,
+    })
+
+    expect(corpo.jobTitle).toBeNull()
+  })
+
+  it("respeita os papéis de workflow informados explicitamente", async () => {
+    let corpo: Record<string, unknown> = {}
+    servidor.use(
+      http.post(`${urlDaApi}/users`, async ({ request }) => {
+        corpo = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json(usuarioApi)
+      }),
+    )
+    const { criarUsuario } = await carregarClienteLimpo()
+
+    await criarUsuario({
+      nome: "Carlos Jurídico",
+      cpf: "11144477735",
+      email: "carlos@ecoporanga.es.gov.br",
+      cargo: "Procurador",
+      senha: "UmaSenhaSegura!2026",
+      perfilAcesso: "coordenador",
+      prefeituraId: organizacao.id,
+      departamentoId: departamento.id,
+      workflowRoles: ["JURIDICO"],
+    })
+
+    expect(corpo.workflowRoles).toEqual(["JURIDICO"])
+    expect(corpo.departmentId).toBe(departamento.id)
+  })
+
   it("deriva o papel de workflow do perfil quando ele não é informado", async () => {
     let corpo: Record<string, unknown> = {}
     servidor.use(
@@ -149,6 +349,104 @@ describe("criarUsuario", () => {
     expect(corpo.workflowRoles).toEqual(["SERVIDOR_COMPRAS"])
     expect(corpo.name).toBe("Maria Costa Andrade")
     expect(corpo.email).toBe("maria.costa@ecoporanga.es.gov.br")
+  })
+})
+
+describe("mapeamento de usuário", () => {
+  it("monta as iniciais do primeiro e do último nome", async () => {
+    servidor.use(http.get(`${urlDaApi}/users`, () => HttpResponse.json([usuarioApi])))
+    const { listarUsuarios } = await carregarClienteLimpo()
+
+    const [usuario] = await listarUsuarios()
+
+    expect(usuario?.iniciais).toBe("MA")
+    expect(usuario?.primeiroNome).toBe("Maria")
+  })
+
+  it("aceita nome de uma palavra só", async () => {
+    servidor.use(http.get(`${urlDaApi}/users`, () => HttpResponse.json([{ ...usuarioApi, name: "Madonna" }])))
+    const { listarUsuarios } = await carregarClienteLimpo()
+
+    const [usuario] = await listarUsuarios()
+
+    expect(usuario?.iniciais).toBe("MM")
+  })
+
+  it("cai para interrogação quando o nome vem vazio", async () => {
+    servidor.use(http.get(`${urlDaApi}/users`, () => HttpResponse.json([{ ...usuarioApi, name: "  " }])))
+    const { listarUsuarios } = await carregarClienteLimpo()
+
+    const [usuario] = await listarUsuarios()
+
+    // Avatar em branco é pior que avatar com "?": o segundo diz que falta dado.
+    expect(usuario?.iniciais).toBe("?")
+  })
+
+  it("marca como inativo quem está pendente de ativação", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/users`, () => HttpResponse.json([{ ...usuarioApi, status: "PENDING_ACTIVATION" }])),
+    )
+    const { listarUsuarios } = await carregarClienteLimpo()
+
+    const [usuario] = await listarUsuarios()
+
+    expect(usuario?.ativo).toBe(false)
+  })
+
+  it("usa servidor_compras quando nenhum papel de workflow é reconhecido", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/users`, () =>
+        HttpResponse.json([
+          { ...usuarioApi, memberships: [{ ...usuarioApi.memberships[0], workflowRoles: [] }] },
+        ]),
+      ),
+    )
+    const { listarUsuarios } = await carregarClienteLimpo()
+
+    const [usuario] = await listarUsuarios()
+
+    // É o fallback que o Bloco 4 vai reavaliar: sem workflow, o papel deixa de
+    // ter origem e passa a valer para todo mundo.
+    expect(usuario?.papel).toBe("servidor_compras")
+  })
+
+  it("ignora vínculo revogado ao descobrir a prefeitura", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/users`, () =>
+        HttpResponse.json([
+          { ...usuarioApi, memberships: [{ ...usuarioApi.memberships[0], active: false }] },
+        ]),
+      ),
+    )
+    const { listarUsuarios } = await carregarClienteLimpo()
+
+    const [usuario] = await listarUsuarios()
+
+    expect(usuario?.prefeituraId).toBeNull()
+  })
+
+  it("trata cargo e último acesso ausentes", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/users`, () =>
+        HttpResponse.json([{ ...usuarioApi, jobTitle: null, lastAccessAt: null }]),
+      ),
+    )
+    const { listarUsuarios } = await carregarClienteLimpo()
+
+    const [usuario] = await listarUsuarios()
+
+    expect(usuario?.cargo).toBe("")
+    expect(usuario?.ultimoAcesso).toBe("")
+  })
+
+  it("preenche a unidade vazia quando a organização não a informa", async () => {
+    servidor.use(http.get(`${urlDaApi}/organizations`, () => HttpResponse.json([{ ...organizacao, unit: null }])))
+    const { listarPrefeituras } = await carregarClienteLimpo()
+
+    const [prefeitura] = await listarPrefeituras()
+
+    expect(prefeitura?.unidade).toBe("")
+    expect(prefeitura?.cabecalho).toBe("PREFEITURA MUNICIPAL DE ECOPORANGA")
   })
 })
 

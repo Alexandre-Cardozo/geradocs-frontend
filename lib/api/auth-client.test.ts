@@ -88,6 +88,74 @@ describe("autenticar", () => {
   })
 })
 
+describe("respostas malformadas", () => {
+  it("não quebra quando o corpo de erro não é JSON válido", async () => {
+    servidor.use(
+      http.post(`${urlDaApi}/auth/login`, () =>
+        new HttpResponse("<html>erro do proxy</html>", {
+          status: 502,
+          headers: { "content-type": "application/json" },
+        }),
+      ),
+    )
+    const { autenticar } = await carregarClienteLimpo()
+
+    // Um proxy no meio do caminho devolve HTML com content-type de JSON. Sem o
+    // tratamento, o erro exibido seria de parse, escondendo o 502.
+    await expect(autenticar("33333333333", "senha")).rejects.toThrow("CPF ou senha inválidos.")
+  })
+
+  it("usa a mensagem padrão quando o erro vem sem corpo JSON", async () => {
+    servidor.use(
+      http.post(`${urlDaApi}/auth/refresh`, () =>
+        new HttpResponse("Bad Gateway", { status: 502, headers: { "content-type": "text/plain" } }),
+      ),
+    )
+    const { obterSessao } = await carregarClienteLimpo()
+
+    // Gateway e balanceador respondem texto puro. Sem a checagem de
+    // content-type, tentar interpretar como JSON trocaria o 502 por um erro de
+    // parse — e o motivo real sumiria.
+    await expect(obterSessao()).rejects.toThrow("Não foi possível concluir a solicitação.")
+  })
+
+  it("recusa sessão sem usuário identificado", async () => {
+    servidor.use(
+      http.post(`${urlDaApi}/auth/login`, () =>
+        HttpResponse.json({ ...autenticacao, session: { ...sessaoServidor, user: undefined } }),
+      ),
+    )
+    const { autenticar, ApiError } = await carregarClienteLimpo()
+
+    const erro = await autenticar("33333333333", "senha-correta").catch((e: unknown) => e)
+
+    // Seguir com campos vazios criaria uma sessão anônima que parece válida.
+    expect(erro).toBeInstanceOf(ApiError)
+    expect((erro as InstanceType<typeof ApiError>).status).toBe(502)
+  })
+
+  it("avisa quando o servidor cai no meio de uma requisição autenticada", async () => {
+    servidor.use(http.get(`${urlDaApi}/me`, () => HttpResponse.error()))
+    const { obterSessao, ApiError } = await carregarClienteLimpo()
+
+    const erro = await obterSessao().catch((e: unknown) => e)
+
+    expect(erro).toBeInstanceOf(ApiError)
+    expect((erro as InstanceType<typeof ApiError>).status).toBe(0)
+  })
+
+  it("propaga erro do servidor que não seja de autorização", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/me`, () => HttpResponse.json(problema(500, "Falha interna"), { status: 500 })),
+    )
+    const { obterSessao } = await carregarClienteLimpo()
+
+    // 500 não é "não autenticado": tratar como tal deslogaria a pessoa por causa
+    // de um defeito passageiro do servidor.
+    await expect(obterSessao()).rejects.toThrow(/Falha interna/)
+  })
+})
+
 describe("obterSessao", () => {
   it("renova o token e confirma a identidade em /me", async () => {
     const { obterSessao } = await carregarClienteLimpo()
@@ -214,6 +282,86 @@ describe("recuperação de senha", () => {
 
     expect(erro).toBeInstanceOf(ApiError)
     expect((erro as InstanceType<typeof ApiError>).code).toBe("reset-token-invalid")
+  })
+})
+
+describe("campos que o contrato declara como opcionais", () => {
+  it("preenche o que falta em vez de exibir undefined", async () => {
+    // Todo campo da spec é opcional hoje (os DTOs de resposta não declaram
+    // obrigatoriedade). Enquanto for assim, a ausência precisa virar vazio, e
+    // não "undefined" na tela.
+    servidor.use(
+      http.post(`${urlDaApi}/auth/login`, () =>
+        HttpResponse.json({
+          ...autenticacao,
+          session: {
+            user: { id: sessaoServidor.user.id, name: "Maria Costa Andrade" },
+            organization: { id: "1b7c8e10-2d3f-4a5b-8c9d-0e1f2a3b4c5d" },
+          },
+        }),
+      ),
+    )
+    const { autenticar } = await carregarClienteLimpo()
+
+    const sessao = await autenticar("33333333333", "senha-correta")
+
+    expect(sessao.usuario.cpf).toBe("")
+    expect(sessao.usuario.email).toBe("")
+    expect(sessao.usuario.cargo).toBe("")
+    expect(sessao.usuario.ultimoAcesso).toBe("")
+    expect(sessao.usuario.ativo).toBe(false)
+    expect(sessao.prefeitura?.orgao).toBe("")
+    expect(sessao.prefeitura?.unidade).toBe("")
+  })
+
+  it("assume o perfil de menor privilégio quando ele não vem", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/me`, () =>
+        HttpResponse.json({
+          user: { id: sessaoServidor.user.id, name: "Maria Costa Andrade" },
+          organization: null,
+          activeMembership: null,
+        }),
+      ),
+    )
+    const { obterSessao } = await carregarClienteLimpo()
+
+    const sessao = await obterSessao()
+
+    // Errar para mais daria acesso a tela que a pessoa não deveria ver.
+    expect(sessao?.usuario.perfilAcesso).toBe("servidor")
+    expect(sessao?.prefeitura).toBeNull()
+  })
+
+  it("recusa autenticação que volta sem sessão", async () => {
+    servidor.use(
+      http.post(`${urlDaApi}/auth/login`, () => HttpResponse.json({ accessToken: "t", tokenType: "Bearer" })),
+    )
+    const { autenticar, ApiError } = await carregarClienteLimpo()
+
+    const erro = await autenticar("33333333333", "senha-correta").catch((e: unknown) => e)
+
+    expect(erro).toBeInstanceOf(ApiError)
+    expect((erro as InstanceType<typeof ApiError>).status).toBe(502)
+  })
+
+  it("trata renovação que volta sem token", async () => {
+    servidor.use(
+      http.post(`${urlDaApi}/auth/refresh`, () => HttpResponse.json({ tokenType: "Bearer", session: sessaoServidor })),
+      http.get(`${urlDaApi}/me`, () => HttpResponse.json(problema(401, "Sem token"), { status: 401 })),
+    )
+    const { obterSessao } = await carregarClienteLimpo()
+
+    await expect(obterSessao()).resolves.toBeNull()
+  })
+
+  it("não quebra quando a resposta de erro vem sem content-type", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/me`, () => new HttpResponse(null, { status: 503 })),
+    )
+    const { obterSessao } = await carregarClienteLimpo()
+
+    await expect(obterSessao()).rejects.toThrow("Não foi possível concluir a solicitação.")
   })
 })
 
