@@ -165,24 +165,6 @@ export interface ParecerDFD {
   achados: AchadoDFD[]
 }
 
-/** Papéis do fluxo de aprovação. */
-export type PapelUsuario =
-  | "servidor_compras"
-  | "secretaria_demandante"
-  | "comissao"
-  | "juridico"
-  | "gestor_aprovador"
-  | "admin_lahhm"
-
-export const PAPEL_LABEL: Record<PapelUsuario, string> = {
-  servidor_compras: "Servidor de Compras",
-  secretaria_demandante: "Secretaria Demandante",
-  comissao: "Comissão de Contratação",
-  juridico: "Jurídico",
-  gestor_aprovador: "Gestor Aprovador",
-  admin_lahhm: "Admin LAHHM",
-}
-
 /**
  * Eventos que compõem a trilha do processo.
  *
@@ -203,7 +185,8 @@ export interface EventoDoProcesso {
   de: StatusProcesso
   para: StatusProcesso
   autor: string
-  papel: PapelUsuario
+  /** Perfil de quem praticou o evento — para a trilha dizer quem fez o quê. */
+  papel: PerfilAcesso
   data: string
   comentario: string
 }
@@ -247,8 +230,12 @@ export interface Secretaria {
 
 /**
  * Perfil de acesso — controla o que o usuário pode ver e fazer no sistema.
- * Distinto de `PapelUsuario` (papel no fluxo de aprovação): um mesmo usuário
- * tem um perfil de acesso e atua com papéis de workflow conforme a etapa.
+ *
+ * Fonte única desde 21/08/2026: o antigo `PapelUsuario` (comissão, jurídico,
+ * gestor aprovador) descrevia posições do fluxo de aprovação entre setores, que
+ * saiu do produto. Sem esse fluxo, ele duplicava o perfil de acesso com outro
+ * vocabulário — e dois vocabulários para a mesma coisa é como um deles fica
+ * errado sem ninguém perceber.
  */
 export type PerfilAcesso = "admin_geral" | "coordenador" | "servidor"
 
@@ -297,8 +284,6 @@ export interface Usuario {
   email: string
   cargo: string
   perfilAcesso: PerfilAcesso
-  /** Papel primário no fluxo de aprovação (autoria/exibição). */
-  papel: PapelUsuario
   /** Prefeitura a que pertence. null = admin geral (LAHHM, sem prefeitura). */
   prefeituraId: string | null
   /** Secretaria em que atua (nome). */

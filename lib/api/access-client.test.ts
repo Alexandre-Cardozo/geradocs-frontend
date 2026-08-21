@@ -243,7 +243,6 @@ describe("listarUsuarios", () => {
     const [usuario] = await listarUsuarios()
 
     expect(usuario?.perfilAcesso).toBe("servidor")
-    expect(usuario?.papel).toBe("servidor_compras")
     expect(usuario?.prefeituraId).toBe(organizacao.id)
     expect(usuario?.ativo).toBe(true)
   })
@@ -407,7 +406,6 @@ describe("mapeamento de usuário", () => {
 
     // É o fallback que o Bloco 4 vai reavaliar: sem workflow, o papel deixa de
     // ter origem e passa a valer para todo mundo.
-    expect(usuario?.papel).toBe("servidor_compras")
   })
 
   it("ignora vínculo revogado ao descobrir a prefeitura", async () => {

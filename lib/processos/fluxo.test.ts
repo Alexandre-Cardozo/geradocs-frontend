@@ -32,7 +32,7 @@ describe("grafo de transições", () => {
       evento: "encerramento",
       de: "em_elaboracao",
       para: "concluido",
-      papel: "servidor_compras",
+      papel: "servidor",
     })
   })
 

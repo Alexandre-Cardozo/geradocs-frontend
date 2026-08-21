@@ -1,7 +1,7 @@
 import "client-only"
 
 import type { components } from "@/lib/api/gerado/v1"
-import type { PapelUsuario, PerfilAcesso, Sessao, Tenant, Usuario } from "@/lib/types"
+import type { PerfilAcesso, Sessao, Tenant, Usuario } from "@/lib/types"
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1").replace(/\/$/, "")
 
@@ -128,23 +128,9 @@ const perfis: Record<PerfilBackend, PerfilAcesso> = {
   SERVIDOR: "servidor",
 }
 
-const papeis: Partial<Record<string, PapelUsuario>> = {
-  SERVIDOR_COMPRAS: "servidor_compras",
-  SECRETARIA_DEMANDANTE: "secretaria_demandante",
-  COMISSAO: "comissao",
-  JURIDICO: "juridico",
-  GESTOR_APROVADOR: "gestor_aprovador",
-}
-
 function iniciaisDe(nome: string): string {
   const partes = nome.trim().split(/\s+/).filter(Boolean)
   return `${partes[0]?.[0] ?? ""}${partes.at(-1)?.[0] ?? ""}`.toUpperCase() || "?"
-}
-
-function papelDa(session: BackendSession): PapelUsuario {
-  if (session.user?.profileAccess === "ADMIN_GERAL") return "admin_lahhm"
-  const role = session.activeMembership?.workflowRoles?.find((item) => papeis[item])
-  return role ? (papeis[role] ?? "servidor_compras") : "servidor_compras"
 }
 
 function tenantDa(organization: BackendOrganization | null | undefined): Tenant | null {
@@ -187,7 +173,6 @@ function mapearSessao(session: BackendSession): Sessao {
     email: user.email ?? "",
     cargo: user.jobTitle ?? "",
     perfilAcesso: perfis[user.profileAccess ?? "SERVIDOR"] ?? "servidor",
-    papel: papelDa(session),
     prefeituraId: session.organization?.id ?? null,
     avatarDataUrl: null,
     ultimoAcesso: user.lastAccessAt ?? "",

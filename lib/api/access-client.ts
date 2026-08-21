@@ -1,7 +1,7 @@
 import "client-only"
 
 import { requisicaoProtegida } from "@/lib/api/auth-client"
-import type { PapelUsuario, PerfilAcesso, Secretaria, Tenant, Usuario } from "@/lib/types"
+import type { PerfilAcesso, Secretaria, Tenant, Usuario } from "@/lib/types"
 
 type BackendProfile = "ADMIN_GERAL" | "COORDENADOR" | "SERVIDOR"
 type BackendWorkflowRole = "SERVIDOR_COMPRAS" | "SECRETARIA_DEMANDANTE" | "COMISSAO" | "JURIDICO" | "GESTOR_APROVADOR"
@@ -55,14 +55,7 @@ const workflowRoles: Record<PerfilAcesso, BackendWorkflowRole[]> = {
   servidor: ["SERVIDOR_COMPRAS"],
 }
 
-const papeis: Partial<Record<BackendWorkflowRole, PapelUsuario>> = {
-  SERVIDOR_COMPRAS: "servidor_compras",
-  SECRETARIA_DEMANDANTE: "secretaria_demandante",
-  COMISSAO: "comissao",
-  JURIDICO: "juridico",
-  GESTOR_APROVADOR: "gestor_aprovador",
-}
-
+/** ETag no formato que o backend espera em If-Match. */
 function ifMatch(version: number): string {
   return `"${version}"`
 }
@@ -89,7 +82,6 @@ function tenantDa(organization: BackendOrganization, secretarias: Secretaria[] =
 
 function usuarioDa(user: BackendUser): Usuario {
   const membership = user.memberships.find((item) => item.active)
-  const role = membership?.workflowRoles.find((item) => papeis[item])
   return {
     id: user.id,
     nome: user.name,
@@ -99,7 +91,6 @@ function usuarioDa(user: BackendUser): Usuario {
     email: user.email,
     cargo: user.jobTitle ?? "",
     perfilAcesso: perfis[user.profileAccess],
-    papel: user.profileAccess === "ADMIN_GERAL" ? "admin_lahhm" : (role ? papeis[role] ?? "servidor_compras" : "servidor_compras"),
     prefeituraId: membership?.organizationId ?? null,
     secretaria: membership?.departmentId ?? undefined,
     avatarDataUrl: null,

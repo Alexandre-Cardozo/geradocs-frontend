@@ -11,14 +11,14 @@
  * dados do processo, não do grafo.
  */
 
-import type { EventoProcesso, PapelUsuario, StatusProcesso } from "@/lib/types"
+import type { EventoProcesso, PerfilAcesso, StatusProcesso } from "@/lib/types"
 
 export interface Transicao {
   evento: EventoProcesso
   de: StatusProcesso
   para: StatusProcesso
-  /** Papel que executa a transição. */
-  papel: PapelUsuario
+  /** Perfil que executa a transição. */
+  papel: PerfilAcesso
 }
 
 /**
@@ -28,9 +28,9 @@ export interface Transicao {
  * corrigir não pode exigir criar outro processo, que quebraria o histórico.
  */
 export const TRANSICOES: Transicao[] = [
-  { evento: "geracao_documento", de: "rascunho", para: "em_elaboracao", papel: "servidor_compras" },
-  { evento: "encerramento", de: "em_elaboracao", para: "concluido", papel: "servidor_compras" },
-  { evento: "reabertura", de: "concluido", para: "em_elaboracao", papel: "servidor_compras" },
+  { evento: "geracao_documento", de: "rascunho", para: "em_elaboracao", papel: "servidor" },
+  { evento: "encerramento", de: "em_elaboracao", para: "concluido", papel: "servidor" },
+  { evento: "reabertura", de: "concluido", para: "em_elaboracao", papel: "servidor" },
 ]
 
 /**

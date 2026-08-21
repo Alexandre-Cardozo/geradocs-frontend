@@ -42,7 +42,6 @@ import type {
   EventoProcesso,
   NovoProcessoInput,
   ParecerDFD,
-  PapelUsuario,
   PerfilAcesso,
   Processo,
   ResumoDocumentos,
@@ -395,7 +394,6 @@ function registrarEvento(
   processo: Processo,
   evento: EventoProcesso,
   comentario: string,
-  papel: PapelUsuario = "servidor_compras",
 ): void {
   const usuario = usuarioLogado()
   const para = proximoStatus(processo.status, evento) ?? processo.status
@@ -404,7 +402,7 @@ function registrarEvento(
     de: processo.status,
     para,
     autor: usuario?.nome ?? "Sistema",
-    papel,
+    papel: usuario?.perfilAcesso ?? "servidor",
     data: dataHoraBrasiliaISO(),
     comentario,
   })

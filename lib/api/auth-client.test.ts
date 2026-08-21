@@ -27,7 +27,6 @@ describe("autenticar", () => {
     expect(sessao.usuario.primeiroNome).toBe("Maria")
     expect(sessao.usuario.iniciais).toBe("MA")
     expect(sessao.usuario.perfilAcesso).toBe("servidor")
-    expect(sessao.usuario.papel).toBe("servidor_compras")
     expect(sessao.usuario.ativo).toBe(true)
     expect(sessao.prefeitura?.orgao).toBe("Prefeitura Municipal de Ecoporanga")
   })
@@ -201,7 +200,6 @@ describe("obterSessao", () => {
     const sessao = await obterSessao()
 
     expect(sessao?.usuario.perfilAcesso).toBe("admin_geral")
-    expect(sessao?.usuario.papel).toBe("admin_lahhm")
     expect(sessao?.prefeitura).toBeNull()
   })
 })

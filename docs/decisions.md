@@ -268,3 +268,14 @@ A errata ("Onde se lê… Leia-se…") fica pendurada na versão que a originou,
 Mesmo quando a chave de login mudar para e-mail ou matrícula (Fase D do [plano de consolidação](../../geradocs-backend/docs/plano-consolidacao.md)), o CPF segue exigido no cadastro do servidor.
 
 **Por quê:** ele identifica o servidor de forma inequívoca em documento oficial, e essa necessidade é independente de como a pessoa entra no sistema. A minimização de dado pessoal continua valendo no **uso**: CPF de terceiro segue mascarado nas respostas, e só o próprio usuário vê o seu por inteiro.
+
+## 26. `PapelUsuario` sai do modelo; o perfil de acesso é a fonte única
+
+Com o fluxo de aprovação fora do produto (§24 e §25.1), `PapelUsuario` — servidor de compras, secretaria demandante, comissão, jurídico, gestor aprovador — descrevia posições de um fluxo que a plataforma não executa mais.
+
+**Decisão (21/08/2026):** o tipo é removido. `Usuario.papel` deixa de existir e `EventoDoProcesso.papel` passa a usar `PerfilAcesso`.
+
+- **Por quê:** sem o workflow, os dois vocabulários descreviam a mesma coisa — quem é a pessoa no sistema. Dois vocabulários paralelos para o mesmo conceito é como um deles fica errado sem ninguém perceber: era exatamente o que estava acontecendo, com `papelDa()` caindo em `servidor_compras` para todo mundo cujo vínculo não trouxesse papel.
+- **O que era o defeito concreto:** o backend tornou `workflowRoles` opcional no mesmo dia. Com a lista vazia — que passa a ser o caso comum — o fallback silencioso atribuiria "Servidor de Compras" ao jurídico, ao coordenador e a quem mais entrasse.
+- **O que se perde:** a distinção entre secretaria demandante e servidor de compras, que hoje não é usada em lugar nenhum. Se voltar a fazer falta, volta como atributo do vínculo, com uso definido — não como enum que ninguém lê.
+- **`WorkflowRole` continua no backend**, agora opcional. Removê-lo de vez é migração com perda de dado e fica como decisão à parte: [ordem de implementação](../../geradocs-backend/docs/ordem-de-implementacao.md), pendência do Bloco 4.
