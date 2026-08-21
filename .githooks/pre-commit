@@ -45,7 +45,7 @@ alterados=$(git diff --cached --name-only --diff-filter=ACM \
     | grep -E '\.(ts|tsx|mjs|js)$' \
     | grep -vE '^\.(claude|agents)/' || true)
 if [ -n "$alterados" ]; then
-    if ! npx --no-install eslint $alterados; then
+    if ! npx --no-install eslint --no-warn-ignored $alterados; then
         echo "erro: ESLint reprovou os arquivos em stage." >&2
         falhou=1
     fi
