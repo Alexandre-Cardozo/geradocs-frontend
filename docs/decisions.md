@@ -279,3 +279,29 @@ Com o fluxo de aprovação fora do produto (§24 e §25.1), `PapelUsuario` — s
 - **O que era o defeito concreto:** o backend tornou `workflowRoles` opcional no mesmo dia. Com a lista vazia — que passa a ser o caso comum — o fallback silencioso atribuiria "Servidor de Compras" ao jurídico, ao coordenador e a quem mais entrasse.
 - **O que se perde:** a distinção entre secretaria demandante e servidor de compras, que hoje não é usada em lugar nenhum. Se voltar a fazer falta, volta como atributo do vínculo, com uso definido — não como enum que ninguém lê.
 - **`WorkflowRole` continua no backend**, agora opcional. Removê-lo de vez é migração com perda de dado e fica como decisão à parte: [ordem de implementação](../../geradocs-backend/docs/ordem-de-implementacao.md), pendência do Bloco 4.
+
+## 27. `lib/dominio/` — a regra sai do mock e da tela
+
+Até 21/08/2026 a regra de negócio do front-end morava dentro de `lib/api/client.ts` (o banco em memória) e, em parte, dentro das próprias telas: o cálculo de progresso do documento, quais seções travam a geração, o que conta como pendência do processo e os indicadores do painel.
+
+Isso quebrava a promessa registrada em [`estrutura.md`](estrutura.md) de que, na integração, "só os corpos destas funções trocam": a regra morreria junto com o mock, ou viraria duplicação silenciosa com o back-end.
+
+**Decisão:** as regras passam para `lib/dominio/`, como funções puras — sem React, sem `fetch`, sem estado. `client.ts` e as telas passam a consumi-las.
+
+| Módulo | O que guarda |
+|---|---|
+| `escopo.ts` | Quem enxerga qual prefeitura |
+| `indicadores.ts` | Indicadores do painel e resumo do repositório |
+| `processo.ts` | Pendências do processo e regra de encerramento |
+| `secoes.ts` | Progresso, seções indispensáveis e quando o documento pode ser gerado |
+| `versionamento.ts` | Incremento de versão, histórico e o rótulo `RETIFICADO` |
+
+### A natureza da cópia
+
+Quando o back-end assumir cada módulo, **estas regras passam a ser autoritativas no servidor**. A cópia daqui permanece apenas como *affordance* de interface — habilitar botão, mostrar pendência, calcular progresso — e **nunca como fonte de verdade**.
+
+A distinção importa na hora de divergirem: se a tela diz que pode gerar e o servidor recusa, quem está certo é o servidor, e o defeito é da cópia. O caminho de correção é sempre alinhar o front ao back, nunca o contrário.
+
+### O que ficou de fora, e por quê
+
+`lib/api/client.ts` e `lib/api/hooks.ts` continuam fora do gate de cobertura. O motivo mudou: não é mais "serão apagados no Bloco 4/5", é que **o que sobrou neles não é domínio**. `client.ts` virou um armazenamento em memória com funções finas sobre arrays, e `hooks.ts` é invólucro do TanStack Query. Cobri-los a 100% mediria fixture e cola de framework, e o número subiria sem que nada ficasse mais verificado — enquanto cada módulo entregue pelo back-end apaga um pedaço deles.

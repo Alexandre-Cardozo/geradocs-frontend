@@ -29,16 +29,17 @@ export default defineConfig({
         "lib/teste/**",
         "lib/api/gerado/**",
         "**/*.test.ts",
-        // 21/08/2026 — fora do gate por prazo, não por conveniência.
+        // 21/08/2026, revisto ao fim do Bloco 5.
         //
-        // `client.ts` é a fachada mockada e `hooks.ts` são invólucros do TanStack
-        // Query sobre ela. O Bloco 4 apaga cerca de duzentas linhas do primeiro
-        // (fluxo de aprovação) e o Bloco 5 extrai o restante da regra de negócio
-        // para `lib/dominio/`. Cobri-los hoje seria escrever teste para código
-        // marcado para remoção — o alarme que a própria ordem de implementação
-        // lista.
+        // A extração para `lib/dominio/` foi feita: escopo, indicadores,
+        // pendências do processo, seções e versionamento saíram daqui e estão em
+        // 100%. O que sobrou **não é domínio** — `client.ts` virou armazenamento
+        // em memória com funções finas sobre arrays, e `hooks.ts` é invólucro do
+        // TanStack Query.
         //
-        // Voltam ao gate no Bloco 5, quando o que sobrar for domínio de verdade.
+        // Cobri-los a 100% mediria fixture e cola de framework: o número subiria
+        // sem que nada ficasse mais verificado, e cada módulo entregue pelo
+        // back-end apaga um pedaço deles. Ver §27 de docs/decisions.md.
         "lib/api/client.ts",
         "lib/api/hooks.ts",
       ],
@@ -63,7 +64,7 @@ export default defineConfig({
         // pública — testá-las seria escrever teste que executa sem afirmar. Elas
         // desaparecem quando o contrato passar a declarar `required`, correção já
         // registrada como pendência do Bloco 2.
-        branches: 94,
+        branches: 95,
       },
     },
   },

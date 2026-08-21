@@ -72,6 +72,13 @@ GeraDocs/
 │   │   │                         #   pendencias, totalSecoes). Metadados por tipo vivem SÓ aqui.
 │   │   ├── secoes.ts             # Estrutura seccional de cada documento, com fundamento legal e hint
 │   │   └── index.ts              # Barrel — importe daqui: import { CATALOGO } from "@/lib/documentos"
+│   ├── dominio/                  # REGRAS DE NEGÓCIO — funções puras, sem React e sem fetch
+│   │   ├── escopo.ts             # quem enxerga qual prefeitura
+│   │   ├── indicadores.ts        # indicadores do painel e resumo do repositório
+│   │   ├── processo.ts           # pendências e regra de encerramento
+│   │   ├── secoes.ts             # progresso, indispensáveis e quando pode gerar
+│   │   ├── versionamento.ts      # versão, histórico e o rótulo RETIFICADO
+│   │   └── index.ts              # Barrel — importe daqui: import { podeGerar } from "@/lib/dominio"
 │   ├── processos/                # Máquina de estados do processo
 │   │   └── fluxo.ts              # TRANSICOES (elaboração → encerramento → reabertura)
 │   ├── auth/                     # Autenticação e controle de acesso
@@ -167,6 +174,7 @@ TypeScript puro, testável sem browser:
 3. **É dado/lógica?**
    - Nova entidade ou campo? → `lib/types.ts`.
    - **Novo tipo de documento, ou mexer em ordem/dependência/seções?** → `lib/documentos/` (catálogo e seções). **Nunca** espalhe metadado por tipo nas telas — elas leem do catálogo. Leia [`fluxo-contratacao.md`](fluxo-contratacao.md) antes.
+   - **Nova regra de negócio?** → `lib/dominio/` (+ teste). Nunca dentro de `client.ts` nem da tela: a regra precisa sobreviver à troca do mock pela API. Ver §27 de `decisions.md`.
    - Novo acesso a dados? → função em `lib/api/client.ts` **+** hook em `lib/api/hooks.ts` (as telas usam só o hook).
    - Dado de exemplo? → `lib/mocks/fixtures.ts`.
    - Formatação? → `lib/format.ts`.

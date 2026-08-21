@@ -13,8 +13,21 @@ import {
   resumoDocumentos as resumoDocumentosFixture,
   usuarios as usuariosFixture,
 } from "@/lib/mocks/fixtures"
-import { CATALOGO, ordenar, secoesPorTipoBase } from "@/lib/documentos"
+import { CATALOGO, secoesPorTipoBase } from "@/lib/documentos"
 import { podeEmitir, proximoStatus } from "@/lib/processos/fluxo"
+import {
+  calcularIndicadores,
+  documentosPendentes,
+  empilharVersao,
+  entradaDeHistorico,
+  exigeJustificativaParaEncerrar,
+  motivoDoEncerramento,
+  noEscopo,
+  prefeiturasVisiveis,
+  resumirDocumentos,
+  proximaVersao,
+  statusAposEditar,
+} from "@/lib/dominio"
 import { limpaCPF } from "@/lib/auth/cpf"
 import {
   autenticar,
@@ -224,24 +237,10 @@ function iniciaisDe(nome: string): string {
 /** Estatísticas do dashboard, escopadas à prefeitura do usuário logado. */
 export async function getEstatisticas(): Promise<EstatisticasDashboard> {
   await delay()
-  const usuario = usuarioLogado()
-  const escopo = usuario?.prefeituraId ?? null
-  const meus = escopo ? db.processos.filter((p) => p.prefeituraId === escopo) : db.processos
-  const docs = escopo ? db.documentos.filter((d) => d.prefeituraId === escopo) : db.documentos
-  const ativos = meus.filter((p) => p.status !== "concluido").length
-  const emElaboracao = meus.filter((p) => p.status === "em_elaboracao").length
-  const gerados = new Set(docs.map((d) => `${d.processoId}:${d.tipo}`))
-  const pendentes = meus
-    .flatMap((p) => p.documentos.map((t) => `${p.id}:${t}`))
-    .filter((chave) => !gerados.has(chave)).length
-  const etps = docs.filter((d) => d.tipo === "ETP").length
+  const escopo = escopoPrefeituras()
   return {
     ...clone(db.estatisticas),
-    processosAtivos: ativos,
-    processosEmElaboracao: emElaboracao,
-    documentosPendentes: pendentes,
-    documentosGerados: docs.length,
-    etpsConcluidos: etps,
+    ...calcularIndicadores(noEscopo(db.processos, escopo), noEscopo(db.documentos, escopo)),
   }
 }
 
@@ -263,8 +262,7 @@ export interface Paginado<T> {
 
 /** Ids de prefeitura visíveis ao usuário logado (admin vê todas). */
 function escopoPrefeituras(): string[] | null {
-  const usuario = usuarioLogado()
-  return usuario?.prefeituraId ? [usuario.prefeituraId] : null
+  return prefeiturasVisiveis(usuarioLogado())
 }
 
 export async function getProcessos(params: ListaProcessosParams = {}): Promise<Paginado<Processo>> {
@@ -349,9 +347,7 @@ export async function atualizarSecao(input: AtualizarSecaoInput): Promise<SecaoD
   const secao = secoes.find((s) => s.id === input.secaoId)
   if (!secao) throw new Error(`Seção ${input.secaoId} não encontrada`)
   secao.conteudo = input.conteudo
-  // Esvaziar uma seção antes concluída volta o status para "Não iniciado" —
-  // senão o rail e o percentual do documento contariam seção vazia como completa.
-  secao.status = input.status ?? (input.conteudo.trim() ? "Completo" : "Não iniciado")
+  secao.status = statusAposEditar(input.conteudo, input.status)
   return clone(secao)
 }
 
@@ -385,8 +381,7 @@ function docsGeradosDo(processoId: string): TipoDocumento[] {
 
 /** Documentos do processo ainda não gerados. Vazio = o processo pode ser encerrado. */
 export function pendentesDoProcesso(processo: Processo): TipoDocumento[] {
-  const gerados = docsGeradosDo(processo.id)
-  return ordenar(processo.documentos.filter((t) => !gerados.includes(t)))
+  return documentosPendentes(processo, docsGeradosDo(processo.id))
 }
 
 /** Registra um evento na trilha, aplicando a transição quando ela existir. */
@@ -421,7 +416,7 @@ export async function encerrarProcesso(processoId: string, justificativa = ""): 
   await delay(500)
   const processo = processoOuErro(processoId)
   const pendentes = pendentesDoProcesso(processo)
-  if (pendentes.length > 0 && justificativa.trim() === "") {
+  if (exigeJustificativaParaEncerrar(pendentes) && justificativa.trim() === "") {
     throw new Error(
       `Ainda faltam documentos: ${pendentes.map((t) => CATALOGO[t].titulo).join(", ")}. ` +
         "Informe a justificativa para encerrar mesmo assim.",
@@ -430,11 +425,7 @@ export async function encerrarProcesso(processoId: string, justificativa = ""): 
   if (!podeEmitir(processo.status, "encerramento")) {
     throw new Error("Só é possível encerrar um processo em elaboração.")
   }
-  registrarEvento(
-    processo,
-    "encerramento",
-    pendentes.length > 0 ? `Encerrado com pendências. ${justificativa.trim()}` : "Todos os documentos foram gerados.",
-  )
+  registrarEvento(processo, "encerramento", motivoDoEncerramento(pendentes, justificativa))
   return clone(processo)
 }
 
@@ -454,8 +445,7 @@ export async function reabrirProcesso(processoId: string, motivo: string): Promi
 
 export async function getDocumentos(): Promise<DocumentoGerado[]> {
   await delay()
-  const escopo = escopoPrefeituras()
-  const docs = escopo ? db.documentos.filter((d) => escopo.includes(d.prefeituraId)) : db.documentos
+  const docs = noEscopo(db.documentos, escopoPrefeituras())
   return clone(docs)
 }
 
@@ -463,9 +453,7 @@ export async function getResumoDocumentos(): Promise<ResumoDocumentos> {
   await delay()
   const escopo = escopoPrefeituras()
   if (!escopo) return clone(db.resumoDocumentos)
-  const docs = db.documentos.filter((d) => escopo.includes(d.prefeituraId))
-  const totalKB = docs.reduce((s, d) => s + (Number.parseInt(d.tamanho, 10) || 0), 0)
-  return { total: docs.length, esteMes: docs.length, armazenamentoMB: Math.round((totalKB / 1024) * 10) / 10 }
+  return resumirDocumentos(noEscopo(db.documentos, escopo))
 }
 
 export async function getHistoricoVersoes(processoId: string, tipo: TipoDocumento): Promise<VersaoDocumento[]> {
@@ -499,19 +487,18 @@ export async function gerarDocumento(input: GerarDocumentoInput): Promise<Docume
 
   if (existente) {
     // Regeração — nova versão. A anterior fica registrada no histórico.
-    existente.versao += 1
+    existente.versao = proximaVersao(existente.versao)
     existente.titulo = `${input.tipo} — ${objeto}`
     existente.geradoEm = geradoEm
     existente.tamanho = `${tamanhoKB} KB`
     existente.status = "final"
-    const historico = db.versoes.get(chaveVersao) ?? []
-    historico.unshift({
-      versao: existente.versao,
-      geradoEm,
-      tamanho: `${tamanhoKB} KB`,
-      nota: "Regeração",
-    })
-    db.versoes.set(chaveVersao, historico)
+    db.versoes.set(
+      chaveVersao,
+      empilharVersao(
+        db.versoes.get(chaveVersao) ?? [],
+        entradaDeHistorico(existente.versao, geradoEm, `${tamanhoKB} KB`),
+      ),
+    )
     if (processo) processo.atualizadoEm = dataBrasiliaISO()
     return clone(existente)
   }
@@ -529,7 +516,7 @@ export async function gerarDocumento(input: GerarDocumentoInput): Promise<Docume
     versao: 1,
   }
   db.documentos.unshift(doc)
-  db.versoes.set(chaveVersao, [{ versao: 1, geradoEm, tamanho: `${tamanhoKB} KB`, nota: "Geração inicial" }])
+  db.versoes.set(chaveVersao, [entradaDeHistorico(1, geradoEm, `${tamanhoKB} KB`)])
 
   // Indicadores da tela de Documentos e do dashboard acompanham a nova geração.
   db.resumoDocumentos.total += 1

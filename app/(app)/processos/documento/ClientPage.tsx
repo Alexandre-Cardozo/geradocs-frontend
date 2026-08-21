@@ -18,6 +18,7 @@ import {
   useSecoes,
 } from "@/lib/api/hooks"
 import { CATALOGO, porSlug } from "@/lib/documentos"
+import { concluidas, obrigatoriasPendentes, podeGerar, progresso } from "@/lib/dominio"
 import { type SecaoDocumento, type StatusDocumento } from "@/lib/types"
 
 const statusRail: Record<StatusDocumento, { dot: string; chip: string }> = {
@@ -66,13 +67,13 @@ export default function EditorDocumento() {
     setRascunho(active?.conteudo ?? "")
   }
 
-  const completedCount = lista.filter((s) => s.status === "Completo").length
-  const progress = lista.length > 0 ? Math.round((completedCount / lista.length) * 100) : 0
+  const completedCount = concluidas(lista).length
+  const progress = progresso(lista)
 
   // Só as seções indispensáveis prendem a geração: as demais são dispensáveis
-  // mediante justificativa (no ETP, Art. 18, § 2º).
-  const obrigatoriasPendentes = lista.filter((s) => s.obrigatoria && s.status !== "Completo")
-  const podeGerar = lista.length > 0 && obrigatoriasPendentes.length === 0
+  // mediante justificativa (no ETP, Art. 18, § 2º). A regra vive em lib/dominio.
+  const secoesPendentes = obrigatoriasPendentes(lista)
+  const documentoPodeSerGerado = podeGerar(lista)
 
   const handleSave = (avancar = false) => {
     if (!active) return
@@ -276,10 +277,10 @@ export default function EditorDocumento() {
                     Ao regerar o {tipo}, o documento gerado anteriormente será <strong>substituído</strong> por esta nova versão.
                   </InfoBanner>
                 )}
-                {isLast && !jaGerado && !podeGerar && (
+                {isLast && !jaGerado && !documentoPodeSerGerado && (
                   <InfoBanner tone="warning">
                     Conclua as seções obrigatórias para gerar o {meta.titulo}. Faltam:{" "}
-                    <strong>{obrigatoriasPendentes.map((s) => s.titulo).join(", ")}</strong>.
+                    <strong>{secoesPendentes.map((s) => s.titulo).join(", ")}</strong>.
                   </InfoBanner>
                 )}
                 <div className="flex flex-wrap justify-between gap-2.5">
@@ -296,7 +297,7 @@ export default function EditorDocumento() {
                     ← Seção Anterior
                   </Button>
                   <div className="flex flex-wrap items-center gap-2.5">
-                    {!isLast && podeGerar && !jaGerado && (
+                    {!isLast && documentoPodeSerGerado && !jaGerado && (
                       <Button
                         variant="success"
                         icon={<IconDownload size={14} strokeWidth={2.5} />}
@@ -334,7 +335,7 @@ export default function EditorDocumento() {
                       <Button
                         variant="success"
                         icon={<IconDownload size={14} strokeWidth={2.5} />}
-                        disabled={gerarDocumento.isPending || !podeGerar}
+                        disabled={gerarDocumento.isPending || !documentoPodeSerGerado}
                         onClick={() => finalizar(false)}
                       >
                         {gerarDocumento.isPending ? `Gerando ${tipo}...` : `Finalizar e Gerar ${tipo}`}
@@ -342,7 +343,7 @@ export default function EditorDocumento() {
                     )}
                   </div>
                 </div>
-                {isLast && !jaGerado && lista.some((s) => !s.obrigatoria && s.status !== "Completo") && podeGerar && (
+                {isLast && !jaGerado && lista.some((s) => !s.obrigatoria && s.status !== "Completo") && documentoPodeSerGerado && (
                   <div className="flex justify-end">
                     <Tag tone="info">Seções opcionais em branco serão omitidas do documento</Tag>
                   </div>
