@@ -26,7 +26,7 @@ export default function AdminPrefeituras() {
   const salvar = () => {
     if (orgao.trim() === "") return
     criar.mutate(
-      { orgao, unidade, pcaAno: String(new Date().getFullYear()) },
+      { orgao, unidade },
       {
         onSuccess: () => {
           showToast("Prefeitura cadastrada.")
@@ -40,7 +40,7 @@ export default function AdminPrefeituras() {
 
   const excluir = (id: string, nome: string) => {
     remover.mutate(id, {
-      onSuccess: () => showToast(`${nome} removida.`),
+      onSuccess: () => showToast(`${nome} desativada.`),
       onError: (e) => showToast(e instanceof Error ? e.message : "Não foi possível remover."),
     })
   }
@@ -116,7 +116,7 @@ export default function AdminPrefeituras() {
                     <td className="px-4 py-3.25">
                       <button
                         type="button"
-                        aria-label={`Remover ${p.orgao}`}
+                        aria-label={`Desativar ${p.orgao}`}
                         disabled={remover.isPending}
                         onClick={() => excluir(p.id, p.orgao)}
                         className="flex size-7 cursor-pointer items-center justify-center rounded-sm border border-border bg-ice text-danger transition-colors hover:bg-tint-danger-bg disabled:opacity-50"

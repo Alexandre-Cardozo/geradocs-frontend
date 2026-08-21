@@ -26,9 +26,10 @@ import { EmptyState, ErrorState, LoadingState, SkeletonRows } from "@/components
 import { Th } from "@/components/shared/tabela";
 import { useToast } from "@/components/shared/providers";
 import {
-  useAtualizarConfigTenant,
   useConfigTenant,
+  useCriarSecretaria,
   useCriarUsuario,
+  useRemoverSecretaria,
   useSessao,
   useUsuarios,
 } from "@/lib/api/hooks";
@@ -141,10 +142,11 @@ export default function Configuracoes() {
   const showToast = useToast();
   const { data: sessao } = useSessao();
   const prefeituraId = sessao?.prefeitura?.id;
-  const tenant = useConfigTenant();
-  const atualizar = useAtualizarConfigTenant();
+  const tenant = useConfigTenant(prefeituraId);
   const servidores = useUsuarios(prefeituraId);
   const criarServidor = useCriarUsuario();
+  const criarSecretaria = useCriarSecretaria(prefeituraId);
+  const removerSecretaria = useRemoverSecretaria(prefeituraId);
 
   const [activeTab, setActiveTab] = useState("identidade");
 
@@ -154,6 +156,7 @@ export default function Configuracoes() {
   const [nsCpf, setNsCpf] = useState("");
   const [nsEmail, setNsEmail] = useState("");
   const [nsCargo, setNsCargo] = useState("");
+  const [nsSenha, setNsSenha] = useState("");
   const [nsPerfil, setNsPerfil] = useState<PerfilAcesso>("servidor");
 
   // Estado local dos formulários, semeado quando o tenant carrega.
@@ -166,12 +169,16 @@ export default function Configuracoes() {
   const [novaSecretaria, setNovaSecretaria] = useState("");
   const [pcaFile, setPcaFile] = useState<string | null>(null);
   const [pcaYear, setPcaYear] = useState("2025");
-  const [seeded, setSeeded] = useState(false);
+  const [tenantSincronizado, setTenantSincronizado] = useState<string | null>(null);
 
   // Semeia os formulários quando o tenant carrega (ajuste de estado durante o
   // render, guardado por `seeded` — evita efeito com setState síncrono).
-  if (tenant.data && !seeded) {
-    setSeeded(true);
+  const versaoLocalDoTenant = tenant.data
+    ? `${tenant.data.id}:${tenant.data.secretarias.map((secretaria) => secretaria.id).join("|")}`
+    : null;
+
+  if (tenant.data && tenantSincronizado !== versaoLocalDoTenant) {
+    setTenantSincronizado(versaoLocalDoTenant);
     setLogoFile(tenant.data.logoArquivo);
     setLogoDataUrl(tenant.data.logoDataUrl);
     setTimbrado(tenant.data.timbrado);
@@ -202,25 +209,8 @@ export default function Configuracoes() {
     );
   }
 
-  const salvarTenant = (
-    patch: Parameters<typeof atualizar.mutate>[0],
-    msg: string,
-  ) => {
-    atualizar.mutate(patch, {
-      onSuccess: (tenantAtualizado) => {
-        // Realinha o formulário com o estado canônico devolvido pela API — na
-        // integração real o backend pode normalizar valores (trim, ids, contagens).
-        setLogoFile(tenantAtualizado.logoArquivo);
-        setLogoDataUrl(tenantAtualizado.logoDataUrl);
-        setTimbrado(tenantAtualizado.timbrado);
-        setCabecalho(tenantAtualizado.cabecalho);
-        setRodape(tenantAtualizado.rodape);
-        setSecretarias(tenantAtualizado.secretarias);
-        setPcaFile(tenantAtualizado.pca.arquivo);
-        setPcaYear(tenantAtualizado.pca.ano);
-        showToast(msg);
-      },
-    });
+  const salvarTenant = (_patch: unknown, msg: string) => {
+    showToast(`${msg} A persistência será habilitada com o módulo de configurações do backend.`);
   };
 
   const addSecretaria = () => {
@@ -229,17 +219,20 @@ export default function Configuracoes() {
       showToast("Informe o nome da secretaria para adicionar.");
       return;
     }
-    const nova: Secretaria = { id: `sec-${Date.now()}`, nome };
-    const lista = [...secretarias, nova];
-    setSecretarias(lista);
-    setNovaSecretaria("");
-    salvarTenant({ secretarias: lista }, "Secretaria adicionada.");
+    criarSecretaria.mutate(nome, {
+      onSuccess: () => {
+        setNovaSecretaria("");
+        showToast("Secretaria adicionada.");
+      },
+      onError: (error) => showToast(error instanceof Error ? error.message : "Não foi possível adicionar a secretaria."),
+    });
   };
 
   const removeSecretaria = (id: string) => {
-    const lista = secretarias.filter((s) => s.id !== id);
-    setSecretarias(lista);
-    salvarTenant({ secretarias: lista }, "Secretaria removida.");
+    removerSecretaria.mutate(id, {
+      onSuccess: () => showToast("Secretaria desativada."),
+      onError: (error) => showToast(error instanceof Error ? error.message : "Não foi possível desativar a secretaria."),
+    });
   };
 
   // Lê o brasão selecionado como data URL para poder exibi-lo (preview, sidebar, timbre).
@@ -393,7 +386,6 @@ export default function Configuracoes() {
 
             <div className="flex gap-2.5">
               <Button
-                disabled={atualizar.isPending}
                 onClick={() =>
                   salvarTenant(
                     { logoArquivo: logoFile, logoDataUrl, timbrado },
@@ -401,7 +393,7 @@ export default function Configuracoes() {
                   )
                 }
               >
-                {atualizar.isPending ? "Salvando..." : "Salvar Configurações"}
+                Salvar Configurações
               </Button>
             </div>
           </div>
@@ -443,7 +435,6 @@ export default function Configuracoes() {
 
             <div className="flex gap-2.5">
               <Button
-                disabled={atualizar.isPending}
                 onClick={() =>
                   salvarTenant(
                     { cabecalho, rodape },
@@ -451,9 +442,7 @@ export default function Configuracoes() {
                   )
                 }
               >
-                {atualizar.isPending
-                  ? "Salvando..."
-                  : "Salvar Cabeçalho e Rodapé"}
+                Salvar Cabeçalho e Rodapé
               </Button>
             </div>
           </div>
@@ -467,7 +456,7 @@ export default function Configuracoes() {
         </div>
       )}
 
-      {/* ── Secretarias (CRUD local) ── */}
+      {/* ── Secretarias (API real) ── */}
       {activeTab === "secretarias" && (
         <SectionBlock
           title="Secretarias do Órgão"
@@ -484,6 +473,7 @@ export default function Configuracoes() {
             <Button
               icon={<IconPlus size={14} strokeWidth={2.5} />}
               onClick={addSecretaria}
+              disabled={criarSecretaria.isPending || novaSecretaria.trim() === ""}
               className="h-9.5"
             >
               Adicionar Nova Secretaria
@@ -504,6 +494,7 @@ export default function Configuracoes() {
                 <button
                   type="button"
                   aria-label={`Remover ${s.nome}`}
+                  disabled={removerSecretaria.isPending}
                   onClick={() => removeSecretaria(s.id)}
                   className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-sm border border-border bg-ice text-text-3"
                 >
@@ -599,7 +590,7 @@ export default function Configuracoes() {
 
             <div className="flex gap-2.5">
               <Button
-                disabled={!pcaFile || atualizar.isPending}
+                disabled={!pcaFile}
                 onClick={() =>
                   salvarTenant(
                     {
@@ -613,7 +604,7 @@ export default function Configuracoes() {
                   )
                 }
               >
-                {atualizar.isPending ? "Salvando..." : "Salvar PCA"}
+                Salvar PCA
               </Button>
             </div>
           </div>
@@ -648,6 +639,9 @@ export default function Configuracoes() {
                 <FormField label="Cargo">
                   <Input value={nsCargo} onChange={(e) => setNsCargo(e.target.value)} placeholder="Ex: Servidor de Compras" />
                 </FormField>
+                <FormField label="Senha inicial" required hint="Mínimo de 12 caracteres.">
+                  <Input value={nsSenha} onChange={(e) => setNsSenha(e.target.value)} type="password" autoComplete="new-password" />
+                </FormField>
                 <FormField label="Perfil de Acesso" required>
                   <Dropdown
                     value={nsPerfil}
@@ -663,15 +657,15 @@ export default function Configuracoes() {
               <div className="mt-4 flex gap-2.5">
                 <Button variant="secondary" onClick={() => setNovoServidor(false)}>Cancelar</Button>
                 <Button
-                  disabled={criarServidor.isPending || nsNome.trim() === "" || !validaCPF(nsCpf) || nsEmail.trim() === "" || !prefeituraId}
+                  disabled={criarServidor.isPending || nsNome.trim() === "" || !validaCPF(nsCpf) || nsEmail.trim() === "" || nsSenha.length < 12 || !prefeituraId}
                   onClick={() =>
                     criarServidor.mutate(
-                      { nome: nsNome, cpf: nsCpf, email: nsEmail, cargo: nsCargo, perfilAcesso: nsPerfil, prefeituraId: prefeituraId ?? null },
+                      { nome: nsNome, cpf: nsCpf, email: nsEmail, cargo: nsCargo, senha: nsSenha, perfilAcesso: nsPerfil, prefeituraId: prefeituraId ?? null },
                       {
                         onSuccess: () => {
-                          showToast("Servidor cadastrado. Senha inicial: geradocs123");
+                          showToast("Servidor cadastrado com a senha inicial informada.");
                           setNovoServidor(false);
-                          setNsNome(""); setNsCpf(""); setNsEmail(""); setNsCargo(""); setNsPerfil("servidor");
+                          setNsNome(""); setNsCpf(""); setNsEmail(""); setNsCargo(""); setNsSenha(""); setNsPerfil("servidor");
                         },
                         onError: (e) => showToast(e instanceof Error ? e.message : "Não foi possível cadastrar."),
                       }
@@ -714,7 +708,7 @@ export default function Configuracoes() {
                             </span>
                             <div>
                               <div className="text-base font-semibold text-text-1">{u.nome}</div>
-                              <div className="font-mono text-xs text-text-muted">{formatCPF(u.cpf)}</div>
+                              <div className="font-mono text-xs text-text-muted">{u.cpf.includes("*") ? u.cpf : formatCPF(u.cpf)}</div>
                             </div>
                           </div>
                         </td>

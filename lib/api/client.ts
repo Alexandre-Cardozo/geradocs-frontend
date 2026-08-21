@@ -15,7 +15,7 @@ import {
 } from "@/lib/mocks/fixtures"
 import { CATALOGO, REGRA_MODALIDADE, ordenar, secoesPorTipoBase } from "@/lib/documentos"
 import { proximoStatus, transicaoDe } from "@/lib/processos/fluxo"
-import { limpaCPF, validaCPF } from "@/lib/auth/cpf"
+import { limpaCPF } from "@/lib/auth/cpf"
 import {
   autenticar,
   encerrarSessao,
@@ -23,6 +23,17 @@ import {
   redefinirSenha,
   solicitarRedefinicao,
 } from "@/lib/api/auth-client"
+import {
+  criarDepartamento as criarDepartamentoNaApi,
+  criarPrefeitura as criarPrefeituraNaApi,
+  criarUsuario as criarUsuarioNaApi,
+  desativarDepartamento as desativarDepartamentoNaApi,
+  desativarPrefeitura as desativarPrefeituraNaApi,
+  desativarUsuario as desativarUsuarioNaApi,
+  listarPrefeituras as listarPrefeiturasNaApi,
+  listarUsuarios as listarUsuariosNaApi,
+  obterTenant as obterTenantNaApi,
+} from "@/lib/api/access-client"
 import { dataBrasiliaISO, dataHoraBrasiliaISO } from "@/lib/format"
 import type {
   ApontamentoRetificacao,
@@ -40,6 +51,7 @@ import type {
   Processo,
   ResumoDocumentos,
   SecaoDocumento,
+  Secretaria,
   Sessao,
   StatusProcesso,
   Tenant,
@@ -753,8 +765,9 @@ function prefeituraFoco(prefeituraId?: string): Tenant {
 }
 
 export async function getConfigTenant(prefeituraId?: string): Promise<Tenant> {
-  await delay()
-  return clone(prefeituraFoco(prefeituraId))
+  const id = prefeituraId ?? exigeSessao().prefeituraId
+  if (!id) throw new Error("Selecione uma prefeitura para consultar as configurações.")
+  return obterTenantNaApi(id)
 }
 
 export async function atualizarConfigTenant(patch: Partial<Tenant>, prefeituraId?: string): Promise<Tenant> {
@@ -767,50 +780,26 @@ export async function atualizarConfigTenant(patch: Partial<Tenant>, prefeituraId
 /* ── Cadastro de prefeituras (admin geral) ─────────────────────────────────── */
 
 export async function getPrefeituras(): Promise<Tenant[]> {
-  await delay()
-  return clone(db.prefeituras)
+  return listarPrefeiturasNaApi()
 }
 
 export interface NovaPrefeituraInput {
   orgao: string
   unidade: string
-  pcaAno?: string
 }
 
 export async function criarPrefeitura(input: NovaPrefeituraInput): Promise<Tenant> {
-  await delay(500)
-  const nova: Tenant = {
-    id: `PREF-${String(++db.seqPrefeitura).padStart(3, "0")}`,
-    orgao: input.orgao.trim(),
-    unidade: input.unidade.trim() || "Secretaria de Administração",
-    secretarias: [],
-    logoArquivo: null,
-    logoDataUrl: null,
-    timbrado: true,
-    cabecalho: `${input.orgao.trim().toUpperCase()}\n${input.unidade.trim()}`,
-    rodape: "Documento gerado eletronicamente pela plataforma GeraDocs · {data} · Processo nº {numero}",
-    pca: { ano: input.pcaAno ?? String(new Date().getFullYear()), arquivo: null, itensIndexados: 0 },
-  }
-  db.prefeituras.unshift(nova)
-  return clone(nova)
+  return criarPrefeituraNaApi(input)
 }
 
 export async function removerPrefeitura(id: string): Promise<void> {
-  await delay(400)
-  if (db.usuarios.some((u) => u.prefeituraId === id)) {
-    throw new Error("Há servidores vinculados a esta prefeitura. Reatribua-os antes de excluir.")
-  }
-  db.prefeituras = db.prefeituras.filter((p) => p.id !== id)
-  db.processos = db.processos.filter((p) => p.prefeituraId !== id)
-  db.documentos = db.documentos.filter((d) => d.prefeituraId !== id)
+  await desativarPrefeituraNaApi(id)
 }
 
 /* ── Cadastro de usuários (admin geral e coordenador da própria prefeitura) ── */
 
 export async function getUsuarios(prefeituraId?: string): Promise<Usuario[]> {
-  await delay()
-  const lista = prefeituraId ? db.usuarios.filter((u) => u.prefeituraId === prefeituraId) : db.usuarios
-  return clone(lista)
+  return listarUsuariosNaApi(prefeituraId)
 }
 
 export interface NovoUsuarioInput {
@@ -818,35 +807,17 @@ export interface NovoUsuarioInput {
   cpf: string
   email: string
   cargo: string
+  senha: string
   perfilAcesso: PerfilAcesso
   prefeituraId: string | null
   secretaria?: string
 }
 
 export async function criarUsuario(input: NovoUsuarioInput): Promise<Usuario> {
-  await delay(500)
-  const cpf = limpaCPF(input.cpf)
-  if (!validaCPF(cpf)) throw new Error("CPF inválido.")
-  if (db.usuarios.some((u) => u.cpf === cpf)) throw new Error("Já existe um usuário com este CPF.")
-  const nome = input.nome.trim()
-  const usuario: Usuario = {
-    id: `USR-${String(++db.seqUsuario).padStart(3, "0")}`,
-    nome,
-    primeiroNome: nome.split(" ")[0] ?? nome,
-    iniciais: iniciaisDe(nome),
-    cpf,
-    email: input.email.trim(),
-    cargo: input.cargo.trim(),
-    perfilAcesso: input.perfilAcesso,
-    papel: input.perfilAcesso === "coordenador" ? "gestor_aprovador" : "servidor_compras",
-    prefeituraId: input.perfilAcesso === "admin_geral" ? null : input.prefeituraId,
-    secretaria: input.secretaria,
-    avatarDataUrl: null,
-    ultimoAcesso: "",
-    ativo: true,
-  }
-  db.usuarios.push(usuario)
-  return clone(usuario)
+  return criarUsuarioNaApi({
+    ...input,
+    departamentoId: input.secretaria,
+  })
 }
 
 export interface AtualizarUsuarioInput {
@@ -879,6 +850,13 @@ export async function atualizarUsuario(input: AtualizarUsuarioInput): Promise<Us
 }
 
 export async function removerUsuario(id: string): Promise<void> {
-  await delay(400)
-  db.usuarios = db.usuarios.filter((u) => u.id !== id)
+  await desativarUsuarioNaApi(id)
+}
+
+export async function criarSecretaria(prefeituraId: string, nome: string): Promise<Secretaria> {
+  return criarDepartamentoNaApi(prefeituraId, nome)
+}
+
+export async function removerSecretaria(prefeituraId: string, secretariaId: string): Promise<void> {
+  await desativarDepartamentoNaApi(prefeituraId, secretariaId)
 }

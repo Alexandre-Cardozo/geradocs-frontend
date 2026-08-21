@@ -115,6 +115,11 @@ async function requisicaoAutenticada<T>(path: string, init: RequestInit = {}, pe
   return (await response.json()) as T
 }
 
+/** Requisição autenticada reutilizável para módulos já migrados ao Spring Boot. */
+export async function requisicaoProtegida<T>(path: string, init: RequestInit = {}): Promise<T> {
+  return requisicaoAutenticada<T>(path, init)
+}
+
 type PerfilBackend = NonNullable<NonNullable<BackendSession["user"]>["profileAccess"]>
 
 const perfis: Record<PerfilBackend, PerfilAcesso> = {

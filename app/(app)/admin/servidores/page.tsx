@@ -26,6 +26,7 @@ export default function AdminServidores() {
   const [cpf, setCpf] = useState("")
   const [email, setEmail] = useState("")
   const [cargo, setCargo] = useState("")
+  const [senha, setSenha] = useState("")
   const [perfil, setPerfil] = useState<PerfilAcesso>("servidor")
   const [prefeituraId, setPrefeituraId] = useState("")
 
@@ -43,17 +44,17 @@ export default function AdminServidores() {
 
   const cpfValido = validaCPF(cpf)
   const precisaPrefeitura = perfil !== "admin_geral"
-  const podeSalvar = nome.trim() !== "" && cpfValido && email.trim() !== "" && (!precisaPrefeitura || prefeituraId !== "")
+  const podeSalvar = nome.trim() !== "" && cpfValido && email.trim() !== "" && senha.length >= 12 && (!precisaPrefeitura || prefeituraId !== "")
 
   const salvar = () => {
     if (!podeSalvar) return
     criar.mutate(
-      { nome, cpf, email, cargo, perfilAcesso: perfil, prefeituraId: precisaPrefeitura ? prefeituraId : null },
+      { nome, cpf, email, cargo, senha, perfilAcesso: perfil, prefeituraId: precisaPrefeitura ? prefeituraId : null },
       {
         onSuccess: () => {
-          showToast("Servidor cadastrado. Senha inicial: geradocs123")
+          showToast("Servidor cadastrado com a senha inicial informada.")
           setNovo(false)
-          setNome(""); setCpf(""); setEmail(""); setCargo(""); setPerfil("servidor"); setPrefeituraId("")
+          setNome(""); setCpf(""); setEmail(""); setCargo(""); setSenha(""); setPerfil("servidor"); setPrefeituraId("")
         },
         onError: (e) => showToast(e instanceof Error ? e.message : "Não foi possível cadastrar."),
       }
@@ -90,6 +91,9 @@ export default function AdminServidores() {
             </FormField>
             <FormField label="Cargo">
               <Input value={cargo} onChange={(e) => setCargo(e.target.value)} placeholder="Ex: Servidor de Compras" />
+            </FormField>
+            <FormField label="Senha inicial" required hint="Mínimo de 12 caracteres.">
+              <Input value={senha} onChange={(e) => setSenha(e.target.value)} type="password" autoComplete="new-password" />
             </FormField>
             <FormField label="Perfil de Acesso" required>
               <Dropdown
@@ -188,7 +192,7 @@ export default function AdminServidores() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3.25 font-mono text-sm text-text-3">{formatCPF(u.cpf)}</td>
+                    <td className="px-4 py-3.25 font-mono text-sm text-text-3">{u.cpf.includes("*") ? u.cpf : formatCPF(u.cpf)}</td>
                     <td className="px-4 py-3.25 text-sm text-text-3">{nomePrefeitura(u.prefeituraId)}</td>
                     <td className="px-4 py-3.25">
                       <Tag tone={perfilTone(u.perfilAcesso)}>{PERFIL_ACESSO_LABEL[u.perfilAcesso]}</Tag>
@@ -197,9 +201,12 @@ export default function AdminServidores() {
                     <td className="px-4 py-3.25">
                       <button
                         type="button"
-                        aria-label={`Remover ${u.nome}`}
+                        aria-label={`Desativar ${u.nome}`}
                         disabled={remover.isPending}
-                        onClick={() => remover.mutate(u.id, { onSuccess: () => showToast(`${u.nome} removido.`) })}
+                        onClick={() => remover.mutate(u.id, {
+                          onSuccess: () => showToast(`${u.nome} desativado.`),
+                          onError: (error) => showToast(error instanceof Error ? error.message : "Não foi possível desativar o servidor."),
+                        })}
                         className="flex size-7 cursor-pointer items-center justify-center rounded-sm border border-border bg-ice text-danger transition-colors hover:bg-tint-danger-bg disabled:opacity-50"
                       >
                         <IconTrash size={13} />

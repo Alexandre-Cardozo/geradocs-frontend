@@ -293,7 +293,11 @@ export function useGerarDocumento() {
 
 /** Config da prefeitura em foco (sem id = a da sessão). */
 export function useConfigTenant(prefeituraId?: string) {
-  return useQuery({ queryKey: chaves.tenant(prefeituraId), queryFn: () => api.getConfigTenant(prefeituraId) })
+  return useQuery({
+    queryKey: chaves.tenant(prefeituraId),
+    queryFn: () => api.getConfigTenant(prefeituraId),
+    enabled: prefeituraId != null,
+  })
 }
 
 export function useAtualizarConfigTenant(prefeituraId?: string) {
@@ -326,7 +330,10 @@ export function useRemoverPrefeitura() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => api.removerPrefeitura(id),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: chaves.prefeituras }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: chaves.prefeituras })
+      void queryClient.invalidateQueries({ queryKey: ["usuarios"] })
+    },
   })
 }
 
@@ -360,5 +367,27 @@ export function useRemoverUsuario() {
   return useMutation({
     mutationFn: (id: string) => api.removerUsuario(id),
     onSuccess: () => invalidarUsuarios(queryClient),
+  })
+}
+
+export function useCriarSecretaria(prefeituraId: string | undefined) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (nome: string) => {
+      if (!prefeituraId) throw new Error("Prefeitura não identificada.")
+      return api.criarSecretaria(prefeituraId, nome)
+    },
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: chaves.tenant(prefeituraId) }),
+  })
+}
+
+export function useRemoverSecretaria(prefeituraId: string | undefined) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (secretariaId: string) => {
+      if (!prefeituraId) throw new Error("Prefeitura não identificada.")
+      return api.removerSecretaria(prefeituraId, secretariaId)
+    },
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: chaves.tenant(prefeituraId) }),
   })
 }
