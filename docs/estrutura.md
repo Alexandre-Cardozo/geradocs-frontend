@@ -34,7 +34,6 @@ GeraDocs/
 │       │   ├── dfd/page.tsx      # Verificação do DFD pela IA (insumo, não é doc gerado) . rota  /processos/dfd?id=PROC-2024-089
 │       │   ├── documento/page.tsx# Editor de seções — serve os 6 tipos de documento ..... rota  /processos/documento?id=PROC-2024-089&tipo=etp
 │       │   └── etp/page.tsx      # Redirect legado → documento?tipo=etp (compat. — ver §14)
-│       ├── aprovacoes/page.tsx   # Fila de aprovações + trilha de auditoria .. rota  /aprovacoes
 │       ├── documentos/page.tsx   # Repositório de documentos gerados ......... rota  /documentos
 │       ├── configuracoes/page.tsx# Config da prefeitura (coordenador) ........ rota  /configuracoes
 │       ├── perfil/page.tsx       # Meu Perfil (servidor/coordenador) ......... rota  /perfil
@@ -73,18 +72,22 @@ GeraDocs/
 │   │   │                         #   pendencias, totalSecoes). Metadados por tipo vivem SÓ aqui.
 │   │   ├── secoes.ts             # Estrutura seccional de cada documento, com fundamento legal e hint
 │   │   └── index.ts              # Barrel — importe daqui: import { CATALOGO } from "@/lib/documentos"
-│   ├── processos/                # Máquina de estados do fluxo de aprovação
-│   │   └── fluxo.ts              # TRANSICOES + guardas (envio, aprovação, rejeição, retificação, conclusão)
+│   ├── processos/                # Máquina de estados do processo
+│   │   └── fluxo.ts              # TRANSICOES (elaboração → encerramento → reabertura)
 │   ├── auth/                     # Autenticação e controle de acesso
 │   │   ├── cpf.ts               # validaCPF (dígitos), formatCPF, CPFS_DEMO
 │   │   └── acesso.ts            # RBAC: rotaPermitida, navPrincipal, navSistema (fonte única)
 │   ├── api/
 │   │   ├── auth-client.ts        # Transporte HTTP da autenticação, refresh e mapeamento da sessão
+│   │   ├── access-client.ts      # Organizações, secretarias e usuários na API real
+│   │   ├── procurement-client.ts # Processos na API real
+│   │   ├── gerado/v1.d.ts        # Tipos do contrato OpenAPI — NÃO editar à mão (npm run tipos)
 │   │   ├── client.ts             # Fachada híbrida: auth real; demais módulos ainda mockados
 │   │   └── hooks.ts              # Hooks TanStack Query (useProcessos, useCriarProcesso, ...) —
 │   │                             #   ÚNICA porta de entrada de dados para as telas
-│   └── mocks/
-│       └── fixtures.ts           # Dados de exemplo — PROIBIDO importar em componentes/páginas
+│   ├── mocks/
+│   │   └── fixtures.ts           # Dados de exemplo — PROIBIDO importar em componentes/páginas
+│   └── teste/                    # setup do Vitest, MSW, fixtures de API e guarda-corpos executáveis
 │
 ├── design_system/                # Design System fonte (LAHHM · GeraDocs) — NORMATIVO, não editável
 │   ├── readme.md                 # Regras visuais (leia antes de qualquer tarefa de UI)
@@ -177,7 +180,7 @@ TypeScript puro, testável sem browser:
 
 | Item | Padrão | Exemplo |
 |---|---|---|
-| Pastas de rota | kebab-case, pt-BR, plural para coleções | `processos/`, `aprovacoes/` |
+| Pastas de rota | kebab-case, pt-BR, plural para coleções | `processos/`, `documentos/` |
 | Componentes | PascalCase (arquivo = componente principal quando exclusivo) | `AppShell.tsx`, `Sidebar.tsx` |
 | Módulos agrupadores | minúsculo, pelo papel | `forms.tsx`, `estados.tsx` |
 | Hooks | `use` + Entidade em pt-BR | `useProcessos`, `useCriarProcesso` |

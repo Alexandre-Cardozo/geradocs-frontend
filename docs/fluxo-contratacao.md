@@ -90,36 +90,62 @@ Uma seção pode declarar `painel` e o editor genérico renderiza um formulário
 
 ---
 
-## Fluxo de aprovação e retificação (Fase 2 — implementada)
+## Onde a plataforma termina
 
-A máquina de estados, o envio para aprovação, o parecer jurídico, a conclusão, o versionamento e a retificação por seção foram implementados. A fonte da máquina de estados é `lib/processos/fluxo.ts`.
+**A plataforma entrega os documentos; o protocolo e a aprovação acontecem fora dela.**
+
+Na Prefeitura de Ecoporanga, o fluxo administrativo é o GPI da E&L: é lá que o
+servidor protocola o processo, é lá que os documentos são assinados e é lá que a
+comissão, o jurídico e o gestor se manifestam. Duplicar esse fluxo aqui criaria
+duas verdades sobre o mesmo processo.
+
+Decidido em 20–21/08/2026 — ADR [§24](decisions.md), [§25](decisions.md) e
+[§26](decisions.md).
 
 ### Máquina de estados
 
-Usa apenas os seis status fixos de `StatusProcesso` (o vocabulário é normativo — nenhum status novo foi inventado):
+Três status, e não seis:
 
 ```
-Rascunho ──envio(servidor)──▶ Em Revisão ──envio(comissão)──▶ Aguardando ──aprovação(gestor)──▶ Aprovado ──conclusão──▶ Concluído
-                                   ▲                                │
-                                   └──────retificação(gestor)───────┘        Aguardando ──rejeição──▶ Rejeitado (terminal)
+Rascunho ──gera o primeiro documento──▶ Em Elaboração ──encerra──▶ Concluído
+                                              ▲                        │
+                                              └───────reabre───────────┘
 ```
 
-- **Envio** (`rascunho → em_revisao`): no hub, botão "Enviar para Aprovação", **travado até os documentos obrigatórios da modalidade estarem gerados**.
-- **Parecer jurídico** (Art. 53): registrado no estágio *Em Revisão* pelo papel Jurídico. Como o vocabulário de status é fixo, **não é um status** — é um gate no checklist de conformidade, exigido para encaminhar.
-- **Encaminhamento** (`em_revisao → aguardando`): pela comissão, **exige parecer jurídico favorável**.
-- **Decisão** (`aguardando →`): o gestor Aprova, Rejeita ou Solicita Retificação. A aprovação exige o checklist integralmente atendido.
-- **Conclusão** (`aprovado → concluido`): homologação, encerra o processo.
+- **Em Elaboração**: o processo ganhou o primeiro documento gerado.
+- **Encerramento**: quando todos os documentos escolhidos estão prontos. Se
+  faltar algum, **a plataforma não impede** — pede justificativa, que fica
+  registrada na trilha. Orientar sem travar é a regra de produto que vale acima
+  das outras.
+- **Reabertura**: para retificar um documento depois de encerrado. Corrigir não
+  pode exigir criar outro processo, que quebraria o histórico.
 
-### Fila de aprovação derivada
+A fonte da máquina de estados é [`lib/processos/fluxo.ts`](../lib/processos/fluxo.ts).
 
-`getFilaAprovacoes` projeta os processos no pipeline (`db.processos` filtrado por status), **não é mais uma fixture desacoplada**. `ItemAprovacao.tipo` (a antiga taxonomia `"ETP" | "TR" | "ETP + TR"`) foi substituída por `documentos: TipoDocumento[]`. O checklist é **computado** do estado do processo (obrigatórios gerados + parecer jurídico + ausência de apontamentos abertos).
+### O que a trilha registra
 
-### Retificação por seção + versionamento
+`EventoDoProcesso` sobrevive à remoção do fluxo porque é o **único registro do
+que aconteceu dentro da plataforma** — o GPI só registra o que vem depois.
+Eventos: criação, troca de modalidade, geração de documento, retificação,
+encerramento e reabertura. Nem todos mudam o status: trocar a modalidade entra
+na trilha sem transição.
 
-- O gestor cria **apontamentos por documento e seção** (`ApontamentoRetificacao`) ao solicitar retificação; o processo volta para *Em Revisão*.
-- O elaborador vê os apontamentos **no editor** do documento e os resolve.
-- `gerarDocumento` **incrementa a versão** (`DocumentoGerado.versao`) e guarda a anterior no histórico (`VersaoDocumento`) — **nunca sobrescreve sem rastro**. Regerar após retificação resolve os apontamentos abertos do documento.
-- A tela de Documentos mostra `v{n}`; o hub sinaliza apontamentos pendentes.
+### Retificação e versionamento
+
+`gerarDocumento` **incrementa a versão** e guarda a anterior no histórico
+(`VersaoDocumento`) — nunca sobrescreve sem rastro. A tela de Documentos mostra
+`v{n}`.
+
+O que **ainda falta** aqui está no [plano de produto](plano-diretrizes-reuniao.md):
+o rótulo `RETIFICADO` da v2 em diante, o snapshot do conteúdo por versão (sem ele
+não há errata possível) e a errata "Onde se lê… Leia-se…", facultativa.
+
+### O que foi removido
+
+Fila de aprovações, checklist de conformidade, parecer jurídico como *gate*,
+apontamentos de retificação por seção e as decisões de aprovar, rejeitar e
+solicitar retificação. Se um ente sem sistema de protocolo precisar disso um dia,
+volta como **módulo próprio de workflow** — não como ressurreição destes status.
 
 ---
 
@@ -130,8 +156,8 @@ Itens reais que permanecem fora do escopo do produto (fase de planejamento) ou d
 ### Retificação pós-publicação
 Conceito distinto da retificação interna acima. Depois de publicado o edital, alteração vira republicação/errata (Art. 55, § 1º: nova divulgação e reabertura de prazos, salvo se não afetar as propostas). Na execução, vira termo aditivo (Art. 124) ou apostilamento (Art. 136). Fora do escopo — o produto encerra na fase preparatória.
 
-### Autenticação e papéis reais
-O mock opera como usuário único (Maria Costa, servidor de compras) e permite exercer todos os papéis do fluxo para demonstração. A separação real de papéis (servidor / comissão / jurídico / gestor) e o controle de acesso entram com a autenticação da fase de backend.
+### Perfis de acesso
+A autenticação é real desde 20/08/2026 e o controle de acesso se apoia em três perfis — administrador geral, coordenador e servidor. Os papéis de workflow (comissão, jurídico, gestor aprovador) saíram junto com o fluxo de aprovação; ver ADR §26.
 
 ### Regime da Lei 13.303/16
 Empresas estatais seguem regime próprio (RILC), não a 14.133/21. Hoje o produto assume 14.133 em todas as referências legais. Suportar estatais exigiria um campo de regime no `Tenant` e um mapa de fundamentos por regime.

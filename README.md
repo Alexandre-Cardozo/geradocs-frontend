@@ -1,10 +1,10 @@
 # GeraDocs — Frontend
 
-Aplicação web do **GeraDocs**, SaaS GovTech da **LAHHM** que automatiza, com IA, os documentos da fase preparatória da contratação pública sob a **Lei 14.133/2021**: o DFD é anexado e verificado, e a plataforma gera **Cotação de Mercado → ETP → Mapa de Riscos → TR → Edital → Contrato**, na ordem do fluxo real, até a aprovação e a exportação DOCX/PDF com timbre do município.
+Aplicação web do **GeraDocs**, SaaS GovTech da **LAHHM** que automatiza, com IA, os documentos da fase preparatória da contratação pública sob a **Lei 14.133/2021**: o DFD é anexado e verificado, e a plataforma gera **Cotação de Mercado → ETP → Mapa de Riscos → TR → Edital → Contrato**, na ordem do fluxo real, até a exportação DOCX/PDF com timbre do município. O protocolo e a aprovação acontecem no sistema de processo administrativo da prefeitura, não aqui.
 
 > Que documentos existem, em que ordem, com que fundamento legal e quais são as lacunas conhecidas: **[docs/fluxo-contratacao.md](docs/fluxo-contratacao.md)** — leia antes de mexer em documentos, wizard ou hub do processo.
 
-O projeto está em integração progressiva com o backend Spring Boot. Autenticação, sessão, refresh, logout, recuperação/redefinição de senha, prefeituras, secretarias, usuários e a criação/listagem de processos usam a API real. Detalhe e edição de processo, DFD, documentos, aprovações, identidade visual e PCA continuam sobre a camada mockada até seus módulos existirem no backend.
+O projeto está em integração progressiva com o backend Spring Boot. Autenticação, sessão, refresh, logout, recuperação/redefinição de senha, prefeituras, secretarias, usuários e a criação/listagem de processos usam a API real. Detalhe e edição de processo, DFD, documentos, identidade visual e PCA continuam sobre a camada mockada até seus módulos existirem no backend.
 
 ## Stack
 
@@ -42,7 +42,6 @@ app/                    # ROTAS (App Router) — cada pasta = um segmento de URL
     processos/          # Lista, wizard (novo/), hub (detalhe/), DFD (dfd/) e
                         #   editor de documentos (documento/). O id do processo é
                         #   query param (?id=), não segmento — static export, §22 decisions.md
-    aprovacoes/         # Fila + trilha de auditoria      /aprovacoes
     documentos/         # Repositório de documentos       /documentos
     configuracoes/      # Prefeitura, secretarias, PCA, servidores  /configuracoes
     perfil/             # Meu Perfil                      /perfil
@@ -55,7 +54,7 @@ components/             # INTERFACE REUTILIZÁVEL
 lib/                    # DADOS E DOMÍNIO (TypeScript puro)
   types.ts              # modelo de domínio congelado (Processo, Usuario, Sessao, ...)
   documentos/           # CATÁLOGO: ordem, dependências, regras por modalidade e seções
-  processos/            # máquina de estados do fluxo de aprovação (fluxo.ts)
+  processos/            # máquina de estados do processo (fluxo.ts)
   auth/                 # cpf.ts (validação) + acesso.ts (RBAC — fonte única)
   format.ts             # formatBRL ("R$ 485.000,00"), formatData, formatDataHora
   mocks/fixtures.ts     # dados — nunca importar em componentes
@@ -95,6 +94,8 @@ O app exige uma conta ativa cadastrada no backend e login por CPF + senha. Três
 
 ## Fluxo completo simulável com mocks
 
-Fazer login → criar processo no wizard (os documentos oferecidos dependem da modalidade — contratação direta não tem Edital) → anexar DFD → checklist da IA (parecer persistido) → elaborar os documentos na ordem do fluxo, preenchendo ou gerando cada seção com IA simulada, com as dependências travando o que ainda não pode começar (o TR espera o ETP; o Edital espera o TR) → finalizar cada documento (exige só as seções obrigatórias) → **enviar para aprovação** (travado até os obrigatórios estarem gerados) → **registrar parecer jurídico (Art. 53) e encaminhar** → o gestor **Aprova / Rejeita / Solicita Retificação** (apontamentos por seção, que o elaborador resolve no editor, gerando nova versão do documento) → **concluir** o processo aprovado. Toda transição fica na trilha de auditoria.
+Fazer login → criar processo no wizard (os documentos oferecidos dependem da modalidade — contratação direta não tem Edital) → anexar DFD → checklist da IA (parecer persistido) → elaborar os documentos na ordem do fluxo, preenchendo ou gerando cada seção com IA simulada, com as dependências travando o que ainda não pode começar (o TR espera o ETP; o Edital espera o TR) → finalizar cada documento (exige só as seções obrigatórias) → **encerrar o processo**, que pede justificativa se ainda faltar documento, mas não impede. Todo evento fica na trilha.
 
-Ordem canônica, fundamento legal de cada documento e a **máquina de estados do fluxo de aprovação**: [docs/fluxo-contratacao.md](docs/fluxo-contratacao.md).
+Daqui em diante é fora da plataforma: o servidor protocola os documentos no sistema administrativo da prefeitura, onde acontecem a assinatura, o parecer jurídico e a aprovação.
+
+Ordem canônica, fundamento legal de cada documento e **onde a plataforma termina**: [docs/fluxo-contratacao.md](docs/fluxo-contratacao.md).

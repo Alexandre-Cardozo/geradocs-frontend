@@ -21,7 +21,7 @@ Fonte única: `lib/auth/acesso.ts` (`rotaPermitida`, `navPrincipal`, `navSistema
 | Rota | admin_geral | coordenador | servidor |
 |---|:---:|:---:|:---:|
 | `/` (dashboard / painel do sistema) | ✅ (painel admin) | ✅ | ✅ |
-| `/processos`, `/aprovacoes`, `/documentos` | ❌ | ✅ | ✅ |
+| `/processos`, `/documentos` | ❌ | ✅ | ✅ |
 | `/configuracoes` (prefeitura) | ❌ | ✅ | ❌ |
 | `/admin/prefeituras`, `/admin/servidores` | ✅ | ❌ | ❌ |
 | `/perfil` (Meu Perfil) | ❌¹ | ✅ | ✅ |
