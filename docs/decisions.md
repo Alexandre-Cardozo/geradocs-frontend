@@ -238,3 +238,33 @@ Criação e listagem de processos passam a usar `GET` e `POST /api/v1/procuremen
 - O seletor de secretaria envia o identificador real do departamento. Organização, usuário responsável e isolamento por tenant são derivados da sessão pelo backend, nunca enviados pelo navegador.
 - O processo nasce como `DRAFT`/Rascunho. Os filtros para estados ainda não implementados retornam vazio, em vez de simular um estado inexistente no servidor.
 - Depois de criar, o usuário volta para a lista integrada. DFD, detalhe, edição e geração documental permanecem mockados até os respectivos contratos e persistência serem implementados; portanto o wizard não redireciona mais para uma tela que não encontraria o novo UUID no mock.
+
+## 25. Decisões de produto que fecham a remoção do fluxo de aprovação
+
+Tomadas em 21/08/2026, junto com a §24. Fecham as cinco perguntas que o [plano das diretrizes](plano-diretrizes-reuniao.md) deixou em aberto.
+
+### 25.1 Apontamentos por seção e parecer jurídico saem do produto
+
+Nenhum dos dois sobrevive à remoção do fluxo. O `ApontamentoRetificacao` não vira revisão interna e não há campo para anexar o parecer do Art. 53 — ele é emitido e guardado no GPI.
+
+**Por quê:** ambos existiam como peças do fluxo entre setores. Mantê-los "por precaução", sem quem os produza, deixaria dois conceitos na interface que ninguém alimenta — e conceito órfão é lido por quem chega depois como funcionalidade a usar.
+
+**Consequência:** a retificação passa a nascer de um comando explícito do próprio elaborador ("Retificar documento"), não de um apontamento recebido. É o que a §26 abaixo assume.
+
+### 25.2 Documento de modalidade anterior é mantido e marcado
+
+Trocada a modalidade, o documento já gerado que deixa de ser cabível — o Edital num processo que virou Dispensa — **permanece no repositório**, marcado como "de modalidade anterior".
+
+**Por quê:** ele existiu, foi elaborado por alguém e integra o histórico do processo. Apagar ou esconder apagaria o rastro de trabalho real; a marcação diz o que mudou sem fingir que não aconteceu.
+
+### 25.3 A errata é anexo da versão, não documento do catálogo
+
+A errata ("Onde se lê… Leia-se…") fica pendurada na versão que a originou, sem id próprio no repositório de documentos.
+
+**Por quê:** os seis tipos do catálogo participam da matriz modalidade × documentos e da ordem canônica do fluxo. A errata não pertence a nenhuma das duas: ela é derivada de uma correção, não um artefato exigido pela lei para instruir o processo. Dar-lhe id próprio obrigaria a inventar posição e obrigatoriedade que a Lei 14.133 não prevê.
+
+### 25.4 O CPF continua obrigatório no cadastro
+
+Mesmo quando a chave de login mudar para e-mail ou matrícula (Fase D do [plano de consolidação](../../geradocs-backend/docs/plano-consolidacao.md)), o CPF segue exigido no cadastro do servidor.
+
+**Por quê:** ele identifica o servidor de forma inequívoca em documento oficial, e essa necessidade é independente de como a pessoa entra no sistema. A minimização de dado pessoal continua valendo no **uso**: CPF de terceiro segue mascarado nas respostas, e só o próprio usuário vê o seu por inteiro.
