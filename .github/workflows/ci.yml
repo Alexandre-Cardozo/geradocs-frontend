@@ -21,6 +21,16 @@ jobs:
       - name: Instalar dependências
         run: npm ci
 
+      # O gate só entrou depois que as cinco vulnerabilidades altas herdadas do
+      # Next foram corrigidas: gate que nasce vermelho ninguém lê, todo mundo
+      # aprende a ignorar. A partir daqui, dependência vulnerável barra a PR.
+      #
+      # Efeito colateral aceito: um aviso publicado hoje pode reprovar uma PR que
+      # não encostou em dependência nenhuma. É o preço de saber no dia, e não no
+      # dia do incidente.
+      - name: Dependência vulnerável
+        run: npm audit --audit-level=high
+
       - name: ESLint (eslint-config-next + aderência ao DS)
         run: npm run lint
 
