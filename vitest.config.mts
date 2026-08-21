@@ -58,13 +58,14 @@ export default defineConfig({
         lines: 100,
         functions: 100,
         statements: 100,
-        // Branch fica em 94: as 13 restantes são fallbacks `??` que existem só
-        // para satisfazer o TypeScript, porque a especificação OpenAPI declara
-        // todo campo como opcional. Não há entrada capaz de alcançá-las pela API
+        // Branch em 97: as 7 restantes são fallbacks `??` que existem só para
+        // satisfazer o TypeScript, porque a especificação OpenAPI declara todo
+        // campo como opcional. Não há entrada capaz de alcançá-las pela API
         // pública — testá-las seria escrever teste que executa sem afirmar. Elas
         // desaparecem quando o contrato passar a declarar `required`, correção já
         // registrada como pendência do Bloco 2.
-        branches: 96,
+        // 21/08/2026 — Bloco 6: 96 -> 97 com o descritor de identificador.
+        branches: 97,
       },
     },
   },

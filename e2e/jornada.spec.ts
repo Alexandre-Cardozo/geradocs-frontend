@@ -31,7 +31,7 @@ test.describe("guarda de sessão", () => {
 
     // A mensagem é genérica de propósito: dizer "usuário não encontrado"
     // transformaria a tela em oráculo de quem tem conta.
-    await expect(page.getByText(/CPF ou senha inválidos/i)).toBeVisible()
+    await expect(page.getByText(/CPF ou senha inválida/i)).toBeVisible()
     await expect(page).toHaveURL(/\/login$/)
   })
 

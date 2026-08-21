@@ -10,7 +10,7 @@ import lahhmLogo from "@/public/lahhm-logo-white.png";
 import { Button, FormField, Input, ValidationMsg } from "@/components/ui";
 import { IconArrowRight, IconCheckCircle } from "@/components/ui/icons";
 import { useLogin, useRecuperarSenha, useSessao } from "@/lib/api/hooks";
-import { formatCPF } from "@/lib/auth/cpf";
+import { IDENTIFICADOR, mensagemCredencialRecusada } from "@/lib/auth/identificador";
 
 export default function Login() {
   const router = useRouter();
@@ -18,7 +18,7 @@ export default function Login() {
   const login = useLogin();
   const recuperar = useRecuperarSenha();
 
-  const [cpf, setCpf] = useState("");
+  const [identificador, setIdentificador] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
   const [modoRecuperar, setModoRecuperar] = useState(false);
@@ -34,11 +34,11 @@ export default function Login() {
   const entrar = () => {
     setErro("");
     login.mutate(
-      { cpf, senha },
+      { identificador, senha },
       {
         onSuccess: () => router.replace("/"),
         onError: (e) =>
-          setErro(e instanceof Error ? e.message : "CPF ou senha inválidos."),
+          setErro(e instanceof Error ? e.message : mensagemCredencialRecusada()),
       },
     );
   };
@@ -85,13 +85,16 @@ export default function Login() {
               </h1>
 
               <div className="flex flex-col gap-3.5">
-                <FormField label="CPF">
+                <FormField label={IDENTIFICADOR.rotulo}>
                   <Input
-                    value={cpf}
-                    onChange={(e) => setCpf(formatCPF(e.target.value))}
+                    value={identificador}
+                    onChange={(e) =>
+                      setIdentificador(IDENTIFICADOR.formata(e.target.value))
+                    }
                     onKeyDown={(e) => e.key === "Enter" && entrar()}
-                    placeholder="000.000.000-00"
-                    autoComplete="username"
+                    placeholder={IDENTIFICADOR.placeholder}
+                    inputMode={IDENTIFICADOR.inputMode}
+                    autoComplete={IDENTIFICADOR.autoComplete}
                   />
                 </FormField>
                 <FormField label="Senha">
@@ -126,7 +129,7 @@ export default function Login() {
                   className="w-full font-bold"
                   icon={<IconArrowRight size={15} strokeWidth={2.5} />}
                   disabled={
-                    login.isPending || cpf.trim() === "" || senha === ""
+                    login.isPending || identificador.trim() === "" || senha === ""
                   }
                   onClick={entrar}
                 >

@@ -1,6 +1,7 @@
 import "client-only"
 
 import type { components } from "@/lib/api/gerado/v1"
+import { IDENTIFICADOR, mensagemCredencialRecusada } from "@/lib/auth/identificador"
 import { iniciaisDe, primeiroNome } from "@/lib/dominio"
 import type { PerfilAcesso, Sessao, Tenant, Usuario } from "@/lib/types"
 
@@ -177,17 +178,27 @@ function mapearSessao(session: BackendSession): Sessao {
   return { usuario, prefeitura: tenantDa(session.organization ?? null) }
 }
 
-export async function autenticar(cpf: string, password: string): Promise<Sessao> {
+/**
+ * @param identifier o que a pessoa digitou na chave configurada — CPF, e-mail ou
+ *                   matrícula, conforme `IDENTIFICADOR` (ADR-015)
+ */
+export async function autenticar(identifier: string, password: string): Promise<Sessao> {
   try {
     const authentication = await requisicaoPublica<AuthenticationResponse>("/auth/login", {
       method: "POST",
-      body: JSON.stringify({ cpf, password, organizationId: null }),
+      body: JSON.stringify({
+        identifier: IDENTIFICADOR.normaliza(identifier),
+        password,
+        organizationId: null,
+      }),
     })
     accessToken = authentication.accessToken ?? null
     return mapearSessao(authentication.session ?? {})
   } catch (error) {
+    // 0 é rede fora do ar e 429 é bloqueio por tentativas: chamar os dois de
+    // credencial inválida mandaria a pessoa conferir uma senha que está certa.
     if (error instanceof ApiError && error.status !== 0 && error.status !== 429) {
-      throw new ApiError("CPF ou senha inválidos.", error.status, error.code)
+      throw new ApiError(mensagemCredencialRecusada(), error.status, error.code)
     }
     throw error
   }

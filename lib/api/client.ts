@@ -34,7 +34,6 @@ import {
   statusDoDocumentoNoProcesso,
   tituloDoDocumento,
 } from "@/lib/dominio"
-import { limpaCPF } from "@/lib/auth/cpf"
 import {
   autenticar,
   encerrarSessao,
@@ -167,11 +166,14 @@ function montarSessao(usuario: Usuario): Sessao {
 }
 
 /**
- * Login real por CPF + senha. O access token fica somente em memória e o
- * refresh token permanece no cookie HttpOnly emitido pelo backend.
+ * Login real pela chave configurada + senha. O access token fica somente em
+ * memória e o refresh token permanece no cookie HttpOnly emitido pelo backend.
+ *
+ * A normalização é do descritor (ADR-015): quem sabe o que fazer com o valor
+ * digitado é a chave ativa, não este módulo.
  */
-export async function login(cpf: string, senha: string): Promise<Sessao> {
-  const sessao = await autenticar(limpaCPF(cpf), senha)
+export async function login(identificador: string, senha: string): Promise<Sessao> {
+  const sessao = await autenticar(identificador, senha)
   db.sessao = clone(sessao)
   return clone(sessao)
 }
@@ -582,8 +584,11 @@ export async function removerPrefeitura(id: string): Promise<void> {
 
 /* ── Cadastro de usuários (admin geral e coordenador da própria prefeitura) ── */
 
-export async function getUsuarios(prefeituraId?: string): Promise<Usuario[]> {
-  return listarUsuariosNaApi(prefeituraId)
+/**
+ * @param busca trecho de nome ou matrícula; quem filtra é o servidor
+ */
+export async function getUsuarios(prefeituraId?: string, busca?: string): Promise<Usuario[]> {
+  return listarUsuariosNaApi(prefeituraId, busca)
 }
 
 export interface NovoUsuarioInput {
@@ -591,6 +596,8 @@ export interface NovoUsuarioInput {
   cpf: string
   email: string
   cargo: string
+  matricula?: string
+  decretoNomeacao?: string
   senha: string
   perfilAcesso: PerfilAcesso
   prefeituraId: string | null
@@ -609,6 +616,8 @@ export interface AtualizarUsuarioInput {
   nome?: string
   email?: string
   cargo?: string
+  matricula?: string
+  decretoNomeacao?: string
   perfilAcesso?: PerfilAcesso
   prefeituraId?: string | null
   secretaria?: string
@@ -626,6 +635,10 @@ export async function atualizarUsuario(input: AtualizarUsuarioInput): Promise<Us
   }
   if (input.email != null) usuario.email = input.email.trim()
   if (input.cargo != null) usuario.cargo = input.cargo.trim()
+  if (input.matricula !== undefined) usuario.matricula = input.matricula.trim() || undefined
+  if (input.decretoNomeacao !== undefined) {
+    usuario.decretoNomeacao = input.decretoNomeacao.trim() || undefined
+  }
   if (input.perfilAcesso != null) usuario.perfilAcesso = input.perfilAcesso
   if (input.prefeituraId !== undefined) usuario.prefeituraId = input.prefeituraId
   if (input.secretaria !== undefined) usuario.secretaria = input.secretaria

@@ -25,6 +25,8 @@ const usuarioApi = {
   cpf: "33333333333",
   email: "maria.costa@ecoporanga.es.gov.br",
   jobTitle: "Servidora de Compras",
+  registrationNumber: "MAT-4471",
+  appointmentDecree: "Decreto 1.234/2026",
   profileAccess: "SERVIDOR" as const,
   status: "ACTIVE" as const,
   memberships: [
@@ -235,6 +237,64 @@ describe("listarUsuarios", () => {
     expect(recebida?.searchParams.has("organizationId")).toBe(false)
   })
 
+  it("envia o termo de busca para o servidor", async () => {
+    let recebida: URL | undefined
+    servidor.use(
+      http.get(`${urlDaApi}/users`, ({ request }) => {
+        recebida = new URL(request.url)
+        return HttpResponse.json([usuarioApi])
+      }),
+    )
+    const { listarUsuarios } = await carregarClienteLimpo()
+
+    await listarUsuarios(organizacao.id, "  mat-44  ")
+
+    // Quem conhece a matrícula de quem não está na página é o servidor: filtrar
+    // só o que já foi carregado esconderia justamente o servidor procurado.
+    expect(recebida?.searchParams.get("search")).toBe("mat-44")
+  })
+
+  it("não envia busca em branco", async () => {
+    let recebida: URL | undefined
+    servidor.use(
+      http.get(`${urlDaApi}/users`, ({ request }) => {
+        recebida = new URL(request.url)
+        return HttpResponse.json([usuarioApi])
+      }),
+    )
+    const { listarUsuarios } = await carregarClienteLimpo()
+
+    await listarUsuarios(organizacao.id, "   ")
+
+    expect(recebida?.searchParams.has("search")).toBe(false)
+  })
+
+  it("traz matrícula e decreto de nomeação", async () => {
+    servidor.use(http.get(`${urlDaApi}/users`, () => HttpResponse.json([usuarioApi])))
+    const { listarUsuarios } = await carregarClienteLimpo()
+
+    const [usuario] = await listarUsuarios()
+
+    expect(usuario?.matricula).toBe("MAT-4471")
+    expect(usuario?.decretoNomeacao).toBe("Decreto 1.234/2026")
+  })
+
+  it("trata matrícula ausente como ausente, e não como texto vazio", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/users`, () =>
+        HttpResponse.json([{ ...usuarioApi, registrationNumber: null, appointmentDecree: null }]),
+      ),
+    )
+    const { listarUsuarios } = await carregarClienteLimpo()
+
+    const [usuario] = await listarUsuarios()
+
+    // "" apareceria na tabela como célula vazia sem explicação; undefined deixa
+    // a tela decidir o traço.
+    expect(usuario?.matricula).toBeUndefined()
+    expect(usuario?.decretoNomeacao).toBeUndefined()
+  })
+
   it("mapeia perfil e papel de workflow para o vocabulário da interface", async () => {
     servidor.use(http.get(`${urlDaApi}/users`, () => HttpResponse.json([usuarioApi])))
     const { listarUsuarios } = await carregarClienteLimpo()
@@ -273,6 +333,39 @@ describe("criarUsuario", () => {
     expect(corpo.organizationId).toBeNull()
     expect(corpo.departmentId).toBeNull()
     expect(corpo.profileAccess).toBe("ADMIN_GERAL")
+  })
+
+  it("envia matrícula e decreto quando informados, e nulo quando não", async () => {
+    let corpo: Record<string, unknown> = {}
+    servidor.use(
+      http.post(`${urlDaApi}/users`, async ({ request }) => {
+        corpo = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json(usuarioApi)
+      }),
+    )
+    const { criarUsuario } = await carregarClienteLimpo()
+    const base = {
+      nome: "Ana Paula Ribeiro",
+      cpf: "11144477735",
+      email: "ana@ecoporanga.es.gov.br",
+      cargo: "Servidora",
+      senha: "UmaSenhaSegura!2026",
+      perfilAcesso: "servidor" as const,
+      prefeituraId: organizacao.id,
+    }
+
+    await criarUsuario({ ...base, matricula: "  mat-4471  ", decretoNomeacao: "Decreto 1/2026" })
+    expect(corpo.registrationNumber).toBe("mat-4471")
+    expect(corpo.appointmentDecree).toBe("Decreto 1/2026")
+
+    // Campo em branco precisa virar nulo: "" gravado ocuparia a matrícula única
+    // e impediria o próximo cadastro sem matrícula.
+    await criarUsuario({ ...base, matricula: "   ", decretoNomeacao: "" })
+    expect(corpo.registrationNumber).toBeNull()
+    expect(corpo.appointmentDecree).toBeNull()
+
+    await criarUsuario(base)
+    expect(corpo.registrationNumber).toBeNull()
   })
 
   it("envia cargo nulo quando ele vem vazio", async () => {

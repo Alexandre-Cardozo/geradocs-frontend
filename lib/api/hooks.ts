@@ -1,6 +1,7 @@
 "use client"
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useEffect, useState } from "react"
 
 import * as api from "@/lib/api/client"
 import type { ListaProcessosParams } from "@/lib/api/client"
@@ -23,7 +24,7 @@ export const chaves = {
   resumoDocumentos: ["documentos", "resumo"] as const,
   historicoVersoes: (id: string, tipo: TipoDocumento) => ["versoes", id, tipo] as const,
   tenant: (prefeituraId?: string) => ["tenant", prefeituraId ?? "sessao"] as const,
-  usuarios: (prefeituraId?: string) => ["usuarios", prefeituraId ?? "todos"] as const,
+  usuarios: (prefeituraId?: string, busca = "") => ["usuarios", prefeituraId ?? "todos", busca] as const,
   prefeituras: ["prefeituras"] as const,
 }
 
@@ -36,7 +37,8 @@ export function useSessao() {
 export function useLogin() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (input: { cpf: string; senha: string }) => api.login(input.cpf, input.senha),
+    mutationFn: (input: { identificador: string; senha: string }) =>
+      api.login(input.identificador, input.senha),
     onSuccess: (sessao) => {
       queryClient.setQueryData(chaves.sessao, sessao)
       void queryClient.invalidateQueries() // recarrega tudo no escopo do novo usuário
@@ -283,8 +285,32 @@ export function useRemoverPrefeitura() {
   })
 }
 
-export function useUsuarios(prefeituraId?: string) {
-  return useQuery({ queryKey: chaves.usuarios(prefeituraId), queryFn: () => api.getUsuarios(prefeituraId) })
+/**
+ * Espera a digitação parar antes de consultar.
+ *
+ * Sem isso, buscar "MAT-4471" dispararia oito requisições e a lista piscaria a
+ * cada tecla — e a última resposta a chegar poderia não ser a do último termo.
+ */
+function useBuscaAdiada(busca: string, milissegundos = 300): string {
+  const [adiada, setAdiada] = useState(busca)
+  useEffect(() => {
+    const temporizador = setTimeout(() => setAdiada(busca), milissegundos)
+    return () => clearTimeout(temporizador)
+  }, [busca, milissegundos])
+  return adiada
+}
+
+/**
+ * @param busca trecho de nome ou matrícula, como a pessoa digita
+ */
+export function useUsuarios(prefeituraId?: string, busca = "") {
+  const buscaAdiada = useBuscaAdiada(busca)
+  return useQuery({
+    queryKey: chaves.usuarios(prefeituraId, buscaAdiada),
+    queryFn: () => api.getUsuarios(prefeituraId, buscaAdiada),
+    // Sem isto a lista some e volta a cada termo novo, em vez de atualizar.
+    placeholderData: keepPreviousData,
+  })
 }
 
 function invalidarUsuarios(queryClient: ReturnType<typeof useQueryClient>) {

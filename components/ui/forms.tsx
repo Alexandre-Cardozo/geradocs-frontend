@@ -24,6 +24,7 @@ export function Input({
   prefix,
   type = "text",
   autoComplete,
+  inputMode,
   onKeyDown,
   disabled,
   title,
@@ -36,6 +37,8 @@ export function Input({
   prefix?: string
   type?: "text" | "password" | "email"
   autoComplete?: string
+  /** Teclado do celular: `numeric` para CPF, `email` para e-mail. */
+  inputMode?: "text" | "numeric" | "email"
   onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void
   /** Campo somente leitura e não focável (ex.: CPF no perfil). */
   disabled?: boolean
@@ -58,6 +61,7 @@ export function Input({
           placeholder={placeholder}
           type={type}
           autoComplete={autoComplete}
+          inputMode={inputMode}
           disabled={disabled}
           title={title}
           className={`${controleBase} pl-8 ${disabledCls} ${className}`}
@@ -74,6 +78,7 @@ export function Input({
       placeholder={placeholder}
       type={type}
       autoComplete={autoComplete}
+      inputMode={inputMode}
       disabled={disabled}
       title={title}
       className={`${controleBase} ${disabledCls} ${className}`}

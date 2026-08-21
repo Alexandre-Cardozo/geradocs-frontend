@@ -319,3 +319,20 @@ A distinção importa na hora de divergirem: se a tela diz que pode gerar e o se
 ### O que ficou de fora, e por quê
 
 `lib/api/client.ts` e `lib/api/hooks.ts` continuam fora do gate de cobertura. O motivo mudou: não é mais "serão apagados no Bloco 4/5", é que **o que sobrou neles não é domínio**. `client.ts` virou um armazenamento em memória com funções finas sobre arrays, e `hooks.ts` é invólucro do TanStack Query. Cobri-los a 100% mediria fixture e cola de framework, e o número subiria sem que nada ficasse mais verificado — enquanto cada módulo entregue pelo back-end apaga um pedaço deles.
+
+## 28. A chave de login é um descritor, não um campo de CPF
+
+Até 21/08/2026 a tela de login era uma tela de CPF: rótulo, placeholder, máscara, validação, `autoComplete` e a mensagem de erro estavam escritos literalmente em `app/(auth)/login/page.tsx`, e `client.ts` chamava `limpaCPF` antes de enviar. Trocar a chave — o que já se sabia necessário, porque nem toda prefeitura quer o CPF na porta de entrada — seria mexer nesses cinco pontos e torcer para não esquecer nenhum. Esquecer o `autoComplete`, por exemplo, faria o gerenciador de senhas oferecer o CPF salvo num campo de e-mail.
+
+**Decisão:** `lib/auth/identificador.ts` descreve a chave inteira em um objeto — rótulo, placeholder, `inputMode`, `autoComplete`, máscara, normalização, validação e mensagem de formato. A tela renderiza o descritor e não sabe qual é a chave. O tipo ativo vem de `NEXT_PUBLIC_LOGIN_IDENTIFIER`, com CPF como padrão, e precisa coincidir com o `geradocs.auth.login-identifier` do back-end (ADR-015 lá).
+
+**Consequências:**
+
+- `autenticar()` envia `identifier` no lugar de `cpf`. O back-end aceita os dois durante a transição, mas o front já migrou.
+- A normalização deixou de ser do `client.ts` e passou a ser do descritor: quem sabe o que fazer com o valor digitado é a chave ativa.
+- A mensagem de credencial recusada passou a ser `«Rótulo» ou senha inválida.`, o mesmo texto que o back-end devolve no 401 — antes dizia "CPF" mesmo quando a chave não era CPF.
+- `app/(auth)/login/page.test.tsx` roda a tela nas três chaves. Enquanto passar, "trocar a chave custa uma variável de ambiente" é fato verificado, e não intenção escrita aqui.
+
+**Matrícula e decreto de nomeação** entraram em `Usuario` e no cadastro de servidores, com a busca da listagem passando a aceitar nome **ou** matrícula — atendendo ao caso levantado na reunião, o de localizar o servidor desligado pelo número que o RH usa. A busca vai ao servidor (com espera de 300 ms) porque quem conhece a matrícula de quem não está na página é ele; filtrar só o que já foi carregado esconderia justamente o servidor procurado.
+
+**Divergência registrada:** o passo 6.6 do plano previa *edição* de matrícula em `perfil/`. Ela ficou somente leitura ali, editável apenas no cadastro em `admin/servidores`. O motivo é o próprio ADR-015: quando a matrícula for a chave de login, deixar a pessoa alterar a própria matrícula é deixá-la alterar o próprio identificador de acesso. É a mesma razão pela qual o CPF já era somente leitura nessa tela.

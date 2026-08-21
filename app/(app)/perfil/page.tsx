@@ -132,6 +132,16 @@ export default function MeuPerfil() {
             <FormField label="Cargo">
               <Input value={cargo} onChange={(e) => setCargo(e.target.value)} />
             </FormField>
+            <FormField label="Matrícula">
+              <Input value={usuario.matricula ?? "—"} disabled />
+              <p className="mt-1.5 text-xs text-text-muted">
+                A matrícula é cadastral e pode ser a chave de login: quem a
+                altera é a administração, em Servidores.
+              </p>
+            </FormField>
+            <FormField label="Decreto de Nomeação">
+              <Input value={usuario.decretoNomeacao ?? "—"} disabled />
+            </FormField>
             <div className="sm:col-span-2">
               <FormField label="Secretaria">
                 <Dropdown

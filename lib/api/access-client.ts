@@ -35,6 +35,8 @@ interface BackendUser {
   cpf: string
   email: string
   jobTitle: string | null
+  registrationNumber: string | null
+  appointmentDecree: string | null
   profileAccess: BackendProfile
   status: "PENDING_ACTIVATION" | "ACTIVE" | "INACTIVE"
   memberships: BackendMembership[]
@@ -79,6 +81,8 @@ function usuarioDa(user: BackendUser): Usuario {
     cpf: user.cpf,
     email: user.email,
     cargo: user.jobTitle ?? "",
+    matricula: user.registrationNumber ?? undefined,
+    decretoNomeacao: user.appointmentDecree ?? undefined,
     perfilAcesso: perfis[user.profileAccess],
     prefeituraId: membership?.organizationId ?? null,
     secretaria: membership?.departmentId ?? undefined,
@@ -102,6 +106,8 @@ export interface NovoUsuarioInput {
   cpf: string
   email: string
   cargo: string
+  matricula?: string
+  decretoNomeacao?: string
   senha: string
   perfilAcesso: PerfilAcesso
   prefeituraId: string | null
@@ -156,8 +162,14 @@ export async function desativarDepartamento(organizationId: string, departmentId
   })
 }
 
-export async function listarUsuarios(organizationId?: string): Promise<Usuario[]> {
-  const query = organizationId ? `?organizationId=${encodeURIComponent(organizationId)}` : ""
+/**
+ * @param busca trecho de nome ou matrícula; o servidor filtra antes de devolver
+ */
+export async function listarUsuarios(organizationId?: string, busca?: string): Promise<Usuario[]> {
+  const parametros = new URLSearchParams()
+  if (organizationId) parametros.set("organizationId", organizationId)
+  if (busca != null && busca.trim() !== "") parametros.set("search", busca.trim())
+  const query = parametros.size > 0 ? `?${parametros}` : ""
   const users = await requisicaoProtegida<BackendUser[]>(`/users${query}`)
   return users.map(usuarioDa)
 }
@@ -171,6 +183,8 @@ export async function criarUsuario(input: NovoUsuarioInput): Promise<Usuario> {
       cpf: input.cpf,
       email: input.email.trim(),
       jobTitle: input.cargo.trim() || null,
+      registrationNumber: input.matricula?.trim() || null,
+      appointmentDecree: input.decretoNomeacao?.trim() || null,
       password: input.senha,
       profileAccess,
       organizationId: input.perfilAcesso === "admin_geral" ? null : input.prefeituraId,

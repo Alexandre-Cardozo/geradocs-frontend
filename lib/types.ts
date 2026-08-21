@@ -283,6 +283,10 @@ export interface Usuario {
   cpf: string
   email: string
   cargo: string
+  /** Matrícula funcional; pode ser a chave de login (ADR-015). Ausente quando não informada. */
+  matricula?: string
+  /** Número do decreto de nomeação — o comissionado costuma lembrar dele, não da matrícula. */
+  decretoNomeacao?: string
   perfilAcesso: PerfilAcesso
   /** Prefeitura a que pertence. null = admin geral (LAHHM, sem prefeitura). */
   prefeituraId: string | null

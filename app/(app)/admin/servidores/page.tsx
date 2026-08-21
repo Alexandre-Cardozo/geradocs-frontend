@@ -16,7 +16,13 @@ const perfilTone = (p: PerfilAcesso) => (p === "admin_geral" ? "warning" : p ===
 
 export default function AdminServidores() {
   const showToast = useToast()
-  const usuarios = useUsuarios()
+
+  // Filtros da listagem
+  const [filtroPrefeitura, setFiltroPrefeitura] = useState("")
+  const [buscaServidor, setBuscaServidor] = useState("")
+  const [filtroFuncao, setFiltroFuncao] = useState("")
+
+  const usuarios = useUsuarios(undefined, buscaServidor)
   const prefeituras = usePrefeituras()
   const criar = useCriarUsuario()
   const remover = useRemoverUsuario()
@@ -26,20 +32,18 @@ export default function AdminServidores() {
   const [cpf, setCpf] = useState("")
   const [email, setEmail] = useState("")
   const [cargo, setCargo] = useState("")
+  const [matricula, setMatricula] = useState("")
+  const [decreto, setDecreto] = useState("")
   const [senha, setSenha] = useState("")
   const [perfil, setPerfil] = useState<PerfilAcesso>("servidor")
   const [prefeituraId, setPrefeituraId] = useState("")
 
-  // Filtros da listagem
-  const [filtroPrefeitura, setFiltroPrefeitura] = useState("")
-  const [buscaNome, setBuscaNome] = useState("")
-  const [filtroFuncao, setFiltroFuncao] = useState("")
-
+  // Nome e matrícula vão ao servidor (ele conhece a matrícula de quem não está
+  // na página); prefeitura e função filtram o que já veio.
   const listaFiltrada = (usuarios.data ?? []).filter((u) => {
     const okPref = filtroPrefeitura === "" || u.prefeituraId === filtroPrefeitura
-    const okNome = buscaNome.trim() === "" || u.nome.toLowerCase().includes(buscaNome.trim().toLowerCase())
     const okFuncao = filtroFuncao === "" || u.perfilAcesso === filtroFuncao
-    return okPref && okNome && okFuncao
+    return okPref && okFuncao
   })
 
   const cpfValido = validaCPF(cpf)
@@ -49,12 +53,17 @@ export default function AdminServidores() {
   const salvar = () => {
     if (!podeSalvar) return
     criar.mutate(
-      { nome, cpf, email, cargo, senha, perfilAcesso: perfil, prefeituraId: precisaPrefeitura ? prefeituraId : null },
+      {
+        nome, cpf, email, cargo, matricula, decretoNomeacao: decreto, senha,
+        perfilAcesso: perfil,
+        prefeituraId: precisaPrefeitura ? prefeituraId : null,
+      },
       {
         onSuccess: () => {
           showToast("Servidor cadastrado com a senha inicial informada.")
           setNovo(false)
-          setNome(""); setCpf(""); setEmail(""); setCargo(""); setSenha(""); setPerfil("servidor"); setPrefeituraId("")
+          setNome(""); setCpf(""); setEmail(""); setCargo(""); setMatricula(""); setDecreto("")
+          setSenha(""); setPerfil("servidor"); setPrefeituraId("")
         },
         onError: (e) => showToast(e instanceof Error ? e.message : "Não foi possível cadastrar."),
       }
@@ -91,6 +100,12 @@ export default function AdminServidores() {
             </FormField>
             <FormField label="Cargo">
               <Input value={cargo} onChange={(e) => setCargo(e.target.value)} placeholder="Ex: Servidor de Compras" />
+            </FormField>
+            <FormField label="Matrícula" hint="Número funcional no RH. Pode ser a chave de login (ADR-015).">
+              <Input value={matricula} onChange={(e) => setMatricula(e.target.value)} placeholder="Ex: MAT-4471" />
+            </FormField>
+            <FormField label="Decreto de Nomeação" hint="Para comissionados, é o número que a pessoa costuma lembrar.">
+              <Input value={decreto} onChange={(e) => setDecreto(e.target.value)} placeholder="Ex: Decreto 1.234/2026" />
             </FormField>
             <FormField label="Senha inicial" required hint="Mínimo de 12 caracteres.">
               <Input value={senha} onChange={(e) => setSenha(e.target.value)} type="password" autoComplete="new-password" />
@@ -131,7 +146,7 @@ export default function AdminServidores() {
       )}
 
       {/* Filtros da listagem — prefeitura, busca por servidor, função */}
-      {usuarios.isSuccess && (usuarios.data.length > 0 || filtroPrefeitura !== "" || buscaNome !== "" || filtroFuncao !== "") && (
+      {usuarios.isSuccess && (usuarios.data.length > 0 || filtroPrefeitura !== "" || buscaServidor !== "" || filtroFuncao !== "") && (
         <div className="mb-3 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
           <Dropdown
             value={filtroPrefeitura}
@@ -143,9 +158,10 @@ export default function AdminServidores() {
             ]}
           />
           <Input
-            value={buscaNome}
-            onChange={(e) => setBuscaNome(e.target.value)}
-            placeholder="Buscar por servidor..."
+            value={buscaServidor}
+            onChange={(e) => setBuscaServidor(e.target.value)}
+            placeholder="Buscar por nome ou matrícula..."
+            aria-label="Buscar por nome ou matrícula"
             className="h-9.5"
           />
           <Dropdown
@@ -170,10 +186,10 @@ export default function AdminServidores() {
         )}
         {usuarios.isSuccess && listaFiltrada.length > 0 && (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[820px] border-collapse">
+            <table className="w-full min-w-[940px] border-collapse">
               <thead>
                 <tr className="border-b border-border bg-ice">
-                  {["Servidor", "CPF", "Prefeitura", "Perfil", "Último Acesso", ""].map((h, i) => (
+                  {["Servidor", "CPF", "Matrícula", "Prefeitura", "Perfil", "Último Acesso", ""].map((h, i) => (
                     <Th key={h === "" ? `x-${i}` : h}>{h}</Th>
                   ))}
                 </tr>
@@ -193,6 +209,7 @@ export default function AdminServidores() {
                       </div>
                     </td>
                     <td className="px-4 py-3.25 font-mono text-sm text-text-3">{u.cpf.includes("*") ? u.cpf : formatCPF(u.cpf)}</td>
+                    <td className="px-4 py-3.25 font-mono text-sm text-text-3">{u.matricula ?? "—"}</td>
                     <td className="px-4 py-3.25 text-sm text-text-3">{nomePrefeitura(u.prefeituraId)}</td>
                     <td className="px-4 py-3.25">
                       <Tag tone={perfilTone(u.perfilAcesso)}>{PERFIL_ACESSO_LABEL[u.perfilAcesso]}</Tag>

@@ -115,6 +115,11 @@
       },
       "CreateUserRequest" : {
         "properties" : {
+          "appointmentDecree" : {
+            "maxLength" : 60,
+            "minLength" : 0,
+            "type" : "string"
+          },
           "cpf" : {
             "minLength" : 1,
             "type" : "string"
@@ -150,6 +155,11 @@
           },
           "profileAccess" : {
             "enum" : [ "ADMIN_GERAL", "COORDENADOR", "SERVIDOR" ],
+            "type" : "string"
+          },
+          "registrationNumber" : {
+            "maxLength" : 40,
+            "minLength" : 0,
             "type" : "string"
           }
         },
@@ -204,7 +214,11 @@
       "LoginRequest" : {
         "properties" : {
           "cpf" : {
-            "minLength" : 1,
+            "deprecated" : true,
+            "description" : "Obsoleto desde 21/08/2026 (ADR-015): use identifier.",
+            "type" : "string"
+          },
+          "identifier" : {
             "type" : "string"
           },
           "organizationId" : {
@@ -217,7 +231,6 @@
             "type" : "string"
           }
         },
-        "required" : [ "cpf", "password" ],
         "type" : "object"
       },
       "MembershipResponse" : {
@@ -460,6 +473,9 @@
       },
       "SessionUserResponse" : {
         "properties" : {
+          "appointmentDecree" : {
+            "type" : "string"
+          },
           "cpf" : {
             "type" : "string"
           },
@@ -482,6 +498,9 @@
           },
           "profileAccess" : {
             "enum" : [ "ADMIN_GERAL", "COORDENADOR", "SERVIDOR" ],
+            "type" : "string"
+          },
+          "registrationNumber" : {
             "type" : "string"
           },
           "status" : {
@@ -571,6 +590,11 @@
       },
       "UpdateUserRequest" : {
         "properties" : {
+          "appointmentDecree" : {
+            "maxLength" : 60,
+            "minLength" : 0,
+            "type" : "string"
+          },
           "departmentId" : {
             "format" : "uuid",
             "type" : "string"
@@ -598,6 +622,11 @@
           "profileAccess" : {
             "enum" : [ "ADMIN_GERAL", "COORDENADOR", "SERVIDOR" ],
             "type" : "string"
+          },
+          "registrationNumber" : {
+            "maxLength" : 40,
+            "minLength" : 0,
+            "type" : "string"
           }
         },
         "required" : [ "email", "name", "profileAccess" ],
@@ -605,6 +634,9 @@
       },
       "UserResponse" : {
         "properties" : {
+          "appointmentDecree" : {
+            "type" : "string"
+          },
           "cpf" : {
             "type" : "string"
           },
@@ -637,6 +669,9 @@
           },
           "profileAccess" : {
             "enum" : [ "ADMIN_GERAL", "COORDENADOR", "SERVIDOR" ],
+            "type" : "string"
+          },
+          "registrationNumber" : {
             "type" : "string"
           },
           "status" : {
@@ -684,6 +719,9 @@
           },
           "profileAccess" : {
             "enum" : [ "ADMIN_GERAL", "COORDENADOR", "SERVIDOR" ],
+            "type" : "string"
+          },
+          "registrationNumber" : {
             "type" : "string"
           },
           "status" : {
@@ -1324,6 +1362,13 @@
           "required" : false,
           "schema" : {
             "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "search",
+          "required" : false,
+          "schema" : {
             "type" : "string"
           }
         } ],

@@ -59,7 +59,7 @@ describe("autenticar", () => {
 
     // A mensagem do backend citava o usuário; a da interface não pode — senão a
     // tela vira oráculo de quem tem conta (enumeração).
-    await expect(autenticar("33333333333", "errada")).rejects.toThrow("CPF ou senha inválidos.")
+    await expect(autenticar("33333333333", "errada")).rejects.toThrow("CPF ou senha inválida.")
   })
 
   it("preserva a mensagem de bloqueio por excesso de tentativas", async () => {
@@ -101,7 +101,7 @@ describe("respostas malformadas", () => {
 
     // Um proxy no meio do caminho devolve HTML com content-type de JSON. Sem o
     // tratamento, o erro exibido seria de parse, escondendo o 502.
-    await expect(autenticar("33333333333", "senha")).rejects.toThrow("CPF ou senha inválidos.")
+    await expect(autenticar("33333333333", "senha")).rejects.toThrow("CPF ou senha inválida.")
   })
 
   it("usa a mensagem padrão quando o erro vem sem corpo JSON", async () => {

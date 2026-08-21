@@ -331,6 +331,7 @@ export interface components {
             urgency?: boolean;
         };
         CreateUserRequest: {
+            appointmentDecree?: string;
             cpf: string;
             /** Format: uuid */
             departmentId?: string;
@@ -343,6 +344,7 @@ export interface components {
             password: string;
             /** @enum {string} */
             profileAccess: "ADMIN_GERAL" | "COORDENADOR" | "SERVIDOR";
+            registrationNumber?: string;
         };
         DeactivationRequest: {
             reason: string;
@@ -363,10 +365,15 @@ export interface components {
             version?: number;
         };
         LoginRequest: {
-            cpf: string;
+            /**
+             * @deprecated
+             * @description Obsoleto desde 21/08/2026 (ADR-015): use identifier.
+             */
+            cpf?: string;
+            identifier?: string;
             /** Format: uuid */
             organizationId?: string;
-            password: string;
+            password?: string;
         };
         MembershipResponse: {
             active?: boolean;
@@ -463,6 +470,7 @@ export interface components {
             user?: components["schemas"]["SessionUserResponse"];
         };
         SessionUserResponse: {
+            appointmentDecree?: string;
             cpf?: string;
             email?: string;
             /** Format: uuid */
@@ -473,6 +481,7 @@ export interface components {
             name?: string;
             /** @enum {string} */
             profileAccess?: "ADMIN_GERAL" | "COORDENADOR" | "SERVIDOR";
+            registrationNumber?: string;
             /** @enum {string} */
             status?: "ACTIVE" | "INACTIVE" | "PENDING_ACTIVATION";
         };
@@ -499,6 +508,7 @@ export interface components {
             urgency?: boolean;
         };
         UpdateUserRequest: {
+            appointmentDecree?: string;
             /** Format: uuid */
             departmentId?: string;
             /** Format: email */
@@ -509,8 +519,10 @@ export interface components {
             organizationId?: string;
             /** @enum {string} */
             profileAccess: "ADMIN_GERAL" | "COORDENADOR" | "SERVIDOR";
+            registrationNumber?: string;
         };
         UserResponse: {
+            appointmentDecree?: string;
             cpf?: string;
             /** Format: date-time */
             createdAt?: string;
@@ -524,6 +536,7 @@ export interface components {
             name?: string;
             /** @enum {string} */
             profileAccess?: "ADMIN_GERAL" | "COORDENADOR" | "SERVIDOR";
+            registrationNumber?: string;
             /** @enum {string} */
             status?: "ACTIVE" | "INACTIVE" | "PENDING_ACTIVATION";
             /** Format: date-time */
@@ -543,6 +556,7 @@ export interface components {
             name?: string;
             /** @enum {string} */
             profileAccess?: "ADMIN_GERAL" | "COORDENADOR" | "SERVIDOR";
+            registrationNumber?: string;
             /** @enum {string} */
             status?: "ACTIVE" | "INACTIVE" | "PENDING_ACTIVATION";
         };
@@ -1034,6 +1048,7 @@ export interface operations {
         parameters: {
             query?: {
                 organizationId?: string;
+                search?: string;
             };
             header?: never;
             path?: never;
