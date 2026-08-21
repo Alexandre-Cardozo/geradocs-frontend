@@ -209,7 +209,16 @@ A decisão de autenticação mockada registrada no §21 foi substituída para o 
 - A rota estática `/redefinir-senha?token=` completa o link enviado por e-mail. O backend deve usar a URL com o `basePath`: `http://localhost:3000/GeraDocsFrontend/redefinir-senha` no ambiente local.
 - A sessão real alimenta temporariamente os módulos mockados pela fachada existente. Isso preserva telas e hooks, mas dados de processos/configurações ainda não representam persistência real.
 
-## 24. Vocabulário de status reduzido a três
+## 24. Integração real da administração de acesso
+
+As telas de Administração e a aba de Secretarias deixaram de manipular a base em memória. `lib/api/access-client.ts` é a camada anticorrupção que converte os DTOs do Spring para `Tenant` e `Usuario`, e reutiliza o transporte autenticado de `auth-client.ts`.
+
+- Prefeituras, departamentos e usuários são consultados/criados pela API real e o cache é invalidado pelos hooks TanStack Query após cada mutação.
+- "Remover" passou a significar **desativar**: não há exclusão local nem perda silenciosa de histórico. Como o backend exige concorrência otimista, a camada lê a versão atual e envia `If-Match` antes da desativação.
+- O formulário envia a senha inicial escolhida pelo administrador (mínimo de 12 caracteres); não existe senha padrão no frontend. CPFs de listagem são tratados como mascarados, conforme a resposta do servidor.
+- Identidade visual, cabeçalho/rodapé e PCA permanecem temporariamente locais na tela de Configurações, pois ainda não possuem contrato/persistência no backend. A interface não deve apresentar essas opções como integração concluída.
+
+## 25. Vocabulário de status reduzido a três
 
 O fluxo de aprovação entre setores sai do produto: na Prefeitura de Ecoporanga ele acontece no GPI da E&L, e a plataforma termina na elaboração do documento (ver [`fluxo-contratacao.md`](fluxo-contratacao.md) e o [plano das diretrizes](plano-diretrizes-reuniao.md)). Com isso, quatro dos seis status de `StatusProcesso` passariam a existir sem nada que os produza.
 

@@ -46,6 +46,8 @@ ser consultada em toda tarefa de interface, dado ou domínio.
   recuperação/redefinição de senha falam com a API Spring por
   `lib/api/auth-client.ts`. O access token vive só em memória; o refresh token é
   cookie `HttpOnly`.
+- **Administração de acesso é real**: prefeituras, secretarias e usuários usam
+  a API Spring autenticada; criações e desativações não alteram mais fixtures.
 - **Todo o resto ainda é mock**: processos, documentos, seções, versões e o
   parecer da IA vivem em memória (`lib/api/client.ts` + `lib/mocks/fixtures.ts`) e
   somem ao recarregar.

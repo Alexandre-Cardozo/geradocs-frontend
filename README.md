@@ -4,7 +4,7 @@ Aplicação web do **GeraDocs**, SaaS GovTech da **LAHHM** que automatiza, com I
 
 > Que documentos existem, em que ordem, com que fundamento legal e quais são as lacunas conhecidas: **[docs/fluxo-contratacao.md](docs/fluxo-contratacao.md)** — leia antes de mexer em documentos, wizard ou hub do processo.
 
-O projeto está em integração progressiva com o backend Spring Boot. Autenticação, sessão, refresh, logout e recuperação/redefinição de senha já usam a API real; processos, documentos, aprovações e configurações ainda operam sobre a camada mockada até seus módulos existirem no backend.
+O projeto está em integração progressiva com o backend Spring Boot. Autenticação, sessão, refresh, logout, recuperação/redefinição de senha, prefeituras, secretarias e usuários já usam a API real; processos, documentos, aprovações, identidade visual e PCA ainda operam sobre a camada mockada até seus módulos existirem no backend.
 
 ## Stack
 
@@ -60,7 +60,8 @@ lib/                    # DADOS E DOMÍNIO (TypeScript puro)
   format.ts             # formatBRL ("R$ 485.000,00"), formatData, formatDataHora
   mocks/fixtures.ts     # dados — nunca importar em componentes
   api/auth-client.ts    # transporte HTTP, token em memória, refresh HttpOnly
-  api/client.ts         # fachada híbrida: auth real + módulos ainda mockados
+  api/access-client.ts  # transporte administrativo: organizações, departamentos e usuários
+  api/client.ts         # fachada híbrida: acesso real + módulos ainda mockados
   api/hooks.ts          # hooks TanStack Query (única porta das views)
 design_system/          # DS fonte (tokens, .prompt.md, guidelines) — normativo
 docs/                   # estrutura.md · decisions.md · fluxo-contratacao.md (domínio)
@@ -83,6 +84,8 @@ docs/                   # estrutura.md · decisions.md · fluxo-contratacao.md (
 3. Execute `npm run dev` e acesse `http://localhost:3000/GeraDocsFrontend/login`.
 
 O access token JWT fica somente em memória. O refresh token é rotativo e permanece em cookie `HttpOnly`; ao recarregar a página, o frontend renova a sessão e consulta `GET /api/v1/me`. Não armazene tokens no `localStorage`.
+
+As áreas administrativas também usam a API protegida: `GET`/`POST` de organizações, departamentos e usuários, além das desativações lógicas. As mutações de desativação buscam a versão atual e enviam `If-Match`, mantendo a concorrência otimista definida pelo backend. A senha inicial é informada pelo administrador e precisa ter ao menos 12 caracteres; o CPF devolvido nas listagens já vem mascarado pelo servidor.
 
 > ⚠️ **A autenticação está validada apenas em ambiente local.** O refresh token usa `SameSite=Lax`, que funciona entre `localhost:3000` e `localhost:8080` porque a porta não separa *sites*. Publicado o front em `github.io` e a API em outro domínio, a renovação da sessão deixa de receber o cookie e o usuário cai no `/login` a cada recarga. A decisão que resolve isso — publicar as duas pontas sob o mesmo domínio registrável — está em [ADR-013](../geradocs-backend/docs/architecture-decisions.md) e precisa ser executada antes da primeira publicação.
 
