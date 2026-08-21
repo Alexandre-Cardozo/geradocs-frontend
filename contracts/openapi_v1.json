@@ -77,6 +77,42 @@
         "required" : [ "name" ],
         "type" : "object"
       },
+      "CreateProcurementProcessRequest" : {
+        "properties" : {
+          "demandObject" : {
+            "maxLength" : 2000,
+            "minLength" : 3,
+            "type" : "string"
+          },
+          "departmentId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "estimatedValue" : {
+            "minimum" : 0.0,
+            "type" : "number"
+          },
+          "legalBasis" : {
+            "maxLength" : 1000,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "modality" : {
+            "enum" : [ "ELECTRONIC_AUCTION", "COMPETITION", "CONTEST", "AUCTION", "COMPETITIVE_DIALOGUE", "DIRECT_AWARD_ARTICLE_75", "SOLE_SOURCE", "ACCREDITATION" ],
+            "type" : "string"
+          },
+          "objectDescription" : {
+            "maxLength" : 1000,
+            "minLength" : 3,
+            "type" : "string"
+          },
+          "urgency" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "departmentId", "estimatedValue", "modality", "objectDescription" ],
+        "type" : "object"
+      },
       "CreateUserRequest" : {
         "properties" : {
           "cpf" : {
@@ -251,6 +287,78 @@
         },
         "type" : "object"
       },
+      "PageProcurementProcessResponse" : {
+        "properties" : {
+          "content" : {
+            "items" : {
+              "$ref" : "#/components/schemas/ProcurementProcessResponse"
+            },
+            "type" : "array"
+          },
+          "empty" : {
+            "type" : "boolean"
+          },
+          "first" : {
+            "type" : "boolean"
+          },
+          "last" : {
+            "type" : "boolean"
+          },
+          "number" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "numberOfElements" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "pageable" : {
+            "$ref" : "#/components/schemas/PageableObject"
+          },
+          "size" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "sort" : {
+            "$ref" : "#/components/schemas/SortObject"
+          },
+          "totalElements" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "totalPages" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "type" : "object"
+      },
+      "PageableObject" : {
+        "properties" : {
+          "offset" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "pageNumber" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "pageSize" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "paged" : {
+            "type" : "boolean"
+          },
+          "sort" : {
+            "$ref" : "#/components/schemas/SortObject"
+          },
+          "unpaged" : {
+            "type" : "boolean"
+          }
+        },
+        "type" : "object"
+      },
       "PasswordRecoveryRequest" : {
         "properties" : {
           "email" : {
@@ -277,6 +385,71 @@
           }
         },
         "required" : [ "password", "token" ],
+        "type" : "object"
+      },
+      "ProcurementProcessResponse" : {
+        "properties" : {
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "demandObject" : {
+            "type" : "string"
+          },
+          "departmentId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "departmentName" : {
+            "type" : "string"
+          },
+          "estimatedValue" : {
+            "type" : "number"
+          },
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "legalBasis" : {
+            "type" : "string"
+          },
+          "modality" : {
+            "enum" : [ "ELECTRONIC_AUCTION", "COMPETITION", "CONTEST", "AUCTION", "COMPETITIVE_DIALOGUE", "DIRECT_AWARD_ARTICLE_75", "SOLE_SOURCE", "ACCREDITATION" ],
+            "type" : "string"
+          },
+          "objectDescription" : {
+            "type" : "string"
+          },
+          "organizationId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "processNumber" : {
+            "type" : "string"
+          },
+          "responsibleUserId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "responsibleUserName" : {
+            "type" : "string"
+          },
+          "status" : {
+            "enum" : [ "DRAFT" ],
+            "type" : "string"
+          },
+          "updatedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "urgency" : {
+            "type" : "boolean"
+          },
+          "version" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        },
         "type" : "object"
       },
       "SessionResponse" : {
@@ -334,6 +507,20 @@
         },
         "type" : "object"
       },
+      "SortObject" : {
+        "properties" : {
+          "empty" : {
+            "type" : "boolean"
+          },
+          "sorted" : {
+            "type" : "boolean"
+          },
+          "unsorted" : {
+            "type" : "boolean"
+          }
+        },
+        "type" : "object"
+      },
       "UpdateDepartmentRequest" : {
         "properties" : {
           "acronym" : {
@@ -364,6 +551,38 @@
           }
         },
         "required" : [ "name" ],
+        "type" : "object"
+      },
+      "UpdateProcurementProcessRequest" : {
+        "properties" : {
+          "demandObject" : {
+            "maxLength" : 2000,
+            "minLength" : 3,
+            "type" : "string"
+          },
+          "estimatedValue" : {
+            "minimum" : 0.0,
+            "type" : "number"
+          },
+          "legalBasis" : {
+            "maxLength" : 1000,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "modality" : {
+            "enum" : [ "ELECTRONIC_AUCTION", "COMPETITION", "CONTEST", "AUCTION", "COMPETITIVE_DIALOGUE", "DIRECT_AWARD_ARTICLE_75", "SOLE_SOURCE", "ACCREDITATION" ],
+            "type" : "string"
+          },
+          "objectDescription" : {
+            "maxLength" : 1000,
+            "minLength" : 3,
+            "type" : "string"
+          },
+          "urgency" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "estimatedValue", "modality", "objectDescription" ],
         "type" : "object"
       },
       "UpdateUserRequest" : {
@@ -646,7 +865,7 @@
     },
     "/api/v1/organizations" : {
       "get" : {
-        "operationId" : "list_1",
+        "operationId" : "list_2",
         "responses" : {
           "200" : {
             "content" : {
@@ -665,7 +884,7 @@
         "tags" : [ "organization-controller" ]
       },
       "post" : {
-        "operationId" : "create_1",
+        "operationId" : "create_2",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -693,7 +912,7 @@
     },
     "/api/v1/organizations/{organizationId}" : {
       "get" : {
-        "operationId" : "get_1",
+        "operationId" : "get_2",
         "parameters" : [ {
           "in" : "path",
           "name" : "organizationId",
@@ -718,7 +937,7 @@
         "tags" : [ "organization-controller" ]
       },
       "patch" : {
-        "operationId" : "update_1",
+        "operationId" : "update_2",
         "parameters" : [ {
           "in" : "path",
           "name" : "organizationId",
@@ -971,6 +1190,153 @@
           }
         },
         "tags" : [ "organization-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes" : {
+      "get" : {
+        "operationId" : "list_1",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "status",
+          "required" : false,
+          "schema" : {
+            "enum" : [ "DRAFT" ],
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "search",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "default" : 0,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "default" : 20,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PageProcurementProcessResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "procurement-process-controller" ]
+      },
+      "post" : {
+        "operationId" : "create_1",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateProcurementProcessRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProcurementProcessResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "procurement-process-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{processId}" : {
+      "get" : {
+        "operationId" : "get_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProcurementProcessResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "procurement-process-controller" ]
+      },
+      "patch" : {
+        "operationId" : "update_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "header",
+          "name" : "If-Match",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UpdateProcurementProcessRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProcurementProcessResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "procurement-process-controller" ]
       }
     },
     "/api/v1/users" : {

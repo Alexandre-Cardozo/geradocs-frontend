@@ -34,6 +34,7 @@ import {
   listarUsuarios as listarUsuariosNaApi,
   obterTenant as obterTenantNaApi,
 } from "@/lib/api/access-client"
+import { criarProcessoReal, listarProcessos } from "@/lib/api/procurement-client"
 import { dataBrasiliaISO, dataHoraBrasiliaISO } from "@/lib/format"
 import type {
   ApontamentoRetificacao,
@@ -271,24 +272,7 @@ function escopoPrefeituras(): string[] | null {
 }
 
 export async function getProcessos(params: ListaProcessosParams = {}): Promise<Paginado<Processo>> {
-  await delay()
-  const { busca = "", status = "todos", pagina = 1, porPagina = 8 } = params
-  const escopo = escopoPrefeituras()
-  const filtrados = db.processos.filter((p) => {
-    if (escopo && !escopo.includes(p.prefeituraId)) return false
-    const matchStatus = status === "todos" || p.status === status
-    const q = busca.trim().toLowerCase()
-    const matchBusca = q === "" || p.objeto.toLowerCase().includes(q) || p.id.toLowerCase().includes(q)
-    return matchStatus && matchBusca
-  })
-  const totalPaginas = Math.max(1, Math.ceil(filtrados.length / porPagina))
-  const inicio = (pagina - 1) * porPagina
-  return {
-    itens: clone(filtrados.slice(inicio, inicio + porPagina)),
-    total: filtrados.length,
-    pagina,
-    totalPaginas,
-  }
+  return listarProcessos(params)
 }
 
 export async function getProcesso(id: string): Promise<Processo> {
@@ -304,34 +288,7 @@ export async function getProximoNumeroProcesso(): Promise<string> {
 }
 
 export async function criarProcesso(input: NovoProcessoInput): Promise<Processo> {
-  await delay(600)
-  const autor = exigeSessao()
-  if (!autor.prefeituraId) throw new Error("Somente usuários vinculados a uma prefeitura criam processos.")
-  const id = `PROC-${ANO_SERIE}-${String(db.seqProcesso++).padStart(3, "0")}`
-  const hoje = dataBrasiliaISO()
-  const processo: Processo = {
-    id,
-    prefeituraId: autor.prefeituraId,
-    objeto: input.objeto || "Novo Processo de Contratação",
-    objetoDemanda: input.objetoDemanda,
-    modalidade: input.modalidade,
-    secretaria: input.secretaria,
-    status: "rascunho",
-    valorEstimado: input.valorEstimado ?? 0,
-    responsavel: autor.nome,
-    criadoEm: hoje,
-    atualizadoEm: hoje,
-    etpStatus: "Não iniciado",
-    trStatus: "Não iniciado",
-    documentos: input.documentos,
-    fundamentoLegal: input.fundamentoLegal,
-    ata: input.ata ?? null,
-    fases: input.fases,
-    dfdArquivo: input.dfdArquivo ?? null,
-    trilha: [],
-  }
-  db.processos.unshift(processo)
-  return clone(processo)
+  return criarProcessoReal(input)
 }
 
 export interface AtualizarProcessoInput {

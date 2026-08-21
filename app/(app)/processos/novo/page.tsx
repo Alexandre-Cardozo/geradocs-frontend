@@ -33,7 +33,6 @@ import {
 import {
   useConfigTenant,
   useCriarProcesso,
-  useProximoNumeroProcesso,
 } from "@/lib/api/hooks";
 import {
   CATALOGO,
@@ -173,7 +172,6 @@ const labelClasses = "text-base font-semibold text-text-2";
 export default function NovoProcesso() {
   const router = useRouter();
   const { data: tenant } = useConfigTenant();
-  const { data: proximoNumero } = useProximoNumeroProcesso();
   const criarProcesso = useCriarProcesso();
 
   const [step, setStep] = useState(1);
@@ -242,7 +240,10 @@ export default function NovoProcesso() {
     (step === 2 && secretaria !== "" && objeto.trim() !== "" && dfdOuObjeto) ||
     step === 3;
 
-  const numeroProcesso = proximoNumero ?? "PROC-2024-090";
+  // A numeração é atribuída de forma atômica pelo back-end na criação.
+  // Não antecipamos um número no cliente para evitar colisões entre usuários.
+  const numeroProcesso = "Será definido pelo servidor";
+  const secretariaNome = tenant?.secretarias.find((item) => item.id === secretaria)?.nome ?? "";
 
   const handleCreate = () => {
     if (!modalidadeSel) return;
@@ -270,27 +271,17 @@ export default function NovoProcesso() {
         },
       },
       {
-        onSuccess: (processo) => {
-          // Verificação do DFD primeiro, quando pedida; senão, o primeiro
-          // documento do fluxo — que nem sempre é o ETP (contratação direta).
-          if (verificarDFD) return router.push(`/processos/dfd?id=${encodeURIComponent(processo.id)}`);
-          const primeiro = documentosEscolhidos[0];
-          router.push(
-            primeiro
-              ? `/processos/documento?id=${encodeURIComponent(processo.id)}&tipo=${CATALOGO[primeiro].slug}`
-              : `/processos/detalhe?id=${encodeURIComponent(processo.id)}`,
-          );
+        onSuccess: () => {
+          // DFD, ETP e documentos ainda são as próximas etapas do back-end.
+          // A lista já é integrada e exibe o rascunho persistido.
+          router.push("/processos");
         },
       },
     );
   };
 
   const primeiroDocumento = documentosEscolhidos[0];
-  const destinoAposCriar = verificarDFD
-    ? "à verificação do DFD pela IA"
-    : primeiroDocumento
-      ? `ao preenchimento do ${CATALOGO[primeiroDocumento].titulo}`
-      : "ao painel do processo";
+  const destinoAposCriar = "à lista de processos como rascunho";
 
   return (
     <div className="max-w-content p-4 sm:p-5 lg:p-7">
@@ -424,7 +415,7 @@ export default function NovoProcesso() {
                     options={[
                       { value: "", label: "Selecione a secretaria..." },
                       ...(tenant?.secretarias ?? []).map((s) => ({
-                        value: s.nome,
+                        value: s.id,
                         label: s.nome,
                       })),
                     ]}
@@ -727,7 +718,7 @@ export default function NovoProcesso() {
                     ? MODALIDADE_LABEL[modalidadeSel.valor]
                     : undefined,
                 },
-                { rotulo: "Secretaria", valor: secretaria },
+                { rotulo: "Secretaria", valor: secretariaNome },
                 { rotulo: "Descrição", valor: objeto.trim() },
                 {
                   rotulo: "Objeto da demanda",

@@ -229,3 +229,12 @@ O fluxo de aprovação entre setores sai do produto: na Prefeitura de Ecoporanga
 - **O que sobrevive:** a trilha de auditoria. `TransicaoAprovacao` vira `EventoProcesso` (criação, troca de modalidade, geração de documento, retificação, encerramento, reabertura) — é o único registro do que aconteceu **dentro** da plataforma, já que o GPI só registra o que vem depois.
 - **Encerramento:** ocorre quando todos os documentos do processo foram gerados, com a válvula de escape padrão do produto — encerrar mesmo assim, mediante justificativa registrada.
 - **Reversão:** se um dia um ente sem sistema de protocolo precisar do fluxo interno, ele volta como módulo próprio de workflow, não como ressurreição destes status. Ver ADR §20, que esta decisão substitui no que toca ao vocabulário.
+
+## 26. Primeira integração real de processos de compra
+
+Criação e listagem de processos passam a usar `GET` e `POST /api/v1/procurement-processes`. A camada `lib/api/procurement-client.ts` traduz o contrato do Spring para o tipo de tela `Processo`, mantendo as views dependentes apenas dos hooks existentes.
+
+- O servidor atribui o número `PROC-AAAA-NNNNNN` de forma atômica no `POST`; o wizard não exibe previsão numérica que possa colidir com outra criação.
+- O seletor de secretaria envia o identificador real do departamento. Organização, usuário responsável e isolamento por tenant são derivados da sessão pelo backend, nunca enviados pelo navegador.
+- O processo nasce como `DRAFT`/Rascunho. Os filtros para estados ainda não implementados retornam vazio, em vez de simular um estado inexistente no servidor.
+- Depois de criar, o usuário volta para a lista integrada. DFD, detalhe, edição e geração documental permanecem mockados até os respectivos contratos e persistência serem implementados; portanto o wizard não redireciona mais para uma tela que não encontraria o novo UUID no mock.

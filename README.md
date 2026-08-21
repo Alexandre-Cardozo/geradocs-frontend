@@ -4,7 +4,7 @@ Aplicação web do **GeraDocs**, SaaS GovTech da **LAHHM** que automatiza, com I
 
 > Que documentos existem, em que ordem, com que fundamento legal e quais são as lacunas conhecidas: **[docs/fluxo-contratacao.md](docs/fluxo-contratacao.md)** — leia antes de mexer em documentos, wizard ou hub do processo.
 
-O projeto está em integração progressiva com o backend Spring Boot. Autenticação, sessão, refresh, logout, recuperação/redefinição de senha, prefeituras, secretarias e usuários já usam a API real; processos, documentos, aprovações, identidade visual e PCA ainda operam sobre a camada mockada até seus módulos existirem no backend.
+O projeto está em integração progressiva com o backend Spring Boot. Autenticação, sessão, refresh, logout, recuperação/redefinição de senha, prefeituras, secretarias, usuários e a criação/listagem de processos usam a API real. Detalhe e edição de processo, DFD, documentos, aprovações, identidade visual e PCA continuam sobre a camada mockada até seus módulos existirem no backend.
 
 ## Stack
 

@@ -123,9 +123,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_1"];
+        get: operations["list_2"];
         put?: never;
-        post: operations["create_1"];
+        post: operations["create_2"];
         delete?: never;
         options?: never;
         head?: never;
@@ -139,13 +139,13 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_1"];
+        get: operations["get_2"];
         put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
-        patch: operations["update_1"];
+        patch: operations["update_2"];
         trace?: never;
     };
     "/api/v1/organizations/{organizationId}/deactivate": {
@@ -210,6 +210,38 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/procurement-processes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_1"];
+        put?: never;
+        post: operations["create_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/procurement-processes/{processId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["update_1"];
         trace?: never;
     };
     "/api/v1/users": {
@@ -287,6 +319,17 @@ export interface components {
             name: string;
             unit?: string;
         };
+        CreateProcurementProcessRequest: {
+            demandObject?: string;
+            /** Format: uuid */
+            departmentId: string;
+            estimatedValue: number;
+            legalBasis?: string;
+            /** @enum {string} */
+            modality: "ELECTRONIC_AUCTION" | "COMPETITION" | "CONTEST" | "AUCTION" | "COMPETITIVE_DIALOGUE" | "DIRECT_AWARD_ARTICLE_75" | "SOLE_SOURCE" | "ACCREDITATION";
+            objectDescription: string;
+            urgency?: boolean;
+        };
         CreateUserRequest: {
             cpf: string;
             /** Format: uuid */
@@ -350,6 +393,35 @@ export interface components {
             /** Format: int64 */
             version?: number;
         };
+        PageProcurementProcessResponse: {
+            content?: components["schemas"]["ProcurementProcessResponse"][];
+            empty?: boolean;
+            first?: boolean;
+            last?: boolean;
+            /** Format: int32 */
+            number?: number;
+            /** Format: int32 */
+            numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
+            /** Format: int32 */
+            size?: number;
+            sort?: components["schemas"]["SortObject"];
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+        };
+        PageableObject: {
+            /** Format: int64 */
+            offset?: number;
+            /** Format: int32 */
+            pageNumber?: number;
+            /** Format: int32 */
+            pageSize?: number;
+            paged?: boolean;
+            sort?: components["schemas"]["SortObject"];
+            unpaged?: boolean;
+        };
         PasswordRecoveryRequest: {
             /** Format: email */
             email: string;
@@ -357,6 +429,34 @@ export interface components {
         PasswordResetRequest: {
             password: string;
             token: string;
+        };
+        ProcurementProcessResponse: {
+            /** Format: date-time */
+            createdAt?: string;
+            demandObject?: string;
+            /** Format: uuid */
+            departmentId?: string;
+            departmentName?: string;
+            estimatedValue?: number;
+            /** Format: uuid */
+            id?: string;
+            legalBasis?: string;
+            /** @enum {string} */
+            modality?: "ELECTRONIC_AUCTION" | "COMPETITION" | "CONTEST" | "AUCTION" | "COMPETITIVE_DIALOGUE" | "DIRECT_AWARD_ARTICLE_75" | "SOLE_SOURCE" | "ACCREDITATION";
+            objectDescription?: string;
+            /** Format: uuid */
+            organizationId?: string;
+            processNumber?: string;
+            /** Format: uuid */
+            responsibleUserId?: string;
+            responsibleUserName?: string;
+            /** @enum {string} */
+            status?: "DRAFT";
+            /** Format: date-time */
+            updatedAt?: string;
+            urgency?: boolean;
+            /** Format: int64 */
+            version?: number;
         };
         SessionResponse: {
             activeMembership?: components["schemas"]["MembershipResponse"];
@@ -378,6 +478,11 @@ export interface components {
             /** @enum {string} */
             status?: "ACTIVE" | "INACTIVE" | "PENDING_ACTIVATION";
         };
+        SortObject: {
+            empty?: boolean;
+            sorted?: boolean;
+            unsorted?: boolean;
+        };
         UpdateDepartmentRequest: {
             acronym?: string;
             name: string;
@@ -385,6 +490,15 @@ export interface components {
         UpdateOrganizationRequest: {
             name: string;
             unit?: string;
+        };
+        UpdateProcurementProcessRequest: {
+            demandObject?: string;
+            estimatedValue: number;
+            legalBasis?: string;
+            /** @enum {string} */
+            modality: "ELECTRONIC_AUCTION" | "COMPETITION" | "CONTEST" | "AUCTION" | "COMPETITIVE_DIALOGUE" | "DIRECT_AWARD_ARTICLE_75" | "SOLE_SOURCE" | "ACCREDITATION";
+            objectDescription: string;
+            urgency?: boolean;
         };
         UpdateUserRequest: {
             /** Format: uuid */
@@ -592,7 +706,7 @@ export interface operations {
             };
         };
     };
-    list_1: {
+    list_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -612,7 +726,7 @@ export interface operations {
             };
         };
     };
-    create_1: {
+    create_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -636,7 +750,7 @@ export interface operations {
             };
         };
     };
-    get_1: {
+    get_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -658,7 +772,7 @@ export interface operations {
             };
         };
     };
-    update_1: {
+    update_2: {
         parameters: {
             query?: never;
             header?: {
@@ -816,6 +930,105 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["DepartmentResponse"];
+                };
+            };
+        };
+    };
+    list_1: {
+        parameters: {
+            query?: {
+                status?: "DRAFT";
+                search?: string;
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PageProcurementProcessResponse"];
+                };
+            };
+        };
+    };
+    create_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateProcurementProcessRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ProcurementProcessResponse"];
+                };
+            };
+        };
+    };
+    get_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                processId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ProcurementProcessResponse"];
+                };
+            };
+        };
+    };
+    update_1: {
+        parameters: {
+            query?: never;
+            header?: {
+                "If-Match"?: string;
+            };
+            path: {
+                processId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateProcurementProcessRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ProcurementProcessResponse"];
                 };
             };
         };
