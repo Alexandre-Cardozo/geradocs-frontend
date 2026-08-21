@@ -4,21 +4,19 @@
  * exporá; a troca de mocks por HTTP não deve alterar estes tipos.
  */
 
-/** Vocabulário fixo de status de processo. */
-export type StatusProcesso =
-  | "rascunho"
-  | "em_revisao"
-  | "aguardando"
-  | "aprovado"
-  | "rejeitado"
-  | "concluido"
+/**
+ * Vocabulário fixo de status de processo.
+ *
+ * Três, e não seis: o fluxo de aprovação entre setores acontece no sistema de
+ * processo administrativo da prefeitura, não aqui (ADR §24). A plataforma
+ * termina quando os documentos estão prontos — `em_revisao`, `aguardando`,
+ * `aprovado` e `rejeitado` descreviam etapas que ela não executa mais.
+ */
+export type StatusProcesso = "rascunho" | "em_elaboracao" | "concluido"
 
 export const STATUS_PROCESSO_LABEL: Record<StatusProcesso, string> = {
   rascunho: "Rascunho",
-  em_revisao: "Em Revisão",
-  aguardando: "Aguardando",
-  aprovado: "Aprovado",
-  rejeitado: "Rejeitado",
+  em_elaboracao: "Em Elaboração",
   concluido: "Concluído",
 }
 
@@ -103,21 +101,7 @@ export interface Processo {
   dfdArquivo?: string | null
   urgente?: boolean
   /** Trilha de auditoria das transições de status (fonte única — a fila de aprovações projeta daqui). */
-  trilha: TransicaoAprovacao[]
-  /** Data de envio para análise (rascunho → em_revisao). Ausente enquanto em rascunho. */
-  enviadoEm?: string
-  /** Prazo de análise, quando o processo está no pipeline de aprovação. */
-  prazo?: string
-  /** Parecer jurídico de controle prévio de legalidade (Art. 53). Gate para encaminhar ao gestor. */
-  parecerJuridico?: ParecerJuridico
-}
-
-/** Parecer jurídico de controle prévio de legalidade — Art. 53, Lei 14.133/21. */
-export interface ParecerJuridico {
-  favoravel: boolean
-  autor: string
-  data: string
-  comentario: string
+  trilha: EventoDoProcesso[]
 }
 
 export interface NovoProcessoInput {
@@ -200,66 +184,28 @@ export const PAPEL_LABEL: Record<PapelUsuario, string> = {
 }
 
 /**
- * Máquina de estados:
- * Rascunho → Em Revisão → (Retificação → Em Revisão) → Aprovado | Rejeitado → Concluído.
+ * Eventos que compõem a trilha do processo.
+ *
+ * A trilha sobrevive à remoção do fluxo de aprovação (ADR §24) porque é o único
+ * registro do que aconteceu **dentro** da plataforma — o sistema de protocolo da
+ * prefeitura só registra o que vem depois.
  */
-export type EventoAprovacao = "envio" | "aprovacao" | "rejeicao" | "retificacao" | "conclusao"
+export type EventoProcesso =
+  | "criacao"
+  | "troca_modalidade"
+  | "geracao_documento"
+  | "retificacao"
+  | "encerramento"
+  | "reabertura"
 
-export interface TransicaoAprovacao {
-  evento: EventoAprovacao
+export interface EventoDoProcesso {
+  evento: EventoProcesso
   de: StatusProcesso
   para: StatusProcesso
   autor: string
   papel: PapelUsuario
   data: string
   comentario: string
-}
-
-/** Item de conformidade do checklist de aprovação (derivado do estado do processo). */
-export interface ItemChecklist {
-  ok: boolean
-  texto: string
-}
-
-/**
- * Projeção de um processo na fila de aprovação. Montada a partir do `Processo`
- * (não é mais uma fixture própria) — ver `getFilaAprovacoes`.
- */
-export interface ItemAprovacao {
-  processoId: string
-  objeto: string
-  /** Documentos do processo, na ordem do fluxo. Substitui a taxonomia antiga "ETP + TR". */
-  documentos: TipoDocumento[]
-  secretaria: string
-  responsavel: string
-  valorEstimado: number
-  modalidade: Modalidade
-  enviadoEm: string
-  status: StatusProcesso
-  parecerJuridico?: ParecerJuridico
-  checklist: ItemChecklist[]
-  trilha: TransicaoAprovacao[]
-}
-
-export type DecisaoAprovacao = "aprovar" | "rejeitar" | "retificar"
-
-/**
- * Apontamento de retificação — a comissão/gestor marca uma seção específica de
- * um documento como pendente de correção. O elaborador o vê no editor e resolve.
- * Substitui o "parecer em texto livre único" por rastreabilidade por seção (TCU).
- */
-export interface ApontamentoRetificacao {
-  id: string
-  processoId: string
-  tipo: TipoDocumento
-  /** Seção apontada; ausente = apontamento do documento como um todo. */
-  secaoId?: string
-  secaoTitulo?: string
-  texto: string
-  autor: string
-  papel: PapelUsuario
-  data: string
-  resolvido: boolean
 }
 
 /**
@@ -374,8 +320,10 @@ export interface Sessao {
 export interface EstatisticasDashboard {
   processosAtivos: number
   processosNovosMes: number
-  aguardandoAprovacao: number
-  aguardandoUrgentes: number
+  /** Processos que já têm documento em elaboração. */
+  processosEmElaboracao: number
+  /** Documentos escolhidos no processo que ainda não foram gerados. */
+  documentosPendentes: number
   documentosGerados: number
   documentosSemana: number
   etpsConcluidos: number

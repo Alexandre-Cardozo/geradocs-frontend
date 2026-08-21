@@ -19,7 +19,6 @@ const matriz: Array<{ rota: string; permitidos: PerfilAcesso[] }> = [
   { rota: "/configuracoes", permitidos: ["coordenador"] },
   { rota: "/processos", permitidos: ["servidor", "coordenador"] },
   { rota: "/processos/novo", permitidos: ["servidor", "coordenador"] },
-  { rota: "/aprovacoes", permitidos: ["servidor", "coordenador"] },
   { rota: "/documentos", permitidos: ["servidor", "coordenador"] },
   { rota: "/perfil", permitidos: perfis },
 ]

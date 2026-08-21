@@ -13,7 +13,6 @@ const ACESSO_ROTA: Array<{ prefixo: string; perfis: PerfilAcesso[] }> = [
   { prefixo: "/admin", perfis: ["admin_geral"] },
   { prefixo: "/configuracoes", perfis: ["coordenador"] },
   { prefixo: "/processos", perfis: ["servidor", "coordenador"] },
-  { prefixo: "/aprovacoes", perfis: ["servidor", "coordenador"] },
   { prefixo: "/documentos", perfis: ["servidor", "coordenador"] },
   { prefixo: "/perfil", perfis: ["servidor", "coordenador", "admin_geral"] },
 ]
@@ -29,7 +28,6 @@ export function rotaPermitida(perfil: PerfilAcesso, pathname: string): boolean {
 export type IconeNav =
   | "dashboard"
   | "processos"
-  | "aprovacoes"
   | "documentos"
   | "configuracoes"
   | "prefeituras"
@@ -39,8 +37,6 @@ export interface ItemNav {
   href: string
   label: string
   icone: IconeNav
-  /** Fonte de contagem para o badge (só "aprovacoes" hoje). */
-  badge?: "aprovacoes"
 }
 
 /** Itens da seção "Principal" da sidebar por perfil. */
@@ -55,7 +51,6 @@ export function navPrincipal(perfil: PerfilAcesso): ItemNav[] {
   return [
     { href: "/", label: "Dashboard", icone: "dashboard" },
     { href: "/processos", label: "Processos", icone: "processos" },
-    { href: "/aprovacoes", label: "Aprovações", icone: "aprovacoes", badge: "aprovacoes" },
     { href: "/documentos", label: "Documentos", icone: "documentos" },
   ]
 }

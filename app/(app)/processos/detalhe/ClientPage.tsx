@@ -11,23 +11,21 @@ import {
   IconEye,
   IconFile,
   IconFileText,
-  IconHelp,
   IconPlus,
 } from "@/components/ui/icons"
 import { ErrorState, LoadingState } from "@/components/shared/estados"
 import { useToast } from "@/components/shared/providers"
 import {
-  useApontamentos,
   useAtualizarProcesso,
   useConfigTenant,
   useDocumentos,
-  useEnviarParaAprovacao,
+  useEncerrarProcesso,
   useGerarDocumento,
   useParecerDFD,
   useProcesso,
   useSecoes,
 } from "@/lib/api/hooks"
-import { CATALOGO, REGRA_MODALIDADE, documentosDaModalidade, ordenar, pendencias } from "@/lib/documentos"
+import { CATALOGO, documentosDaModalidade, ordenar, pendencias } from "@/lib/documentos"
 import { formatBRL, formatData } from "@/lib/format"
 import { MODALIDADE_LABEL, type TipoDocumento } from "@/lib/types"
 
@@ -40,11 +38,10 @@ export default function HubProcesso() {
   const processo = useProcesso(processoId)
   const documentos = useDocumentos()
   const parecer = useParecerDFD(processoId)
-  const apontamentos = useApontamentos(processoId)
   const { data: tenant } = useConfigTenant()
   const atualizar = useAtualizarProcesso()
   const gerar = useGerarDocumento()
-  const enviar = useEnviarParaAprovacao()
+  const encerrar = useEncerrarProcesso()
 
   // Seções de cada tipo, para o progresso dos cards. As chamadas são explícitas
   // e em ordem fixa porque hooks não podem ser chamados em laço.
@@ -118,20 +115,29 @@ export default function HubProcesso() {
     )
   }
 
-  // Envio para aprovação (rascunho → em_revisao): exige os obrigatórios gerados.
+  // Encerramento: a plataforma termina quando os documentos estão prontos. O
+  // protocolo e a aprovação acontecem no sistema administrativo da prefeitura.
   const tiposGeradosAgora = docsGerados.map((d) => d.tipo)
-  const obrigatoriosPendentes = REGRA_MODALIDADE[proc.modalidade].obrigatorios
-    .filter((t) => proc.documentos.includes(t) && !tiposGeradosAgora.includes(t))
-  const podeEnviar = proc.status === "rascunho" && obrigatoriosPendentes.length === 0
-  const apontamentosAbertos = (apontamentos.data ?? []).filter((a) => !a.resolvido)
+  const documentosPendentes = ordenar(proc.documentos.filter((t) => !tiposGeradosAgora.includes(t)))
+  const podeEncerrar = proc.status !== "concluido" && proc.documentos.length > 0
 
-  const enviarParaAprovacao = () => {
-    enviar.mutate(
-      { processoId, comentario: "" },
+  const encerrarProcesso = () => {
+    // Pendência não impede: exige justificativa. A plataforma orienta, não trava.
+    const justificativa =
+      documentosPendentes.length === 0
+        ? ""
+        : (window.prompt(
+            `Faltam ${documentosPendentes.length} documento(s): ${documentosPendentes
+              .map((t) => CATALOGO[t].titulo)
+              .join(", ")}.\n\nInforme a justificativa para encerrar mesmo assim:`,
+          ) ?? "")
+    if (documentosPendentes.length > 0 && justificativa.trim() === "") return
+    encerrar.mutate(
+      { processoId, justificativa },
       {
-        onSuccess: () => showToast("Processo enviado para análise da comissão."),
-        onError: (e) => showToast(e instanceof Error ? e.message : "Não foi possível enviar o processo."),
-      }
+        onSuccess: () => showToast("Processo encerrado. Protocole os documentos no sistema da prefeitura."),
+        onError: (e) => showToast(e instanceof Error ? e.message : "Não foi possível encerrar o processo."),
+      },
     )
   }
 
@@ -298,7 +304,6 @@ export default function HubProcesso() {
           const bloqueios = pendencias(tipo, proc.documentos, tiposGerados)
           const bloqueado = bloqueios.length > 0 && !finalizado
           const editorHref = `/processos/documento?id=${encodeURIComponent(processoId)}&tipo=${meta.slug}`
-          const apontamentosDoTipo = apontamentosAbertos.filter((a) => a.tipo === tipo)
 
           return (
             <div
@@ -333,20 +338,6 @@ export default function HubProcesso() {
 
               <ProgressBar percent={progresso} />
 
-              {apontamentosDoTipo.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => router.push(editorHref)}
-                  className="mt-3 flex w-full items-start gap-2 rounded-md border border-tint-warning-border bg-tint-warning-bg px-3 py-2 text-left"
-                >
-                  <span className="mt-px flex shrink-0 text-tint-warning-fg">
-                    <IconHelp size={13} strokeWidth={2.5} />
-                  </span>
-                  <span className="text-xs font-semibold text-tint-warning-fg">
-                    {apontamentosDoTipo.length} apontamento(s) de retificação — abra o editor para corrigir e regerar.
-                  </span>
-                </button>
-              )}
 
               <div className="mt-4 flex flex-wrap items-center gap-2">
                 {bloqueado ? (
@@ -413,47 +404,34 @@ export default function HubProcesso() {
         </InfoBanner>
       )}
 
-      {/* Envio para aprovação — só em rascunho, com os obrigatórios gerados */}
-      {proc.status === "rascunho" && proc.documentos.length > 0 && (
+      {/* Encerramento — a plataforma entrega os documentos; o protocolo é no GPI */}
+      {podeEncerrar && (
         <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-card border border-border bg-surface p-5">
           <div className="min-w-0 flex-1">
-            <div className="font-display text-md font-bold text-text-1">Enviar para Aprovação</div>
-            <p className="m-0 mt-1 text-sm text-text-3">
-              {podeEnviar
-                ? "Todos os documentos obrigatórios foram gerados. Envie o processo para a análise da comissão e do gestor."
-                : `Gere os documentos obrigatórios antes de enviar: ${obrigatoriosPendentes
+            <div className="font-display text-md font-bold text-text-1">Encerrar Processo</div>
+            <p id="ajuda-encerrar" className="m-0 mt-1 text-sm text-text-3">
+              {documentosPendentes.length === 0
+                ? "Todos os documentos foram gerados. Encerre o processo e protocole os arquivos no sistema administrativo da prefeitura."
+                : `Ainda faltam: ${documentosPendentes
                     .map((t) => CATALOGO[t].titulo)
-                    .join(", ")}.`}
+                    .join(", ")}. É possível encerrar assim mesmo, mediante justificativa.`}
             </p>
           </div>
           <Button
             icon={<IconArrowRight size={14} strokeWidth={2.5} />}
-            disabled={!podeEnviar || enviar.isPending}
-            onClick={enviarParaAprovacao}
+            disabled={encerrar.isPending}
+            onClick={encerrarProcesso}
           >
-            {enviar.isPending ? "Enviando..." : "Enviar para Aprovação"}
+            {encerrar.isPending ? "Encerrando..." : "Encerrar Processo"}
           </Button>
         </div>
       )}
 
-      {/* Processo já no pipeline — atalho para a fila de aprovação */}
-      {["em_revisao", "aguardando", "aprovado", "rejeitado"].includes(proc.status) && (
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-card border border-border bg-surface p-5">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <span className="font-display text-md font-bold text-text-1">Análise e Aprovação</span>
-              <StatusBadge status={proc.status} size="sm" />
-            </div>
-            <p className="m-0 mt-1 text-sm text-text-3">
-              {apontamentosAbertos.length > 0
-                ? `Há ${apontamentosAbertos.length} apontamento(s) de retificação a atender antes de reenviar.`
-                : "Acompanhe a análise e a decisão na fila de aprovações."}
-            </p>
-          </div>
-          <Button variant="secondary" icon={<IconEye size={14} />} onClick={() => router.push("/aprovacoes")}>
-            Ver na Fila de Aprovações
-          </Button>
-        </div>
+      {proc.status === "concluido" && (
+        <InfoBanner tone="success" className="mt-6">
+          Processo encerrado. Os documentos estão no repositório, prontos para protocolo no sistema
+          administrativo da prefeitura.
+        </InfoBanner>
       )}
     </div>
   )

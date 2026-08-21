@@ -19,8 +19,6 @@ export const chaves = {
   proximoNumero: ["processos", "proximo-numero"] as const,
   parecerDFD: (id: string) => ["parecer-dfd", id] as const,
   secoes: (id: string, tipo: TipoDocumento) => ["secoes", id, tipo] as const,
-  aprovacoes: ["aprovacoes"] as const,
-  apontamentos: (id: string) => ["apontamentos", id] as const,
   documentos: ["documentos"] as const,
   resumoDocumentos: ["documentos", "resumo"] as const,
   historicoVersoes: (id: string, tipo: TipoDocumento) => ["versoes", id, tipo] as const,
@@ -182,79 +180,28 @@ export function useGerarSecao(processoId: string, tipo: TipoDocumento) {
   })
 }
 
-export function useFilaAprovacoes() {
-  return useQuery({ queryKey: chaves.aprovacoes, queryFn: api.getFilaAprovacoes })
-}
-
-/** Invalida tudo que depende do status/trilha de um processo (fila, listas, detalhe). */
-function invalidarPipeline(queryClient: ReturnType<typeof useQueryClient>, processoId: string) {
-  void queryClient.invalidateQueries({ queryKey: chaves.aprovacoes })
+/** Invalida tudo que depende do status ou da trilha de um processo. */
+function invalidarProcesso(queryClient: ReturnType<typeof useQueryClient>, processoId: string) {
   void queryClient.invalidateQueries({ queryKey: ["processos"] })
   void queryClient.invalidateQueries({ queryKey: chaves.processo(processoId) })
-  void queryClient.invalidateQueries({ queryKey: chaves.apontamentos(processoId) })
   void queryClient.invalidateQueries({ queryKey: chaves.estatisticas })
 }
 
-export function useEnviarParaAprovacao() {
+export function useEncerrarProcesso() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (input: { processoId: string; comentario: string }) =>
-      api.enviarParaAprovacao(input.processoId, input.comentario),
-    onSuccess: (processo) => invalidarPipeline(queryClient, processo.id),
+    mutationFn: (input: { processoId: string; justificativa?: string }) =>
+      api.encerrarProcesso(input.processoId, input.justificativa ?? ""),
+    onSuccess: (processo) => invalidarProcesso(queryClient, processo.id),
   })
 }
 
-export function useRegistrarParecerJuridico() {
+export function useReabrirProcesso() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (input: { processoId: string; favoravel: boolean; comentario: string }) =>
-      api.registrarParecerJuridico(input.processoId, input.favoravel, input.comentario),
-    onSuccess: (processo) => invalidarPipeline(queryClient, processo.id),
-  })
-}
-
-export function useEncaminharParaAprovacao() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (input: { processoId: string; comentario: string }) =>
-      api.encaminharParaAprovacao(input.processoId, input.comentario),
-    onSuccess: (processo) => invalidarPipeline(queryClient, processo.id),
-  })
-}
-
-export function useConcluirProcesso() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (input: { processoId: string; comentario: string }) =>
-      api.concluirProcesso(input.processoId, input.comentario),
-    onSuccess: (processo) => invalidarPipeline(queryClient, processo.id),
-  })
-}
-
-export function useDecidirAprovacao() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: api.decidirAprovacao,
-    onSuccess: (item) => invalidarPipeline(queryClient, item.processoId),
-  })
-}
-
-export function useApontamentos(processoId: string) {
-  return useQuery({
-    queryKey: chaves.apontamentos(processoId),
-    queryFn: () => api.getApontamentos(processoId),
-    enabled: processoId !== "",
-  })
-}
-
-export function useResolverApontamento(processoId: string) {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (id: string) => api.resolverApontamento(id),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: chaves.apontamentos(processoId) })
-      void queryClient.invalidateQueries({ queryKey: chaves.aprovacoes })
-    },
+    mutationFn: (input: { processoId: string; motivo: string }) =>
+      api.reabrirProcesso(input.processoId, input.motivo),
+    onSuccess: (processo) => invalidarProcesso(queryClient, processo.id),
   })
 }
 
@@ -285,8 +232,7 @@ export function useGerarDocumento() {
       void queryClient.invalidateQueries({ queryKey: ["processos"] })
       void queryClient.invalidateQueries({ queryKey: ["secoes"] })
       void queryClient.invalidateQueries({ queryKey: ["versoes"] })
-      void queryClient.invalidateQueries({ queryKey: chaves.apontamentos(input.processoId) })
-      void queryClient.invalidateQueries({ queryKey: chaves.aprovacoes })
+      void queryClient.invalidateQueries({ queryKey: chaves.processo(input.processoId) })
     },
   })
 }

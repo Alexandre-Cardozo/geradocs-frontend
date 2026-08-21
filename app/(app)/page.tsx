@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/icons"
 import { ErrorState, SkeletonRows } from "@/components/shared/estados"
 import { Th } from "@/components/shared/tabela"
-import { useEstatisticas, useFilaAprovacoes, useProcessos, useSessao } from "@/lib/api/hooks"
+import { useEstatisticas, useProcessos, useSessao } from "@/lib/api/hooks"
 import { dataPorExtenso, formatBRL, formatData, saudacao } from "@/lib/format"
 import PainelAdmin from "@/app/(app)/admin/PainelAdmin"
 
@@ -26,10 +26,8 @@ export default function Dashboard() {
   const usuario = sessao?.usuario
   const estatisticas = useEstatisticas()
   const processos = useProcessos({ porPagina: 5 })
-  const aprovacoes = useFilaAprovacoes()
 
   const recentes = processos.data?.itens ?? []
-  const pendentes = (aprovacoes.data ?? []).filter((a) => a.status === "aguardando")
 
   // O admin geral vê um painel de sistema (prefeituras e servidores), não o fluxo de processos.
   if (usuario?.perfilAcesso === "admin_geral") return <PainelAdmin />
@@ -78,8 +76,8 @@ export default function Dashboard() {
                 tone="royal"
               />
               <StatCard
-                label="Aguardando Aprovação"
-                value={String(estatisticas.data.aguardandoAprovacao)}
+                label="Em Elaboração"
+                value={String(estatisticas.data.processosEmElaboracao)}
                 icon={IconClock}
                 tone="warning"
               />
@@ -153,43 +151,28 @@ export default function Dashboard() {
 
         {/* Coluna direita */}
         <div className="flex flex-col gap-5">
-          {/* Pendentes de aprovação */}
+          {/* Documentos pendentes — o que falta gerar nos processos abertos */}
           <div className="overflow-hidden rounded-card border border-border bg-surface">
             <div className="flex items-center justify-between border-b border-border-soft p-4.5">
-              <h3 className="m-0 font-display text-lg font-bold text-text-1">Pendentes de Aprovação</h3>
-              <span className="rounded-full bg-tint-danger-bg px-2 py-0.5 text-xs font-bold text-danger">
-                {aprovacoes.isSuccess ? pendentes.length : "…"}
+              <h3 className="m-0 font-display text-lg font-bold text-text-1">Documentos Pendentes</h3>
+              <span className="rounded-full bg-tint-royal-bg px-2 py-0.5 text-xs font-bold text-royal">
+                {estatisticas.isSuccess ? estatisticas.data.documentosPendentes : "…"}
               </span>
             </div>
-            {aprovacoes.isPending && <SkeletonRows rows={3} height={36} />}
-            {aprovacoes.isError && <ErrorState onRetry={() => void aprovacoes.refetch()} />}
-            {aprovacoes.isSuccess && (
-              <div className="py-2">
-                {pendentes.map((item) => (
-                  <div
-                    key={item.processoId}
-                    onClick={() => router.push("/aprovacoes")}
-                    className="flex cursor-pointer items-start gap-2.5 px-4.5 py-3 transition-colors hover:bg-ice"
-                  >
-                    <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md bg-tint-royal-bg">
-                      <span className="font-mono text-2xs font-bold text-royal">
-                        {item.documentos.length}
-                      </span>
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-base font-semibold text-text-1">{item.objeto}</div>
-                      <div className="mt-0.5 font-mono text-xs text-text-muted">{item.processoId}</div>
-                    </div>
-                  </div>
-                ))}
+            {estatisticas.isPending && <SkeletonRows rows={3} height={36} />}
+            {estatisticas.isError && <ErrorState onRetry={() => void estatisticas.refetch()} />}
+            {estatisticas.isSuccess && (
+              <div className="px-4.5 py-4 text-base text-text-3">
+                Documentos escolhidos nos processos abertos que ainda não foram gerados. A
+                plataforma encerra o processo quando todos estiverem prontos.
               </div>
             )}
             <div className="border-t border-border-soft px-4.5 py-3">
               <Link
-                href="/aprovacoes"
+                href="/processos"
                 className="block w-full rounded-md bg-tint-royal-bg py-2.25 text-center text-base font-semibold text-royal no-underline"
               >
-                Ver todas as aprovações
+                Ver processos
               </Link>
             </div>
           </div>

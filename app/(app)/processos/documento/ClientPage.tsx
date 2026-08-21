@@ -5,22 +5,20 @@ import { notFound, useRouter, useSearchParams } from "next/navigation"
 import { useRef, useState } from "react"
 
 import { Button, InfoBanner, ProgressBar, SectionBlock, Tag, Textarea, ValidationMsg } from "@/components/ui"
-import { IconArrowRight, IconCheck, IconCheckCircle, IconDownload, IconEye, IconHelp, IconSave, IconSparkles } from "@/components/ui/icons"
+import { IconArrowRight, IconCheckCircle, IconCheck, IconDownload, IconEye, IconHelp, IconSave, IconSparkles } from "@/components/ui/icons"
 import { PainelATA, PainelDaSecao } from "@/components/documentos/paineis"
 import { ErrorState, InlineSpinner, LoadingState } from "@/components/shared/estados"
 import { useToast } from "@/components/shared/providers"
 import {
-  useApontamentos,
   useAtualizarSecao,
   useDocumentos,
   useGerarDocumento,
   useGerarSecao,
   useProcesso,
-  useResolverApontamento,
   useSecoes,
 } from "@/lib/api/hooks"
 import { CATALOGO, porSlug } from "@/lib/documentos"
-import { PAPEL_LABEL, type SecaoDocumento, type StatusDocumento } from "@/lib/types"
+import { type SecaoDocumento, type StatusDocumento } from "@/lib/types"
 
 const statusRail: Record<StatusDocumento, { dot: string; chip: string }> = {
   "Completo": { dot: "bg-success", chip: "bg-tint-success-bg text-tint-success-fg" },
@@ -46,12 +44,8 @@ export default function EditorDocumento() {
   const salvar = useAtualizarSecao(processoId, tipo)
   const gerar = useGerarSecao(processoId, tipo)
   const gerarDocumento = useGerarDocumento()
-  const apontamentos = useApontamentos(processoId)
-  const resolver = useResolverApontamento(processoId)
 
   const jaGerado = (documentos.data ?? []).some((d) => d.processoId === processoId && d.tipo === tipo)
-  // Apontamentos de retificação abertos deste documento — o gestor os criou na fila de aprovação.
-  const apontamentosAbertos = (apontamentos.data ?? []).filter((a) => a.tipo === tipo && !a.resolvido)
 
   const [activeSection, setActiveSection] = useState("1")
   const [rascunho, setRascunho] = useState("")
@@ -215,43 +209,6 @@ export default function EditorDocumento() {
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 lg:p-6">
-          {apontamentosAbertos.length > 0 && (
-            <div className="mb-4 rounded-card border border-violet bg-tint-violet-bg px-4.5 py-4">
-              <div className="mb-2 flex items-center gap-2">
-                <span className="flex text-tint-violet-fg">
-                  <IconHelp size={16} />
-                </span>
-                <h3 className="m-0 font-display text-md font-bold text-tint-violet-fg">
-                  Apontamentos de Retificação ({apontamentosAbertos.length})
-                </h3>
-              </div>
-              <p className="m-0 mb-3 text-sm text-text-3">
-                Corrija os pontos abaixo e regere o {tipo} — isso cria uma nova versão e resolve os apontamentos.
-              </p>
-              <div className="flex flex-col gap-2">
-                {apontamentosAbertos.map((a) => (
-                  <div key={a.id} className="flex items-start gap-2.5 rounded-md border border-border bg-surface px-3 py-2">
-                    <div className="min-w-0 flex-1">
-                      {a.secaoTitulo && <div className="text-xs font-semibold text-text-2">{a.secaoTitulo}</div>}
-                      <div className="text-sm text-text-2">{a.texto}</div>
-                      <div className="mt-0.5 text-2xs text-text-muted">
-                        {a.autor} · {PAPEL_LABEL[a.papel]}
-                      </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      icon={<IconCheck size={12} strokeWidth={3} />}
-                      disabled={resolver.isPending}
-                      onClick={() => resolver.mutate(a.id)}
-                    >
-                      Resolver
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
           {active?.painel && active.painel !== "ata" ? (
             <PainelDaSecao secao={active} rascunho={rascunho} setRascunho={setRascunho} />

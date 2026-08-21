@@ -1,50 +1,43 @@
 import { describe, expect, it } from "vitest"
 
 import { EVENTO_LABEL, TRANSICOES, podeEmitir, proximoStatus, transicaoDe } from "@/lib/processos/fluxo"
-import type { EventoAprovacao, StatusProcesso } from "@/lib/types"
+import { STATUS_PROCESSO_LABEL } from "@/lib/types"
+import type { EventoProcesso, StatusProcesso } from "@/lib/types"
 
 /**
- * A máquina de estados é a única fonte das transições. Guardas de negócio
- * (documentos gerados, parecer) ficam fora dela de propósito — aqui só o grafo.
+ * A máquina de estados é a única fonte das transições. Guardas de negócio —
+ * quais documentos o processo contém e quais foram gerados — ficam fora dela.
  */
 
 describe("grafo de transições", () => {
-  it("leva o processo do rascunho à conclusão pelo caminho previsto", () => {
-    expect(proximoStatus("rascunho", "envio")).toBe("em_revisao")
-    expect(proximoStatus("em_revisao", "envio")).toBe("aguardando")
-    expect(proximoStatus("aguardando", "aprovacao")).toBe("aprovado")
-    expect(proximoStatus("aprovado", "conclusao")).toBe("concluido")
+  it("leva o processo do rascunho à conclusão", () => {
+    expect(proximoStatus("rascunho", "geracao_documento")).toBe("em_elaboracao")
+    expect(proximoStatus("em_elaboracao", "encerramento")).toBe("concluido")
   })
 
-  it("a retificação devolve para a revisão, não para o rascunho", () => {
-    // Voltar ao rascunho descartaria a submissão e o histórico dela.
-    expect(proximoStatus("aguardando", "retificacao")).toBe("em_revisao")
-  })
-
-  it("a rejeição é terminal", () => {
-    expect(proximoStatus("aguardando", "rejeicao")).toBe("rejeitado")
-    for (const evento of Object.keys(EVENTO_LABEL) as EventoAprovacao[]) {
-      expect(podeEmitir("rejeitado", evento), `rejeitado + ${evento}`).toBe(false)
-    }
+  it("permite reabrir o processo encerrado para retificar", () => {
+    // Corrigir um documento não pode exigir criar outro processo: isso quebraria
+    // o histórico do que já foi elaborado.
+    expect(proximoStatus("concluido", "reabertura")).toBe("em_elaboracao")
   })
 
   it("recusa transição que o grafo não declara", () => {
-    expect(proximoStatus("rascunho", "aprovacao")).toBeUndefined()
-    expect(proximoStatus("concluido", "envio")).toBeUndefined()
-    expect(podeEmitir("rascunho", "conclusao")).toBe(false)
+    expect(proximoStatus("rascunho", "encerramento")).toBeUndefined()
+    expect(proximoStatus("concluido", "encerramento")).toBeUndefined()
+    expect(podeEmitir("rascunho", "reabertura")).toBe(false)
   })
 
   it("devolve a transição inteira, com o papel que a executa", () => {
-    expect(transicaoDe("aguardando", "aprovacao")).toEqual({
-      evento: "aprovacao",
-      de: "aguardando",
-      para: "aprovado",
-      papel: "gestor_aprovador",
+    expect(transicaoDe("em_elaboracao", "encerramento")).toEqual({
+      evento: "encerramento",
+      de: "em_elaboracao",
+      para: "concluido",
+      papel: "servidor_compras",
     })
   })
 
   it("não encontra transição inexistente", () => {
-    expect(transicaoDe("concluido", "rejeicao")).toBeUndefined()
+    expect(transicaoDe("rascunho", "retificacao")).toBeUndefined()
   })
 })
 
@@ -55,14 +48,29 @@ describe("integridade da tabela", () => {
     expect(new Set(chaves).size).toBe(chaves.length)
   })
 
-  it("todo evento declarado tem rótulo para a trilha de auditoria", () => {
+  it("só usa status do vocabulário normativo", () => {
+    const vocabulario = Object.keys(STATUS_PROCESSO_LABEL) as StatusProcesso[]
     for (const transicao of TRANSICOES) {
-      expect(EVENTO_LABEL[transicao.evento], transicao.evento).toBeTruthy()
+      expect(vocabulario, `de: ${transicao.de}`).toContain(transicao.de)
+      expect(vocabulario, `para: ${transicao.para}`).toContain(transicao.para)
     }
   })
 
-  it("nenhuma transição sai de um estado terminal", () => {
-    const terminais: StatusProcesso[] = ["rejeitado", "concluido"]
-    expect(TRANSICOES.filter((t) => terminais.includes(t.de))).toEqual([])
+  it("todo evento tem rótulo para a trilha de auditoria", () => {
+    const eventos = Object.keys(EVENTO_LABEL) as EventoProcesso[]
+    for (const transicao of TRANSICOES) {
+      expect(eventos, transicao.evento).toContain(transicao.evento)
+    }
+  })
+
+  it("registra eventos que não mudam o status", () => {
+    // Trocar a modalidade e retificar um documento entram na trilha sem
+    // transição: o processo continua onde estava, mas alguém precisa saber que
+    // aconteceu.
+    const comTransicao = new Set(TRANSICOES.map((t) => t.evento))
+    expect(comTransicao.has("troca_modalidade")).toBe(false)
+    expect(comTransicao.has("retificacao")).toBe(false)
+    expect(EVENTO_LABEL.troca_modalidade).toBeTruthy()
+    expect(EVENTO_LABEL.retificacao).toBeTruthy()
   })
 })

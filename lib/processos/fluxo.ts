@@ -1,62 +1,64 @@
 /**
  * Máquina de estados do processo de contratação.
  *
- * A tabela abaixo é a **fonte única** das transições — antes elas viviam
- * embutidas em `decidirAprovacao`, sem cobrir envio nem conclusão. Aqui está
- * apenas a estrutura do grafo (de → para por evento e papel); as regras de
- * negócio (documentos gerados, parecer jurídico) são guardas aplicadas no
- * client, porque dependem de dados do processo.
+ * Três estados, e não seis: o fluxo de aprovação entre setores acontece no
+ * sistema de processo administrativo da prefeitura (ADR §24 do front-end). Aqui
+ * o processo nasce em rascunho, entra em elaboração quando ganha documentos e se
+ * encerra quando todos os que ele contém foram gerados.
  *
- * Usa somente os seis status fixos de `StatusProcesso` — nenhum status novo é
- * inventado (o vocabulário é normativo). Por isso o parecer jurídico (Art. 53)
- * não é um status, e sim um gate no checklist antes de encaminhar ao gestor.
+ * Esta tabela é a **fonte única** das transições. As guardas de negócio — quais
+ * documentos existem, quais foram gerados — ficam fora dela, porque dependem de
+ * dados do processo, não do grafo.
  */
 
-import type { EventoAprovacao, PapelUsuario, StatusProcesso } from "@/lib/types"
+import type { EventoProcesso, PapelUsuario, StatusProcesso } from "@/lib/types"
 
 export interface Transicao {
-  evento: EventoAprovacao
+  evento: EventoProcesso
   de: StatusProcesso
   para: StatusProcesso
-  /** Papel que executa a transição no fluxo real. */
+  /** Papel que executa a transição. */
   papel: PapelUsuario
 }
 
 /**
- * Rascunho → Em Revisão → Aguardando → Aprovado → Concluído,
- * com Retificação devolvendo de Aguardando para Em Revisão e Rejeição terminal.
- * O evento `envio` cobre tanto o envio do elaborador quanto o encaminhamento da
- * comissão (dois passos, mesmo evento — como na trilha de auditoria).
+ * Rascunho → Em Elaboração → Concluído, com reabertura para retificar.
+ *
+ * A reabertura existe porque documento gerado pode precisar de correção — e
+ * corrigir não pode exigir criar outro processo, que quebraria o histórico.
  */
 export const TRANSICOES: Transicao[] = [
-  { evento: "envio", de: "rascunho", para: "em_revisao", papel: "servidor_compras" },
-  { evento: "envio", de: "em_revisao", para: "aguardando", papel: "comissao" },
-  { evento: "aprovacao", de: "aguardando", para: "aprovado", papel: "gestor_aprovador" },
-  { evento: "rejeicao", de: "aguardando", para: "rejeitado", papel: "gestor_aprovador" },
-  { evento: "retificacao", de: "aguardando", para: "em_revisao", papel: "gestor_aprovador" },
-  { evento: "conclusao", de: "aprovado", para: "concluido", papel: "gestor_aprovador" },
+  { evento: "geracao_documento", de: "rascunho", para: "em_elaboracao", papel: "servidor_compras" },
+  { evento: "encerramento", de: "em_elaboracao", para: "concluido", papel: "servidor_compras" },
+  { evento: "reabertura", de: "concluido", para: "em_elaboracao", papel: "servidor_compras" },
 ]
 
-/** Rótulos dos eventos (usados na trilha de auditoria). */
-export const EVENTO_LABEL: Record<EventoAprovacao, string> = {
-  envio: "Envio",
-  aprovacao: "Aprovação",
-  rejeicao: "Rejeição",
-  retificacao: "Solicitação de Retificação",
-  conclusao: "Conclusão",
+/**
+ * Rótulos dos eventos na trilha.
+ *
+ * Nem todo evento muda o status: trocar a modalidade ou retificar um documento
+ * são registros da trilha sem transição correspondente.
+ */
+export const EVENTO_LABEL: Record<EventoProcesso, string> = {
+  criacao: "Criação do Processo",
+  troca_modalidade: "Troca de Modalidade",
+  geracao_documento: "Geração de Documento",
+  retificacao: "Retificação",
+  encerramento: "Encerramento",
+  reabertura: "Reabertura",
 }
 
 /** A transição que sai de `de` sob `evento`, se existir. */
-export function transicaoDe(de: StatusProcesso, evento: EventoAprovacao): Transicao | undefined {
+export function transicaoDe(de: StatusProcesso, evento: EventoProcesso): Transicao | undefined {
   return TRANSICOES.find((t) => t.de === de && t.evento === evento)
 }
 
 /** Há uma transição válida saindo de `de` sob `evento`? (só o grafo — sem guardas de negócio) */
-export function podeEmitir(de: StatusProcesso, evento: EventoAprovacao): boolean {
+export function podeEmitir(de: StatusProcesso, evento: EventoProcesso): boolean {
   return transicaoDe(de, evento) !== undefined
 }
 
 /** Status resultante de aplicar `evento` a `de`, ou `undefined` se a transição não existe. */
-export function proximoStatus(de: StatusProcesso, evento: EventoAprovacao): StatusProcesso | undefined {
+export function proximoStatus(de: StatusProcesso, evento: EventoProcesso): StatusProcesso | undefined {
   return transicaoDe(de, evento)?.para
 }

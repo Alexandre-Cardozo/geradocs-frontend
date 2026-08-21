@@ -10,10 +10,7 @@ import { STATUS_PROCESSO_LABEL, type StatusDocumento, type StatusProcesso } from
  */
 const statusCfg: Record<StatusProcesso, { pill: string; dot: string }> = {
   rascunho: { pill: "bg-status-draft-bg text-status-draft-fg", dot: "bg-status-draft-dot" },
-  em_revisao: { pill: "bg-status-review-bg text-status-review-fg", dot: "bg-status-review-dot" },
-  aguardando: { pill: "bg-status-waiting-bg text-status-waiting-fg", dot: "bg-status-waiting-dot" },
-  aprovado: { pill: "bg-status-approved-bg text-status-approved-fg", dot: "bg-status-approved-dot" },
-  rejeitado: { pill: "bg-status-rejected-bg text-status-rejected-fg", dot: "bg-status-rejected-dot" },
+  em_elaboracao: { pill: "bg-status-review-bg text-status-review-fg", dot: "bg-status-review-dot" },
   concluido: { pill: "bg-status-done-bg text-status-done-fg", dot: "bg-status-done-dot" },
 }
 

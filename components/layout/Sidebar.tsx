@@ -10,7 +10,6 @@ import geradocsLogo from "@/public/geradocs-mark-white.png";
 import {
   IconBuilding,
   IconCamera,
-  IconCheckCircle,
   IconDashboard,
   IconDownload,
   IconFileText,
@@ -21,7 +20,6 @@ import {
 } from "@/components/ui/icons";
 import {
   useAtualizarAvatar,
-  useFilaAprovacoes,
   useLogout,
   useSessao,
 } from "@/lib/api/hooks";
@@ -32,7 +30,6 @@ import { PERFIL_ACESSO_LABEL } from "@/lib/types";
 const ICONES: Record<IconeNav, ReactNode> = {
   dashboard: <IconDashboard size={18} />,
   processos: <IconFileText size={18} />,
-  aprovacoes: <IconCheckCircle size={18} />,
   documentos: <IconDownload size={18} />,
   configuracoes: <IconSettings size={18} />,
   prefeituras: <IconBuilding size={18} />,
@@ -111,7 +108,6 @@ export default function Sidebar({
   const pathname = usePathname();
   const router = useRouter();
   const { data: sessao } = useSessao();
-  const { data: fila } = useFilaAprovacoes();
   const atualizarAvatar = useAtualizarAvatar();
   const logout = useLogout();
   const [menuAberto, setMenuAberto] = useState(false);
@@ -119,18 +115,11 @@ export default function Sidebar({
   const usuario = sessao?.usuario;
   const prefeitura = sessao?.prefeitura;
   const perfil = usuario?.perfilAcesso ?? "servidor";
-  const pendentes = fila?.filter((a) => a.status === "aguardando").length;
 
-  const paraItem = (i: {
-    href: string;
-    label: string;
-    icone: IconeNav;
-    badge?: "aprovacoes";
-  }): NavItem => ({
+  const paraItem = (i: { href: string; label: string; icone: IconeNav }): NavItem => ({
     href: i.href,
     label: i.label,
     icon: ICONES[i.icone],
-    badge: i.badge === "aprovacoes" ? pendentes : undefined,
     match: (p) => (i.href === "/" ? p === "/" : p.startsWith(i.href)),
   });
 
