@@ -26,7 +26,6 @@ export const sessaoServidor = {
   activeMembership: {
     organizationId: "1b7c8e10-2d3f-4a5b-8c9d-0e1f2a3b4c5d",
     departmentId: null,
-    workflowRoles: ["SERVIDOR_COMPRAS"],
     active: true,
   },
   permissions: ["process:read", "process:write"],

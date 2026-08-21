@@ -31,7 +31,6 @@ const usuarioApi = {
     {
       organizationId: organizacao.id,
       departmentId: null,
-      workflowRoles: ["SERVIDOR_COMPRAS" as const],
       active: true,
     },
   ],
@@ -299,7 +298,7 @@ describe("criarUsuario", () => {
     expect(corpo.jobTitle).toBeNull()
   })
 
-  it("respeita os papéis de workflow informados explicitamente", async () => {
+  it("vincula o coordenador ao departamento informado", async () => {
     let corpo: Record<string, unknown> = {}
     servidor.use(
       http.post(`${urlDaApi}/users`, async ({ request }) => {
@@ -310,7 +309,7 @@ describe("criarUsuario", () => {
     const { criarUsuario } = await carregarClienteLimpo()
 
     await criarUsuario({
-      nome: "Carlos Jurídico",
+      nome: "Carlos Ribeiro",
       cpf: "11144477735",
       email: "carlos@ecoporanga.es.gov.br",
       cargo: "Procurador",
@@ -318,40 +317,13 @@ describe("criarUsuario", () => {
       perfilAcesso: "coordenador",
       prefeituraId: organizacao.id,
       departamentoId: departamento.id,
-      workflowRoles: ["JURIDICO"],
     })
 
-    expect(corpo.workflowRoles).toEqual(["JURIDICO"])
     expect(corpo.departmentId).toBe(departamento.id)
+    expect(corpo.organizationId).toBe(organizacao.id)
+    expect(corpo.profileAccess).toBe("COORDENADOR")
   })
 
-  it("deriva o papel de workflow do perfil quando ele não é informado", async () => {
-    let corpo: Record<string, unknown> = {}
-    servidor.use(
-      http.post(`${urlDaApi}/users`, async ({ request }) => {
-        corpo = (await request.json()) as Record<string, unknown>
-        return HttpResponse.json(usuarioApi)
-      }),
-    )
-    const { criarUsuario } = await carregarClienteLimpo()
-
-    await criarUsuario({
-      nome: "  Maria Costa Andrade  ",
-      cpf: "33333333333",
-      email: "  maria.costa@ecoporanga.es.gov.br  ",
-      cargo: "Servidora de Compras",
-      senha: "UmaSenhaSegura!2026",
-      perfilAcesso: "servidor",
-      prefeituraId: organizacao.id,
-    })
-
-    expect(corpo.workflowRoles).toEqual(["SERVIDOR_COMPRAS"])
-    expect(corpo.name).toBe("Maria Costa Andrade")
-    expect(corpo.email).toBe("maria.costa@ecoporanga.es.gov.br")
-  })
-})
-
-describe("mapeamento de usuário", () => {
   it("monta as iniciais do primeiro e do último nome", async () => {
     servidor.use(http.get(`${urlDaApi}/users`, () => HttpResponse.json([usuarioApi])))
     const { listarUsuarios } = await carregarClienteLimpo()
@@ -396,7 +368,7 @@ describe("mapeamento de usuário", () => {
     servidor.use(
       http.get(`${urlDaApi}/users`, () =>
         HttpResponse.json([
-          { ...usuarioApi, memberships: [{ ...usuarioApi.memberships[0], workflowRoles: [] }] },
+          { ...usuarioApi, memberships: [{ ...usuarioApi.memberships[0] }] },
         ]),
       ),
     )

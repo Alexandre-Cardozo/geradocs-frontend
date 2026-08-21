@@ -151,17 +151,9 @@
           "profileAccess" : {
             "enum" : [ "ADMIN_GERAL", "COORDENADOR", "SERVIDOR" ],
             "type" : "string"
-          },
-          "workflowRoles" : {
-            "items" : {
-              "enum" : [ "SERVIDOR_COMPRAS", "SECRETARIA_DEMANDANTE", "COMISSAO", "JURIDICO", "GESTOR_APROVADOR" ],
-              "type" : "string"
-            },
-            "type" : "array",
-            "uniqueItems" : true
           }
         },
-        "required" : [ "cpf", "email", "name", "password", "profileAccess", "workflowRoles" ],
+        "required" : [ "cpf", "email", "name", "password", "profileAccess" ],
         "type" : "object"
       },
       "DeactivationRequest" : {
@@ -244,14 +236,6 @@
           "organizationId" : {
             "format" : "uuid",
             "type" : "string"
-          },
-          "workflowRoles" : {
-            "items" : {
-              "enum" : [ "SERVIDOR_COMPRAS", "SECRETARIA_DEMANDANTE", "COMISSAO", "JURIDICO", "GESTOR_APROVADOR" ],
-              "type" : "string"
-            },
-            "type" : "array",
-            "uniqueItems" : true
           }
         },
         "type" : "object"
@@ -614,17 +598,9 @@
           "profileAccess" : {
             "enum" : [ "ADMIN_GERAL", "COORDENADOR", "SERVIDOR" ],
             "type" : "string"
-          },
-          "workflowRoles" : {
-            "items" : {
-              "enum" : [ "SERVIDOR_COMPRAS", "SECRETARIA_DEMANDANTE", "COMISSAO", "JURIDICO", "GESTOR_APROVADOR" ],
-              "type" : "string"
-            },
-            "type" : "array",
-            "uniqueItems" : true
           }
         },
-        "required" : [ "email", "name", "profileAccess", "workflowRoles" ],
+        "required" : [ "email", "name", "profileAccess" ],
         "type" : "object"
       },
       "UserResponse" : {

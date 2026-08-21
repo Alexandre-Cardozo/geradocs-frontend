@@ -4,7 +4,6 @@ import { requisicaoProtegida } from "@/lib/api/auth-client"
 import type { PerfilAcesso, Secretaria, Tenant, Usuario } from "@/lib/types"
 
 type BackendProfile = "ADMIN_GERAL" | "COORDENADOR" | "SERVIDOR"
-type BackendWorkflowRole = "SERVIDOR_COMPRAS" | "SECRETARIA_DEMANDANTE" | "COMISSAO" | "JURIDICO" | "GESTOR_APROVADOR"
 
 interface BackendOrganization {
   id: string
@@ -26,7 +25,6 @@ interface BackendDepartment {
 interface BackendMembership {
   organizationId: string
   departmentId: string | null
-  workflowRoles: BackendWorkflowRole[]
   active: boolean
 }
 
@@ -49,11 +47,6 @@ const perfis: Record<BackendProfile, PerfilAcesso> = {
   SERVIDOR: "servidor",
 }
 
-const workflowRoles: Record<PerfilAcesso, BackendWorkflowRole[]> = {
-  admin_geral: [],
-  coordenador: ["GESTOR_APROVADOR"],
-  servidor: ["SERVIDOR_COMPRAS"],
-}
 
 /** ETag no formato que o backend espera em If-Match. */
 function ifMatch(version: number): string {
@@ -117,7 +110,6 @@ export interface NovoUsuarioInput {
   perfilAcesso: PerfilAcesso
   prefeituraId: string | null
   departamentoId?: string | null
-  workflowRoles?: BackendWorkflowRole[]
 }
 
 export async function listarPrefeituras(): Promise<Tenant[]> {
@@ -187,7 +179,6 @@ export async function criarUsuario(input: NovoUsuarioInput): Promise<Usuario> {
       profileAccess,
       organizationId: input.perfilAcesso === "admin_geral" ? null : input.prefeituraId,
       departmentId: input.perfilAcesso === "admin_geral" ? null : input.departamentoId ?? null,
-      workflowRoles: input.workflowRoles ?? workflowRoles[input.perfilAcesso],
     }),
   })
   return usuarioDa(user)

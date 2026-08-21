@@ -343,7 +343,6 @@ export interface components {
             password: string;
             /** @enum {string} */
             profileAccess: "ADMIN_GERAL" | "COORDENADOR" | "SERVIDOR";
-            workflowRoles: ("SERVIDOR_COMPRAS" | "SECRETARIA_DEMANDANTE" | "COMISSAO" | "JURIDICO" | "GESTOR_APROVADOR")[];
         };
         DeactivationRequest: {
             reason: string;
@@ -377,7 +376,6 @@ export interface components {
             id?: string;
             /** Format: uuid */
             organizationId?: string;
-            workflowRoles?: ("SERVIDOR_COMPRAS" | "SECRETARIA_DEMANDANTE" | "COMISSAO" | "JURIDICO" | "GESTOR_APROVADOR")[];
         };
         OrganizationResponse: {
             /** Format: date-time */
@@ -511,7 +509,6 @@ export interface components {
             organizationId?: string;
             /** @enum {string} */
             profileAccess: "ADMIN_GERAL" | "COORDENADOR" | "SERVIDOR";
-            workflowRoles: ("SERVIDOR_COMPRAS" | "SECRETARIA_DEMANDANTE" | "COMISSAO" | "JURIDICO" | "GESTOR_APROVADOR")[];
         };
         UserResponse: {
             cpf?: string;
