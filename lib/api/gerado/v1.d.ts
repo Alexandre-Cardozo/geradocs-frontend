@@ -228,7 +228,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/procurement-processes/{processId}": {
+    "/api/v1/procurement-processes/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -988,7 +988,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                processId: string;
+                id: string;
             };
             cookie?: never;
         };
@@ -1012,7 +1012,7 @@ export interface operations {
                 "If-Match"?: string;
             };
             path: {
-                processId: string;
+                id: string;
             };
             cookie?: never;
         };

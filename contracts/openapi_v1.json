@@ -1270,12 +1270,12 @@
         "tags" : [ "procurement-process-controller" ]
       }
     },
-    "/api/v1/procurement-processes/{processId}" : {
+    "/api/v1/procurement-processes/{id}" : {
       "get" : {
         "operationId" : "get_1",
         "parameters" : [ {
           "in" : "path",
-          "name" : "processId",
+          "name" : "id",
           "required" : true,
           "schema" : {
             "format" : "uuid",
@@ -1300,7 +1300,7 @@
         "operationId" : "update_1",
         "parameters" : [ {
           "in" : "path",
-          "name" : "processId",
+          "name" : "id",
           "required" : true,
           "schema" : {
             "format" : "uuid",
