@@ -10,16 +10,20 @@ import { Th } from "@/components/shared/tabela"
 import { useToast } from "@/components/shared/providers"
 import { useProcessos } from "@/lib/api/hooks"
 import { formatBRL } from "@/lib/format"
-import { MODALIDADE_LABEL, type StatusProcesso } from "@/lib/types"
+import { MODALIDADE_LABEL, STATUS_PROCESSO_LABEL, type StatusProcesso } from "@/lib/types"
 
+/**
+ * Os rótulos saem de `STATUS_PROCESSO_LABEL`, não de uma lista paralela: o
+ * vocabulário de status é normativo e vai encolher quando o fluxo de aprovação
+ * sair do produto. Uma cópia local continuaria oferecendo filtro para status que
+ * deixou de existir, sem quebrar nada.
+ */
 const statusFilters = [
   { key: "todos", label: "Todos" },
-  { key: "rascunho", label: "Rascunho" },
-  { key: "em_revisao", label: "Em Revisão" },
-  { key: "aguardando", label: "Aguardando" },
-  { key: "aprovado", label: "Aprovado" },
-  { key: "concluido", label: "Concluído" },
-  { key: "rejeitado", label: "Rejeitado" },
+  ...(Object.keys(STATUS_PROCESSO_LABEL) as StatusProcesso[]).map((key) => ({
+    key,
+    label: STATUS_PROCESSO_LABEL[key],
+  })),
 ]
 
 export default function Processos() {

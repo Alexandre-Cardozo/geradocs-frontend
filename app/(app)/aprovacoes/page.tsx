@@ -50,10 +50,10 @@ import {
 /** Opções do filtro de status da fila (vocabulário fixo). */
 const OPCOES_STATUS = [
   { value: "todos", label: "Todos os status" },
-  { value: "aguardando", label: "Aguardando" },
-  { value: "em_revisao", label: "Em Revisão" },
-  { value: "aprovado", label: "Aprovado" },
-  { value: "rejeitado", label: "Rejeitado" },
+  { value: "aguardando", label: STATUS_PROCESSO_LABEL.aguardando },
+  { value: "em_revisao", label: STATUS_PROCESSO_LABEL.em_revisao },
+  { value: "aprovado", label: STATUS_PROCESSO_LABEL.aprovado },
+  { value: "rejeitado", label: STATUS_PROCESSO_LABEL.rejeitado },
 ];
 
 /**

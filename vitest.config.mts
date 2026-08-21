@@ -32,11 +32,13 @@ export default defineConfig({
         // baixar um deles precisa dizer por quê na descrição da PR.
         // 20/08/2026 — Bloco 1.7: só a camada de transporte de autenticação.
         // 21/08/2026 — os clientes de acesso e de processos entraram cobertos;
-        // a catraca sobe de 11% para 16% de linha.
-        lines: 16,
-        functions: 12,
-        branches: 26,
-        statements: 16,
+        // a catraca subiu de 11% para 16% de linha.
+        // 21/08/2026 — Bloco 3: domínio puro (catálogo, seções, formatação,
+        // RBAC, CPF) e guarda-corpos executáveis; 16% → 27%.
+        lines: 27,
+        functions: 22,
+        branches: 33,
+        statements: 27,
       },
     },
   },

@@ -1,16 +1,20 @@
 import type { ComponentType, ReactNode } from "react"
 
 import { IconInfo, type IconProps } from "@/components/ui/icons"
-import type { StatusDocumento, StatusProcesso } from "@/lib/types"
+import { STATUS_PROCESSO_LABEL, type StatusDocumento, type StatusProcesso } from "@/lib/types"
 
-/** Badge de status de processo com ponto colorido — vocabulário fixo. */
-const statusCfg: Record<StatusProcesso, { label: string; pill: string; dot: string }> = {
-  rascunho: { label: "Rascunho", pill: "bg-status-draft-bg text-status-draft-fg", dot: "bg-status-draft-dot" },
-  em_revisao: { label: "Em Revisão", pill: "bg-status-review-bg text-status-review-fg", dot: "bg-status-review-dot" },
-  aguardando: { label: "Aguardando", pill: "bg-status-waiting-bg text-status-waiting-fg", dot: "bg-status-waiting-dot" },
-  aprovado: { label: "Aprovado", pill: "bg-status-approved-bg text-status-approved-fg", dot: "bg-status-approved-dot" },
-  rejeitado: { label: "Rejeitado", pill: "bg-status-rejected-bg text-status-rejected-fg", dot: "bg-status-rejected-dot" },
-  concluido: { label: "Concluído", pill: "bg-status-done-bg text-status-done-fg", dot: "bg-status-done-dot" },
+/**
+ * Estilo do badge por status. **O rótulo não mora aqui**: vem de
+ * `STATUS_PROCESSO_LABEL`, que é o vocabulário normativo. Manter uma cópia local
+ * faria o badge continuar exibindo status que o domínio deixou de ter.
+ */
+const statusCfg: Record<StatusProcesso, { pill: string; dot: string }> = {
+  rascunho: { pill: "bg-status-draft-bg text-status-draft-fg", dot: "bg-status-draft-dot" },
+  em_revisao: { pill: "bg-status-review-bg text-status-review-fg", dot: "bg-status-review-dot" },
+  aguardando: { pill: "bg-status-waiting-bg text-status-waiting-fg", dot: "bg-status-waiting-dot" },
+  aprovado: { pill: "bg-status-approved-bg text-status-approved-fg", dot: "bg-status-approved-dot" },
+  rejeitado: { pill: "bg-status-rejected-bg text-status-rejected-fg", dot: "bg-status-rejected-dot" },
+  concluido: { pill: "bg-status-done-bg text-status-done-fg", dot: "bg-status-done-dot" },
 }
 
 export function StatusBadge({ status, size = "md" }: { status: StatusProcesso; size?: "sm" | "md" }) {
@@ -22,7 +26,7 @@ export function StatusBadge({ status, size = "md" }: { status: StatusProcesso; s
       }`}
     >
       <span className={`size-1.25 shrink-0 rounded-full ${c.dot}`} />
-      {c.label}
+      {STATUS_PROCESSO_LABEL[status]}
     </span>
   )
 }
