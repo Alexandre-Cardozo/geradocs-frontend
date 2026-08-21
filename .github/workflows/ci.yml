@@ -75,6 +75,39 @@ jobs:
           test -f out/index.html || { echo "::error::out/index.html ausente"; exit 1; }
           test -f out/404.html   || { echo "::error::out/404.html ausente — rota recarregada devolveria 404"; exit 1; }
 
+  e2e:
+    name: Jornada e acessibilidade
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      # A versão do Playwright é fixada no package.json; o navegador que ele
+      # baixa aqui é o mesmo revisão que roda nas máquinas de desenvolvimento.
+      # Navegador que se atualiza sozinho transforma verde em vermelho de
+      # madrugada, sem ninguém ter mudado nada.
+      - name: Instalar o Chromium do Playwright
+        run: npx playwright install --with-deps chromium
+
+      # A API é interceptada em e2e/api.ts — nunca a real: o e2e não pode
+      # depender de backend no ar nem tocar em dado de gente de verdade.
+      - name: Jornada de ponta a ponta
+        run: npm run e2e
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report
+          retention-days: 7
+
   scan-de-segredos:
     name: Scan de segredos
     runs-on: ubuntu-latest

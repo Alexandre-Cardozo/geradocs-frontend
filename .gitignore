@@ -16,3 +16,8 @@ npm-debug.log*
 
 # cobertura de testes
 /coverage
+
+# Playwright
+/test-results
+/playwright-report
+/blob-report
