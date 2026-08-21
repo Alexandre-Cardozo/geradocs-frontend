@@ -42,12 +42,16 @@ Use **sempre**:
 npm run deps:sync
 ```
 
-Ele apaga o `package-lock.json` e reinstala do zero, e isso não é exagero: um
-`npm install <pacote>` no macOS resolve a árvore só para esta plataforma e deixa
-de fora as dependências opcionais do `sharp` para linux (`@emnapi/*`). O lock
-resultante passa no `npm ci` aqui e **reprova no CI**, com a mensagem enganosa de
-que `package.json` e lock estão dessincronizados. Aconteceu duas vezes em
-21/08/2026.
+Ele resolve o lock **dentro de um contêiner linux** e depois instala aqui. Não é
+exagero: o `npm install` no macOS não busca o manifesto das dependências
+opcionais do `sharp` para linux, então `@emnapi/runtime` e companhia ficam de
+fora do lock. O resultado passa no `npm ci` local e **reprova no runner**, com a
+mensagem enganosa de que `package.json` e lock estão dessincronizados —
+apagar o lock e reinstalar no macOS **não** resolve, porque o problema é a
+plataforma que resolve a árvore, não o lock estar velho.
+
+Precisa do Docker rodando (`colima start`, se for o caso). Derrubou o CI duas
+vezes em 21/08/2026 antes de a causa ficar clara.
 
 ## 5. Verificar antes de commitar
 

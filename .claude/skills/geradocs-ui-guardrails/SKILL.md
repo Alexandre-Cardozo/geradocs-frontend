@@ -79,10 +79,11 @@ PCA é contexto do órgão.
 
 ## Ao mexer em dependência
 
-Use `npm run deps:sync`, nunca `npm install <pacote>` sozinho. No macOS o
-install incremental poda da árvore as dependências opcionais do `sharp` para
-linux; o `npm ci` passa aqui e reprova no CI dizendo que o lock está
-dessincronizado.
+Use `npm run deps:sync`, nunca `npm install <pacote>` sozinho. Ele resolve o
+lock dentro de um contêiner linux: no macOS o npm não busca o manifesto das
+dependências opcionais do `sharp` para linux, o `npm ci` passa aqui e reprova no
+runner dizendo que o lock está dessincronizado. Apagar o lock e reinstalar no
+macOS não resolve.
 
 ## Anti-padrões proibidos
 
