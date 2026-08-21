@@ -521,6 +521,35 @@
         },
         "type" : "object"
       },
+      "TransferUserOrganizationRequest" : {
+        "properties" : {
+          "confirmed" : {
+            "type" : "boolean"
+          },
+          "destinationDepartmentId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "destinationOrganizationId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "reason" : {
+            "minLength" : 1,
+            "type" : "string"
+          },
+          "workflowRoles" : {
+            "items" : {
+              "enum" : [ "SERVIDOR_COMPRAS", "SECRETARIA_DEMANDANTE", "COMISSAO", "JURIDICO", "GESTOR_APROVADOR" ],
+              "type" : "string"
+            },
+            "type" : "array",
+            "uniqueItems" : true
+          }
+        },
+        "required" : [ "destinationOrganizationId", "reason", "workflowRoles" ],
+        "type" : "object"
+      },
       "UpdateDepartmentRequest" : {
         "properties" : {
           "acronym" : {
@@ -1270,12 +1299,12 @@
         "tags" : [ "procurement-process-controller" ]
       }
     },
-    "/api/v1/procurement-processes/{processId}" : {
+    "/api/v1/procurement-processes/{id}" : {
       "get" : {
         "operationId" : "get_1",
         "parameters" : [ {
           "in" : "path",
-          "name" : "processId",
+          "name" : "id",
           "required" : true,
           "schema" : {
             "format" : "uuid",
@@ -1300,7 +1329,7 @@
         "operationId" : "update_1",
         "parameters" : [ {
           "in" : "path",
-          "name" : "processId",
+          "name" : "id",
           "required" : true,
           "schema" : {
             "format" : "uuid",
@@ -1488,6 +1517,43 @@
             "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/DeactivationRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UserResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "user-controller" ]
+      }
+    },
+    "/api/v1/users/{userId}/transfer-organization" : {
+      "post" : {
+        "operationId" : "transferOrganization",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "userId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TransferUserOrganizationRequest"
               }
             }
           },

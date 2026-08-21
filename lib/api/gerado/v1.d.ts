@@ -228,7 +228,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/procurement-processes/{processId}": {
+    "/api/v1/procurement-processes/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -286,6 +286,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["deactivate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{userId}/transfer-organization": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["transferOrganization"];
         delete?: never;
         options?: never;
         head?: never;
@@ -482,6 +498,15 @@ export interface components {
             empty?: boolean;
             sorted?: boolean;
             unsorted?: boolean;
+        };
+        TransferUserOrganizationRequest: {
+            confirmed?: boolean;
+            /** Format: uuid */
+            destinationDepartmentId?: string;
+            /** Format: uuid */
+            destinationOrganizationId: string;
+            reason: string;
+            workflowRoles: ("SERVIDOR_COMPRAS" | "SECRETARIA_DEMANDANTE" | "COMISSAO" | "JURIDICO" | "GESTOR_APROVADOR")[];
         };
         UpdateDepartmentRequest: {
             acronym?: string;
@@ -988,7 +1013,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                processId: string;
+                id: string;
             };
             cookie?: never;
         };
@@ -1012,7 +1037,7 @@ export interface operations {
                 "If-Match"?: string;
             };
             path: {
-                processId: string;
+                id: string;
             };
             cookie?: never;
         };
@@ -1143,6 +1168,32 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["DeactivationRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UserResponse"];
+                };
+            };
+        };
+    };
+    transferOrganization: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TransferUserOrganizationRequest"];
             };
         };
         responses: {

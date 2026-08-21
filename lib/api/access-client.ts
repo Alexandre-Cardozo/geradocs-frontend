@@ -211,3 +211,29 @@ export async function desativarUsuario(id: string): Promise<void> {
     body: JSON.stringify({ reason: "Desativado pela administração." }),
   })
 }
+
+export interface TransferirUsuarioInput {
+  usuarioId: string
+  prefeituraDestinoId: string
+  departamentoDestinoId?: string
+  workflowRoles: string[]
+  motivo: string
+}
+
+/** Move um vínculo organizacional de forma explícita e auditável. */
+export async function transferirUsuario(input: TransferirUsuarioInput): Promise<Usuario> {
+  const user = await requisicaoProtegida<BackendUser>(
+    `/users/${input.usuarioId}/transfer-organization`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        destinationOrganizationId: input.prefeituraDestinoId,
+        destinationDepartmentId: input.departamentoDestinoId ?? null,
+        workflowRoles: input.workflowRoles,
+        reason: input.motivo.trim(),
+        confirmed: true,
+      }),
+    },
+  )
+  return usuarioDa(user)
+}
