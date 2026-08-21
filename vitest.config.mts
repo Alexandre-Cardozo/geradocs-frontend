@@ -30,11 +30,13 @@ export default defineConfig({
         // Catraca: estes números são a cobertura medida hoje, não uma meta.
         // Sobem a cada bloco da ordem de implementação e nunca descem — quem
         // baixar um deles precisa dizer por quê na descrição da PR.
-        // 20/08/2026 — Bloco 1.7: só a camada de transporte está coberta.
-        lines: 11,
-        functions: 6,
-        branches: 13,
-        statements: 10,
+        // 20/08/2026 — Bloco 1.7: só a camada de transporte de autenticação.
+        // 21/08/2026 — os clientes de acesso e de processos entraram cobertos;
+        // a catraca sobe de 11% para 16% de linha.
+        lines: 16,
+        functions: 12,
+        branches: 26,
+        statements: 16,
       },
     },
   },
