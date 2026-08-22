@@ -4,7 +4,6 @@
 import "client-only"
 
 import {
-  conteudoDemoETP,
   documentos as documentosFixture,
   estatisticas as estatisticasFixture,
   parecerDFDBase,
@@ -13,14 +12,12 @@ import {
   resumoDocumentos as resumoDocumentosFixture,
   usuarios as usuariosFixture,
 } from "@/lib/mocks/fixtures"
-import { CATALOGO, secoesPorTipoBase } from "@/lib/documentos"
+import { CATALOGO } from "@/lib/documentos"
 import { podeEmitir, proximoStatus } from "@/lib/processos/fluxo"
 import {
   calcularIndicadores,
-  corpoDoDocumento,
   documentosPendentes,
   empilharVersao,
-  foiDispensada,
   entradaDeHistorico,
   impactoTrocaModalidade,
   iniciaisDe,
@@ -34,10 +31,7 @@ import {
   noEscopo,
   prefeiturasVisiveis,
   resumirDocumentos,
-  proximaVersao,
-  statusAposDispensar,
   statusAposEditar,
-  statusDoDocumentoNoProcesso,
   tituloComRotuloDeVersao,
   tituloDoDocumento,
 } from "@/lib/dominio"
@@ -60,11 +54,23 @@ import {
   listarUsuarios as listarUsuariosNaApi,
   obterTenant as obterTenantNaApi,
 } from "@/lib/api/access-client"
-import { criarProcessoReal, listarProcessos } from "@/lib/api/procurement-client"
+import {
+  abrirDocumento,
+  concluirDocumento,
+  gerarTextoDaSecao,
+  salvarSecao,
+} from "@/lib/api/authoring-client"
+import {
+  atualizarProcessoReal,
+  criarProcessoReal,
+  listarProcessos,
+  obterProcesso,
+} from "@/lib/api/procurement-client"
 import { dataBrasiliaISO, dataHoraBrasiliaISO } from "@/lib/format"
 import type {
   DocumentoGerado,
   EstatisticasDashboard,
+  EventoDoProcesso,
   EventoProcesso,
   Modalidade,
   NovoProcessoInput,
@@ -105,9 +111,10 @@ const db = {
   sessao: null as Sessao | null,
   processos: clone(processosFixture),
   /** Seções por documento — chave `${processoId}:${tipo}`. */
-  secoes: new Map<string, SecaoDocumento[]>(),
   pareceresDFD: new Map<string, ParecerDFD>(),
   documentos: clone(documentosFixture),
+  /** Trilha dos processos que vivem no servidor — chave é o id do processo. */
+  trilhas: new Map<string, EventoDoProcesso[]>(),
   /** Histórico de versões por documento — chave `${processoId}:${tipo}`. */
   versoes: new Map<string, VersaoDocumento[]>(),
   /**
@@ -154,27 +161,6 @@ for (const doc of db.documentos) {
   ])
 }
 
-function secoesDoDocumento(processoId: string, tipo: TipoDocumento): SecaoDocumento[] {
-  const chave = `${processoId}:${tipo}`
-  let secoes = db.secoes.get(chave)
-  if (!secoes) {
-    // As seções nascem em branco a partir do catálogo de domínio.
-    secoes = clone(secoesPorTipoBase[tipo])
-    const jaGerado = db.documentos.some((d) => d.processoId === processoId && d.tipo === tipo)
-    if (jaGerado) {
-      // Documento já gerado → todas as seções contam como concluídas (progresso 100%).
-      secoes = secoes.map((s) => ({ ...s, status: "Completo" }))
-    } else if (tipo === "ETP" && processoId === "PROC-2024-089") {
-      // Só o ETP do processo de referência já chega com seções redigidas.
-      secoes = secoes.map((s) => {
-        const conteudo = conteudoDemoETP[s.id]
-        return conteudo ? { ...s, conteudo, status: "Completo" as const } : s
-      })
-    }
-    db.secoes.set(chave, secoes)
-  }
-  return secoes
-}
 
 /* ── Autenticação / sessão ─────────────────────────────────────────────────── */
 
@@ -288,10 +274,7 @@ export async function getProcessos(params: ListaProcessosParams = {}): Promise<P
 }
 
 export async function getProcesso(id: string): Promise<Processo> {
-  await delay()
-  const proc = db.processos.find((p) => p.id === id)
-  if (!proc) throw new Error(`Processo ${id} não encontrado`)
-  return clone(proc)
+  return obterProcesso(id)
 }
 
 export async function getProximoNumeroProcesso(): Promise<string> {
@@ -318,39 +301,45 @@ export interface AtualizarProcessoInput {
   justificativaModalidade?: string
 }
 
-/** Edições feitas no hub do processo (secretaria, descrição, objeto da demanda, DFD, documentos). */
+/**
+ * Edições feitas no hub do processo.
+ *
+ * A troca de modalidade continua produzindo o registro da trilha aqui porque a
+ * trilha ainda vive em memória — ela migra junto com o histórico do processo. O
+ * dado do processo, esse, já vai e volta do servidor.
+ */
 export async function atualizarProcesso(input: AtualizarProcessoInput): Promise<Processo> {
-  await delay(400)
-  const proc = db.processos.find((p) => p.id === input.id)
-  if (!proc) throw new Error(`Processo ${input.id} não encontrado`)
-  if (input.secretaria !== undefined) proc.secretaria = input.secretaria
-  if (input.objeto !== undefined) proc.objeto = input.objeto
-  if (input.objetoDemanda !== undefined) proc.objetoDemanda = input.objetoDemanda
-  if (input.dfdArquivo !== undefined) proc.dfdArquivo = input.dfdArquivo
-  if (input.modalidade !== undefined && input.modalidade !== proc.modalidade) {
+  const atual = await obterProcesso(input.id)
+  if (input.modalidade !== undefined && input.modalidade !== atual.modalidade) {
     // Contra a lista que o processo tinha, e não contra a que está sendo salva:
     // com a lista nova, o que a tela acabou de remover já não estaria lá, e a
     // trilha registraria "nada removido" exatamente quando algo foi.
     const impacto = impactoTrocaModalidade(
-      proc.modalidade,
+      atual.modalidade,
       input.modalidade,
-      proc.documentos,
-      docsGeradosDo(proc.id),
+      atual.documentos,
+      docsGeradosDo(atual.id),
     )
-    const anterior = proc.modalidade
-    proc.modalidade = input.modalidade
-    // O evento entra antes da lista mudar de valor no objeto clonado, mas
-    // depois de a modalidade trocar: a trilha precisa dizer de onde para onde.
-    registrarEvento(
-      proc,
+    registrarEventoLocal(
+      atual.id,
       "troca_modalidade",
-      motivoDaTrocaDeModalidade(anterior, input.modalidade, impacto, input.justificativaModalidade ?? ""),
+      motivoDaTrocaDeModalidade(
+        atual.modalidade,
+        input.modalidade,
+        impacto,
+        input.justificativaModalidade ?? "",
+      ),
     )
   }
-  if (input.documentos !== undefined) proc.documentos = input.documentos
-  proc.atualizadoEm = dataBrasiliaISO()
-  return clone(proc)
+  return atualizarProcessoReal(atual, {
+    objeto: input.objeto,
+    objetoDemanda: input.objetoDemanda,
+    modalidade: input.modalidade,
+    documentos: input.documentos,
+    dfdArquivo: input.dfdArquivo,
+  })
 }
+
 
 /* ── Verificação do DFD ────────────────────────────────────────────────────── */
 
@@ -373,8 +362,7 @@ export async function getParecerDFD(processoId: string): Promise<ParecerDFD | nu
 /* ── Seções de documento (todos os tipos do catálogo) ──────────────────────── */
 
 export async function getSecoes(processoId: string, tipo: TipoDocumento): Promise<SecaoDocumento[]> {
-  await delay()
-  return clone(secoesDoDocumento(processoId, tipo))
+  return (await abrirDocumento(processoId, tipo)).secoes
 }
 
 export interface AtualizarSecaoInput {
@@ -393,39 +381,31 @@ export interface AtualizarSecaoInput {
 }
 
 export async function atualizarSecao(input: AtualizarSecaoInput): Promise<SecaoDocumento> {
-  await delay(400)
-  const secoes = secoesDoDocumento(input.processoId, input.tipo)
-  const secao = secoes.find((s) => s.id === input.secaoId)
+  const documento = await salvarSecao(
+    input.processoId,
+    input.tipo,
+    input.secaoId,
+    input.conteudo,
+    input.justificativaDispensa,
+  )
+  const secao = documento.secoes.find((s) => s.id === input.secaoId)
   if (!secao) throw new Error(`Seção ${input.secaoId} não encontrada`)
-  secao.conteudo = input.conteudo
-  if (input.justificativaDispensa !== undefined) {
-    const justificativa = input.justificativaDispensa.trim()
-    if (justificativa) secao.justificativaDispensa = justificativa
-    else delete secao.justificativaDispensa
-  }
-  // Preencher a seção retira a dispensa: as duas coisas juntas produziriam um
-  // documento que traz o conteúdo e, logo abaixo, diz que ele foi dispensado.
-  if (input.conteudo.trim()) delete secao.justificativaDispensa
-  secao.status = foiDispensada(secao)
-    ? statusAposDispensar(secao.justificativaDispensa ?? "")
-    : statusAposEditar(input.conteudo, input.status)
-  return clone(secao)
+  return secao
 }
 
-/** Geração de conteúdo por IA — simulada com delay maior. */
+/**
+ * Pede ao servidor a redação da seção.
+ *
+ * O texto volta para o rascunho e **não** é gravado: quem decide se aquilo entra
+ * no documento é quem assina. A seção devolvida traz o texto proposto com o
+ * status que ela teria se fosse aceito — e é a tela que decide aceitar.
+ */
 export async function gerarSecao(processoId: string, tipo: TipoDocumento, secaoId: string): Promise<SecaoDocumento> {
-  await delay(1800)
-  const secoes = secoesDoDocumento(processoId, tipo)
-  const secao = secoes.find((s) => s.id === secaoId)
+  const documento = await abrirDocumento(processoId, tipo)
+  const secao = documento.secoes.find((s) => s.id === secaoId)
   if (!secao) throw new Error(`Seção ${secaoId} não encontrada`)
-  const processo = db.processos.find((p) => p.id === processoId)
-  const objeto = processo?.objetoDemanda || processo?.objeto || "objeto da contratação"
-  secao.conteudo =
-    `[Conteúdo gerado pela IA] ${secao.titulo} referente ao processo ${processoId} — ` +
-    `${objeto}. Elaborado em conformidade com o ` +
-    `${secao.fundamentoLegal}, considerando o DFD anexado, o PCA vigente e as informações prestadas pela ${processo?.secretaria ?? "secretaria demandante"}.`
-  secao.status = "Completo"
-  return clone(secao)
+  const texto = await gerarTextoDaSecao(processoId, tipo, secaoId)
+  return { ...secao, conteudo: texto, status: statusAposEditar(texto) }
 }
 
 /* ── Ciclo do processo ─────────────────────────────────────────────────────── */
@@ -446,6 +426,39 @@ export function pendentesDoProcesso(processo: Processo): TipoDocumento[] {
 }
 
 /** Registra um evento na trilha, aplicando a transição quando ela existir. */
+/**
+ * Registra um evento na trilha de um processo que vive no servidor.
+ *
+ * A trilha ainda é local — ela migra junto com o histórico do processo. Até lá,
+ * o evento é guardado à parte, indexado pelo id do processo, em vez de dentro do
+ * objeto que agora vem da API.
+ */
+/**
+ * A trilha de um processo.
+ *
+ * Ainda local — ela migra para o servidor junto com o histórico do processo. A
+ * tela já a consome por aqui para que essa migração não mexa nas páginas.
+ */
+export async function getTrilha(processoId: string): Promise<EventoDoProcesso[]> {
+  await delay(120)
+  return clone(db.trilhas.get(processoId) ?? [])
+}
+
+function registrarEventoLocal(processoId: string, evento: EventoProcesso, comentario: string): void {
+  const usuario = usuarioLogado()
+  const trilha = db.trilhas.get(processoId) ?? []
+  trilha.unshift({
+    evento,
+    de: "rascunho",
+    para: "rascunho",
+    autor: usuario?.nome ?? "Sistema",
+    papel: usuario?.perfilAcesso ?? "servidor",
+    data: dataHoraBrasiliaISO(),
+    comentario,
+  })
+  db.trilhas.set(processoId, trilha)
+}
+
 function registrarEvento(
   processo: Processo,
   evento: EventoProcesso,
@@ -554,23 +567,29 @@ export interface GerarDocumentoInput {
  * regeração **incrementa a versão** e guarda a versão anterior no histórico —
  * nunca sobrescreve sem deixar rastro (rastreabilidade exigida pelo controle).
  */
+/**
+ * Conclui o documento.
+ *
+ * A conclusão em si e o corpo são do servidor — é ele que valida as seções
+ * indispensáveis e congela o texto. O que ainda vive aqui é o **acervo**:
+ * identificador `DOC-`, formato e tamanho do arquivo, que só passam a existir de
+ * verdade quando o Bloco 11 produzir o arquivo.
+ */
 export async function gerarDocumento(input: GerarDocumentoInput): Promise<DocumentoGerado> {
-  await delay(700)
-  const processo = db.processos.find((p) => p.id === input.processoId)
-  const objeto = processo?.objeto ?? "Processo de Contratação"
+  const concluido = await concluirDocumento(input.processoId, input.tipo)
+  const processo = await obterProcesso(input.processoId)
+  const objeto = processo.objeto
   const meta = CATALOGO[input.tipo]
   const tamanhoKB = meta.tamanhoKB
   const chaveVersao = `${input.processoId}:${input.tipo}`
-
-  // Documento finalizado → todas as suas seções ficam concluídas (inclui a última).
-  for (const secao of secoesDoDocumento(input.processoId, input.tipo)) secao.status = "Completo"
 
   const existente = db.documentos.find((d) => d.processoId === input.processoId && d.tipo === input.tipo)
   const geradoEm = dataHoraBrasiliaISO()
 
   if (existente) {
-    // Regeração — nova versão. A anterior fica registrada no histórico.
-    existente.versao = proximaVersao(existente.versao)
+    // A versão vem do servidor: é ele que conta as conclusões, e contar aqui
+    // faria duas abas divergirem sobre qual é a versão vigente.
+    existente.versao = concluido.versao
     existente.titulo = tituloComRotuloDeVersao(
       tituloDoDocumento(input.tipo, objeto),
       existente.versao,
@@ -585,28 +604,25 @@ export async function gerarDocumento(input: GerarDocumentoInput): Promise<Docume
         entradaDeHistorico(existente.versao, geradoEm, `${tamanhoKB} KB`, input.retificacao),
       ),
     )
-    db.corpos.set(chaveVersao, corpoDoDocumento(secoesDoDocumento(input.processoId, input.tipo)))
-    if (processo) {
-      processo.atualizadoEm = dataBrasiliaISO()
-      if (input.retificacao) {
-        // Só a retificação declarada entra na trilha do processo. Regeração
-        // corriqueira fica no histórico do documento, que é onde ela pertence.
-        registrarEvento(
-          processo,
-          "retificacao",
-          `${CATALOGO[input.tipo].titulo} retificado (v${existente.versao}) — ${notaDaVersao(
-            existente.versao,
-            input.retificacao,
-          )}`,
-        )
-      }
+    db.corpos.set(chaveVersao, concluido.corpo)
+    if (input.retificacao) {
+      // Só a retificação declarada entra na trilha do processo. Regeração
+      // corriqueira fica no histórico do documento, que é onde ela pertence.
+      registrarEventoLocal(
+        input.processoId,
+        "retificacao",
+        `${CATALOGO[input.tipo].titulo} retificado (v${existente.versao}) — ${notaDaVersao(
+          existente.versao,
+          input.retificacao,
+        )}`,
+      )
     }
     return clone(existente)
   }
 
   const doc: DocumentoGerado = {
     id: numeroDeDocumento(ANO_SERIE, ++db.seqDocumento),
-    prefeituraId: processo?.prefeituraId ?? escopoPrefeituras()?.[0] ?? "PREF-001",
+    prefeituraId: processo.prefeituraId,
     processoId: input.processoId,
     titulo: tituloDoDocumento(input.tipo, objeto),
     tipo: input.tipo,
@@ -614,11 +630,11 @@ export async function gerarDocumento(input: GerarDocumentoInput): Promise<Docume
     geradoEm,
     tamanho: `${tamanhoKB} KB`,
     status: "final",
-    versao: 1,
+    versao: concluido.versao,
   }
   db.documentos.unshift(doc)
-  db.versoes.set(chaveVersao, [entradaDeHistorico(1, geradoEm, `${tamanhoKB} KB`)])
-  db.corpos.set(chaveVersao, corpoDoDocumento(secoesDoDocumento(input.processoId, input.tipo)))
+  db.versoes.set(chaveVersao, [entradaDeHistorico(concluido.versao, geradoEm, `${tamanhoKB} KB`)])
+  db.corpos.set(chaveVersao, concluido.corpo)
 
   // Indicadores da tela de Documentos e do dashboard acompanham a nova geração.
   db.resumoDocumentos.total += 1
@@ -628,11 +644,6 @@ export async function gerarDocumento(input: GerarDocumentoInput): Promise<Docume
   db.estatisticas.documentosSemana += 1
   if (input.tipo === "ETP") db.estatisticas.etpsConcluidos += 1
 
-  // Reflete a conclusão no processo de origem.
-  if (processo) {
-    Object.assign(processo, statusDoDocumentoNoProcesso(input.tipo))
-    processo.atualizadoEm = dataBrasiliaISO()
-  }
   return clone(doc)
 }
 

@@ -2,7 +2,15 @@ import { expect, test } from "@playwright/test"
 
 import type { Page } from "@playwright/test"
 
-import { comSessao, prestesALogar, rota, semSessao, sessaoAdmin } from "./api"
+import {
+  comProcessoEDocumento,
+  comSessao,
+  prestesALogar,
+  processo,
+  rota,
+  semSessao,
+  sessaoAdmin,
+} from "./api"
 
 /**
  * O menu aparece em mais de um lugar no DOM (barra fixa no desktop, gaveta no
@@ -99,5 +107,42 @@ test.describe("recarregar a página não perde a sessão", () => {
     // vive só em memória e some a cada recarga.
     await expect(page).toHaveURL(/\/processos/)
     await expect(menuLateral(page).getByRole("link", { name: "Processos" })).toBeVisible()
+  })
+})
+
+test.describe("elaboração do ETP", () => {
+  /**
+   * A jornada que o Bloco 9 destravou: o processo e o documento vivem no
+   * servidor, e o que a pessoa escreve sobrevive ao recarregamento.
+   *
+   * Era a limitação registrada na ADR 22 — criar um processo e perdê-lo ao
+   * recarregar a página. Este teste existe para que ela não volte.
+   */
+  test("o processo aparece na listagem e o ETP abre com o catálogo", async ({ page }) => {
+    await comSessao(page)
+    await comProcessoEDocumento(page)
+
+    await page.goto(rota("/processos"))
+
+    await expect(page.getByText(processo.objectDescription)).toBeVisible()
+  })
+
+  test("o texto escrito no ETP sobrevive ao recarregamento", async ({ page }) => {
+    await comSessao(page)
+    await comProcessoEDocumento(page)
+
+    await page.goto(
+      rota(`/processos/documento?id=${encodeURIComponent(processo.id)}&tipo=etp`),
+    )
+    const editor = page.getByPlaceholder("Preencha o conteúdo desta seção...")
+    await expect(editor).toBeVisible()
+    await editor.fill("Necessidade descrita pela secretaria.")
+    await page.getByRole("button", { name: /^Salvar$/ }).click()
+
+    await page.reload()
+
+    // É o ponto do bloco: o que foi escrito está no servidor, não na memória do
+    // navegador.
+    await expect(page.getByText("Necessidade descrita pela secretaria.")).toBeVisible()
   })
 })

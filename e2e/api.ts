@@ -110,3 +110,93 @@ export async function comSessao(page: Page, sessao: Sessao = sessaoServidor) {
   await page.route(`${API}/organizations**`, (rota) => rota.fulfill({ json: [] }))
   await page.route(`${API}/users**`, (rota) => rota.fulfill({ json: [] }))
 }
+
+/** Um processo com ETP previsto, como o servidor o devolve. */
+export const processo = {
+  id: "3f2b1a00-1111-4222-8333-444455556666",
+  processNumber: "PROC-2026-000007",
+  organizationId: sessaoServidor.organization.id,
+  departmentId: "8a7b6c5d-4e3f-4a2b-9c8d-7e6f5a4b3c2d",
+  departmentName: "Secretaria de Administração",
+  responsibleUserName: "Maria Costa Andrade",
+  objectDescription: "Aquisição de material de expediente",
+  demandObject: "Papel A4, canetas e pastas",
+  modality: "ELECTRONIC_AUCTION",
+  estimatedValue: 485000,
+  legalBasis: "Art. 28, I, Lei 14.133/21",
+  urgency: false,
+  documents: ["ETP", "TR"],
+  dfdFileName: "dfd-2026-014.pdf",
+  status: "DRAFT",
+  createdAt: "2026-08-20T10:00:00-03:00",
+  updatedAt: "2026-08-20T10:30:00-03:00",
+  version: 0,
+}
+
+function secao(sectionCode: string, position: number, required: boolean, content = "") {
+  return {
+    sectionCode,
+    position,
+    title: `Seção ${sectionCode} do ETP`,
+    legalBasis: `Art. 18, § 1º, ${sectionCode}, Lei 14.133/21`,
+    hint: "Demonstre o que a seção pede.",
+    required,
+    content,
+    resolved: content !== "",
+  }
+}
+
+/**
+ * O processo e o ETP servidos pela API, com o texto sobrevivendo à edição.
+ *
+ * O dublê guarda o que foi escrito porque é justamente isso que a jornada
+ * verifica: o que a pessoa digitou continua lá depois de recarregar a página.
+ */
+export async function comProcessoEDocumento(page: Page) {
+  // `comSessao` registra a listagem vazia. Sem retirá-la, ela também casa com
+  // `/procurement-processes/{id}` e o processo volta no formato de página — o
+  // mapeamento então reclama de uma modalidade que nunca veio.
+  await page.unroute(`${API}/procurement-processes**`)
+  const escrito = new Map<string, string>()
+
+  const documento = () => ({
+    id: "5c4d3e2f-1111-4222-8333-444455556666",
+    processId: processo.id,
+    documentType: "ETP",
+    currentVersion: 0,
+    finalized: false,
+    progress: escrito.size > 0 ? 50 : 0,
+    canGenerate: escrito.has("1"),
+    sections: [
+      secao("1", 1, true, escrito.get("1") ?? ""),
+      secao("2", 2, false, escrito.get("2") ?? ""),
+    ],
+    pendingRequiredSections: escrito.has("1") ? [] : ["Seção 1 do ETP"],
+    silentGaps: escrito.has("2") ? [] : ["Seção 2 do ETP"],
+    body: [...escrito.entries()].map(([codigo, texto]) => ({
+      sectionCode: codigo,
+      title: `Seção ${codigo} do ETP`,
+      text: texto,
+      dispensed: false,
+    })),
+  })
+
+  // Da mais genérica para a mais específica: no Playwright a rota registrada
+  // por último vence, então a listagem precisa vir primeiro — senão o `**`
+  // engoliria também o detalhe do processo e o documento.
+  await page.route(`${API}/procurement-processes**`, (rota) =>
+    rota.fulfill({
+      json: { content: [processo], totalElements: 1, number: 0, totalPages: 1 },
+    }),
+  )
+  await page.route(`${API}/procurement-processes/*`, (rota) => rota.fulfill({ json: processo }))
+  await page.route(`${API}/procurement-processes/*/documents/*`, (rota) =>
+    rota.fulfill({ json: documento() }),
+  )
+  await page.route(`${API}/procurement-processes/*/documents/*/sections/*`, async (rota) => {
+    const corpo = rota.request().postDataJSON() as { content?: string }
+    const codigo = new URL(rota.request().url()).pathname.split("/").pop() ?? "1"
+    escrito.set(codigo, corpo.content ?? "")
+    await rota.fulfill({ json: documento() })
+  })
+}

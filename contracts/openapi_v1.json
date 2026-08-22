@@ -45,6 +45,24 @@
         "required" : [ "accessToken", "expiresAt", "expiresIn", "session", "tokenType" ],
         "type" : "object"
       },
+      "BlockView" : {
+        "properties" : {
+          "dispensed" : {
+            "type" : "boolean"
+          },
+          "sectionCode" : {
+            "type" : "string"
+          },
+          "text" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "dispensed", "sectionCode", "text", "title" ],
+        "type" : "object"
+      },
       "CreateDepartmentRequest" : {
         "properties" : {
           "acronym" : {
@@ -88,6 +106,19 @@
           "departmentId" : {
             "format" : "uuid",
             "type" : "string"
+          },
+          "dfdFileName" : {
+            "maxLength" : 255,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "documents" : {
+            "items" : {
+              "enum" : [ "COTACAO", "ETP", "MAPA", "TR", "EDITAL", "CONTRATO" ],
+              "type" : "string"
+            },
+            "type" : "array",
+            "uniqueItems" : true
           },
           "estimatedValue" : {
             "minimum" : 0.0,
@@ -211,6 +242,71 @@
           }
         },
         "required" : [ "active", "createdAt", "id", "name", "organizationId", "updatedAt", "version" ],
+        "type" : "object"
+      },
+      "DocumentResponse" : {
+        "properties" : {
+          "body" : {
+            "items" : {
+              "$ref" : "#/components/schemas/BlockView"
+            },
+            "type" : "array"
+          },
+          "canGenerate" : {
+            "type" : "boolean"
+          },
+          "currentVersion" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "documentType" : {
+            "enum" : [ "COTACAO", "ETP", "MAPA", "TR", "EDITAL", "CONTRATO" ],
+            "type" : "string"
+          },
+          "finalized" : {
+            "type" : "boolean"
+          },
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "pendingRequiredSections" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "processId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "progress" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "sections" : {
+            "items" : {
+              "$ref" : "#/components/schemas/SectionResponseView"
+            },
+            "type" : "array"
+          },
+          "silentGaps" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "body", "canGenerate", "currentVersion", "documentType", "finalized", "id", "pendingRequiredSections", "processId", "progress", "sections", "silentGaps" ],
+        "type" : "object"
+      },
+      "GeneratedSectionResponse" : {
+        "properties" : {
+          "text" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "text" ],
         "type" : "object"
       },
       "LoginRequest" : {
@@ -405,6 +501,17 @@
           "departmentName" : {
             "type" : "string"
           },
+          "dfdFileName" : {
+            "type" : "string"
+          },
+          "documents" : {
+            "items" : {
+              "enum" : [ "COTACAO", "ETP", "MAPA", "TR", "EDITAL", "CONTRATO" ],
+              "type" : "string"
+            },
+            "type" : "array",
+            "uniqueItems" : true
+          },
           "estimatedValue" : {
             "type" : "number"
           },
@@ -452,7 +559,56 @@
             "type" : "integer"
           }
         },
-        "required" : [ "createdAt", "id", "modality", "objectDescription", "organizationId", "processNumber", "status", "updatedAt", "urgency", "version" ],
+        "required" : [ "createdAt", "documents", "id", "modality", "objectDescription", "organizationId", "processNumber", "status", "updatedAt", "urgency", "version" ],
+        "type" : "object"
+      },
+      "SaveSectionRequest" : {
+        "properties" : {
+          "content" : {
+            "maxLength" : 100000,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "dispensationJustification" : {
+            "maxLength" : 2000,
+            "minLength" : 0,
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "SectionResponseView" : {
+        "properties" : {
+          "content" : {
+            "type" : "string"
+          },
+          "dispensationJustification" : {
+            "type" : "string"
+          },
+          "hint" : {
+            "type" : "string"
+          },
+          "legalBasis" : {
+            "type" : "string"
+          },
+          "position" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "required" : {
+            "type" : "boolean"
+          },
+          "resolved" : {
+            "type" : "boolean"
+          },
+          "sectionCode" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "content", "hint", "legalBasis", "position", "required", "resolved", "sectionCode", "title" ],
         "type" : "object"
       },
       "SessionResponse" : {
@@ -570,6 +726,19 @@
             "maxLength" : 2000,
             "minLength" : 3,
             "type" : "string"
+          },
+          "dfdFileName" : {
+            "maxLength" : 255,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "documents" : {
+            "items" : {
+              "enum" : [ "COTACAO", "ETP", "MAPA", "TR", "EDITAL", "CONTRATO" ],
+              "type" : "string"
+            },
+            "type" : "array",
+            "uniqueItems" : true
           },
           "estimatedValue" : {
             "minimum" : 0.0,
@@ -1361,6 +1530,170 @@
           }
         },
         "tags" : [ "procurement-process-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}" : {
+      "get" : {
+        "operationId" : "open",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "documentType",
+          "required" : true,
+          "schema" : {
+            "enum" : [ "COTACAO", "ETP", "MAPA", "TR", "EDITAL", "CONTRATO" ],
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DocumentResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "document-authoring-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/finalize" : {
+      "post" : {
+        "operationId" : "finalizeDocument",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "documentType",
+          "required" : true,
+          "schema" : {
+            "enum" : [ "COTACAO", "ETP", "MAPA", "TR", "EDITAL", "CONTRATO" ],
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DocumentResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "document-authoring-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/sections/{sectionCode}" : {
+      "put" : {
+        "operationId" : "saveSection",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "documentType",
+          "required" : true,
+          "schema" : {
+            "enum" : [ "COTACAO", "ETP", "MAPA", "TR", "EDITAL", "CONTRATO" ],
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "sectionCode",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SaveSectionRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DocumentResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "document-authoring-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/sections/{sectionCode}/generate" : {
+      "post" : {
+        "operationId" : "generateSection",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "documentType",
+          "required" : true,
+          "schema" : {
+            "enum" : [ "COTACAO", "ETP", "MAPA", "TR", "EDITAL", "CONTRATO" ],
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "sectionCode",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/GeneratedSectionResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "document-authoring-controller" ]
       }
     },
     "/api/v1/users" : {

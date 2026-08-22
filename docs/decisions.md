@@ -197,7 +197,7 @@ Correção: o id do processo (e o `tipo` do documento) deixaram de ser **segment
 - Cada `page.tsx` é um Server Component que envolve o `ClientPage` em `<Suspense>` — exigência do `useSearchParams()` sob static export. Os `ClientPage` leem `searchParams.get("id")`/`get("tipo")` no lugar de `useParams()`.
 - **Não recrie rotas `[id]`/`[tipo]` para conteúdo de runtime.** Qualquer tela nova que dependa de um id gerado em runtime segue este padrão (query param + página estática).
 - **DFD continua separado de `documento/`** de propósito: o DFD é *insumo* (Art. 6º — anexo + verificação por IA que emite `ParecerDFD`), **não** um dos seis `TipoDocumento` geráveis (Cotação, ETP, Mapa, TR, Edital, Contrato). Ver §19 e [`fluxo-contratacao.md`](fluxo-contratacao.md#insumos-que-não-são-documentos-gerados). Unificar as duas rotas seria misturar um insumo com os documentos gerados.
-- Limitação conhecida do mock: o "db" em memória reseta a cada carregamento de página, então um processo recém-criado só existe na sessão que o criou — hard refresh/deep-link de um id novo mostra "não encontrado" (esperado; processos das fixtures sobrevivem). Persistir em `localStorage` fica para quando fizer sentido.
+- ~~Limitação conhecida do mock: o "db" em memória reseta a cada carregamento de página, então um processo recém-criado só existe na sessão que o criou.~~ **Resolvida em 22/08/2026, no Bloco 9.3.** Processo, documento e seções vivem no servidor; recarregar a página não perde mais nada. A jornada de ponta a ponta escreve no ETP, recarrega e confere que o texto continua lá — para que a limitação não volte sem ninguém notar.
 
 ## 23. Primeira integração real: autenticação e recuperação de conta
 
@@ -366,3 +366,28 @@ Três das quatro fatias deste bloco têm a mesma forma: a plataforma **sabia** d
 **Dado sintético marcado.** `tenantDa()` fabrica timbre, cabeçalho, rodapé e exercício do PCA. Configuração inventada exibida como real é pior que campo vazio: campo vazio a pessoa preenche; valor plausível ela confere uma vez, aceita, e o documento sai com um cabeçalho que ninguém decidiu — e que ela vai jurar ter configurado. A marca é discreta e presente: alerta grande em quatro campos vira ruído que se aprende a ignorar. A lista em `lib/dominio/sintetico.ts` é fonte única, cada entrada diz em que bloco o campo passa a vir do servidor, e um guarda-corpo quebra o build se um campo declarado não estiver marcado em tela nenhuma.
 
 **Dois guarda-corpos novos.** O nº 7 (`aria-describedby` em botão travado por regra de negócio) estava como `it.todo` desde o Bloco 1, adiado por depender de estender o `Button` — o que o 8.1 precisou fazer de qualquer forma. Ao virar executável apontou **onze** botões, não os três previstos. O nº 8 é o de dado sintético. O arquivo de guarda-corpos não tem mais nenhuma pendência declarada.
+
+## 31. O front-end sai do mock para processo, documento e seções
+
+Até 22/08/2026 o processo, o documento e as seções viviam num banco em memória dentro de `lib/api/client.ts`. Era isso que fazia um processo recém-criado sumir ao recarregar a página — a limitação registrada na §22.
+
+**Decisão:** esses três fluxos passam a usar a API real, pelos tipos gerados do contrato. `client.ts` continua existindo como fachada, e é isso que permitiu a migração não tocar em nenhuma tela: as páginas chamam as mesmas funções, que agora falam HTTP.
+
+**O que mudou de dono:**
+
+| Antes (mock) | Agora |
+|---|---|
+| Processo: criar, listar, ler, editar | Servidor |
+| Documento: abrir, salvar seção, gerar seção, concluir | Servidor |
+| Catálogo de seções (Art. 18) | Servidor |
+| Regra de conclusão e corpo do documento | Servidor — a cópia do front continua como *affordance* |
+| Acervo: identificador `DOC-`, formato, tamanho | Ainda local, até o Bloco 11 produzir o arquivo |
+| Trilha do processo, parecer do DFD, indicadores, configuração do órgão | Ainda local |
+
+**Três decisões que o código passou a expressar:**
+
+- **A versão do documento vem do servidor.** Contá-la no cliente faria duas abas divergirem sobre qual é a versão vigente.
+- **A geração devolve o texto para o rascunho e não o grava.** Quem decide se aquilo entra no documento é quem assina.
+- **`If-Match` com a versão que a tela leu.** A API substitui o recurso inteiro, então o que não muda é reenviado como está — e um PATCH que omitisse o valor estimado o zeraria.
+
+**O mock encolheu de verdade**, não só de fachada: saíram o armazenamento de seções, o conteúdo de demonstração do ETP e a geração de texto simulada. O que sobrou em `client.ts` é o que ainda não tem contrato — e some conforme os blocos seguintes entregam.

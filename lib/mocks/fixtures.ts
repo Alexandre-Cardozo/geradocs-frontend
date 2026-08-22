@@ -370,16 +370,6 @@ export const processos: Processo[] = [
   ...processosEcoporanga.map((p) => ({ ...p, prefeituraId: PREF_ECOPORANGA })),
 ];
 
-/**
- * Conteúdo já redigido do ETP do processo de referência (PROC-2024-089),
- * por id de seção. As demais seções e documentos nascem em branco.
- */
-export const conteudoDemoETP: Record<string, string> = {
-  "1": "Necessidade de aquisição de equipamentos de tecnologia da informação para modernização do parque tecnológico das unidades escolares da rede municipal de ensino, visando melhorar a qualidade do ensino e a infraestrutura pedagógica.",
-  "2": "Contratação prevista no Plano de Contratações Anual de 2025, item 47, sob responsabilidade da Secretaria Municipal de Educação — Diretoria de Tecnologia Educacional.",
-  "3": "Microcomputadores tipo desktop com processador de no mínimo 6 núcleos, 16 GB de memória RAM, armazenamento SSD de 512 GB e garantia on-site de 36 meses.",
-};
-
 /** Achados do parecer da IA sobre o DFD (protótipo DFDReview). */
 export const parecerDFDBase: Omit<ParecerDFD, "processoId" | "arquivo"> = {
   analisadoEm: "2025-07-09T14:38:00",

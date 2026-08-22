@@ -33,9 +33,12 @@ const processoApi = {
   estimatedValue: 485000,
   legalBasis: "Art. 28, I, Lei 14.133/21",
   urgency: false,
+  documents: ["ETP", "TR", "EDITAL"],
+  dfdFileName: "dfd-2026-014.pdf",
   status: "DRAFT" as const,
   createdAt: "2026-08-20T10:00:00-03:00",
   updatedAt: "2026-08-20T10:30:00-03:00",
+  version: 0,
 }
 
 function pagina(conteudo: unknown[] = [processoApi]) {
@@ -236,5 +239,85 @@ describe("criarProcessoReal", () => {
     })
 
     expect(corpo.estimatedValue).toBe(0)
+  })
+})
+
+describe("atualizarProcessoReal", () => {
+  it("reenvia o que não muda, porque a API troca o recurso inteiro", async () => {
+    let corpo: Record<string, unknown> = {}
+    servidor.use(
+      http.patch(`${urlDaApi}/procurement-processes/:id`, async ({ request }) => {
+        corpo = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json(processoApi)
+      }),
+    )
+    const { atualizarProcessoReal, obterProcesso } = await carregarClienteLimpo()
+    servidor.use(http.get(`${urlDaApi}/procurement-processes/:id`, () => HttpResponse.json(processoApi)))
+    const atual = await obterProcesso(processoApi.id)
+
+    await atualizarProcessoReal(atual, { objeto: "Descrição revisada" })
+
+    // PATCH que omitisse o valor estimado o zeraria: a API substitui o recurso.
+    expect(corpo.objectDescription).toBe("Descrição revisada")
+    expect(corpo.estimatedValue).toBe(485000)
+    expect(corpo.dfdFileName).toBe("dfd-2026-014.pdf")
+  })
+
+  it("processo sem DFD e sem urgência declarada não inventa valores", async () => {
+    let corpo: Record<string, unknown> = {}
+    const semOpcionais = { ...processoApi, dfdFileName: undefined, urgency: false, version: undefined }
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id`, () => HttpResponse.json(semOpcionais)),
+      http.patch(`${urlDaApi}/procurement-processes/:id`, async ({ request }) => {
+        corpo = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json(semOpcionais)
+      }),
+    )
+    const { atualizarProcessoReal, obterProcesso } = await carregarClienteLimpo()
+    const atual = await obterProcesso(processoApi.id)
+
+    expect(atual.dfdArquivo).toBeNull()
+    await atualizarProcessoReal(atual, {})
+
+    expect(corpo.dfdFileName).toBeNull()
+    expect(corpo.urgency).toBe(false)
+  })
+
+  it("remover o DFD é diferente de não mexer nele", async () => {
+    let corpo: Record<string, unknown> = {}
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id`, () => HttpResponse.json(processoApi)),
+      http.patch(`${urlDaApi}/procurement-processes/:id`, async ({ request }) => {
+        corpo = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json(processoApi)
+      }),
+    )
+    const { atualizarProcessoReal, obterProcesso } = await carregarClienteLimpo()
+    const atual = await obterProcesso(processoApi.id)
+
+    // `null` retira o anexo; `undefined` mantém o que está lá. Colapsar os dois
+    // faria salvar a descrição apagar o DFD anexado.
+    await atualizarProcessoReal(atual, { dfdArquivo: null })
+
+    expect(corpo.dfdFileName).toBeNull()
+  })
+
+  it("envia If-Match com a versão que a tela leu, e zero quando não há", async () => {
+    let ifMatch: string | null = null
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id`, () =>
+        HttpResponse.json({ ...processoApi, version: undefined }),
+      ),
+      http.patch(`${urlDaApi}/procurement-processes/:id`, ({ request }) => {
+        ifMatch = request.headers.get("If-Match")
+        return HttpResponse.json(processoApi)
+      }),
+    )
+    const { atualizarProcessoReal, obterProcesso } = await carregarClienteLimpo()
+
+    await atualizarProcessoReal(await obterProcesso(processoApi.id), {})
+
+    // Recurso recém-criado nasce na versão 0; sem o cabeçalho a API responde 428.
+    expect(ifMatch).toBe('"0"')
   })
 })

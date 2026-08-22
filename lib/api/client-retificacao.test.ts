@@ -1,37 +1,75 @@
+import { HttpResponse, http } from "msw"
 import { describe, expect, it, vi } from "vitest"
 
+import { documentoApi, processoApi } from "@/lib/teste/fixtures-api"
+import { urlDaApi } from "@/lib/teste/handlers"
+import { servidor } from "@/lib/teste/servidor-msw"
+
 /**
- * O "Fecha quando" do passo 8.2: regerar produz `v2` marcada e o histórico
- * mostra o motivo.
+ * Retificação: v2 marcada, histórico com o motivo, trilha com a natureza.
+ *
+ * A conclusão e a versão são do servidor desde o Bloco 9 — é ele que valida as
+ * seções indispensáveis e conta as conclusões. O que ainda é do front-end é o
+ * **acervo**: título com o rótulo RETIFICADO, histórico de versões e o registro
+ * na trilha do processo.
  */
 async function carregarClienteLimpo() {
   vi.resetModules()
   return import("@/lib/api/client")
 }
 
-const PROCESSO = "PROC-2024-089"
+/**
+ * O servidor conta as conclusões, como faz de verdade: cada `finalize` devolve
+ * a versão seguinte.
+ */
+function servidorQueConclui() {
+  let versao = 0
+  servidor.use(
+    http.get(`${urlDaApi}/procurement-processes/:id`, () => HttpResponse.json(processoApi)),
+    http.post(`${urlDaApi}/procurement-processes/:id/documents/:tipo/finalize`, () => {
+      versao += 1
+      return HttpResponse.json({
+        ...documentoApi,
+        finalized: true,
+        currentVersion: versao,
+        body: [{ sectionCode: "1", title: "Seção 1", text: "Necessidade.", dispensed: false }],
+      })
+    }),
+  )
+}
+
+const PROCESSO = processoApi.id
 
 describe("retificação de documento", () => {
-  it("gera v2 marcada e registra o motivo no histórico", async () => {
-    const { gerarDocumento, getDocumentos, getHistoricoVersoes } = await carregarClienteLimpo()
-    // O processo já tem o ETP na versão 1 — é desse estado que parte quem
-    // retifica: o documento existe e já saiu para o processo.
-    const primeira = (await getDocumentos()).find(
-      (d) => d.processoId === PROCESSO && d.tipo === "ETP",
-    )
-    expect(primeira?.versao).toBe(1)
-    expect(primeira?.titulo).not.toContain("RETIFICADO")
+  it("a versão vem do servidor e o título ganha o rótulo", async () => {
+    servidorQueConclui()
+    const { gerarDocumento } = await carregarClienteLimpo()
+    // Retificar pressupõe documento gerado: não se retifica o que nunca saiu.
+    await gerarDocumento({ processoId: PROCESSO, tipo: "ETP" })
 
-    const segunda = await gerarDocumento({
+    const documento = await gerarDocumento({
       processoId: PROCESSO,
       tipo: "ETP",
       retificacao: { motivo: "erro_material", detalhe: "Valor da seção 5 trocado." },
     })
 
-    expect(segunda.versao).toBe(2)
+    // Contar a versão aqui faria duas abas divergirem sobre qual é a vigente.
+    expect(documento.versao).toBe(2)
     // O rótulo vai no título porque o arquivo sai da plataforma: anexado ao
     // processo no sistema da prefeitura, o badge da tela não viaja junto.
-    expect(segunda.titulo).toContain("RETIFICADO")
+    expect(documento.titulo).toContain("RETIFICADO")
+  })
+
+  it("o histórico registra a natureza e o que foi corrigido", async () => {
+    servidorQueConclui()
+    const { gerarDocumento, getHistoricoVersoes } = await carregarClienteLimpo()
+    await gerarDocumento({ processoId: PROCESSO, tipo: "ETP" })
+
+    await gerarDocumento({
+      processoId: PROCESSO,
+      tipo: "ETP",
+      retificacao: { motivo: "erro_material", detalhe: "Valor da seção 5 trocado." },
+    })
 
     expect((await getHistoricoVersoes(PROCESSO, "ETP"))[0]?.nota).toBe(
       "Retificação (Erro material): Valor da seção 5 trocado.",
@@ -39,7 +77,9 @@ describe("retificação de documento", () => {
   })
 
   it("a retificação entra na trilha do processo", async () => {
-    const { gerarDocumento, getProcesso } = await carregarClienteLimpo()
+    servidorQueConclui()
+    const { gerarDocumento, getTrilha } = await carregarClienteLimpo()
+    await gerarDocumento({ processoId: PROCESSO, tipo: "ETP" })
 
     await gerarDocumento({
       processoId: PROCESSO,
@@ -47,43 +87,33 @@ describe("retificação de documento", () => {
       retificacao: { motivo: "alteracao_substancial", detalhe: "Prazo de entrega alterado." },
     })
 
-    const evento = (await getProcesso(PROCESSO))?.trilha[0]
+    const evento = (await getTrilha(PROCESSO))[0]
     expect(evento?.evento).toBe("retificacao")
     expect(evento?.comentario).toContain("Alteração substancial")
     expect(evento?.comentario).toContain("Prazo de entrega alterado.")
   })
 
   it("regerar sem declarar retificação não vira retificação", async () => {
-    const { gerarDocumento, getHistoricoVersoes, getProcesso } = await carregarClienteLimpo()
-    const antes = await getProcesso(PROCESSO)
+    servidorQueConclui()
+    const { gerarDocumento, getHistoricoVersoes, getTrilha } = await carregarClienteLimpo()
+
+    await gerarDocumento({ processoId: PROCESSO, tipo: "ETP" })
+    await gerarDocumento({ processoId: PROCESSO, tipo: "ETP" })
+
+    // Regeração acontece enquanto o documento ainda está sendo elaborado.
+    // Marcá-la como retificação esvaziaria a palavra onde ela tem peso.
+    expect((await getHistoricoVersoes(PROCESSO, "ETP"))[0]?.nota).toBe("Regeração")
+    expect(await getTrilha(PROCESSO)).toEqual([])
+  })
+
+  it("o corpo guardado é o que o servidor congelou", async () => {
+    servidorQueConclui()
+    const { gerarDocumento, getCorpoDocumento } = await carregarClienteLimpo()
 
     await gerarDocumento({ processoId: PROCESSO, tipo: "ETP" })
 
-    // Regeração acontece enquanto o documento ainda está sendo elaborado dentro
-    // da plataforma. Marcá-la como retificação esvaziaria a palavra onde ela
-    // tem peso — e encheria a trilha de eventos sem consequência.
-    expect((await getHistoricoVersoes(PROCESSO, "ETP"))[0]?.nota).toBe("Regeração")
-    expect((await getProcesso(PROCESSO))?.trilha.length).toBe(antes?.trilha.length)
-  })
-
-  it("cada retificação empilha uma versão nova, sem sobrescrever", async () => {
-    const { gerarDocumento, getHistoricoVersoes } = await carregarClienteLimpo()
-    await gerarDocumento({
-      processoId: PROCESSO,
-      tipo: "ETP",
-      retificacao: { motivo: "erro_material", detalhe: "Primeira correção." },
-    })
-    const terceira = await gerarDocumento({
-      processoId: PROCESSO,
-      tipo: "ETP",
-      retificacao: { motivo: "erro_material", detalhe: "Segunda correção." },
-    })
-
-    // Documento que instrui contratação precisa poder mostrar o que mudou e
-    // quando; sobrescrever apagaria exatamente a pergunta do controle.
-    expect(terceira.versao).toBe(3)
-    const historico = await getHistoricoVersoes(PROCESSO, "ETP")
-    expect(historico.map((v) => v.versao)).toEqual([3, 2, 1])
-    expect(historico[1]?.nota).toContain("Primeira correção.")
+    // O documento gerado é um retrato: quem congela é o servidor, no momento em
+    // que valida as seções.
+    expect((await getCorpoDocumento(PROCESSO, "ETP"))[0]?.texto).toBe("Necessidade.")
   })
 })

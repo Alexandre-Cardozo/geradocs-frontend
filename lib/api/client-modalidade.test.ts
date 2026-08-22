@@ -1,35 +1,89 @@
+import { HttpResponse, http } from "msw"
 import { describe, expect, it, vi } from "vitest"
 
+import { processoApi } from "@/lib/teste/fixtures-api"
+import { urlDaApi } from "@/lib/teste/handlers"
+import { servidor } from "@/lib/teste/servidor-msw"
+
 /**
- * O caso que fecha o passo 8.1: um processo montado como Pregão Eletrônico vira
- * Dispensa do Art. 75.
+ * O caso da reunião: um processo montado como Pregão Eletrônico vira Dispensa
+ * do Art. 75.
  *
- * Cada teste precisa de um módulo novo porque o `client` guarda o banco em
- * memória em variável de módulo — sem isso, a troca de um teste vaza para o
- * seguinte e a suíte passa a testar a ordem em que os testes rodam.
+ * O processo em si vive no servidor desde o Bloco 9. O que ainda é do front-end
+ * — e é o que se testa aqui — é o **registro na trilha**: qual documento deixou
+ * de ser cabível, qual passou a ser obrigatório, e a justificativa de quem
+ * decidiu manter a lista assim mesmo.
  */
 async function carregarClienteLimpo() {
   vi.resetModules()
   return import("@/lib/api/client")
 }
 
-const PREGAO_COM_EDITAL = "PROC-2024-089"
+/** Responde a leitura com o processo dado e ecoa a edição de volta. */
+function servidorComProcesso(processo: Record<string, unknown> = processoApi) {
+  servidor.use(
+    http.get(`${urlDaApi}/procurement-processes/:id`, () => HttpResponse.json(processo)),
+    http.patch(`${urlDaApi}/procurement-processes/:id`, async ({ request }) => {
+      const corpo = (await request.json()) as Record<string, unknown>
+      return HttpResponse.json({ ...processo, ...corpo, version: 1 })
+    }),
+  )
+}
+
+const PROCESSO = processoApi.id
 
 describe("troca de modalidade", () => {
-  it("ajustando a lista, remove o que deixou de ser cabível e registra o ajuste", async () => {
-    const { atualizarProcesso, getProcesso } = await carregarClienteLimpo()
-    const antes = await getProcesso(PREGAO_COM_EDITAL)
-    expect(antes?.documentos).toContain("Edital")
+  it("envia a modalidade e a lista nova para o servidor", async () => {
+    let corpo: Record<string, unknown> = {}
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id`, () => HttpResponse.json(processoApi)),
+      http.patch(`${urlDaApi}/procurement-processes/:id`, async ({ request }) => {
+        corpo = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json({ ...processoApi, version: 1 })
+      }),
+    )
+    const { atualizarProcesso } = await carregarClienteLimpo()
 
-    const depois = await atualizarProcesso({
-      id: PREGAO_COM_EDITAL,
+    await atualizarProcesso({
+      id: PROCESSO,
       modalidade: "Dispensa Art. 75",
       documentos: ["ETP", "TR"],
     })
 
-    expect(depois.modalidade).toBe("Dispensa Art. 75")
-    expect(depois.documentos).not.toContain("Edital")
-    const evento = depois.trilha[0]
+    expect(corpo.modality).toBe("DIRECT_AWARD_ARTICLE_75")
+    expect(corpo.documents).toEqual(["ETP", "TR"])
+  })
+
+  it("envia If-Match com a versão que a tela leu", async () => {
+    let ifMatch: string | null = null
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id`, () =>
+        HttpResponse.json({ ...processoApi, version: 7 }),
+      ),
+      http.patch(`${urlDaApi}/procurement-processes/:id`, ({ request }) => {
+        ifMatch = request.headers.get("If-Match")
+        return HttpResponse.json({ ...processoApi, version: 8 })
+      }),
+    )
+    const { atualizarProcesso } = await carregarClienteLimpo()
+
+    await atualizarProcesso({ id: PROCESSO, objeto: "Descrição revisada" })
+
+    // Sem isto, duas edições simultâneas se sobrescreveriam em silêncio.
+    expect(ifMatch).toBe('"7"')
+  })
+
+  it("registra na trilha o que deixou de ser cabível", async () => {
+    servidorComProcesso()
+    const { atualizarProcesso, getTrilha } = await carregarClienteLimpo()
+
+    await atualizarProcesso({
+      id: PROCESSO,
+      modalidade: "Dispensa Art. 75",
+      documentos: ["ETP", "TR"],
+    })
+
+    const evento = (await getTrilha(PROCESSO))[0]
     expect(evento?.evento).toBe("troca_modalidade")
     expect(evento?.comentario).toContain("Pregão Eletrônico")
     expect(evento?.comentario).toContain("Dispensa Art. 75")
@@ -37,47 +91,41 @@ describe("troca de modalidade", () => {
   })
 
   it("mantendo a lista, a justificativa vai literal para a trilha", async () => {
-    const { atualizarProcesso } = await carregarClienteLimpo()
+    servidorComProcesso()
+    const { atualizarProcesso, getTrilha } = await carregarClienteLimpo()
 
-    const depois = await atualizarProcesso({
-      id: PREGAO_COM_EDITAL,
+    await atualizarProcesso({
+      id: PROCESSO,
       modalidade: "Dispensa Art. 75",
       justificativaModalidade: "O edital já foi publicado e será anulado por ato próprio.",
     })
 
     // É a justificativa que responde ao controle por que o processo ficou com um
     // documento que a modalidade vigente não comporta.
-    expect(depois.documentos).toContain("Edital")
-    expect(depois.trilha[0]?.comentario).toContain(
+    expect((await getTrilha(PROCESSO))[0]?.comentario).toContain(
       "O edital já foi publicado e será anulado por ato próprio.",
     )
   })
 
   it("a trilha registra quem trocou e quando", async () => {
-    const { atualizarProcesso } = await carregarClienteLimpo()
+    servidorComProcesso()
+    const { atualizarProcesso, getTrilha } = await carregarClienteLimpo()
 
-    const evento = (
-      await atualizarProcesso({ id: PREGAO_COM_EDITAL, modalidade: "Dispensa Art. 75" })
-    ).trilha[0]
+    await atualizarProcesso({ id: PROCESSO, modalidade: "Dispensa Art. 75" })
 
-    // Sem autor e data, a trilha não serve ao controle: ela existe justamente
-    // para dizer quem fez o quê dentro da plataforma.
+    const evento = (await getTrilha(PROCESSO))[0]
     expect(evento?.autor).not.toBe("")
     expect(evento?.data).toMatch(/^\d{4}-\d{2}-\d{2}T/)
   })
 
   it("salvar sem trocar a modalidade não polui a trilha", async () => {
-    const { atualizarProcesso, getProcesso } = await carregarClienteLimpo()
-    const antes = await getProcesso(PREGAO_COM_EDITAL)
+    servidorComProcesso()
+    const { atualizarProcesso, getTrilha } = await carregarClienteLimpo()
 
-    const depois = await atualizarProcesso({
-      id: PREGAO_COM_EDITAL,
-      modalidade: "Pregão Eletrônico",
-      objeto: "Descrição revisada",
-    })
+    await atualizarProcesso({ id: PROCESSO, objeto: "Descrição revisada" })
 
     // Evento sem mudança transformaria a trilha em log de cliques, e o que
     // importa deixaria de ser encontrável no meio.
-    expect(depois.trilha.length).toBe(antes?.trilha.length)
+    expect(await getTrilha(PROCESSO)).toEqual([])
   })
 })

@@ -102,6 +102,8 @@ export interface Processo {
   urgente?: boolean
   /** Trilha de auditoria das transições de status (fonte única — a fila de aprovações projeta daqui). */
   trilha: EventoDoProcesso[]
+  /** Versão do recurso no servidor, para concorrência otimista (If-Match). */
+  versao?: number
 }
 
 export interface NovoProcessoInput {
