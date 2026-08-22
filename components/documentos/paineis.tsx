@@ -51,7 +51,7 @@ function PainelQuantidades({ secao, rascunho, setRascunho }: PainelProps) {
   const [vigencia, setVigencia] = useState("12 meses")
 
   return (
-    <SectionBlock title={secao.titulo} hint={secao.hint}>
+    <SectionBlock title={secao.titulo} hint={secao.hint ?? ""}>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <FormField label="Quantidade Estimada" required>
           <QuantityInput value={qty} onChange={setQty} />
@@ -112,7 +112,7 @@ function PainelValor({ secao, rascunho, setRascunho }: PainelProps) {
   ]
 
   return (
-    <SectionBlock title={secao.titulo} hint={secao.hint}>
+    <SectionBlock title={secao.titulo} hint={secao.hint ?? ""}>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <FormField label="Quantidade" required>
           <QuantityInput value={qty} onChange={setQty} />

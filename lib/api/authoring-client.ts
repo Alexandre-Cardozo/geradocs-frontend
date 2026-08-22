@@ -33,9 +33,10 @@ interface SecaoApi {
   sectionCode: string;
   position: number;
   title: string;
-  legalBasis: string;
-  hint: string;
+  legalBasis?: string;
+  hint?: string;
   required: boolean;
+  origin: "CATALOG" | "AD_HOC";
   content: string;
   dispensationJustification?: string;
   resolved: boolean;
@@ -90,9 +91,10 @@ function mapearSecao(secao: SecaoApi): SecaoDocumento {
     titulo: secao.title,
     status: status(secao),
     obrigatoria: secao.required,
+    origem: secao.origin === "AD_HOC" ? "servidor" : "catalogo",
     conteudo: secao.content,
-    hint: secao.hint,
-    fundamentoLegal: secao.legalBasis,
+    ...(secao.hint ? { hint: secao.hint } : {}),
+    ...(secao.legalBasis ? { fundamentoLegal: secao.legalBasis } : {}),
     ...(secao.dispensationJustification
       ? { justificativaDispensa: secao.dispensationJustification }
       : {}),
@@ -356,4 +358,56 @@ export async function compararVersoes(
       leiaSe: entrada.leiaSe,
     })),
   };
+}
+
+/**
+ * Acrescenta uma seção criada pelo servidor, ancorada em uma do catálogo.
+ *
+ * @param subtopico `true` para subtópico (5.1); `false` para seção nova logo
+ *                  após a âncora
+ */
+export async function acrescentarSecao(
+  processoId: string,
+  tipo: TipoDocumento,
+  titulo: string,
+  ancora: string,
+  subtopico: boolean,
+): Promise<DocumentoEmElaboracao> {
+  return mapear(
+    await requisicaoProtegida<DocumentoApi>(`${rota(processoId, tipo)}/sections`, {
+      method: "POST",
+      body: JSON.stringify({ title: titulo, anchorSectionCode: ancora, nested: subtopico }),
+    }),
+    tipo,
+  );
+}
+
+/** Exclui uma seção criada pelo servidor. As do catálogo têm a dispensa. */
+export async function excluirSecao(
+  processoId: string,
+  tipo: TipoDocumento,
+  secaoId: string,
+): Promise<DocumentoEmElaboracao> {
+  return mapear(
+    await requisicaoProtegida<DocumentoApi>(
+      `${rota(processoId, tipo)}/sections/${encodeURIComponent(secaoId)}`,
+      { method: "DELETE" },
+    ),
+    tipo,
+  );
+}
+
+/** Reordena as seções criadas pelo servidor. As do catálogo seguem a lei. */
+export async function reordenarSecoes(
+  processoId: string,
+  tipo: TipoDocumento,
+  secoesNaOrdem: string[],
+): Promise<DocumentoEmElaboracao> {
+  return mapear(
+    await requisicaoProtegida<DocumentoApi>(`${rota(processoId, tipo)}/sections-order`, {
+      method: "PUT",
+      body: JSON.stringify({ sectionCodesInOrder: secoesNaOrdem }),
+    }),
+    tipo,
+  );
 }

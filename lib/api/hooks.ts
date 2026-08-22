@@ -220,6 +220,36 @@ export function useCorpoDocumento(processoId: string, tipo: TipoDocumento) {
   })
 }
 
+/**
+ * Acrescentar, excluir e reordenar as seções que o servidor cria.
+ *
+ * As três invalidam as mesmas consultas porque mexem na mesma coisa — a
+ * estrutura do documento — e separar as invalidações deixaria a tela mostrando
+ * uma estrutura e o corpo de outra.
+ */
+export function useEstruturaDoDocumento(processoId: string, tipo: TipoDocumento) {
+  const queryClient = useQueryClient()
+  const invalidar = () => {
+    void queryClient.invalidateQueries({ queryKey: chaves.secoes(processoId, tipo) })
+    void queryClient.invalidateQueries({ queryKey: ["corpo-documento"] })
+  }
+  const acrescentar = useMutation({
+    mutationFn: (input: { titulo: string; ancora: string; subtopico: boolean }) =>
+      api.acrescentarSecaoDoDocumento(processoId, tipo, input.titulo, input.ancora, input.subtopico),
+    onSuccess: invalidar,
+  })
+  const excluir = useMutation({
+    mutationFn: (secaoId: string) => api.excluirSecaoDoDocumento(processoId, tipo, secaoId),
+    onSuccess: invalidar,
+  })
+  const reordenar = useMutation({
+    mutationFn: (secoesNaOrdem: string[]) =>
+      api.reordenarSecoesDoDocumento(processoId, tipo, secoesNaOrdem),
+    onSuccess: invalidar,
+  })
+  return { acrescentar, excluir, reordenar }
+}
+
 /** A demanda consolidada dos DFDs do processo. */
 export function useConsolidacaoDaDemanda(processoId: string) {
   return useQuery({

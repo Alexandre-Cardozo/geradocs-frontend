@@ -308,6 +308,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/sections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["addSection"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/sections-order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["reorderSections"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/procurement-processes/{processId}/documents/{documentType}/sections/{sectionCode}": {
         parameters: {
             query?: never;
@@ -318,7 +350,7 @@ export interface paths {
         get?: never;
         put: operations["saveSection"];
         post?: never;
-        delete?: never;
+        delete: operations["removeSection"];
         options?: never;
         head?: never;
         patch?: never;
@@ -429,6 +461,11 @@ export interface components {
             /** Format: email */
             email: string;
             password: string;
+        };
+        AddSectionRequest: {
+            anchorSectionCode: string;
+            nested: boolean;
+            title: string;
         };
         AttachDfdRequest: {
             /** Format: uuid */
@@ -704,6 +741,9 @@ export interface components {
             /** Format: int64 */
             version: number;
         };
+        ReorderSectionsRequest: {
+            sectionCodesInOrder: string[];
+        };
         SaveSectionRequest: {
             content?: string;
             dispensationJustification?: string;
@@ -719,8 +759,10 @@ export interface components {
         SectionResponseView: {
             content: string;
             dispensationJustification?: string;
-            hint: string;
-            legalBasis: string;
+            hint?: string;
+            legalBasis?: string;
+            /** @enum {string} */
+            origin: "CATALOG" | "AD_HOC";
             /** Format: int32 */
             position: number;
             required: boolean;
@@ -1439,6 +1481,60 @@ export interface operations {
             };
         };
     };
+    addSection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                processId: string;
+                documentType: "COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddSectionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DocumentResponse"];
+                };
+            };
+        };
+    };
+    reorderSections: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                processId: string;
+                documentType: "COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReorderSectionsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DocumentResponse"];
+                };
+            };
+        };
+    };
     saveSection: {
         parameters: {
             query?: never;
@@ -1455,6 +1551,30 @@ export interface operations {
                 "application/json": components["schemas"]["SaveSectionRequest"];
             };
         };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DocumentResponse"];
+                };
+            };
+        };
+    };
+    removeSection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                processId: string;
+                documentType: "COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO";
+                sectionCode: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description OK */
             200: {

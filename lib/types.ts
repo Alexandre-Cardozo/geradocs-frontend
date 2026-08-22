@@ -140,10 +140,22 @@ export interface SecaoDocumento {
    */
   obrigatoria: boolean
   conteudo: string
-  /** Frase de orientação — o usuário sempre sabe o que escrever e por quê. */
-  hint: string
-  /** Fundamento citado literalmente (ex.: "Art. 18, § 1º, I, Lei 14.133/21"). */
-  fundamentoLegal: string
+  /** Frase de orientação — ausente em seção criada pelo servidor. */
+  hint?: string
+  /**
+   * De onde a seção veio.
+   *
+   * `catalogo` traduz a lei — não se exclui nem se reordena. `servidor` foi
+   * criada por quem elabora o documento, e nunca é indispensável (ADR-018).
+   */
+  origem: "catalogo" | "servidor"
+  /**
+   * Fundamento citado literalmente (ex.: "Art. 18, § 1º, I, Lei 14.133/21").
+   *
+   * Ausente em seção criada pelo servidor: a lei não a conhece, e inventar um
+   * fundamento seria mentir sobre o que a norma diz.
+   */
+  fundamentoLegal?: string
   /**
    * Por que a seção foi dispensada.
    *

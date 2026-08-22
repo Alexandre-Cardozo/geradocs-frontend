@@ -8,6 +8,7 @@ function secao(partes: Partial<SecaoDocumento> & { id: string }): SecaoDocumento
     titulo: `Seção ${partes.id}`,
     status: "Não iniciado",
     obrigatoria: true,
+    origem: "catalogo",
     conteudo: "",
     hint: "Oriente.",
     fundamentoLegal: "Art. 18, § 1º, Lei 14.133/21",

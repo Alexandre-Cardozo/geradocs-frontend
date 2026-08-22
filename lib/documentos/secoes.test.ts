@@ -63,7 +63,7 @@ describe("estrutura seccional por documento", () => {
 describe("toda seção orienta quem escreve", () => {
   it.each(ORDEM_FLUXO)("%s cita fundamento legal literal em cada seção", (tipo) => {
     for (const secao of secoesPorTipoBase[tipo]) {
-      expect(secao.fundamentoLegal.trim(), `${tipo} — ${secao.titulo}`).not.toBe("")
+      expect(secao.fundamentoLegal!.trim(), `${tipo} — ${secao.titulo}`).not.toBe("")
     }
   })
 
@@ -72,7 +72,7 @@ describe("toda seção orienta quem escreve", () => {
     // instruirá o modelo de IA a redigir a seção. Seção sem hint deixa os dois
     // sem contexto.
     for (const secao of secoesPorTipoBase[tipo]) {
-      expect(secao.hint.trim(), `${tipo} — ${secao.titulo}`).not.toBe("")
+      expect(secao.hint!.trim(), `${tipo} — ${secao.titulo}`).not.toBe("")
     }
   })
 

@@ -26,6 +26,7 @@ function secoes(defs: DefSecao[]): SecaoDocumento[] {
     titulo: def.titulo,
     status: "Não iniciado",
     obrigatoria: !def.opcional,
+    origem: "catalogo",
     conteudo: "",
     hint: def.hint,
     fundamentoLegal: def.fundamentoLegal,

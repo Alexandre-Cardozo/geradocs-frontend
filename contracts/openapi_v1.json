@@ -22,6 +22,25 @@
         "required" : [ "cpf", "email", "password" ],
         "type" : "object"
       },
+      "AddSectionRequest" : {
+        "properties" : {
+          "anchorSectionCode" : {
+            "maxLength" : 10,
+            "minLength" : 1,
+            "type" : "string"
+          },
+          "nested" : {
+            "type" : "boolean"
+          },
+          "title" : {
+            "maxLength" : 200,
+            "minLength" : 1,
+            "type" : "string"
+          }
+        },
+        "required" : [ "anchorSectionCode", "nested", "title" ],
+        "type" : "object"
+      },
       "AttachDfdRequest" : {
         "properties" : {
           "departmentId" : {
@@ -820,6 +839,19 @@
         "required" : [ "createdAt", "documents", "id", "modality", "objectDescription", "organizationId", "processNumber", "status", "updatedAt", "urgency", "version" ],
         "type" : "object"
       },
+      "ReorderSectionsRequest" : {
+        "properties" : {
+          "sectionCodesInOrder" : {
+            "items" : {
+              "type" : "string"
+            },
+            "minItems" : 1,
+            "type" : "array"
+          }
+        },
+        "required" : [ "sectionCodesInOrder" ],
+        "type" : "object"
+      },
       "SaveSectionRequest" : {
         "properties" : {
           "content" : {
@@ -871,6 +903,10 @@
           "legalBasis" : {
             "type" : "string"
           },
+          "origin" : {
+            "enum" : [ "CATALOG", "AD_HOC" ],
+            "type" : "string"
+          },
           "position" : {
             "format" : "int32",
             "type" : "integer"
@@ -888,7 +924,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "content", "hint", "legalBasis", "position", "required", "resolved", "sectionCode", "title" ],
+        "required" : [ "content", "origin", "position", "required", "resolved", "sectionCode", "title" ],
         "type" : "object"
       },
       "SessionResponse" : {
@@ -2009,7 +2045,137 @@
         "tags" : [ "document-authoring-controller" ]
       }
     },
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/sections" : {
+      "post" : {
+        "operationId" : "addSection",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "documentType",
+          "required" : true,
+          "schema" : {
+            "enum" : [ "COTACAO", "ETP", "MAPA", "TR", "EDITAL", "CONTRATO" ],
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AddSectionRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DocumentResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "document-authoring-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/sections-order" : {
+      "put" : {
+        "operationId" : "reorderSections",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "documentType",
+          "required" : true,
+          "schema" : {
+            "enum" : [ "COTACAO", "ETP", "MAPA", "TR", "EDITAL", "CONTRATO" ],
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ReorderSectionsRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DocumentResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "document-authoring-controller" ]
+      }
+    },
     "/api/v1/procurement-processes/{processId}/documents/{documentType}/sections/{sectionCode}" : {
+      "delete" : {
+        "operationId" : "removeSection",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "documentType",
+          "required" : true,
+          "schema" : {
+            "enum" : [ "COTACAO", "ETP", "MAPA", "TR", "EDITAL", "CONTRATO" ],
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "sectionCode",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DocumentResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "document-authoring-controller" ]
+      },
       "put" : {
         "operationId" : "saveSection",
         "parameters" : [ {

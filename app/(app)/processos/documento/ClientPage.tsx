@@ -19,6 +19,7 @@ import {
 } from "@/lib/api/hooks"
 import { CATALOGO, porSlug } from "@/lib/documentos"
 import { DispensaDeSecao } from "@/components/documentos/dispensa-de-secao"
+import { EstruturaDoDocumento } from "@/components/documentos/estrutura-do-documento"
 import { PreviaDoDocumento } from "@/components/documentos/previa-do-documento"
 import {
   corpoDoDocumento,
@@ -191,7 +192,11 @@ export default function EditorDocumento() {
                 <span className="block min-w-0 flex-1">
                   <span className={`block text-sm leading-snug ${isActive ? "font-semibold text-royal-hover" : "font-medium text-text-2"}`}>
                     {s.titulo}
-                    {foiDispensada(s) ? (
+                    {s.origem === "servidor" ? (
+                      // Distinta de "Opt.": a do servidor não é dispensável pela
+                      // lei, é uma seção que ele criou.
+                      <span className="ml-1.25 text-2xs font-semibold text-text-muted">Sua</span>
+                    ) : foiDispensada(s) ? (
                       // "Dispensada" e não "Opt.": o trilho precisa distinguir a
                       // seção que pode ficar em branco daquela que já foi
                       // dispensada com justificativa registrada.
@@ -243,7 +248,7 @@ export default function EditorDocumento() {
           {active?.painel && active.painel !== "ata" ? (
             <PainelDaSecao secao={active} rascunho={rascunho} setRascunho={setRascunho} />
           ) : active ? (
-            <SectionBlock title={active.titulo} hint={active.hint}>
+            <SectionBlock title={active.titulo} hint={active.hint ?? ""}>
               {active.status === "Completo" && rascunho === active.conteudo && active.conteudo !== "" ? (
                 <div className="flex flex-col gap-3.5">
                   <div className="flex items-start gap-3 rounded-xl border border-tint-success-border bg-tint-success-bg px-4.5 py-4">
@@ -327,9 +332,14 @@ export default function EditorDocumento() {
                   </InfoBanner>
                 )}
                 {isLast && (
-                  // Na última seção, antes de gerar: é o único momento em que
-                  // olhar o resultado ainda muda alguma coisa.
-                  <PreviaDoDocumento blocos={corpoDoDocumento(lista)} />
+                  <>
+                    {/*
+                      Estrutura e prévia ficam na última seção: é o momento em que
+                      olhar o documento inteiro ainda muda alguma coisa.
+                    */}
+                    <EstruturaDoDocumento processoId={processoId} tipo={tipo} secoes={lista} />
+                    <PreviaDoDocumento blocos={corpoDoDocumento(lista)} />
+                  </>
                 )}
                 {isLast && lacunasSilenciosas.length > 0 && (
                   <InfoBanner tone="info">

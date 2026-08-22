@@ -56,11 +56,14 @@ import {
 } from "@/lib/api/access-client"
 import {
   abrirDocumento,
+  acrescentarSecao,
   compararVersoes as compararVersoesNaApi,
   concluirDocumento,
   corpoDaVersaoVigente,
   gerarTextoDaSecao,
+  excluirSecao,
   historicoDeVersoes,
+  reordenarSecoes,
   salvarSecao,
   versoesComTexto,
 } from "@/lib/api/authoring-client"
@@ -561,6 +564,35 @@ export async function getHistoricoVersoes(processoId: string, tipo: TipoDocument
  */
 export async function getVersoesComTexto(processoId: string, tipo: TipoDocumento) {
   return versoesComTexto(processoId, tipo)
+}
+
+/** Acrescenta uma seção criada pelo servidor, ancorada em uma do catálogo. */
+export async function acrescentarSecaoDoDocumento(
+  processoId: string,
+  tipo: TipoDocumento,
+  titulo: string,
+  ancora: string,
+  subtopico: boolean,
+) {
+  return acrescentarSecao(processoId, tipo, titulo, ancora, subtopico)
+}
+
+/** Exclui uma seção criada pelo servidor. As do catálogo têm a dispensa. */
+export async function excluirSecaoDoDocumento(
+  processoId: string,
+  tipo: TipoDocumento,
+  secaoId: string,
+) {
+  return excluirSecao(processoId, tipo, secaoId)
+}
+
+/** Reordena as seções criadas pelo servidor. As do catálogo seguem a lei. */
+export async function reordenarSecoesDoDocumento(
+  processoId: string,
+  tipo: TipoDocumento,
+  secoesNaOrdem: string[],
+) {
+  return reordenarSecoes(processoId, tipo, secoesNaOrdem)
 }
 
 /** A demanda consolidada dos DFDs do processo. */

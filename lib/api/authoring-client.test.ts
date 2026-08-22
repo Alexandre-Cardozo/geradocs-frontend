@@ -274,3 +274,82 @@ describe("comparação entre versões", () => {
     expect(comparacao.errata[0]?.leiaSe).toBe("45 dias.")
   })
 })
+
+describe("seções criadas pelo servidor", () => {
+  it("traduz a origem e omite fundamento e orientação", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id/documents/:tipo`, () =>
+        HttpResponse.json({
+          ...documentoApi,
+          sections: [
+            {
+              sectionCode: "2.1",
+              position: 3,
+              title: "Memória de cálculo",
+              required: false,
+              origin: "AD_HOC",
+              content: "",
+              resolved: false,
+            },
+          ],
+        }),
+      ),
+    )
+    const { abrirDocumento } = await carregarClienteLimpo()
+
+    const secao = (await abrirDocumento(PROCESSO, "ETP")).secoes[0]
+
+    // A lei não conhece esta seção: fundamento e orientação simplesmente não
+    // existem nela, e inventá-los seria mentir sobre o que a norma diz.
+    expect(secao?.origem).toBe("servidor")
+    expect(secao?.fundamentoLegal).toBeUndefined()
+    expect(secao?.hint).toBeUndefined()
+  })
+
+  it("acrescentar envia título, âncora e tipo", async () => {
+    let corpo: Record<string, unknown> = {}
+    servidor.use(
+      http.post(`${urlDaApi}/procurement-processes/:id/documents/:tipo/sections`, async ({ request }) => {
+        corpo = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json(documentoApi)
+      }),
+    )
+    const { acrescentarSecao } = await carregarClienteLimpo()
+
+    await acrescentarSecao(PROCESSO, "ETP", "Memória de cálculo", "2", true)
+
+    expect(corpo).toEqual({
+      title: "Memória de cálculo",
+      anchorSectionCode: "2",
+      nested: true,
+    })
+  })
+
+  it("excluir e reordenar falam com as rotas certas", async () => {
+    let excluida = ""
+    let ordem: unknown = null
+    servidor.use(
+      http.delete(
+        `${urlDaApi}/procurement-processes/:id/documents/:tipo/sections/:secao`,
+        ({ request }) => {
+          excluida = new URL(request.url).pathname
+          return HttpResponse.json(documentoApi)
+        },
+      ),
+      http.put(
+        `${urlDaApi}/procurement-processes/:id/documents/:tipo/sections-order`,
+        async ({ request }) => {
+          ordem = ((await request.json()) as Record<string, unknown>).sectionCodesInOrder
+          return HttpResponse.json(documentoApi)
+        },
+      ),
+    )
+    const { excluirSecao, reordenarSecoes } = await carregarClienteLimpo()
+
+    await excluirSecao(PROCESSO, "ETP", "2.1")
+    await reordenarSecoes(PROCESSO, "ETP", ["2.2", "2.1"])
+
+    expect(excluida).toContain("/sections/2.1")
+    expect(ordem).toEqual(["2.2", "2.1"])
+  })
+})

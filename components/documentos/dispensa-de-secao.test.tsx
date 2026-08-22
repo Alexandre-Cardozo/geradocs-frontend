@@ -9,6 +9,7 @@ const SECAO: SecaoDocumento = {
   titulo: "Resultados Pretendidos",
   status: "Não iniciado",
   obrigatoria: false,
+  origem: "catalogo" as const,
   conteudo: "",
   hint: "Descreva os resultados esperados.",
   fundamentoLegal: "Art. 18, § 1º, VII, Lei 14.133/21",

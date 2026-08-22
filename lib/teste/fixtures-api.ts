@@ -104,6 +104,7 @@ function secaoApi(
     legalBasis: `Art. 18, § 1º, ${sectionCode}, Lei 14.133/21`,
     hint: "Demonstre o que a seção pede.",
     required,
+    origin: "CATALOG" as const,
     content,
     ...(dispensationJustification ? { dispensationJustification } : {}),
     resolved: content !== "" || dispensationJustification != null,
