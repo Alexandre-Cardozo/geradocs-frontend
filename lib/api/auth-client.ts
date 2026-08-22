@@ -147,17 +147,22 @@ function tenantDa(organization: BackendOrganization | null | undefined): Tenant 
 }
 
 /**
- * O contrato gerado declara **todo** campo como opcional, porque os DTOs de
- * resposta do backend não anunciam obrigatoriedade na especificação. Enquanto
- * for assim, o mapeamento decide explicitamente o que fazer com a ausência em
- * vez de fingir que ela não existe.
+ * Desde 21/08/2026 o contrato declara `required`: o que o servidor sempre envia
+ * chega tipado como presente, e os `??` que existiam só para satisfazer o
+ * compilador foram embora. Os que sobraram correspondem a campos de fato
+ * opcionais — CPF de cadastro pendente, cargo, matrícula, último acesso e a
+ * organização do administrador global.
  *
- * A correção está registrada como pendência do contrato: quando a spec passar a
- * declarar `required`, estes `??` viram type error e somem — que é o sinal certo.
+ * A checagem de `user` continua, e não é redundância: um proxy no caminho pode
+ * devolver corpo que não corresponde ao contrato, e sessão sem usuário
+ * identificado precisa virar erro em vez de seguir com campos vazios.
  */
-function mapearSessao(session: BackendSession): Sessao {
-  const user = session.user
-  if (!user?.id || !user.name) {
+function mapearSessao(session: BackendSession | undefined): Sessao {
+  const user = session?.user
+  if (!user?.id || !user.name || !user.email || !user.profileAccess || !user.status) {
+    // Faltando qualquer um destes, quem respondeu não foi o servidor do
+    // contrato — foi um proxy, uma página de erro ou uma versão incompatível.
+    // Preencher com vazio montaria uma sessão que parece válida e não é.
     throw new ApiError("Resposta de sessão incompleta: o servidor não identificou o usuário.", 502)
   }
   const nome = user.name
@@ -167,15 +172,15 @@ function mapearSessao(session: BackendSession): Sessao {
     primeiroNome: primeiroNome(nome),
     iniciais: iniciaisDe(nome),
     cpf: user.cpf ?? "",
-    email: user.email ?? "",
+    email: user.email,
     cargo: user.jobTitle ?? "",
-    perfilAcesso: perfis[user.profileAccess ?? "SERVIDOR"] ?? "servidor",
-    prefeituraId: session.organization?.id ?? null,
+    perfilAcesso: perfis[user.profileAccess],
+    prefeituraId: session?.organization?.id ?? null,
     avatarDataUrl: null,
     ultimoAcesso: user.lastAccessAt ?? "",
     ativo: user.status === "ACTIVE",
   }
-  return { usuario, prefeitura: tenantDa(session.organization ?? null) }
+  return { usuario, prefeitura: tenantDa(session?.organization ?? null) }
 }
 
 /**
@@ -192,8 +197,8 @@ export async function autenticar(identifier: string, password: string): Promise<
         organizationId: null,
       }),
     })
-    accessToken = authentication.accessToken ?? null
-    return mapearSessao(authentication.session ?? {})
+    accessToken = authentication.accessToken
+    return mapearSessao(authentication.session)
   } catch (error) {
     // 0 é rede fora do ar e 429 é bloqueio por tentativas: chamar os dois de
     // credencial inválida mandaria a pessoa conferir uma senha que está certa.

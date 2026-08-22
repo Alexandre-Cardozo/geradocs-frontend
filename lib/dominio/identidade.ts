@@ -21,7 +21,10 @@ export function primeiroNome(nome: string): string {
  */
 export function iniciaisDe(nome: string): string {
   const partes = nome.trim().split(/\s+/).filter(Boolean)
-  const primeira = partes[0]?.[0] ?? ""
-  const ultima = partes.length > 1 ? (partes.at(-1)?.[0] ?? "") : ""
-  return `${primeira}${ultima}`.toUpperCase() || "?"
+  if (partes.length === 0) return "?"
+  // `partes` já veio filtrada, então primeira e última existem e não são vazias.
+  // Encadear `?.` aqui exigiria fallbacks que nenhuma entrada alcança.
+  const primeira = partes[0]![0]!
+  const ultima = partes.length > 1 ? partes[partes.length - 1]![0]! : ""
+  return `${primeira}${ultima}`.toUpperCase()
 }

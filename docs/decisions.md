@@ -336,3 +336,19 @@ Até 21/08/2026 a tela de login era uma tela de CPF: rótulo, placeholder, másc
 **Matrícula e decreto de nomeação** entraram em `Usuario` e no cadastro de servidores, com a busca da listagem passando a aceitar nome **ou** matrícula — atendendo ao caso levantado na reunião, o de localizar o servidor desligado pelo número que o RH usa. A busca vai ao servidor (com espera de 300 ms) porque quem conhece a matrícula de quem não está na página é ele; filtrar só o que já foi carregado esconderia justamente o servidor procurado.
 
 **Divergência registrada:** o passo 6.6 do plano previa *edição* de matrícula em `perfil/`. Ela ficou somente leitura ali, editável apenas no cadastro em `admin/servidores`. O motivo é o próprio ADR-015: quando a matrícula for a chave de login, deixar a pessoa alterar a própria matrícula é deixá-la alterar o próprio identificador de acesso. É a mesma razão pela qual o CPF já era somente leitura nessa tela.
+
+## 29. O contrato passou a afirmar, e os `??` sumiram
+
+A §27 registrava que `client.ts` e `hooks.ts` ficavam fora do gate de cobertura, e a pendência do Bloco 2 registrava que a especificação OpenAPI não declarava campo obrigatório — o springdoc marcava **tudo** como opcional, porque não tem como saber o que é nulo de verdade.
+
+As duas coisas se encontravam num sintoma só: o cliente gerado tratava como incerto o que o servidor sempre envia, e o mapeamento enchia o código de `??` para satisfazer o compilador em caminhos que nenhuma resposta real alcança. Cobertura de branch travada, e — pior — um contrato que não afirmava nada para quem integra.
+
+**Decisão:** o back-end ganhou um `ModelConverter` que inverte o padrão — componente de record é obrigatório, a menos que anotado `@Nullable`. A ausência virou decisão declarada, visível em revisão. Os tipos foram regerados e os `??` sem caminho saíram.
+
+**O que mudou de comportamento, e não só de tipo.** Três testes afirmavam que resposta incompleta devia ser preenchida com vazio: CPF, e-mail, cargo, e perfil de acesso caindo em `"servidor"`. Isso fazia sentido quando *tudo* era opcional no contrato. Deixou de fazer: hoje e-mail, perfil e situação são declarados obrigatórios, e resposta sem eles não é campo ausente — é servidor quebrado, proxy no caminho ou versão incompatível. Preencher com vazio montaria uma sessão que parece válida e não é, e o perfil assumido faria a pessoa entrar com menos acesso do que tem e abrir chamado de permissão. Agora vira `502` explícito.
+
+Ficaram os `??` dos campos que são de fato opcionais: CPF de cadastro pendente, cargo, matrícula, decreto, último acesso e a organização do administrador global.
+
+**Cobertura:** os quatro números — linha, branch, statement e função — estão em 100% e deixaram de ser catraca para virar piso. Uma queda é regressão, não flutuação.
+
+**O que continua fora do gate, e por quê.** `client.ts` e `hooks.ts`. O motivo não é dívida: `client.ts` é o banco em memória que o back-end vem substituindo fatia por fatia — hoje são funções finas sobre arrays de fixture, e ele some junto com os Blocos 8 a 11; `hooks.ts` é invólucro do TanStack Query, e testá-lo mediria o TanStack, não o produto. Cobri-los levaria o número a 100% sem que uma regra a mais ficasse verificada.

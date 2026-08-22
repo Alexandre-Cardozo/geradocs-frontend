@@ -42,6 +42,7 @@
             "type" : "string"
           }
         },
+        "required" : [ "accessToken", "expiresAt", "expiresIn", "session", "tokenType" ],
         "type" : "object"
       },
       "CreateDepartmentRequest" : {
@@ -110,7 +111,7 @@
             "type" : "boolean"
           }
         },
-        "required" : [ "departmentId", "estimatedValue", "modality", "objectDescription" ],
+        "required" : [ "departmentId", "estimatedValue", "modality", "objectDescription", "urgency" ],
         "type" : "object"
       },
       "CreateUserRequest" : {
@@ -209,6 +210,7 @@
             "type" : "integer"
           }
         },
+        "required" : [ "active", "createdAt", "id", "name", "organizationId", "updatedAt", "version" ],
         "type" : "object"
       },
       "LoginRequest" : {
@@ -231,6 +233,7 @@
             "type" : "string"
           }
         },
+        "required" : [ "password" ],
         "type" : "object"
       },
       "MembershipResponse" : {
@@ -251,6 +254,7 @@
             "type" : "string"
           }
         },
+        "required" : [ "active", "id", "organizationId" ],
         "type" : "object"
       },
       "OrganizationResponse" : {
@@ -282,6 +286,7 @@
             "type" : "integer"
           }
         },
+        "required" : [ "createdAt", "id", "name", "status", "updatedAt", "version" ],
         "type" : "object"
       },
       "PageProcurementProcessResponse" : {
@@ -447,6 +452,7 @@
             "type" : "integer"
           }
         },
+        "required" : [ "createdAt", "id", "modality", "objectDescription", "organizationId", "processNumber", "status", "updatedAt", "urgency", "version" ],
         "type" : "object"
       },
       "SessionResponse" : {
@@ -469,6 +475,7 @@
             "$ref" : "#/components/schemas/SessionUserResponse"
           }
         },
+        "required" : [ "permissions", "user" ],
         "type" : "object"
       },
       "SessionUserResponse" : {
@@ -508,6 +515,7 @@
             "type" : "string"
           }
         },
+        "required" : [ "email", "id", "name", "profileAccess", "status" ],
         "type" : "object"
       },
       "SortObject" : {
@@ -585,7 +593,7 @@
             "type" : "boolean"
           }
         },
-        "required" : [ "estimatedValue", "modality", "objectDescription" ],
+        "required" : [ "estimatedValue", "modality", "objectDescription", "urgency" ],
         "type" : "object"
       },
       "UpdateUserRequest" : {
@@ -687,6 +695,7 @@
             "type" : "integer"
           }
         },
+        "required" : [ "createdAt", "email", "id", "memberships", "name", "profileAccess", "status", "updatedAt", "version" ],
         "type" : "object"
       },
       "UserSummaryResponse" : {
@@ -729,6 +738,7 @@
             "type" : "string"
           }
         },
+        "required" : [ "email", "id", "memberships", "name", "profileAccess", "status" ],
         "type" : "object"
       }
     }

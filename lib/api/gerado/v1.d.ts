@@ -303,13 +303,13 @@ export interface components {
             password: string;
         };
         AuthenticationResponse: {
-            accessToken?: string;
+            accessToken: string;
             /** Format: date-time */
-            expiresAt?: string;
+            expiresAt: string;
             /** Format: int64 */
-            expiresIn?: number;
-            session?: components["schemas"]["SessionResponse"];
-            tokenType?: string;
+            expiresIn: number;
+            session: components["schemas"]["SessionResponse"];
+            tokenType: string;
         };
         CreateDepartmentRequest: {
             acronym?: string;
@@ -328,7 +328,7 @@ export interface components {
             /** @enum {string} */
             modality: "ELECTRONIC_AUCTION" | "COMPETITION" | "CONTEST" | "AUCTION" | "COMPETITIVE_DIALOGUE" | "DIRECT_AWARD_ARTICLE_75" | "SOLE_SOURCE" | "ACCREDITATION";
             objectDescription: string;
-            urgency?: boolean;
+            urgency: boolean;
         };
         CreateUserRequest: {
             appointmentDecree?: string;
@@ -351,18 +351,18 @@ export interface components {
         };
         DepartmentResponse: {
             acronym?: string;
-            active?: boolean;
+            active: boolean;
             /** Format: date-time */
-            createdAt?: string;
+            createdAt: string;
             /** Format: uuid */
-            id?: string;
-            name?: string;
+            id: string;
+            name: string;
             /** Format: uuid */
-            organizationId?: string;
+            organizationId: string;
             /** Format: date-time */
-            updatedAt?: string;
+            updatedAt: string;
             /** Format: int64 */
-            version?: number;
+            version: number;
         };
         LoginRequest: {
             /**
@@ -373,30 +373,30 @@ export interface components {
             identifier?: string;
             /** Format: uuid */
             organizationId?: string;
-            password?: string;
+            password: string;
         };
         MembershipResponse: {
-            active?: boolean;
+            active: boolean;
             /** Format: uuid */
             departmentId?: string;
             /** Format: uuid */
-            id?: string;
+            id: string;
             /** Format: uuid */
-            organizationId?: string;
+            organizationId: string;
         };
         OrganizationResponse: {
             /** Format: date-time */
-            createdAt?: string;
+            createdAt: string;
             /** Format: uuid */
-            id?: string;
-            name?: string;
+            id: string;
+            name: string;
             /** @enum {string} */
-            status?: "ACTIVE" | "INACTIVE";
+            status: "ACTIVE" | "INACTIVE";
             unit?: string;
             /** Format: date-time */
-            updatedAt?: string;
+            updatedAt: string;
             /** Format: int64 */
-            version?: number;
+            version: number;
         };
         PageProcurementProcessResponse: {
             content?: components["schemas"]["ProcurementProcessResponse"][];
@@ -437,53 +437,53 @@ export interface components {
         };
         ProcurementProcessResponse: {
             /** Format: date-time */
-            createdAt?: string;
+            createdAt: string;
             demandObject?: string;
             /** Format: uuid */
             departmentId?: string;
             departmentName?: string;
             estimatedValue?: number;
             /** Format: uuid */
-            id?: string;
+            id: string;
             legalBasis?: string;
             /** @enum {string} */
-            modality?: "ELECTRONIC_AUCTION" | "COMPETITION" | "CONTEST" | "AUCTION" | "COMPETITIVE_DIALOGUE" | "DIRECT_AWARD_ARTICLE_75" | "SOLE_SOURCE" | "ACCREDITATION";
-            objectDescription?: string;
+            modality: "ELECTRONIC_AUCTION" | "COMPETITION" | "CONTEST" | "AUCTION" | "COMPETITIVE_DIALOGUE" | "DIRECT_AWARD_ARTICLE_75" | "SOLE_SOURCE" | "ACCREDITATION";
+            objectDescription: string;
             /** Format: uuid */
-            organizationId?: string;
-            processNumber?: string;
+            organizationId: string;
+            processNumber: string;
             /** Format: uuid */
             responsibleUserId?: string;
             responsibleUserName?: string;
             /** @enum {string} */
-            status?: "DRAFT";
+            status: "DRAFT";
             /** Format: date-time */
-            updatedAt?: string;
-            urgency?: boolean;
+            updatedAt: string;
+            urgency: boolean;
             /** Format: int64 */
-            version?: number;
+            version: number;
         };
         SessionResponse: {
             activeMembership?: components["schemas"]["MembershipResponse"];
             organization?: components["schemas"]["OrganizationResponse"];
-            permissions?: ("PROFILE_READ" | "USER_READ" | "USER_MANAGE" | "ORGANIZATION_READ" | "ORGANIZATION_MANAGE" | "PLATFORM_ADMIN")[];
-            user?: components["schemas"]["SessionUserResponse"];
+            permissions: ("PROFILE_READ" | "USER_READ" | "USER_MANAGE" | "ORGANIZATION_READ" | "ORGANIZATION_MANAGE" | "PLATFORM_ADMIN")[];
+            user: components["schemas"]["SessionUserResponse"];
         };
         SessionUserResponse: {
             appointmentDecree?: string;
             cpf?: string;
-            email?: string;
+            email: string;
             /** Format: uuid */
-            id?: string;
+            id: string;
             jobTitle?: string;
             /** Format: date-time */
             lastAccessAt?: string;
-            name?: string;
+            name: string;
             /** @enum {string} */
-            profileAccess?: "ADMIN_GERAL" | "COORDENADOR" | "SERVIDOR";
+            profileAccess: "ADMIN_GERAL" | "COORDENADOR" | "SERVIDOR";
             registrationNumber?: string;
             /** @enum {string} */
-            status?: "ACTIVE" | "INACTIVE" | "PENDING_ACTIVATION";
+            status: "ACTIVE" | "INACTIVE" | "PENDING_ACTIVATION";
         };
         SortObject: {
             empty?: boolean;
@@ -505,7 +505,7 @@ export interface components {
             /** @enum {string} */
             modality: "ELECTRONIC_AUCTION" | "COMPETITION" | "CONTEST" | "AUCTION" | "COMPETITIVE_DIALOGUE" | "DIRECT_AWARD_ARTICLE_75" | "SOLE_SOURCE" | "ACCREDITATION";
             objectDescription: string;
-            urgency?: boolean;
+            urgency: boolean;
         };
         UpdateUserRequest: {
             appointmentDecree?: string;
@@ -525,40 +525,40 @@ export interface components {
             appointmentDecree?: string;
             cpf?: string;
             /** Format: date-time */
-            createdAt?: string;
-            email?: string;
+            createdAt: string;
+            email: string;
             /** Format: uuid */
-            id?: string;
+            id: string;
             jobTitle?: string;
             /** Format: date-time */
             lastAccessAt?: string;
-            memberships?: components["schemas"]["MembershipResponse"][];
-            name?: string;
+            memberships: components["schemas"]["MembershipResponse"][];
+            name: string;
             /** @enum {string} */
-            profileAccess?: "ADMIN_GERAL" | "COORDENADOR" | "SERVIDOR";
+            profileAccess: "ADMIN_GERAL" | "COORDENADOR" | "SERVIDOR";
             registrationNumber?: string;
             /** @enum {string} */
-            status?: "ACTIVE" | "INACTIVE" | "PENDING_ACTIVATION";
+            status: "ACTIVE" | "INACTIVE" | "PENDING_ACTIVATION";
             /** Format: date-time */
-            updatedAt?: string;
+            updatedAt: string;
             /** Format: int64 */
-            version?: number;
+            version: number;
         };
         UserSummaryResponse: {
             cpf?: string;
-            email?: string;
+            email: string;
             /** Format: uuid */
-            id?: string;
+            id: string;
             jobTitle?: string;
             /** Format: date-time */
             lastAccessAt?: string;
-            memberships?: components["schemas"]["MembershipResponse"][];
-            name?: string;
+            memberships: components["schemas"]["MembershipResponse"][];
+            name: string;
             /** @enum {string} */
-            profileAccess?: "ADMIN_GERAL" | "COORDENADOR" | "SERVIDOR";
+            profileAccess: "ADMIN_GERAL" | "COORDENADOR" | "SERVIDOR";
             registrationNumber?: string;
             /** @enum {string} */
-            status?: "ACTIVE" | "INACTIVE" | "PENDING_ACTIVATION";
+            status: "ACTIVE" | "INACTIVE" | "PENDING_ACTIVATION";
         };
     };
     responses: never;

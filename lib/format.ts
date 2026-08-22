@@ -65,15 +65,23 @@ export function formatDataHora(iso: string): string {
 /** Fuso oficial de Brasília — usado nas saudações e na data do Dashboard. */
 const FUSO_BRASILIA = "America/Sao_Paulo"
 
-/** Hora do dia (0–23) no fuso de Brasília. */
+/**
+ * Hora do dia (0–23) no fuso de Brasília.
+ *
+ * Formata direto em vez de procurar a parte "hour" no resultado de
+ * `formatToParts`: a busca devolve `T | undefined`, obrigava a um `?? "0"` que
+ * nenhuma entrada alcança, e "0" seria meia-noite — um fallback que, se um dia
+ * fosse atingido, mudaria a saudação em silêncio.
+ */
 export function horaBrasilia(d: Date = new Date()): number {
-  const partes = new Intl.DateTimeFormat("en-US", {
-    timeZone: FUSO_BRASILIA,
-    hour: "2-digit",
-    hour12: false,
-    hourCycle: "h23",
-  }).formatToParts(d)
-  return Number(partes.find((p) => p.type === "hour")?.value ?? "0")
+  return Number(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: FUSO_BRASILIA,
+      hour: "2-digit",
+      hour12: false,
+      hourCycle: "h23",
+    }).format(d),
+  )
 }
 
 /** Saudação conforme o período do dia em Brasília: Bom dia / Boa tarde / Boa noite. */
@@ -86,8 +94,9 @@ export function saudacao(d: Date = new Date()): string {
 
 /** Ano vigente (4 dígitos) no fuso de Brasília. */
 export function anoBrasilia(d: Date = new Date()): number {
-  const partes = new Intl.DateTimeFormat("en-US", { timeZone: FUSO_BRASILIA, year: "numeric" }).formatToParts(d)
-  return Number(partes.find((p) => p.type === "year")?.value ?? "0")
+  return Number(
+    new Intl.DateTimeFormat("en-US", { timeZone: FUSO_BRASILIA, year: "numeric" }).format(d),
+  )
 }
 
 /** Data atual como ISO "AAAA-MM-DD" no fuso de Brasília (para registrar em fixtures/mocks). */

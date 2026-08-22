@@ -15,7 +15,80 @@ async function carregarClienteLimpo() {
   return import("@/lib/api/auth-client")
 }
 
-afterEach(() => vi.resetModules())
+afterEach(() => {
+  vi.unstubAllEnvs()
+  vi.resetModules()
+})
+
+describe("endereço da API", () => {
+  it("usa o que a configuração informa, sem barra no fim", async () => {
+    let recebida = ""
+    vi.stubEnv("NEXT_PUBLIC_API_URL", "https://api.geradocs.example/v1/")
+    servidor.use(
+      http.post("https://api.geradocs.example/v1/auth/login", ({ request }) => {
+        recebida = request.url
+        return HttpResponse.json(autenticacao)
+      }),
+    )
+    const { autenticar } = await carregarClienteLimpo()
+
+    await autenticar("33333333333", "senha-correta")
+
+    // A barra sobrando produziria "//auth/login": alguns servidores respondem,
+    // outros devolvem 404, e o erro aparece só no ambiente publicado.
+    expect(recebida).toBe("https://api.geradocs.example/v1/auth/login")
+  })
+
+  it("cai no localhost quando nada está configurado", async () => {
+    vi.stubEnv("NEXT_PUBLIC_API_URL", undefined)
+    const { autenticar } = await carregarClienteLimpo()
+    const espiao = vi.spyOn(globalThis, "fetch")
+
+    await autenticar("33333333333", "senha-correta")
+
+    // É o padrão de desenvolvimento: sem ele, rodar o front local exigiria
+    // configurar variável antes do primeiro `npm run dev`.
+    expect(String(espiao.mock.calls[0]?.[0])).toBe("http://localhost:8080/api/v1/auth/login")
+    espiao.mockRestore()
+  })
+})
+
+describe("obterSessao", () => {
+  it("com token em memória, não renova antes de consultar", async () => {
+    let renovacoes = 0
+    servidor.use(
+      http.post(`${urlDaApi}/auth/refresh`, () => {
+        renovacoes += 1
+        return HttpResponse.json(autenticacao)
+      }),
+    )
+    const { autenticar, obterSessao } = await carregarClienteLimpo()
+    await autenticar("33333333333", "senha-correta")
+
+    const sessao = await obterSessao()
+
+    // Renovar a cada leitura de sessão rotacionaria o refresh token à toa e
+    // dobraria as idas ao servidor em toda navegação.
+    expect(sessao?.usuario.nome).toBe("Maria Costa Andrade")
+    expect(renovacoes).toBe(0)
+  })
+
+  it("sem token em memória, renova antes de consultar", async () => {
+    let renovacoes = 0
+    servidor.use(
+      http.post(`${urlDaApi}/auth/refresh`, () => {
+        renovacoes += 1
+        return HttpResponse.json(autenticacao)
+      }),
+    )
+    const { obterSessao } = await carregarClienteLimpo()
+
+    // É o caso do recarregamento de página: o token vive em memória e se perde,
+    // mas o cookie de refresh sobrevive — é ele que devolve a sessão.
+    expect((await obterSessao())?.usuario.nome).toBe("Maria Costa Andrade")
+    expect(renovacoes).toBe(1)
+  })
+})
 
 describe("autenticar", () => {
   it("mapeia a sessão do backend para o modelo da interface", async () => {
@@ -284,17 +357,23 @@ describe("recuperação de senha", () => {
 })
 
 describe("campos que o contrato declara como opcionais", () => {
-  it("preenche o que falta em vez de exibir undefined", async () => {
-    // Todo campo da spec é opcional hoje (os DTOs de resposta não declaram
-    // obrigatoriedade). Enquanto for assim, a ausência precisa virar vazio, e
-    // não "undefined" na tela.
+  it("preenche o que é opcional no contrato, e só isso", async () => {
+    // CPF de cadastro pendente, cargo, matrícula e último acesso são de fato
+    // opcionais. A ausência vira vazio para não exibir "undefined" na tela.
     servidor.use(
       http.post(`${urlDaApi}/auth/login`, () =>
         HttpResponse.json({
           ...autenticacao,
           session: {
-            user: { id: sessaoServidor.user.id, name: "Maria Costa Andrade" },
+            user: {
+              id: sessaoServidor.user.id,
+              name: "Maria Costa Andrade",
+              email: "maria@ecoporanga.es.gov.br",
+              profileAccess: "SERVIDOR",
+              status: "PENDING_ACTIVATION",
+            },
             organization: { id: "1b7c8e10-2d3f-4a5b-8c9d-0e1f2a3b4c5d" },
+            permissions: [],
           },
         }),
       ),
@@ -304,31 +383,36 @@ describe("campos que o contrato declara como opcionais", () => {
     const sessao = await autenticar("33333333333", "senha-correta")
 
     expect(sessao.usuario.cpf).toBe("")
-    expect(sessao.usuario.email).toBe("")
     expect(sessao.usuario.cargo).toBe("")
     expect(sessao.usuario.ultimoAcesso).toBe("")
     expect(sessao.usuario.ativo).toBe(false)
     expect(sessao.prefeitura?.orgao).toBe("")
-    expect(sessao.prefeitura?.unidade).toBe("")
   })
 
-  it("assume o perfil de menor privilégio quando ele não vem", async () => {
+  it("recusa sessão sem perfil de acesso em vez de assumir um", async () => {
     servidor.use(
       http.get(`${urlDaApi}/me`, () =>
         HttpResponse.json({
-          user: { id: sessaoServidor.user.id, name: "Maria Costa Andrade" },
+          user: {
+            id: sessaoServidor.user.id,
+            name: "Maria Costa Andrade",
+            email: "maria@ecoporanga.es.gov.br",
+            status: "ACTIVE",
+          },
           organization: null,
           activeMembership: null,
         }),
       ),
     )
-    const { obterSessao } = await carregarClienteLimpo()
+    const { obterSessao, ApiError } = await carregarClienteLimpo()
 
-    const sessao = await obterSessao()
+    const erro = await obterSessao().catch((e: unknown) => e)
 
-    // Errar para mais daria acesso a tela que a pessoa não deveria ver.
-    expect(sessao?.usuario.perfilAcesso).toBe("servidor")
-    expect(sessao?.prefeitura).toBeNull()
+    // Assumir "servidor" parecia prudente, mas escondia servidor quebrado: a
+    // pessoa entraria com menos acesso do que tem e abriria chamado de
+    // permissão. O contrato declara o perfil como obrigatório desde 21/08/2026.
+    expect(erro).toBeInstanceOf(ApiError)
+    expect((erro as InstanceType<typeof ApiError>).status).toBe(502)
   })
 
   it("recusa autenticação que volta sem sessão", async () => {
