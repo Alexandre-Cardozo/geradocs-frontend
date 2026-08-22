@@ -25,6 +25,7 @@ import {
   useProcesso,
   useSecoes,
 } from "@/lib/api/hooks"
+import { ConsolidacaoDaDemanda } from "@/components/processos/consolidacao-da-demanda"
 import { PainelRetificacao } from "@/components/processos/painel-retificacao"
 import { AlertaOrientacao } from "@/components/shared/alerta-orientacao"
 import { CATALOGO, documentosDaModalidade, ordenar, pendencias } from "@/lib/documentos"
@@ -377,6 +378,21 @@ export default function HubProcesso() {
           </span>
         </button>
       )}
+
+      {/*
+        Consolidação da demanda — só aparece quando há DFD com itens. É o que
+        transforma "três secretarias pediram papel A4" em uma linha de compra, e
+        é onde as divergências aparecem antes de virarem edital.
+      */}
+      <div className="mb-6">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="m-0 font-display text-lg font-bold text-text-1">Demanda Consolidada</h2>
+          <span className="text-sm text-text-3">
+            Alimenta o painel de quantidades do ETP e a Cotação.
+          </span>
+        </div>
+        <ConsolidacaoDaDemanda processoId={processoId} />
+      </div>
 
       {/* Documentos do processo — na ordem canônica do fluxo de contratação */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">

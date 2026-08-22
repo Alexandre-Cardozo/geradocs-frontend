@@ -220,6 +220,15 @@ export function useCorpoDocumento(processoId: string, tipo: TipoDocumento) {
   })
 }
 
+/** A demanda consolidada dos DFDs do processo. */
+export function useConsolidacaoDaDemanda(processoId: string) {
+  return useQuery({
+    queryKey: ["consolidacao-demanda", processoId],
+    queryFn: () => api.getConsolidacaoDaDemanda(processoId),
+    enabled: processoId !== "",
+  })
+}
+
 /**
  * A comparação entre duas versões, com a errata.
  *

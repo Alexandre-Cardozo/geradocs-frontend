@@ -192,3 +192,91 @@ export async function atualizarProcessoReal(
   );
   return mapear(processo);
 }
+
+/** O que pode divergir entre DFDs consolidados no mesmo processo. */
+export type TipoDeIncongruencia = "UNIT" | "SPECIFICATION" | "UNIT_PRICE" | "DELIVERY_DEADLINE";
+
+/** O rótulo e o porquê de cada divergência — a consequência é diferente em cada. */
+export const INCONGRUENCIA: Record<TipoDeIncongruencia, { rotulo: string; consequencia: string }> = {
+  UNIT: {
+    rotulo: "Unidades divergentes",
+    consequencia: "Não é possível somar as quantidades enquanto as unidades diferirem.",
+  },
+  SPECIFICATION: {
+    rotulo: "Especificações divergentes",
+    consequencia: "Pode não ser o mesmo item — comprá-los como um só entregaria o errado para alguém.",
+  },
+  UNIT_PRICE: {
+    rotulo: "Preços unitários divergentes",
+    consequencia: "A estimativa de valor fica inconsistente entre as secretarias.",
+  },
+  DELIVERY_DEADLINE: {
+    rotulo: "Prazos de entrega divergentes",
+    consequencia: "O contrato não pode cumprir os dois prazos ao mesmo tempo.",
+  },
+};
+
+interface ConsolidacaoApi {
+  items: {
+    description: string;
+    unit: string;
+    total: number;
+    summable: boolean;
+    byDepartment: { departmentName: string; quantity: number; unit: string }[];
+  }[];
+  incongruences: {
+    kind: TipoDeIncongruencia;
+    itemDescription: string;
+    values: { departmentName: string; value: string }[];
+  }[];
+}
+
+export interface ItemConsolidado {
+  descricao: string;
+  unidade: string;
+  total: number;
+  /** `false` quando as unidades divergem: o total não pode ser usado como está. */
+  somavel: boolean;
+  porSecretaria: { secretaria: string; quantidade: number; unidade: string }[];
+}
+
+export interface Incongruencia {
+  tipo: TipoDeIncongruencia;
+  item: string;
+  valores: { secretaria: string; valor: string }[];
+}
+
+export interface DemandaConsolidada {
+  itens: ItemConsolidado[];
+  incongruencias: Incongruencia[];
+}
+
+/**
+ * A demanda consolidada dos DFDs do processo.
+ *
+ * Calculada pelo servidor a cada leitura: guardá-la criaria um segundo lugar
+ * onde a mesma verdade mora — que envelhece assim que alguém anexa mais um DFD.
+ */
+export async function consolidacaoDaDemanda(processoId: string): Promise<DemandaConsolidada> {
+  const consolidacao = await requisicaoProtegida<ConsolidacaoApi>(
+    `/procurement-processes/${encodeURIComponent(processoId)}/demand-consolidation`,
+  );
+  return {
+    itens: consolidacao.items.map((item) => ({
+      descricao: item.description,
+      unidade: item.unit,
+      total: item.total,
+      somavel: item.summable,
+      porSecretaria: item.byDepartment.map((d) => ({
+        secretaria: d.departmentName,
+        quantidade: d.quantity,
+        unidade: d.unit,
+      })),
+    })),
+    incongruencias: consolidacao.incongruences.map((i) => ({
+      tipo: i.kind,
+      item: i.itemDescription,
+      valores: i.values.map((v) => ({ secretaria: v.departmentName, valor: v.value })),
+    })),
+  };
+}

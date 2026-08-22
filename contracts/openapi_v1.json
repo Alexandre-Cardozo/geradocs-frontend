@@ -22,6 +22,28 @@
         "required" : [ "cpf", "email", "password" ],
         "type" : "object"
       },
+      "AttachDfdRequest" : {
+        "properties" : {
+          "departmentId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "fileName" : {
+            "maxLength" : 255,
+            "minLength" : 1,
+            "type" : "string"
+          },
+          "items" : {
+            "items" : {
+              "$ref" : "#/components/schemas/DemandItemRequest"
+            },
+            "minItems" : 1,
+            "type" : "array"
+          }
+        },
+        "required" : [ "departmentId", "fileName", "items" ],
+        "type" : "object"
+      },
       "AuthenticationResponse" : {
         "properties" : {
           "accessToken" : {
@@ -61,6 +83,30 @@
           }
         },
         "required" : [ "dispensed", "sectionCode", "text", "title" ],
+        "type" : "object"
+      },
+      "ConsolidatedItemView" : {
+        "properties" : {
+          "byDepartment" : {
+            "items" : {
+              "$ref" : "#/components/schemas/DepartmentDemandView"
+            },
+            "type" : "array"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "summable" : {
+            "type" : "boolean"
+          },
+          "total" : {
+            "type" : "number"
+          },
+          "unit" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "byDepartment", "description", "summable", "total", "unit" ],
         "type" : "object"
       },
       "CreateDepartmentRequest" : {
@@ -209,6 +255,96 @@
         "required" : [ "reason" ],
         "type" : "object"
       },
+      "DemandConsolidationResponse" : {
+        "properties" : {
+          "incongruences" : {
+            "items" : {
+              "$ref" : "#/components/schemas/IncongruenceView"
+            },
+            "type" : "array"
+          },
+          "items" : {
+            "items" : {
+              "$ref" : "#/components/schemas/ConsolidatedItemView"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "incongruences", "items" ],
+        "type" : "object"
+      },
+      "DemandItemRequest" : {
+        "properties" : {
+          "deliveryDays" : {
+            "format" : "int32",
+            "minimum" : 0,
+            "type" : "integer"
+          },
+          "description" : {
+            "maxLength" : 500,
+            "minLength" : 1,
+            "type" : "string"
+          },
+          "quantity" : {
+            "minimum" : 0,
+            "type" : "number"
+          },
+          "specification" : {
+            "type" : "string"
+          },
+          "unit" : {
+            "maxLength" : 20,
+            "minLength" : 1,
+            "type" : "string"
+          },
+          "unitPrice" : {
+            "minimum" : 0,
+            "type" : "number"
+          }
+        },
+        "required" : [ "description", "quantity", "unit" ],
+        "type" : "object"
+      },
+      "DemandItemView" : {
+        "properties" : {
+          "deliveryDays" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "quantity" : {
+            "type" : "number"
+          },
+          "specification" : {
+            "type" : "string"
+          },
+          "unit" : {
+            "type" : "string"
+          },
+          "unitPrice" : {
+            "type" : "number"
+          }
+        },
+        "required" : [ "description", "quantity", "unit" ],
+        "type" : "object"
+      },
+      "DepartmentDemandView" : {
+        "properties" : {
+          "departmentName" : {
+            "type" : "string"
+          },
+          "quantity" : {
+            "type" : "number"
+          },
+          "unit" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "departmentName", "quantity", "unit" ],
+        "type" : "object"
+      },
       "DepartmentResponse" : {
         "properties" : {
           "acronym" : {
@@ -242,6 +378,18 @@
           }
         },
         "required" : [ "active", "createdAt", "id", "name", "organizationId", "updatedAt", "version" ],
+        "type" : "object"
+      },
+      "DivergentValueView" : {
+        "properties" : {
+          "departmentName" : {
+            "type" : "string"
+          },
+          "value" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "departmentName", "value" ],
         "type" : "object"
       },
       "DocumentResponse" : {
@@ -368,6 +516,25 @@
           }
         },
         "required" : [ "text" ],
+        "type" : "object"
+      },
+      "IncongruenceView" : {
+        "properties" : {
+          "itemDescription" : {
+            "type" : "string"
+          },
+          "kind" : {
+            "enum" : [ "UNIT", "SPECIFICATION", "UNIT_PRICE", "DELIVERY_DEADLINE" ],
+            "type" : "string"
+          },
+          "values" : {
+            "items" : {
+              "$ref" : "#/components/schemas/DivergentValueView"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "itemDescription", "kind", "values" ],
         "type" : "object"
       },
       "LoginRequest" : {
@@ -544,6 +711,36 @@
           }
         },
         "required" : [ "password", "token" ],
+        "type" : "object"
+      },
+      "ProcessDfdResponse" : {
+        "properties" : {
+          "departmentId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "departmentName" : {
+            "type" : "string"
+          },
+          "fileName" : {
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "items" : {
+            "items" : {
+              "$ref" : "#/components/schemas/DemandItemView"
+            },
+            "type" : "array"
+          },
+          "submittedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          }
+        },
+        "required" : [ "departmentId", "departmentName", "fileName", "id", "items", "submittedAt" ],
         "type" : "object"
       },
       "ProcurementProcessResponse" : {
@@ -1632,6 +1829,98 @@
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProcurementProcessResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "procurement-process-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{id}/demand-consolidation" : {
+      "get" : {
+        "operationId" : "consolidation",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DemandConsolidationResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "procurement-process-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{id}/dfds" : {
+      "get" : {
+        "operationId" : "dfds",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/ProcessDfdResponse"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "procurement-process-controller" ]
+      },
+      "post" : {
+        "operationId" : "attachDfd",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AttachDfdRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProcessDfdResponse"
                 }
               }
             },

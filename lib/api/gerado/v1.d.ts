@@ -244,6 +244,38 @@ export interface paths {
         patch: operations["update_1"];
         trace?: never;
     };
+    "/api/v1/procurement-processes/{id}/demand-consolidation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["consolidation"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/procurement-processes/{id}/dfds": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["dfds"];
+        put?: never;
+        post: operations["attachDfd"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/procurement-processes/{processId}/documents/{documentType}": {
         parameters: {
             query?: never;
@@ -398,6 +430,12 @@ export interface components {
             email: string;
             password: string;
         };
+        AttachDfdRequest: {
+            /** Format: uuid */
+            departmentId: string;
+            fileName: string;
+            items: components["schemas"]["DemandItemRequest"][];
+        };
         AuthenticationResponse: {
             accessToken: string;
             /** Format: date-time */
@@ -412,6 +450,13 @@ export interface components {
             sectionCode: string;
             text: string;
             title: string;
+        };
+        ConsolidatedItemView: {
+            byDepartment: components["schemas"]["DepartmentDemandView"][];
+            description: string;
+            summable: boolean;
+            total: number;
+            unit: string;
         };
         CreateDepartmentRequest: {
             acronym?: string;
@@ -453,6 +498,33 @@ export interface components {
         DeactivationRequest: {
             reason: string;
         };
+        DemandConsolidationResponse: {
+            incongruences: components["schemas"]["IncongruenceView"][];
+            items: components["schemas"]["ConsolidatedItemView"][];
+        };
+        DemandItemRequest: {
+            /** Format: int32 */
+            deliveryDays?: number;
+            description: string;
+            quantity: number;
+            specification?: string;
+            unit: string;
+            unitPrice?: number;
+        };
+        DemandItemView: {
+            /** Format: int32 */
+            deliveryDays?: number;
+            description: string;
+            quantity: number;
+            specification?: string;
+            unit: string;
+            unitPrice?: number;
+        };
+        DepartmentDemandView: {
+            departmentName: string;
+            quantity: number;
+            unit: string;
+        };
         DepartmentResponse: {
             acronym?: string;
             active: boolean;
@@ -467,6 +539,10 @@ export interface components {
             updatedAt: string;
             /** Format: int64 */
             version: number;
+        };
+        DivergentValueView: {
+            departmentName: string;
+            value: string;
         };
         DocumentResponse: {
             body: components["schemas"]["BlockView"][];
@@ -509,6 +585,12 @@ export interface components {
         };
         GeneratedSectionResponse: {
             text: string;
+        };
+        IncongruenceView: {
+            itemDescription: string;
+            /** @enum {string} */
+            kind: "UNIT" | "SPECIFICATION" | "UNIT_PRICE" | "DELIVERY_DEADLINE";
+            values: components["schemas"]["DivergentValueView"][];
         };
         LoginRequest: {
             /**
@@ -580,6 +662,17 @@ export interface components {
         PasswordResetRequest: {
             password: string;
             token: string;
+        };
+        ProcessDfdResponse: {
+            /** Format: uuid */
+            departmentId: string;
+            departmentName: string;
+            fileName: string;
+            /** Format: uuid */
+            id: string;
+            items: components["schemas"]["DemandItemView"][];
+            /** Format: date-time */
+            submittedAt: string;
         };
         ProcurementProcessResponse: {
             /** Format: date-time */
@@ -1222,6 +1315,76 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ProcurementProcessResponse"];
+                };
+            };
+        };
+    };
+    consolidation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DemandConsolidationResponse"];
+                };
+            };
+        };
+    };
+    dfds: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ProcessDfdResponse"][];
+                };
+            };
+        };
+    };
+    attachDfd: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AttachDfdRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ProcessDfdResponse"];
                 };
             };
         };

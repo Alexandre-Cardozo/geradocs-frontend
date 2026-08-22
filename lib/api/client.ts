@@ -66,6 +66,7 @@ import {
 } from "@/lib/api/authoring-client"
 import {
   atualizarProcessoReal,
+  consolidacaoDaDemanda,
   criarProcessoReal,
   listarProcessos,
   obterProcesso,
@@ -560,6 +561,11 @@ export async function getHistoricoVersoes(processoId: string, tipo: TipoDocument
  */
 export async function getVersoesComTexto(processoId: string, tipo: TipoDocumento) {
   return versoesComTexto(processoId, tipo)
+}
+
+/** A demanda consolidada dos DFDs do processo. */
+export async function getConsolidacaoDaDemanda(processoId: string) {
+  return consolidacaoDaDemanda(processoId)
 }
 
 /** Compara duas versões geradas e traz a errata. */
