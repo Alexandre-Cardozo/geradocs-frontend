@@ -23,6 +23,7 @@ import {
   impactoTrocaModalidade,
   iniciaisDe,
   motivoDaTrocaDeModalidade,
+  notaDaVersao,
   numeroDeDocumento,
   numeroDeProcesso,
   primeiroNome,
@@ -34,8 +35,10 @@ import {
   proximaVersao,
   statusAposEditar,
   statusDoDocumentoNoProcesso,
+  tituloComRotuloDeVersao,
   tituloDoDocumento,
 } from "@/lib/dominio"
+import type { Retificacao } from "@/lib/dominio"
 import {
   autenticar,
   encerrarSessao,
@@ -494,6 +497,14 @@ export async function getHistoricoVersoes(processoId: string, tipo: TipoDocument
 export interface GerarDocumentoInput {
   processoId: string
   tipo: TipoDocumento
+  /**
+   * Presente quando a regeração é uma retificação declarada.
+   *
+   * Ausente, a regeração é apenas isso: o servidor mexeu numa seção e gerou de
+   * novo antes de o documento sair da plataforma. Marcar tudo como retificação
+   * esvaziaria a palavra justamente onde ela tem peso.
+   */
+  retificacao?: Retificacao
 }
 
 /**
@@ -518,7 +529,10 @@ export async function gerarDocumento(input: GerarDocumentoInput): Promise<Docume
   if (existente) {
     // Regeração — nova versão. A anterior fica registrada no histórico.
     existente.versao = proximaVersao(existente.versao)
-    existente.titulo = tituloDoDocumento(input.tipo, objeto)
+    existente.titulo = tituloComRotuloDeVersao(
+      tituloDoDocumento(input.tipo, objeto),
+      existente.versao,
+    )
     existente.geradoEm = geradoEm
     existente.tamanho = `${tamanhoKB} KB`
     existente.status = "final"
@@ -526,10 +540,24 @@ export async function gerarDocumento(input: GerarDocumentoInput): Promise<Docume
       chaveVersao,
       empilharVersao(
         db.versoes.get(chaveVersao) ?? [],
-        entradaDeHistorico(existente.versao, geradoEm, `${tamanhoKB} KB`),
+        entradaDeHistorico(existente.versao, geradoEm, `${tamanhoKB} KB`, input.retificacao),
       ),
     )
-    if (processo) processo.atualizadoEm = dataBrasiliaISO()
+    if (processo) {
+      processo.atualizadoEm = dataBrasiliaISO()
+      if (input.retificacao) {
+        // Só a retificação declarada entra na trilha do processo. Regeração
+        // corriqueira fica no histórico do documento, que é onde ela pertence.
+        registrarEvento(
+          processo,
+          "retificacao",
+          `${CATALOGO[input.tipo].titulo} retificado (v${existente.versao}) — ${notaDaVersao(
+            existente.versao,
+            input.retificacao,
+          )}`,
+        )
+      }
+    }
     return clone(existente)
   }
 

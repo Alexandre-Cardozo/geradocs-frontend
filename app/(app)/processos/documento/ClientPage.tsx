@@ -18,6 +18,7 @@ import {
   useSecoes,
 } from "@/lib/api/hooks"
 import { CATALOGO, porSlug } from "@/lib/documentos"
+import { foiRetificado, rotuloDaVersao } from "@/lib/dominio"
 import { concluidas, obrigatoriasPendentes, podeGerar, progresso } from "@/lib/dominio"
 import { type SecaoDocumento, type StatusDocumento } from "@/lib/types"
 
@@ -46,7 +47,10 @@ export default function EditorDocumento() {
   const gerar = useGerarSecao(processoId, tipo)
   const gerarDocumento = useGerarDocumento()
 
-  const jaGerado = (documentos.data ?? []).some((d) => d.processoId === processoId && d.tipo === tipo)
+  const documentoGerado = (documentos.data ?? []).find(
+    (d) => d.processoId === processoId && d.tipo === tipo,
+  )
+  const jaGerado = documentoGerado != null
 
   const [activeSection, setActiveSection] = useState("1")
   const [rascunho, setRascunho] = useState("")
@@ -140,6 +144,13 @@ export default function EditorDocumento() {
             <div className="font-mono text-xs text-text-muted">{processo.data.id}</div>
             <div className="mt-0.5 text-base leading-snug font-bold text-text-1">{processo.data.objeto}</div>
             <div className="mt-0.75 text-xs text-text-3">{processo.data.secretaria}</div>
+            {documentoGerado && foiRetificado(documentoGerado.versao) && (
+              // O cabeçalho é onde quem está editando descobre que trabalha
+              // sobre um documento já retificado — antes de gerar mais uma versão.
+              <div className="mt-1.5 inline-flex rounded-sm bg-tint-warning-bg px-1.5 py-0.5 font-mono text-2xs font-semibold text-tint-warning-fg">
+                {rotuloDaVersao(documentoGerado.versao)}
+              </div>
+            )}
           </div>
           <ProgressBar percent={progress} label={`Progresso do ${tipo}`} sub={`${completedCount} de ${lista.length} seções concluídas`} />
         </div>

@@ -14,5 +14,13 @@ export * from "@/lib/dominio/numeracao"
 export * from "@/lib/dominio/processo"
 export * from "@/lib/dominio/secoes"
 export * from "@/lib/dominio/versionamento"
+export {
+  MOTIVO_RETIFICACAO_EXPLICACAO,
+  MOTIVO_RETIFICACAO_LABEL,
+  foiRetificado,
+  notaDaVersao,
+  tituloComRotuloDeVersao,
+} from "./versionamento"
+export type { MotivoRetificacao, Retificacao } from "./versionamento"
 export { impactoTrocaModalidade, motivoDaTrocaDeModalidade } from "./modalidade"
 export type { ImpactoTrocaModalidade } from "./modalidade"

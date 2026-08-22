@@ -25,9 +25,10 @@ import {
   useProcesso,
   useSecoes,
 } from "@/lib/api/hooks"
+import { PainelRetificacao } from "@/components/processos/painel-retificacao"
 import { AlertaOrientacao } from "@/components/shared/alerta-orientacao"
 import { CATALOGO, documentosDaModalidade, ordenar, pendencias } from "@/lib/documentos"
-import { impactoTrocaModalidade } from "@/lib/dominio"
+import { impactoTrocaModalidade, rotuloDaVersao, type Retificacao } from "@/lib/dominio"
 import { formatBRL, formatData } from "@/lib/format"
 import { MODALIDADE_LABEL, type Modalidade, type TipoDocumento } from "@/lib/types"
 
@@ -64,6 +65,9 @@ export default function HubProcesso() {
   // Modalidade escolhida mas ainda não aplicada: fica pendente enquanto o
   // alerta de impacto está na tela.
   const [novaModalidade, setNovaModalidade] = useState<Modalidade | null>(null)
+  // Documento cuja retificação está sendo declarada. Um por vez: retificar dois
+  // ao mesmo tempo esconderia qual histórico está sendo lido.
+  const [retificando, setRetificando] = useState<TipoDocumento | null>(null)
 
   const abrirEdicao = () => {
     if (!processo.data) return
@@ -420,8 +424,14 @@ export default function HubProcesso() {
                       <IconCheckCircle size={15} strokeWidth={2.5} />
                       Finalizado
                     </span>
-                    {gerado && gerado.versao > 1 && (
-                      <span className="mt-0.5 font-mono text-2xs text-text-muted">v{gerado.versao}</span>
+                    {gerado && (
+                      <span
+                        className={`mt-0.5 font-mono text-2xs ${
+                          gerado.versao > 1 ? "font-semibold text-tint-warning-fg" : "text-text-muted"
+                        }`}
+                      >
+                        {rotuloDaVersao(gerado.versao)}
+                      </span>
                     )}
                   </span>
                 ) : (
@@ -445,6 +455,11 @@ export default function HubProcesso() {
                     <Button size="sm" variant="ghost" onClick={() => router.push(editorHref)}>
                       Revisar Seções
                     </Button>
+                    {proc.status !== "concluido" && retificando !== tipo && (
+                      <Button size="sm" variant="ghost" onClick={() => setRetificando(tipo)}>
+                        Retificar
+                      </Button>
+                    )}
                   </>
                 ) : obrigatoriasOk ? (
                   <>
@@ -465,6 +480,27 @@ export default function HubProcesso() {
                   </Button>
                 )}
               </div>
+
+              {retificando === tipo && gerado && (
+                <PainelRetificacao
+                  processoId={processoId}
+                  tipo={tipo}
+                  versaoAtual={gerado.versao}
+                  pendente={gerar.isPending}
+                  onConfirmar={(retificacao: Retificacao) =>
+                    gerar.mutate(
+                      { processoId, tipo, retificacao },
+                      {
+                        onSuccess: (doc) => {
+                          setRetificando(null)
+                          showToast(`${tipo} retificado — ${rotuloDaVersao(doc.versao)}.`)
+                        },
+                      },
+                    )
+                  }
+                  onCancelar={() => setRetificando(null)}
+                />
+              )}
             </div>
           )
         })}

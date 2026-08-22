@@ -10,6 +10,7 @@ import { Th } from "@/components/shared/tabela"
 import { useToast } from "@/components/shared/providers"
 import { useDocumentos, useResumoDocumentos } from "@/lib/api/hooks"
 import { CATALOGO, ORDEM_FLUXO } from "@/lib/documentos"
+import { foiRetificado, rotuloDaVersao } from "@/lib/dominio"
 import { formatDataHora } from "@/lib/format"
 import type { DocumentoGerado, TipoDocumento } from "@/lib/types"
 
@@ -122,8 +123,14 @@ export default function Documentos() {
                       <div className="text-base font-semibold text-text-1">{nomeProcesso(doc)}</div>
                       <div className="mt-0.5 flex items-center gap-2">
                         <span className="font-mono text-xs font-semibold text-royal">{doc.processoId}</span>
-                        <span className="rounded-sm bg-border-soft px-1.5 py-0.5 font-mono text-2xs font-semibold text-slate-strong">
-                          v{doc.versao}
+                        <span
+                          className={`rounded-sm px-1.5 py-0.5 font-mono text-2xs font-semibold ${
+                            foiRetificado(doc.versao)
+                              ? "bg-tint-warning-bg text-tint-warning-fg"
+                              : "bg-border-soft text-slate-strong"
+                          }`}
+                        >
+                          {rotuloDaVersao(doc.versao)}
                         </span>
                       </div>
                     </td>
