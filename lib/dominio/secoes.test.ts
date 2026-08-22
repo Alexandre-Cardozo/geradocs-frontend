@@ -1,6 +1,16 @@
 import { describe, expect, it } from "vitest"
 
-import { concluidas, obrigatoriasPendentes, podeGerar, progresso, statusAposEditar } from "@/lib/dominio"
+import {
+  concluidas,
+  dispensadasSemJustificativa,
+  foiDispensada,
+  obrigatoriasPendentes,
+  paragrafoDeDispensa,
+  podeGerar,
+  progresso,
+  statusAposDispensar,
+  statusAposEditar,
+} from "@/lib/dominio"
 import type { SecaoDocumento } from "@/lib/types"
 
 function secao(id: string, obrigatoria: boolean, status: SecaoDocumento["status"]): SecaoDocumento {
@@ -75,5 +85,79 @@ describe("obrigatoriasPendentes e podeGerar", () => {
 
   it("seção em revisão ainda não conta como concluída", () => {
     expect(podeGerar([secao("1", true, "Em revisão")])).toBe(false)
+  })
+})
+
+/**
+ * O Art. 18, § 2º admite dispensar incisos do ETP **mediante justificativa**.
+ * Sem registrar a justificativa, a seção em branco simplesmente some do
+ * documento gerado — e quem audita não distingue o inciso que não se aplica
+ * daquele que ninguém preencheu.
+ */
+describe("dispensa de seção", () => {
+  const dispensavel = (justificativa?: string): SecaoDocumento => ({
+    id: "7",
+    titulo: "Resultados Pretendidos",
+    status: "Não iniciado",
+    obrigatoria: false,
+    conteudo: "",
+    hint: "Descreva os resultados esperados.",
+    fundamentoLegal: "Art. 18, § 1º, VII, Lei 14.133/21",
+    ...(justificativa === undefined ? {} : { justificativaDispensa: justificativa }),
+  })
+
+  it("dispensa exige as três condições juntas", () => {
+    expect(foiDispensada(dispensavel("Contratação de item único, sem métrica aplicável."))).toBe(true)
+
+    // Obrigatória não se dispensa: são os incisos indispensáveis do § 2º.
+    expect(foiDispensada({ ...dispensavel("Justificativa."), obrigatoria: true })).toBe(false)
+    // Seção preenchida não foi dispensada — foi respondida.
+    expect(foiDispensada({ ...dispensavel("Justificativa."), conteudo: "texto" })).toBe(false)
+    // Em branco sem justificativa é lacuna, não dispensa.
+    expect(foiDispensada(dispensavel())).toBe(false)
+    expect(foiDispensada(dispensavel("   "))).toBe(false)
+  })
+
+  it("aponta as lacunas silenciosas antes de gerar", () => {
+    const lista = [
+      { ...dispensavel(), id: "3" },
+      dispensavel("Não se aplica a esta contratação."),
+      { ...dispensavel(), id: "9", obrigatoria: true },
+      { ...dispensavel(), id: "11", conteudo: "preenchida" },
+    ]
+
+    // Só a que está em branco, é dispensável e não tem justificativa.
+    expect(dispensadasSemJustificativa(lista).map((s) => s.id)).toEqual(["3"])
+  })
+
+  it("o parágrafo cita o fundamento e a justificativa literalmente", () => {
+    const secao = dispensavel("  Contratação de item único, sem métrica aplicável.  ")
+    // A guarda estreita o tipo: o parágrafo só é alcançável por ela, e é isso
+    // que dispensa um fallback para justificativa ausente.
+    if (!foiDispensada(secao)) throw new Error("A seção deveria estar dispensada.")
+    const paragrafo = paragrafoDeDispensa(secao)
+
+    expect(paragrafo).toContain("Resultados Pretendidos")
+    expect(paragrafo).toContain("Art. 18, § 2º, da Lei 14.133/21")
+    expect(paragrafo).toContain("Art. 18, § 1º, VII, Lei 14.133/21")
+    expect(paragrafo).toContain("Contratação de item único, sem métrica aplicável.")
+  })
+
+  it("seção dispensada conta como resolvida no trilho", () => {
+    // "Em revisão" seria mentira: não há o que revisar. A dispensa é decisão
+    // tomada, e deixá-la como pendente faria o progresso nunca fechar.
+    expect(statusAposDispensar("Não se aplica.")).toBe("Completo")
+    expect(statusAposDispensar("   ")).toBe("Não iniciado")
+  })
+
+  it("dispensar não libera a geração de seção indispensável", () => {
+    const lista = [
+      { ...dispensavel("Justificativa."), id: "1", obrigatoria: true },
+      dispensavel("Justificativa."),
+    ]
+
+    // A justificativa é a porta de saída do § 2º, e ela não alcança os incisos
+    // que o próprio § 2º torna indispensáveis.
+    expect(podeGerar(lista)).toBe(false)
   })
 })

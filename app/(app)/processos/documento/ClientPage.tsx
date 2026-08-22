@@ -18,7 +18,8 @@ import {
   useSecoes,
 } from "@/lib/api/hooks"
 import { CATALOGO, porSlug } from "@/lib/documentos"
-import { foiRetificado, rotuloDaVersao } from "@/lib/dominio"
+import { DispensaDeSecao } from "@/components/documentos/dispensa-de-secao"
+import { dispensadasSemJustificativa, foiDispensada, foiRetificado, rotuloDaVersao } from "@/lib/dominio"
 import { concluidas, obrigatoriasPendentes, podeGerar, progresso } from "@/lib/dominio"
 import { type SecaoDocumento, type StatusDocumento } from "@/lib/types"
 
@@ -78,6 +79,9 @@ export default function EditorDocumento() {
   // mediante justificativa (no ETP, Art. 18, § 2º). A regra vive em lib/dominio.
   const secoesPendentes = obrigatoriasPendentes(lista)
   const documentoPodeSerGerado = podeGerar(lista)
+  // Dispensáveis em branco sem justificativa: somem do documento sem que nada
+  // registre que sumiram.
+  const lacunasSilenciosas = dispensadasSemJustificativa(lista)
 
   const handleSave = (avancar = false) => {
     if (!active) return
@@ -180,7 +184,14 @@ export default function EditorDocumento() {
                 <span className="block min-w-0 flex-1">
                   <span className={`block text-sm leading-snug ${isActive ? "font-semibold text-royal-hover" : "font-medium text-text-2"}`}>
                     {s.titulo}
-                    {!s.obrigatoria && <span className="ml-1.25 text-2xs text-text-muted">Opt.</span>}
+                    {foiDispensada(s) ? (
+                      // "Dispensada" e não "Opt.": o trilho precisa distinguir a
+                      // seção que pode ficar em branco daquela que já foi
+                      // dispensada com justificativa registrada.
+                      <span className="ml-1.25 text-2xs font-semibold text-royal">Dispensada</span>
+                    ) : (
+                      !s.obrigatoria && <span className="ml-1.25 text-2xs text-text-muted">Opt.</span>
+                    )}
                   </span>
                 </span>
                 <span className={`size-1.5 shrink-0 rounded-full ${cfg.dot}`} />
@@ -251,12 +262,26 @@ export default function EditorDocumento() {
                     placeholder="Preencha o conteúdo desta seção..."
                   />
                   {rascunho.trim() === "" ? (
-                    <div className="flex flex-wrap items-center gap-3">
-                      <Button variant="dark" size="sm" icon={<IconSparkles size={13} />} disabled={gerar.isPending} onClick={handleGerarIA}>
-                        {gerar.isPending ? "Gerando com IA..." : "Gerar com IA"}
-                      </Button>
-                      <span className="text-sm text-text-muted">A IA redige a seção com base no DFD, no PCA e nos dados do processo.</span>
-                    </div>
+                    <>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <Button variant="dark" size="sm" icon={<IconSparkles size={13} />} disabled={gerar.isPending} onClick={handleGerarIA}>
+                          {gerar.isPending ? "Gerando com IA..." : "Gerar com IA"}
+                        </Button>
+                        <span className="text-sm text-text-muted">A IA redige a seção com base no DFD, no PCA e nos dados do processo.</span>
+                      </div>
+                      {!active.obrigatoria && (
+                        <DispensaDeSecao
+                          secao={active}
+                          pendente={salvar.isPending}
+                          onDispensar={(justificativa) =>
+                            salvar.mutate({ secaoId: active.id, conteudo: "", justificativaDispensa: justificativa })
+                          }
+                          onDesfazer={() =>
+                            salvar.mutate({ secaoId: active.id, conteudo: "", justificativaDispensa: "" })
+                          }
+                        />
+                      )}
+                    </>
                   ) : (
                     <ValidationMsg type="ok" msg="Texto suficiente para fundamentar a seção." />
                   )}
@@ -292,6 +317,14 @@ export default function EditorDocumento() {
                   <InfoBanner tone="warning">
                     Conclua as seções obrigatórias para gerar o {meta.titulo}. Faltam:{" "}
                     <strong>{secoesPendentes.map((s) => s.titulo).join(", ")}</strong>.
+                  </InfoBanner>
+                )}
+                {isLast && lacunasSilenciosas.length > 0 && (
+                  <InfoBanner tone="info">
+                    Estas seções ficarão de fora do documento sem qualquer registro:{" "}
+                    <strong>{lacunasSilenciosas.map((s) => s.titulo).join(", ")}</strong>. Dispense-as
+                    com justificativa para que o documento diga que foram dispensadas — é o que o
+                    Art. 18, § 2º pede.
                   </InfoBanner>
                 )}
                 <div className="flex flex-wrap justify-between gap-2.5">

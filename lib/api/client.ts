@@ -19,6 +19,7 @@ import {
   calcularIndicadores,
   documentosPendentes,
   empilharVersao,
+  foiDispensada,
   entradaDeHistorico,
   impactoTrocaModalidade,
   iniciaisDe,
@@ -33,6 +34,7 @@ import {
   prefeiturasVisiveis,
   resumirDocumentos,
   proximaVersao,
+  statusAposDispensar,
   statusAposEditar,
   statusDoDocumentoNoProcesso,
   tituloComRotuloDeVersao,
@@ -372,6 +374,13 @@ export interface AtualizarSecaoInput {
   secaoId: string
   conteudo: string
   status?: SecaoDocumento["status"]
+  /**
+   * Por que a seção dispensável fica em branco (Art. 18, § 2º).
+   *
+   * `undefined` não mexe no que já está gravado; string vazia retira a dispensa
+   * — é assim que a tela desfaz sem precisar de uma operação própria.
+   */
+  justificativaDispensa?: string
 }
 
 export async function atualizarSecao(input: AtualizarSecaoInput): Promise<SecaoDocumento> {
@@ -380,7 +389,17 @@ export async function atualizarSecao(input: AtualizarSecaoInput): Promise<SecaoD
   const secao = secoes.find((s) => s.id === input.secaoId)
   if (!secao) throw new Error(`Seção ${input.secaoId} não encontrada`)
   secao.conteudo = input.conteudo
-  secao.status = statusAposEditar(input.conteudo, input.status)
+  if (input.justificativaDispensa !== undefined) {
+    const justificativa = input.justificativaDispensa.trim()
+    if (justificativa) secao.justificativaDispensa = justificativa
+    else delete secao.justificativaDispensa
+  }
+  // Preencher a seção retira a dispensa: as duas coisas juntas produziriam um
+  // documento que traz o conteúdo e, logo abaixo, diz que ele foi dispensado.
+  if (input.conteudo.trim()) delete secao.justificativaDispensa
+  secao.status = foiDispensada(secao)
+    ? statusAposDispensar(secao.justificativaDispensa ?? "")
+    : statusAposEditar(input.conteudo, input.status)
   return clone(secao)
 }
 

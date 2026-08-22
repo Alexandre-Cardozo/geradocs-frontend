@@ -164,8 +164,12 @@ export function useSecoes(processoId: string, tipo: TipoDocumento) {
 export function useAtualizarSecao(processoId: string, tipo: TipoDocumento) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (input: { secaoId: string; conteudo: string; status?: import("@/lib/types").StatusDocumento }) =>
-      api.atualizarSecao({ processoId, tipo, ...input }),
+    mutationFn: (input: {
+      secaoId: string
+      conteudo: string
+      status?: import("@/lib/types").StatusDocumento
+      justificativaDispensa?: string
+    }) => api.atualizarSecao({ processoId, tipo, ...input }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: chaves.secoes(processoId, tipo) })
     },

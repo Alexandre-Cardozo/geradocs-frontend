@@ -142,6 +142,15 @@ export interface SecaoDocumento {
   hint: string
   /** Fundamento citado literalmente (ex.: "Art. 18, § 1º, I, Lei 14.133/21"). */
   fundamentoLegal: string
+  /**
+   * Por que a seção foi dispensada.
+   *
+   * Só existe em seção dispensável deixada em branco. O Art. 18, § 2º admite
+   * dispensar incisos **mediante justificativa** — sem ela, a seção
+   * simplesmente sumiria do documento, e quem lê depois não distingue "não se
+   * aplica" de "esqueceram".
+   */
+  justificativaDispensa?: string
   /** Painel especial do editor, quando a seção tem um. */
   painel?: PainelSecao
 }

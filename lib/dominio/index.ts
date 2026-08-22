@@ -22,5 +22,13 @@ export {
   tituloComRotuloDeVersao,
 } from "./versionamento"
 export type { MotivoRetificacao, Retificacao } from "./versionamento"
+export { corpoDoDocumento } from "./corpo"
+export type { BlocoDoDocumento } from "./corpo"
+export {
+  dispensadasSemJustificativa,
+  foiDispensada,
+  paragrafoDeDispensa,
+  statusAposDispensar,
+} from "./secoes"
 export { impactoTrocaModalidade, motivoDaTrocaDeModalidade } from "./modalidade"
 export type { ImpactoTrocaModalidade } from "./modalidade"
