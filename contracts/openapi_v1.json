@@ -274,6 +274,22 @@
         "required" : [ "reason" ],
         "type" : "object"
       },
+      "DeclarePcaForesightRequest" : {
+        "properties" : {
+          "itemCode" : {
+            "maxLength" : 40,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "note" : {
+            "maxLength" : 500,
+            "minLength" : 0,
+            "type" : "string"
+          }
+        },
+        "required" : [ "itemCode" ],
+        "type" : "object"
+      },
       "DemandConsolidationResponse" : {
         "properties" : {
           "incongruences" : {
@@ -528,6 +544,37 @@
         },
         "type" : "object"
       },
+      "FindingResponse" : {
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "demand" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "estimatedValue" : {
+            "type" : "number"
+          },
+          "foreseen" : {
+            "type" : "boolean"
+          },
+          "kind" : {
+            "enum" : [ "EXACT", "TERMS", "WIDENED", "DECLARED" ],
+            "type" : "string"
+          },
+          "quantity" : {
+            "type" : "number"
+          },
+          "unit" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "demand", "foreseen" ],
+        "type" : "object"
+      },
       "GeneratedSectionResponse" : {
         "properties" : {
           "text" : {
@@ -535,6 +582,28 @@
           }
         },
         "required" : [ "text" ],
+        "type" : "object"
+      },
+      "ImportPcaPlanRequest" : {
+        "properties" : {
+          "content" : {
+            "maxLength" : 2000000,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "fileName" : {
+            "maxLength" : 255,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "year" : {
+            "format" : "int32",
+            "maximum" : 2100,
+            "minimum" : 2021,
+            "type" : "integer"
+          }
+        },
+        "required" : [ "content", "fileName", "year" ],
         "type" : "object"
       },
       "IncongruenceView" : {
@@ -730,6 +799,54 @@
           }
         },
         "required" : [ "password", "token" ],
+        "type" : "object"
+      },
+      "PcaPlanResponse" : {
+        "properties" : {
+          "importedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "indexedItems" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "sourceFileName" : {
+            "type" : "string"
+          },
+          "year" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "importedAt", "indexedItems", "sourceFileName", "year" ],
+        "type" : "object"
+      },
+      "PcaVerificationResponse" : {
+        "properties" : {
+          "citable" : {
+            "type" : "boolean"
+          },
+          "citation" : {
+            "type" : "string"
+          },
+          "declaredNote" : {
+            "type" : "string"
+          },
+          "findings" : {
+            "items" : {
+              "$ref" : "#/components/schemas/FindingResponse"
+            },
+            "type" : "array"
+          },
+          "foreseen" : {
+            "type" : "boolean"
+          },
+          "plan" : {
+            "$ref" : "#/components/schemas/PcaPlanResponse"
+          }
+        },
+        "required" : [ "citable", "findings", "foreseen" ],
         "type" : "object"
       },
       "ProcessDfdResponse" : {
@@ -1727,6 +1844,50 @@
         "tags" : [ "organization-controller" ]
       }
     },
+    "/api/v1/pca-plan" : {
+      "get" : {
+        "operationId" : "currentPlan",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PcaPlanResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "pca-controller" ]
+      },
+      "post" : {
+        "operationId" : "importPlan",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ImportPcaPlanRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PcaPlanResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "pca-controller" ]
+      }
+    },
     "/api/v1/procurement-processes" : {
       "get" : {
         "operationId" : "list_1",
@@ -2356,6 +2517,97 @@
           }
         },
         "tags" : [ "document-authoring-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{processId}/pca" : {
+      "get" : {
+        "operationId" : "verify",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PcaVerificationResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "pca-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{processId}/pca/citation" : {
+      "post" : {
+        "operationId" : "cite",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PcaVerificationResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "pca-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{processId}/pca/declaration" : {
+      "post" : {
+        "operationId" : "declare",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DeclarePcaForesightRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PcaVerificationResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "pca-controller" ]
       }
     },
     "/api/v1/users" : {

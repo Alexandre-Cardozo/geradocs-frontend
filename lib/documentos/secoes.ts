@@ -78,6 +78,7 @@ const secoesETP: SecaoDocumento[] = secoes([
     fundamentoLegal: "Art. 18, § 1º, II, Lei 14.133/21",
     hint: "Demonstre que a contratação está prevista no Plano de Contratações Anual vigente, indicando o item correspondente. Se não estiver, justifique.",
     opcional: true,
+    painel: "pca",
   },
   {
     titulo: "Requisitos da Contratação",
@@ -420,4 +421,19 @@ export const secoesPorTipoBase: Record<TipoDocumento, SecaoDocumento[]> = {
   TR: secoesTR,
   Edital: secoesEdital,
   Contrato: secoesContrato,
+}
+
+/**
+ * O painel do editor que assiste uma seção do catálogo.
+ *
+ * Existe como consulta por código porque as seções chegam do servidor, e o
+ * servidor não conhece painel — ele é assunto da tela. Sem esta junção, o
+ * `painel` declarado acima morria no mapeamento e os painéis de quantidades,
+ * valor, ATA e PCA simplesmente não apareciam.
+ */
+export function painelDaSecao(
+  tipo: TipoDocumento,
+  codigo: string,
+): SecaoDocumento["painel"] {
+  return secoesPorTipoBase[tipo].find((secao) => secao.id === codigo)?.painel
 }

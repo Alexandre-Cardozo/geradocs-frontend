@@ -518,7 +518,6 @@ export const prefeituras: Tenant[] = [
       "PREFEITURA MUNICIPAL DE SÃO PAULO\nSecretaria Municipal de Compras e Contratações",
     rodape:
       "Documento gerado eletronicamente pela plataforma GeraDocs · São Paulo, {data} · Processo nº {numero}",
-    pca: { ano: "2025", arquivo: null, itensIndexados: 247 },
   },
   {
     id: PREF_ECOPORANGA,
@@ -539,6 +538,5 @@ export const prefeituras: Tenant[] = [
       "PREFEITURA MUNICIPAL DE ECOPORANGA\nEstado do Espírito Santo · Secretaria de Administração",
     rodape:
       "Documento gerado eletronicamente pela plataforma GeraDocs · Ecoporanga/ES, {data} · Processo nº {numero}",
-    pca: { ano: "2025", arquivo: null, itensIndexados: 58 },
   },
 ];

@@ -10,4 +10,4 @@ export {
   totalSecoes,
 } from "./catalogo"
 export type { MetaDocumento } from "./catalogo"
-export { secoesPorTipoBase } from "./secoes"
+export { painelDaSecao, secoesPorTipoBase } from "./secoes"

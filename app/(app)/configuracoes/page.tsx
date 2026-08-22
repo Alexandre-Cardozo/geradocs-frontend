@@ -5,7 +5,6 @@ import { useState } from "react";
 import {
   Button,
   Dropdown,
-  FileUpload,
   FormField,
   InfoBanner,
   Input,
@@ -15,7 +14,6 @@ import {
   Toggle,
 } from "@/components/ui";
 import {
-  IconCheck,
   IconFile,
   IconImage,
   IconPlus,
@@ -34,6 +32,7 @@ import {
   useUsuarios,
 } from "@/lib/api/hooks";
 import { formatCPF, validaCPF } from "@/lib/auth/cpf";
+import { ImportarPca } from "@/components/configuracoes/importar-pca";
 import { MarcaSintetica } from "@/components/shared/marca-sintetica";
 import { anoBrasilia, dataBrasiliaISO, formatData, formatDataHora } from "@/lib/format";
 import { PERFIL_ACESSO_LABEL, type PerfilAcesso, type Secretaria } from "@/lib/types";
@@ -175,8 +174,6 @@ export default function Configuracoes() {
   const [rodape, setRodape] = useState("");
   const [secretarias, setSecretarias] = useState<Secretaria[]>([]);
   const [novaSecretaria, setNovaSecretaria] = useState("");
-  const [pcaFile, setPcaFile] = useState<string | null>(null);
-  const [pcaYear, setPcaYear] = useState("2025");
   const [tenantSincronizado, setTenantSincronizado] = useState<string | null>(null);
 
   // Semeia os formulários quando o tenant carrega (ajuste de estado durante o
@@ -193,11 +190,6 @@ export default function Configuracoes() {
     setCabecalho(tenant.data.cabecalho);
     setRodape(tenant.data.rodape);
     setSecretarias(tenant.data.secretarias);
-    setPcaFile(tenant.data.pca.arquivo);
-    // Sem PCA importado → abre no ano vigente; com PCA, mostra o ano configurado.
-    setPcaYear(
-      tenant.data.pca.arquivo ? tenant.data.pca.ano : String(anoAtual),
-    );
   }
 
   if (tenant.isPending) {
@@ -520,117 +512,14 @@ export default function Configuracoes() {
       {/* ── PCA ── */}
       {activeTab === "pca" && (
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="flex flex-col gap-5">
-            <SectionBlock
-              title="PCA do Ano Vigente"
-              hint="Anexe o PCA aprovado para o ano corrente. Formatos aceitos: PDF, XLSX, DOCX. O arquivo será utilizado como referência durante a geração dos documentos."
-            >
-              <div className="mb-4 flex gap-4">
-                <FormField label="Ano de Referência">
-                  <Dropdown
-                    value={pcaYear}
-                    onChange={setPcaYear}
-                    options={anosPCA}
-                    ariaLabel="Ano de referência do PCA"
-                    className="w-40"
-                  />
-                  <MarcaSintetica campo="pcaAno" />
-                </FormField>
-              </div>
-
-              {pcaFile ? (
-                <div>
-                  <div className="mb-3 flex items-center gap-3 rounded-xl border border-border bg-ice px-4 py-3">
-                    <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-tint-royal-bg text-royal">
-                      <IconFile size={18} />
-                    </span>
-                    <span className="block flex-1">
-                      <span className="block text-base font-semibold text-text-1">
-                        {pcaFile}
-                      </span>
-                      <span className="mt-0.5 block text-xs text-text-muted">
-                        PCA {pcaYear} · Importado em{" "}
-                        {formatData(dataBrasiliaISO())}
-                      </span>
-                    </span>
-                    <Tag tone="success">Ativo</Tag>
-                  </div>
-
-                  <InfoBanner
-                    tone="success"
-                    icon={<IconCheck size={14} strokeWidth={2.5} />}
-                  >
-                    <strong>PCA carregado com sucesso.</strong>{" "}
-                    {tenant.data.pca.itensIndexados} itens de contratação
-                    indexados. O modelo utilizará este PCA como referência nos
-                    processos de {pcaYear}.
-                  </InfoBanner>
-
-                  <div className="mt-3 flex gap-2">
-                    <label className="cursor-pointer">
-                      <input
-                        type="file"
-                        accept=".pdf,.xlsx,.docx"
-                        className="hidden"
-                        onChange={(e) => {
-                          const f = e.target.files?.[0];
-                          if (f) setPcaFile(f.name);
-                        }}
-                      />
-                      <span className="inline-block cursor-pointer rounded-[7px] border border-tint-royal-border bg-tint-royal-bg px-3.5 py-1.5 text-sm font-semibold text-royal">
-                        Substituir arquivo
-                      </span>
-                    </label>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => setPcaFile(null)}
-                    >
-                      Remover PCA
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <FileUpload
-                  file={null}
-                  onChange={setPcaFile}
-                  placeholder="Clique para selecionar o PCA ou arraste o arquivo aqui"
-                  accept=".pdf,.xlsx,.docx"
-                />
-              )}
-            </SectionBlock>
-
-            <div className="flex gap-2.5">
-              <p id="motivo-salvar-pca" className="sr-only">
-                Selecione o arquivo do PCA para indexar.
-              </p>
-              <Button
-                disabled={!pcaFile}
-                ariaDescribedBy="motivo-salvar-pca"
-                onClick={() =>
-                  salvarTenant(
-                    {
-                      pca: {
-                        ano: pcaYear,
-                        arquivo: pcaFile,
-                        itensIndexados: tenant.data.pca.itensIndexados,
-                      },
-                    },
-                    "PCA salvo — o modelo o utilizará como referência.",
-                  )
-                }
-              >
-                Salvar PCA
-              </Button>
-            </div>
-          </div>
+          <ImportarPca anos={anosPCA} />
 
           <div className="lg:sticky lg:top-4">
             <InfoBanner tone="info">
-              O <strong>Plano de Contratações Anual (PCA)</strong> é utilizado
-              pelo modelo de IA para validar se o processo em elaboração está
-              previsto no planejamento vigente, sugerindo o item correspondente
-              e auxiliando no preenchimento do ETP.
+              O <strong>Plano de Contratações Anual (PCA)</strong> importado aqui é onde a
+              plataforma procura ao montar a seção do <strong>inciso II do ETP</strong> (Art. 18,
+              § 1º, II). A busca é por código e por termos do item — determinística, para que
+              quem lê a seção possa conferir por que aquele item foi apontado.
             </InfoBanner>
           </div>
         </div>

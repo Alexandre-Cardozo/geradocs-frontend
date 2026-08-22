@@ -74,6 +74,13 @@ import {
   listarProcessos,
   obterProcesso,
 } from "@/lib/api/procurement-client"
+import {
+  citarNaSecao,
+  declararPrevisao,
+  importarPlano,
+  planoVigente,
+  verificacaoDoProcesso,
+} from "@/lib/api/pca-client"
 import { dataBrasiliaISO, dataHoraBrasiliaISO } from "@/lib/format"
 import type {
   DocumentoGerado,
@@ -598,6 +605,37 @@ export async function reordenarSecoesDoDocumento(
 /** A demanda consolidada dos DFDs do processo. */
 export async function getConsolidacaoDaDemanda(processoId: string) {
   return consolidacaoDaDemanda(processoId)
+}
+
+/** A verificação de previsão no PCA para o processo. */
+export async function getVerificacaoPca(processoId: string) {
+  return verificacaoDoProcesso(processoId)
+}
+
+/** O servidor informa o item do PCA que a busca não encontrou. */
+export async function declararPrevisaoNoPca(
+  processoId: string,
+  entrada: { codigo: string; nota?: string },
+) {
+  return declararPrevisao(processoId, entrada)
+}
+
+/** Escreve a citação do PCA na seção do inciso II do ETP. */
+export async function citarPcaNaSecao(processoId: string) {
+  return citarNaSecao(processoId)
+}
+
+/** O plano vigente do órgão; `null` enquanto nenhum tiver sido anexado. */
+export async function getPlanoPca() {
+  return planoVigente()
+}
+
+export async function importarPlanoPca(entrada: {
+  ano: number
+  arquivo: string
+  conteudo: string
+}) {
+  return importarPlano(entrada)
 }
 
 /** Compara duas versões geradas e traz a errata. */

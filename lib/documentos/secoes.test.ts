@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { ORDEM_FLUXO } from "@/lib/documentos"
-import { secoesPorTipoBase } from "@/lib/documentos/secoes"
+import { painelDaSecao, secoesPorTipoBase } from "@/lib/documentos/secoes"
 import type { TipoDocumento } from "@/lib/types"
 
 /**
@@ -88,11 +88,27 @@ describe("toda seção orienta quem escreve", () => {
 })
 
 describe("painéis especiais", () => {
+  it("sobrevivem à volta pelo servidor, que não conhece painel", () => {
+    // O painel é declarado aqui e as seções chegam da API. Sem a junção por
+    // código, `painel` morria no mapeamento e os painéis do editor
+    // simplesmente não apareciam — que foi o que aconteceu quando o front
+    // deixou o mock, e nenhum teste percebeu.
+    expect(painelDaSecao("ETP", "2")).toBe("pca")
+    expect(painelDaSecao("ETP", "4")).toBe("quantidades")
+    expect(painelDaSecao("ETP", "1")).toBeUndefined()
+    expect(painelDaSecao("TR", "2")).toBeUndefined()
+  })
+
   it("estão só onde a seção exige entrada estruturada", () => {
     const comPainel = ORDEM_FLUXO.flatMap((tipo) =>
       secoesPorTipoBase[tipo].filter((s) => s.painel).map((s) => `${tipo}:${s.painel}`),
     )
-    // Quantidades (inciso IV), ATA (inciso V) e valor (inciso VI) — todos no ETP.
-    expect(comPainel.sort()).toEqual(["ETP:ata", "ETP:quantidades", "ETP:valor"])
+    // PCA (inciso II), quantidades (IV), ATA (V) e valor (VI) — todos no ETP.
+    expect(comPainel.sort()).toEqual([
+      "ETP:ata",
+      "ETP:pca",
+      "ETP:quantidades",
+      "ETP:valor",
+    ])
   })
 })

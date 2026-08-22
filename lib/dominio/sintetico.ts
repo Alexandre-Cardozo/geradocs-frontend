@@ -2,8 +2,11 @@
  * O que a interface mostra e o back-end ainda não fornece.
  *
  * `tenantDa()` fabrica parte da configuração do órgão porque a API de acesso
- * ainda não a persiste: o timbre, o cabeçalho, o rodapé e o exercício do PCA
- * nascem de um valor padrão, não de uma escolha da prefeitura.
+ * ainda não a persiste: o timbre, o cabeçalho e o rodapé nascem de um valor
+ * padrão, não de uma escolha da prefeitura.
+ *
+ * O exercício do PCA saiu desta lista em 22/08/2026, no passo 10.5: o ano agora
+ * é o do plano importado, e não o do calendário.
  *
  * **Configuração inventada exibida como real é pior que campo vazio.** Campo
  * vazio a pessoa preenche; valor plausível ela confere uma vez, aceita, e o
@@ -19,7 +22,6 @@ export type CampoSintetico =
   | "timbrado"
   | "cabecalho"
   | "rodape"
-  | "pcaAno"
   | "parecerDfd"
   | "indicadores"
   | "acervoDocumento"
@@ -37,32 +39,27 @@ export const DADOS_SINTETICOS: Record<CampoSintetico, DadoSintetico> = {
   timbrado: {
     rotulo: "Timbre ativado",
     origem: "Ligado por padrão — a prefeitura ainda não escolheu.",
-    saiEm: "Bloco 10",
+    saiEm: "Bloco 11",
   },
   cabecalho: {
     rotulo: "Cabeçalho",
     origem: "Montado do nome e da unidade do órgão, em maiúsculas.",
-    saiEm: "Bloco 10",
+    saiEm: "Bloco 11",
   },
   rodape: {
     rotulo: "Rodapé",
     origem: "Texto padrão da plataforma, igual para todo órgão.",
-    saiEm: "Bloco 10",
-  },
-  pcaAno: {
-    rotulo: "Exercício do PCA",
-    origem: "Ano corrente do calendário — não é o exercício do plano vigente.",
-    saiEm: "Bloco 10",
+    saiEm: "Bloco 11",
   },
   parecerDfd: {
     rotulo: "Parecer do DFD",
     origem: "Achados e nota fixos, iguais para todo processo — nenhum modelo leu este arquivo.",
-    saiEm: "Bloco 10",
+    saiEm: "Bloco 12",
   },
   indicadores: {
     rotulo: "Indicadores",
     origem: "Contagens de demonstração; não refletem o acervo do órgão.",
-    saiEm: "Bloco 10",
+    saiEm: "Bloco 12",
   },
   acervoDocumento: {
     rotulo: "Identificador, formato e tamanho do arquivo",

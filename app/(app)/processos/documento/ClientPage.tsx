@@ -20,6 +20,7 @@ import {
 import { CATALOGO, porSlug } from "@/lib/documentos"
 import { DispensaDeSecao } from "@/components/documentos/dispensa-de-secao"
 import { EstruturaDoDocumento } from "@/components/documentos/estrutura-do-documento"
+import { PainelPca } from "@/components/documentos/painel-pca"
 import { PreviaDoDocumento } from "@/components/documentos/previa-do-documento"
 import {
   corpoDoDocumento,
@@ -305,6 +306,12 @@ export default function EditorDocumento() {
 
           {/* Painel de Adesão de ATA — acompanha o Levantamento de Mercado. */}
           {active?.painel === "ata" && <PainelATA />}
+
+          {/* Previsão no PCA — acompanha o inciso II. Precisa do processo, e
+              por isso não passa pelo despachante genérico de painéis. */}
+          {active?.painel === "pca" && (
+            <PainelPca secao={active} processoId={processoId} tipo={tipo} />
+          )}
 
           {(() => {
             const isLast = activeSection === lista[lista.length - 1]?.id

@@ -1,6 +1,7 @@
 import "client-only";
 
 import { requisicaoProtegida } from "@/lib/api/auth-client";
+import { painelDaSecao } from "@/lib/documentos";
 import type { BlocoDoDocumento } from "@/lib/dominio";
 import type { MotivoRetificacao, Retificacao } from "@/lib/dominio"
 import type {
@@ -85,7 +86,14 @@ function status(secao: SecaoApi): StatusDocumento {
   return secao.resolved ? "Completo" : "Não iniciado";
 }
 
-function mapearSecao(secao: SecaoApi): SecaoDocumento {
+/**
+ * @param tipo necessário para achar o painel do editor: ele é declarado no
+ *             catálogo da tela, não no contrato, e a junção é pelo código
+ */
+function mapearSecao(secao: SecaoApi, tipo: TipoDocumento): SecaoDocumento {
+  // Seção criada pelo servidor não tem painel: painel assiste inciso da lei,
+  // e a lei não conhece a seção que ele inventou.
+  const painel = secao.origin === "AD_HOC" ? undefined : painelDaSecao(tipo, secao.sectionCode);
   return {
     id: secao.sectionCode,
     titulo: secao.title,
@@ -98,6 +106,7 @@ function mapearSecao(secao: SecaoApi): SecaoDocumento {
     ...(secao.dispensationJustification
       ? { justificativaDispensa: secao.dispensationJustification }
       : {}),
+    ...(painel ? { painel } : {}),
   };
 }
 
@@ -111,7 +120,7 @@ function mapear(documento: DocumentoApi, tipo: TipoDocumento): DocumentoEmElabor
     podeGerar: documento.canGenerate,
     // Ordenadas pela posição do catálogo: é a ordem em que o documento sai
     // impresso, e não a ordem em que o banco devolveu.
-    secoes: [...documento.sections].sort((a, b) => a.position - b.position).map(mapearSecao),
+    secoes: [...documento.sections].sort((a, b) => a.position - b.position).map((secao) => mapearSecao(secao, tipo)),
     pendentes: documento.pendingRequiredSections,
     lacunas: documento.silentGaps,
     corpo: documento.body.map((bloco) => ({

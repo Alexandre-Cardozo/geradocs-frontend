@@ -123,7 +123,7 @@ export interface NovoProcessoInput {
 }
 
 /** Painel especial do editor acionado por uma seção (ver components/documentos/paineis.tsx). */
-export type PainelSecao = "ata" | "quantidades" | "valor"
+export type PainelSecao = "ata" | "pca" | "quantidades" | "valor"
 
 /**
  * Seção de um documento gerável (ETP, TR, Cotação, Mapa, Edital, Contrato).
@@ -282,11 +282,6 @@ export interface Tenant {
   timbrado: boolean
   cabecalho: string
   rodape: string
-  pca: {
-    ano: string
-    arquivo: string | null
-    itensIndexados: number
-  }
 }
 
 /** Alias documental — o Tenant é a Prefeitura no domínio multi-tenant. */

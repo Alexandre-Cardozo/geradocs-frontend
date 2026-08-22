@@ -145,4 +145,36 @@ test.describe("elaboração do ETP", () => {
     // navegador.
     await expect(page.getByText("Necessidade descrita pela secretaria.")).toBeVisible()
   })
+
+  test("o item previsto no PCA é citado na seção do inciso II, e o não previsto só alerta", async ({
+    page,
+  }) => {
+    await comSessao(page)
+    await comProcessoEDocumento(page)
+
+    await page.goto(
+      rota(`/processos/documento?id=${encodeURIComponent(processo.id)}&tipo=etp`),
+    )
+    await page.getByRole("button", { name: /Seção 2 do ETP/ }).first().click()
+
+    // O que a plataforma encontrou aparece com o item — demonstrar é apontar.
+    await expect(page.getByText(/2026-0142/).first()).toBeVisible()
+    await expect(page.getByText(/247 itens indexados/)).toBeVisible()
+
+    // O que não está no plano orienta e deixa seguir: o botão continua ativo.
+    await expect(page.getByText(/Um item não consta do plano/)).toBeVisible()
+    const citar = page.getByRole("button", { name: "Citar na seção" })
+    await expect(citar).toBeEnabled()
+
+    await citar.click()
+    await page.reload()
+    await page.getByRole("button", { name: /Seção 2 do ETP/ }).first().click()
+
+    // A citação está no documento, e a justificativa do que ficou de fora está
+    // visível entre colchetes, em vez de sumir.
+    await expect(page.getByText(/Item 2026-0142/).first()).toBeVisible()
+    await expect(
+      page.getByText(/\[justificar a contratação não prevista no Plano de Contratações Anual\]/),
+    ).toBeVisible()
+  })
 })

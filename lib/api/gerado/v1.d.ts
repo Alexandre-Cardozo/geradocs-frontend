@@ -212,6 +212,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/pca-plan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["currentPlan"];
+        put?: never;
+        post: operations["importPlan"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/procurement-processes": {
         parameters: {
             query?: never;
@@ -404,6 +420,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/procurement-processes/{processId}/pca": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["verify"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/procurement-processes/{processId}/pca/citation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["cite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/procurement-processes/{processId}/pca/declaration": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["declare"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/users": {
         parameters: {
             query?: never;
@@ -535,6 +599,10 @@ export interface components {
         DeactivationRequest: {
             reason: string;
         };
+        DeclarePcaForesightRequest: {
+            itemCode: string;
+            note?: string;
+        };
         DemandConsolidationResponse: {
             incongruences: components["schemas"]["IncongruenceView"][];
             items: components["schemas"]["ConsolidatedItemView"][];
@@ -620,8 +688,25 @@ export interface components {
             /** @enum {string} */
             rectificationKind?: "MATERIAL_ERROR" | "SUBSTANTIAL_CHANGE";
         };
+        FindingResponse: {
+            code?: string;
+            demand: string;
+            description?: string;
+            estimatedValue?: number;
+            foreseen: boolean;
+            /** @enum {string} */
+            kind?: "EXACT" | "TERMS" | "WIDENED" | "DECLARED";
+            quantity?: number;
+            unit?: string;
+        };
         GeneratedSectionResponse: {
             text: string;
+        };
+        ImportPcaPlanRequest: {
+            content: string;
+            fileName: string;
+            /** Format: int32 */
+            year: number;
         };
         IncongruenceView: {
             itemDescription: string;
@@ -699,6 +784,23 @@ export interface components {
         PasswordResetRequest: {
             password: string;
             token: string;
+        };
+        PcaPlanResponse: {
+            /** Format: date-time */
+            importedAt: string;
+            /** Format: int32 */
+            indexedItems: number;
+            sourceFileName: string;
+            /** Format: int32 */
+            year: number;
+        };
+        PcaVerificationResponse: {
+            citable: boolean;
+            citation?: string;
+            declaredNote?: string;
+            findings: components["schemas"]["FindingResponse"][];
+            foreseen: boolean;
+            plan?: components["schemas"]["PcaPlanResponse"];
         };
         ProcessDfdResponse: {
             /** Format: uuid */
@@ -1262,6 +1364,50 @@ export interface operations {
             };
         };
     };
+    currentPlan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PcaPlanResponse"];
+                };
+            };
+        };
+    };
+    importPlan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImportPcaPlanRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PcaPlanResponse"];
+                };
+            };
+        };
+    };
     list_1: {
         parameters: {
             query?: {
@@ -1656,6 +1802,76 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["VersionComparisonResponse"];
+                };
+            };
+        };
+    };
+    verify: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                processId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PcaVerificationResponse"];
+                };
+            };
+        };
+    };
+    cite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                processId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PcaVerificationResponse"];
+                };
+            };
+        };
+    };
+    declare: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                processId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeclarePcaForesightRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PcaVerificationResponse"];
                 };
             };
         };

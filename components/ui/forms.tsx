@@ -297,6 +297,7 @@ export function FormField({
   required,
   hint,
   tip,
+  htmlFor,
   children,
 }: {
   label: string
@@ -304,11 +305,22 @@ export function FormField({
   hint?: string
   /** Dica curta em tooltip (ícone de info ao lado do rótulo). */
   tip?: string
+  /**
+   * `id` do controle que este rótulo nomeia.
+   *
+   * O rótulo não envolve o controle — ele vem antes, como irmão —, então sem
+   * isto não há associação nenhuma: quem usa leitor de tela ouve um campo sem
+   * nome, e quem clica no texto não recebe o foco.
+   */
+  htmlFor?: string
   children: ReactNode
 }) {
   return (
     <div>
-      <label className="mb-1.5 flex items-center gap-1.5 text-base font-semibold text-text-2">
+      <label
+        htmlFor={htmlFor}
+        className="mb-1.5 flex items-center gap-1.5 text-base font-semibold text-text-2"
+      >
         <span>
           {label}
           {required && <span className="ml-1 text-danger">*</span>}

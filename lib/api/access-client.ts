@@ -67,7 +67,6 @@ function tenantDa(organization: BackendOrganization, secretarias: Secretaria[] =
     timbrado: true,
     cabecalho: `${organization.name.toUpperCase()}\n${organization.unit ?? ""}`.trim(),
     rodape: "Documento gerado eletronicamente pela plataforma GeraDocs · {data} · Processo nº {numero}",
-    pca: { ano: String(new Date().getFullYear()), arquivo: null, itensIndexados: 0 },
   }
 }
 

@@ -260,6 +260,53 @@ export function useConsolidacaoDaDemanda(processoId: string) {
 }
 
 /**
+ * A verificação de previsão no PCA e as duas ações do painel.
+ *
+ * Marcar e citar invalidam a mesma consulta porque mexem na mesma resposta —
+ * e citar invalida também as seções, porque grava texto no documento.
+ */
+export function usePrevisaoNoPca(processoId: string, tipo: TipoDocumento) {
+  const queryClient = useQueryClient()
+  const chave = ["previsao-pca", processoId]
+  const verificacao = useQuery({
+    queryKey: chave,
+    queryFn: () => api.getVerificacaoPca(processoId),
+    enabled: processoId !== "",
+  })
+  const marcar = useMutation({
+    mutationFn: (entrada: { codigo: string; nota?: string }) =>
+      api.declararPrevisaoNoPca(processoId, entrada),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: chave })
+    },
+  })
+  const citar = useMutation({
+    mutationFn: () => api.citarPcaNaSecao(processoId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: chave })
+      void queryClient.invalidateQueries({ queryKey: chaves.secoes(processoId, tipo) })
+      void queryClient.invalidateQueries({ queryKey: ["corpo-documento"] })
+    },
+  })
+  return { verificacao, marcar, citar }
+}
+
+/** O PCA do órgão, na tela de configurações. */
+export function usePlanoPca() {
+  const queryClient = useQueryClient()
+  const plano = useQuery({ queryKey: ["plano-pca"], queryFn: () => api.getPlanoPca() })
+  const importar = useMutation({
+    mutationFn: (entrada: { ano: number; arquivo: string; conteudo: string }) =>
+      api.importarPlanoPca(entrada),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["plano-pca"] })
+      void queryClient.invalidateQueries({ queryKey: ["previsao-pca"] })
+    },
+  })
+  return { plano, importar }
+}
+
+/**
  * A comparação entre duas versões, com a errata.
  *
  * `enabled` só quando há duas versões escolhidas: pedir a comparação antes

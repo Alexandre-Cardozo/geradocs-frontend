@@ -391,3 +391,23 @@ Até 22/08/2026 o processo, o documento e as seções viviam num banco em memór
 - **`If-Match` com a versão que a tela leu.** A API substitui o recurso inteiro, então o que não muda é reenviado como está — e um PATCH que omitisse o valor estimado o zeraria.
 
 **O mock encolheu de verdade**, não só de fachada: saíram o armazenamento de seções, o conteúdo de demonstração do ETP e a geração de texto simulada. O que sobrou em `client.ts` é o que ainda não tem contrato — e some conforme os blocos seguintes entregam.
+
+## 32. Previsão no PCA: a tela separa o que a plataforma encontrou do que o servidor afirmou
+
+O Art. 18, § 1º, II exige **demonstração** da previsão no Plano de Contratações Anual. Demonstrar é apontar o item — "está no PCA" sem dizer onde não demonstra coisa alguma, e é isso que o painel do inciso II cobra.
+
+**Decisão:** o painel tem quatro estados e nenhum deles é ambíguo. A plataforma encontrou o item no plano importado (por igualdade, por termos ou por aproximação); ou o servidor informou qual é. **`FORMA_DA_PREVISAO` dá rótulo e explicação a cada um**, e "Informado por você" nunca aparece com a mesma cara de "Encontrado no PCA". Fundir os dois faria a tela parecer ter conferido algo que ninguém conferiu — e é o documento do servidor que vai ao controle depois.
+
+**Item fora do plano não trava.** Contratação fora do PCA existe e exige justificativa, não bloqueio. O painel alerta, diz por que não trava, e a citação sai mesmo assim: ela enumera o que ficou de fora e deixa a justificativa entre colchetes, visível. É o padrão do `AlertaOrientacao` (§24) aplicado a mais um lugar.
+
+**A citação é composta no servidor.** A tela mostra o parágrafo para leitura antes de gravar — é texto que entra em processo administrativo —, mas quem o monta é o domínio, e é ele que o snapshot da versão congela. Montá-lo aqui criaria duas fontes para a mesma frase.
+
+**A aba de PCA em `/configuracoes` deixou de mentir.** Ela dizia "PCA carregado com sucesso, 247 itens de contratação indexados" a partir de uma fixture, aceitava PDF, XLSX e DOCX que nada lia, e afirmava que "o modelo utilizará este PCA" quando nenhum modelo existe. Agora aceita **CSV**, envia o conteúdo do arquivo, e o número que exibe — *itens indexados* — é o que o servidor devolveu. Que só CSV seja lido está escrito na tela, com o formato da linha: limitação declarada é limitação; limitação escondida é defeito.
+
+**`pcaAno` saiu de `DADOS_SINTETICOS`** — o exercício agora é o do plano importado, e não o ano do calendário. E `Tenant.pca` saiu do tipo: era configuração fabricada por `tenantDa()` que nenhuma tela consome mais.
+
+**Três `saiEm` estavam errados e foram corrigidos.** Timbre, cabeçalho e rodapé diziam "Bloco 10", mas nenhum passo do Bloco 10 os entrega — eles nascem com os templates publicados, no 11.1. Indicadores e parecer do DFD diziam o mesmo e dependem de trabalho que ainda não tem passo, então foram para o Bloco 12. O guarda-corpo cobra que cada campo declare seu bloco de saída; ele não tinha como cobrar que o bloco declarado fosse o certo.
+
+**Um defeito anterior apareceu no caminho.** Desde que o front deixou o mock (§31), as seções vêm da API — e a API não conhece `painel`, que é assunto da tela. O campo morria no mapeamento, e os painéis de quantidades, ATA e valor **não apareciam mais**. Nenhum teste percebeu porque nenhum testava a seção *depois* da volta pelo servidor. `painelDaSecao(tipo, codigo)` faz a junção pelo código, e o teste que o guarda diz por que existe.
+
+**`FormField` ganhou `htmlFor`.** O rótulo não envolve o controle — vem antes, como irmão —, então sem `htmlFor` não havia associação nenhuma: leitor de tela anuncia um campo sem nome e clicar no texto não move o foco. Os campos deste painel passaram a usá-lo; **os demais formulários do produto continuam sem**, e isso é dívida aberta, não trabalho concluído.

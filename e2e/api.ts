@@ -199,4 +199,56 @@ export async function comProcessoEDocumento(page: Page) {
     escrito.set(codigo, corpo.content ?? "")
     await rota.fulfill({ json: documento() })
   })
+
+  // A seção 2 do ETP é a do inciso II e carrega o painel do PCA. Sem estas
+  // rotas, abrir o editor deixaria o painel em erro em toda jornada.
+  let informado: string | null = null
+  const verificacao = () => ({
+    plan: {
+      year: 2026,
+      sourceFileName: "pca-2026.csv",
+      importedAt: "2026-08-22T12:00:00-03:00",
+      indexedItems: 247,
+    },
+    foreseen: false,
+    citable: true,
+    citation: CITACAO_PCA,
+    declaredNote: informado,
+    findings: [
+      {
+        demand: "Papel A4 75 g/m2",
+        foreseen: true,
+        kind: "TERMS",
+        code: "2026-0142",
+        description: "Papel A4 75 g/m2, resma com 500 folhas",
+        unit: "RESMA",
+        quantity: 1200,
+        estimatedValue: 28800,
+      },
+      { demand: "Cimento CP-II 50 kg", foreseen: false },
+    ],
+  })
+  await page.route(`${API}/procurement-processes/*/pca`, (rota) =>
+    rota.fulfill({ json: verificacao() }),
+  )
+  await page.route(`${API}/procurement-processes/*/pca/declaration`, async (rota) => {
+    const corpo = rota.request().postDataJSON() as { note?: string | null }
+    informado = corpo.note ?? null
+    await rota.fulfill({ json: verificacao() })
+  })
+  await page.route(`${API}/procurement-processes/*/pca/citation`, async (rota) => {
+    // É o servidor que grava a citação na seção; o dublê faz o mesmo, para que
+    // a jornada possa conferir que o texto ficou no documento.
+    escrito.set("2", CITACAO_PCA)
+    await rota.fulfill({ json: verificacao() })
+  })
 }
+
+/** A citação como o servidor a compõe, com o item previsto e o que ficou de fora. */
+export const CITACAO_PCA = [
+  "A presente contratação está prevista no Plano de Contratações Anual de 2026, nos seguintes itens:",
+  "- Item 2026-0142 — Papel A4 75 g/m2, resma com 500 folhas (quantidade prevista: 1200 RESMA; valor estimado: R$ 28.800,00).",
+  "Os itens a seguir não constam do plano:",
+  "- Cimento CP-II 50 kg.",
+  "Quanto a eles, registra-se: [justificar a contratação não prevista no Plano de Contratações Anual].",
+].join("\n\n")
