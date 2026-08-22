@@ -207,7 +207,48 @@ interface VersaoApi {
   version: number;
   note: string;
   generatedAt: string;
+  contentHash: string;
   body: { sectionCode: string; title: string; text: string; dispensed: boolean }[];
+}
+
+/** Uma versão gerada, com o texto como ele saiu. */
+export interface VersaoComTexto {
+  versao: number;
+  nota: string;
+  geradoEm: string;
+  /** SHA-256 do snapshot: prova que o texto guardado é o texto que saiu. */
+  hash: string;
+  corpo: BlocoDoDocumento[];
+}
+
+function mapearVersao(versao: VersaoApi): VersaoComTexto {
+  return {
+    versao: versao.version,
+    nota: versao.note,
+    geradoEm: versao.generatedAt,
+    hash: versao.contentHash,
+    corpo: versao.body.map((bloco) => ({
+      id: bloco.sectionCode,
+      titulo: bloco.title,
+      texto: bloco.text,
+      dispensada: bloco.dispensed,
+    })),
+  };
+}
+
+/**
+ * As versões com o texto de cada uma, da mais recente para a mais antiga.
+ *
+ * É o que permite responder "o que mudou entre a v1 e a v2" — a pergunta que a
+ * errata responde, e que versionar só o metadado do arquivo deixava sem
+ * resposta.
+ */
+export async function versoesComTexto(
+  processoId: string,
+  tipo: TipoDocumento,
+): Promise<VersaoComTexto[]> {
+  const versoes = await requisicaoProtegida<VersaoApi[]>(`${rota(processoId, tipo)}/versions`);
+  return versoes.map(mapearVersao);
 }
 
 /**

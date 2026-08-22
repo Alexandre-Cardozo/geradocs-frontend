@@ -61,6 +61,7 @@ import {
   gerarTextoDaSecao,
   historicoDeVersoes,
   salvarSecao,
+  versoesComTexto,
 } from "@/lib/api/authoring-client"
 import {
   atualizarProcessoReal,
@@ -547,6 +548,17 @@ export async function getCorpoDocumento(
 
 export async function getHistoricoVersoes(processoId: string, tipo: TipoDocumento): Promise<VersaoDocumento[]> {
   return historicoDeVersoes(processoId, tipo)
+}
+
+/**
+ * As versões com o texto de cada uma.
+ *
+ * Separada de `getHistoricoVersoes` porque carrega o corpo inteiro: a listagem
+ * do histórico não precisa dele, e trazê-lo ali faria toda abertura de painel
+ * baixar todas as versões do documento.
+ */
+export async function getVersoesComTexto(processoId: string, tipo: TipoDocumento) {
+  return versoesComTexto(processoId, tipo)
 }
 
 export interface GerarDocumentoInput {

@@ -220,6 +220,15 @@ export function useCorpoDocumento(processoId: string, tipo: TipoDocumento) {
   })
 }
 
+/** As versões com o texto de cada uma, para comparar o que mudou. */
+export function useVersoesComTexto(processoId: string, tipo: TipoDocumento) {
+  return useQuery({
+    queryKey: ["versoes-com-texto", processoId, tipo],
+    queryFn: () => api.getVersoesComTexto(processoId, tipo),
+    enabled: processoId !== "",
+  })
+}
+
 export function useHistoricoVersoes(processoId: string, tipo: TipoDocumento) {
   return useQuery({
     queryKey: chaves.historicoVersoes(processoId, tipo),
@@ -248,6 +257,7 @@ export function useGerarDocumento() {
       void queryClient.invalidateQueries({ queryKey: ["secoes"] })
       void queryClient.invalidateQueries({ queryKey: ["versoes"] })
       void queryClient.invalidateQueries({ queryKey: ["corpo-documento"] })
+      void queryClient.invalidateQueries({ queryKey: ["versoes-com-texto"] })
       void queryClient.invalidateQueries({ queryKey: chaves.processo(input.processoId) })
     },
   })

@@ -3,6 +3,7 @@
 import { useId, useState } from "react"
 
 import { Button, ChoiceCard, Textarea } from "@/components/ui"
+import { VersoesDoDocumento } from "@/components/documentos/versoes-do-documento"
 import { useHistoricoVersoes } from "@/lib/api/hooks"
 import {
   MOTIVO_RETIFICACAO_EXPLICACAO,
@@ -10,7 +11,6 @@ import {
   type MotivoRetificacao,
   type Retificacao,
 } from "@/lib/dominio"
-import { formatDataHora } from "@/lib/format"
 import type { TipoDocumento } from "@/lib/types"
 
 const MOTIVOS = Object.keys(MOTIVO_RETIFICACAO_LABEL) as MotivoRetificacao[]
@@ -92,15 +92,11 @@ export function PainelRetificacao({
           <div className="mb-1.5 text-2xs font-semibold tracking-caps text-text-muted uppercase">
             Histórico deste documento
           </div>
-          <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
-            {historico.data.map((versao) => (
-              <li key={versao.versao} className="flex flex-wrap items-baseline gap-2 text-sm">
-                <span className="font-mono text-xs font-semibold text-royal">v{versao.versao}</span>
-                <span className="text-text-3">{versao.nota}</span>
-                <span className="text-xs text-text-muted">{formatDataHora(versao.geradoEm)}</span>
-              </li>
-            ))}
-          </ul>
+          {/*
+            Com o texto de cada versão: a pergunta que antecede toda retificação
+            não é só "o que já foi retificado", é "o que estava escrito antes".
+          */}
+          <VersoesDoDocumento processoId={processoId} tipo={tipo} />
         </div>
       )}
 

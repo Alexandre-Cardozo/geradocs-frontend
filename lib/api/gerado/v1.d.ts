@@ -472,6 +472,7 @@ export interface components {
         };
         DocumentVersionResponse: {
             body: components["schemas"]["BlockView"][];
+            contentHash: string;
             /** Format: date-time */
             generatedAt: string;
             note: string;

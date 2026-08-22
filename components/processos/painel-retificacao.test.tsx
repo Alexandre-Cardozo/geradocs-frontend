@@ -64,7 +64,10 @@ describe("painel de retificação", () => {
             version: 1,
             note: "Geração inicial",
             generatedAt: "2026-08-22T12:00:00-03:00",
-            body: [],
+            contentHash: "a".repeat(64),
+            body: [
+              { sectionCode: "1", title: "Necessidade", text: "Texto da v1.", dispensed: false },
+            ],
           },
         ]),
       ),
@@ -74,8 +77,36 @@ describe("painel de retificação", () => {
     // A pergunta que antecede toda retificação é "o que já foi retificado aqui
     // antes?". Mandá-la para outra tela é fazer a pessoa decidir sem o dado.
     expect(await screen.findByText("Histórico deste documento")).toBeInTheDocument()
-    expect(screen.getByText("Geração inicial")).toBeInTheDocument()
+    expect(await screen.findByText("Geração inicial")).toBeInTheDocument()
     expect(screen.getByText("v1")).toBeInTheDocument()
+    // O hash aparece porque é ele que transforma a versão de cópia guardada em
+    // prova de que o texto não foi alterado depois.
+    expect(screen.getByText(/SHA-256/)).toBeInTheDocument()
+  })
+
+  it("permite abrir o texto de uma versão anterior", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id/documents/:tipo/versions`, () =>
+        HttpResponse.json([
+          {
+            version: 1,
+            note: "Geração inicial",
+            generatedAt: "2026-08-22T12:00:00-03:00",
+            contentHash: "a".repeat(64),
+            body: [
+              { sectionCode: "1", title: "Necessidade", text: "Redação original.", dispensed: false },
+            ],
+          },
+        ]),
+      ),
+    )
+    renderizar(<PainelRetificacao {...padrao} onConfirmar={vi.fn()} onCancelar={vi.fn()} />)
+
+    await userEvent.click(await screen.findByRole("button", { name: /ver o texto desta versão/i }))
+
+    // Versionar o metadado respondia "quantas vezes isto foi gerado". Versionar
+    // o texto responde "o que estava escrito antes".
+    expect(screen.getByText("Redação original.")).toBeInTheDocument()
   })
 
   it("enquanto retifica, nada aceita clique", () => {
