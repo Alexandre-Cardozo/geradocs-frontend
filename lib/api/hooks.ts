@@ -220,6 +220,25 @@ export function useCorpoDocumento(processoId: string, tipo: TipoDocumento) {
   })
 }
 
+/**
+ * A comparação entre duas versões, com a errata.
+ *
+ * `enabled` só quando há duas versões escolhidas: pedir a comparação antes
+ * disso traria um 400 a cada abertura de painel.
+ */
+export function useComparacaoDeVersoes(
+  processoId: string,
+  tipo: TipoDocumento,
+  de: number | null,
+  para: number | null,
+) {
+  return useQuery({
+    queryKey: ["comparacao-versoes", processoId, tipo, de, para],
+    queryFn: () => api.compararVersoes(processoId, tipo, de!, para!),
+    enabled: processoId !== "" && de != null && para != null,
+  })
+}
+
 /** As versões com o texto de cada uma, para comparar o que mudou. */
 export function useVersoesComTexto(processoId: string, tipo: TipoDocumento) {
   return useQuery({

@@ -56,6 +56,7 @@ import {
 } from "@/lib/api/access-client"
 import {
   abrirDocumento,
+  compararVersoes as compararVersoesNaApi,
   concluirDocumento,
   corpoDaVersaoVigente,
   gerarTextoDaSecao,
@@ -559,6 +560,16 @@ export async function getHistoricoVersoes(processoId: string, tipo: TipoDocument
  */
 export async function getVersoesComTexto(processoId: string, tipo: TipoDocumento) {
   return versoesComTexto(processoId, tipo)
+}
+
+/** Compara duas versões geradas e traz a errata. */
+export async function compararVersoes(
+  processoId: string,
+  tipo: TipoDocumento,
+  de: number,
+  para: number,
+) {
+  return compararVersoesNaApi(processoId, tipo, de, para)
 }
 
 export interface GerarDocumentoInput {

@@ -326,6 +326,24 @@
         "required" : [ "body", "contentHash", "generatedAt", "note", "version" ],
         "type" : "object"
       },
+      "ErrataEntryView" : {
+        "properties" : {
+          "leiaSe" : {
+            "type" : "string"
+          },
+          "ondeSeLe" : {
+            "type" : "string"
+          },
+          "sectionCode" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "sectionCode", "title" ],
+        "type" : "object"
+      },
       "FinalizeDocumentRequest" : {
         "properties" : {
           "rectificationDescribed" : {
@@ -618,6 +636,28 @@
             "type" : "string"
           }
         },
+        "type" : "object"
+      },
+      "SectionDiffView" : {
+        "properties" : {
+          "change" : {
+            "enum" : [ "ADDED", "REMOVED", "CHANGED", "UNCHANGED" ],
+            "type" : "string"
+          },
+          "currentText" : {
+            "type" : "string"
+          },
+          "previousText" : {
+            "type" : "string"
+          },
+          "sectionCode" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "change", "sectionCode", "title" ],
         "type" : "object"
       },
       "SectionResponseView" : {
@@ -951,6 +991,32 @@
           }
         },
         "required" : [ "email", "id", "memberships", "name", "profileAccess", "status" ],
+        "type" : "object"
+      },
+      "VersionComparisonResponse" : {
+        "properties" : {
+          "errata" : {
+            "items" : {
+              "$ref" : "#/components/schemas/ErrataEntryView"
+            },
+            "type" : "array"
+          },
+          "from" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "sections" : {
+            "items" : {
+              "$ref" : "#/components/schemas/SectionDiffView"
+            },
+            "type" : "array"
+          },
+          "to" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "errata", "from", "sections", "to" ],
         "type" : "object"
       }
     }
@@ -1777,6 +1843,57 @@
                     "$ref" : "#/components/schemas/DocumentVersionResponse"
                   },
                   "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "document-authoring-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/versions/comparison" : {
+      "get" : {
+        "operationId" : "comparison",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "documentType",
+          "required" : true,
+          "schema" : {
+            "enum" : [ "COTACAO", "ETP", "MAPA", "TR", "EDITAL", "CONTRATO" ],
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "from",
+          "required" : true,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "to",
+          "required" : true,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/VersionComparisonResponse"
                 }
               }
             },

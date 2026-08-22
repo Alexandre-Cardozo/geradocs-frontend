@@ -324,6 +324,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/versions/comparison": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["comparison"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/users": {
         parameters: {
             query?: never;
@@ -479,6 +495,12 @@ export interface components {
             /** Format: int32 */
             version: number;
         };
+        ErrataEntryView: {
+            leiaSe?: string;
+            ondeSeLe?: string;
+            sectionCode: string;
+            title: string;
+        };
         FinalizeDocumentRequest: {
             rectificationDescribed?: boolean;
             rectificationDetail?: string;
@@ -593,6 +615,14 @@ export interface components {
             content?: string;
             dispensationJustification?: string;
         };
+        SectionDiffView: {
+            /** @enum {string} */
+            change: "ADDED" | "REMOVED" | "CHANGED" | "UNCHANGED";
+            currentText?: string;
+            previousText?: string;
+            sectionCode: string;
+            title: string;
+        };
         SectionResponseView: {
             content: string;
             dispensationJustification?: string;
@@ -703,6 +733,14 @@ export interface components {
             registrationNumber?: string;
             /** @enum {string} */
             status: "ACTIVE" | "INACTIVE" | "PENDING_ACTIVATION";
+        };
+        VersionComparisonResponse: {
+            errata: components["schemas"]["ErrataEntryView"][];
+            /** Format: int32 */
+            from: number;
+            sections: components["schemas"]["SectionDiffView"][];
+            /** Format: int32 */
+            to: number;
         };
     };
     responses: never;
@@ -1309,6 +1347,32 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["DocumentVersionResponse"][];
+                };
+            };
+        };
+    };
+    comparison: {
+        parameters: {
+            query: {
+                from: number;
+                to: number;
+            };
+            header?: never;
+            path: {
+                processId: string;
+                documentType: "COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["VersionComparisonResponse"];
                 };
             };
         };

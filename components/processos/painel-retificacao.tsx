@@ -3,6 +3,7 @@
 import { useId, useState } from "react"
 
 import { Button, ChoiceCard, Textarea } from "@/components/ui"
+import { ErrataDoDocumento } from "@/components/documentos/errata-do-documento"
 import { VersoesDoDocumento } from "@/components/documentos/versoes-do-documento"
 import { useHistoricoVersoes } from "@/lib/api/hooks"
 import {
@@ -97,6 +98,19 @@ export function PainelRetificacao({
             não é só "o que já foi retificado", é "o que estava escrito antes".
           */}
           <VersoesDoDocumento processoId={processoId} tipo={tipo} />
+        </div>
+      )}
+
+      {historico.isSuccess && historico.data.length > 1 && (
+        <div>
+          <div className="mb-1.5 text-2xs font-semibold tracking-caps text-text-muted uppercase">
+            Errata — facultativa
+          </div>
+          {/*
+            Oferecida, não imposta: obrigar a gerar errata transformaria correção
+            de digitação em ato administrativo.
+          */}
+          <ErrataDoDocumento processoId={processoId} tipo={tipo} />
         </div>
       )}
 

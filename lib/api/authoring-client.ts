@@ -287,3 +287,73 @@ export async function corpoDaVersaoVigente(
     dispensada: bloco.dispensed,
   }));
 }
+
+/** O que aconteceu com uma seção entre duas versões. */
+export type MudancaDaSecao = "ADDED" | "REMOVED" | "CHANGED" | "UNCHANGED";
+
+interface ComparacaoApi {
+  from: number;
+  to: number;
+  sections: {
+    sectionCode: string;
+    title: string;
+    change: MudancaDaSecao;
+    previousText?: string;
+    currentText?: string;
+  }[];
+  errata: {
+    sectionCode: string;
+    title: string;
+    ondeSeLe?: string;
+    leiaSe?: string;
+  }[];
+}
+
+export interface ComparacaoDeVersoes {
+  de: number;
+  para: number;
+  secoes: {
+    id: string;
+    titulo: string;
+    mudanca: MudancaDaSecao;
+    textoAnterior?: string;
+    textoAtual?: string;
+  }[];
+  /** Só o que mudou, no formato "onde se lê / leia-se". */
+  errata: { id: string; titulo: string; ondeSeLe?: string; leiaSe?: string }[];
+}
+
+/**
+ * Compara duas versões geradas e traz a errata.
+ *
+ * A errata vem junto do diff, e não em chamada própria, porque ela é derivada
+ * dele: separá-las faria a tela pedir a mesma comparação duas vezes para montar
+ * uma página só.
+ */
+export async function compararVersoes(
+  processoId: string,
+  tipo: TipoDocumento,
+  de: number,
+  para: number,
+): Promise<ComparacaoDeVersoes> {
+  const comparacao = await requisicaoProtegida<ComparacaoApi>(
+    `${rota(processoId, tipo)}/versions/comparison?from=${de}&to=${para}`,
+  );
+  return {
+    de: comparacao.from,
+    para: comparacao.to,
+    secoes: comparacao.sections.map((secao) => ({
+      id: secao.sectionCode,
+      titulo: secao.title,
+      mudanca: secao.change,
+      textoAnterior: secao.previousText,
+      textoAtual: secao.currentText,
+    })),
+    errata: comparacao.errata.map((entrada) => ({
+      id: entrada.sectionCode,
+      titulo: entrada.title,
+      ondeSeLe: entrada.ondeSeLe,
+      leiaSe: entrada.leiaSe,
+    })),
+  };
+}

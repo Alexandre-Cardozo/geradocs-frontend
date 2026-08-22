@@ -226,3 +226,51 @@ describe("histórico de versões", () => {
     expect(corpo.rectificationDetail).toBe("Prazo alterado.")
   })
 })
+
+describe("comparação entre versões", () => {
+  it("traduz o diff e a errata para o vocabulário da interface", async () => {
+    servidor.use(
+      http.get(
+        `${urlDaApi}/procurement-processes/:id/documents/:tipo/versions/comparison`,
+        ({ request }) => {
+          const url = new URL(request.url)
+          return HttpResponse.json({
+            from: Number(url.searchParams.get("from")),
+            to: Number(url.searchParams.get("to")),
+            sections: [
+              {
+                sectionCode: "1",
+                title: "Necessidade",
+                change: "UNCHANGED",
+                previousText: "Igual.",
+                currentText: "Igual.",
+              },
+              {
+                sectionCode: "4",
+                title: "Prazo",
+                change: "CHANGED",
+                previousText: "30 dias.",
+                currentText: "45 dias.",
+              },
+            ],
+            errata: [
+              { sectionCode: "4", title: "Prazo", ondeSeLe: "30 dias.", leiaSe: "45 dias." },
+            ],
+          })
+        },
+      ),
+    )
+    const { compararVersoes } = await carregarClienteLimpo()
+
+    const comparacao = await compararVersoes(PROCESSO, "ETP", 1, 2)
+
+    expect(comparacao.de).toBe(1)
+    expect(comparacao.para).toBe(2)
+    // O diff traz tudo, para quem quer conferir seção a seção...
+    expect(comparacao.secoes.map((s) => s.mudanca)).toEqual(["UNCHANGED", "CHANGED"])
+    expect(comparacao.secoes[1]?.textoAnterior).toBe("30 dias.")
+    // ...e a errata, só o que mudou.
+    expect(comparacao.errata).toHaveLength(1)
+    expect(comparacao.errata[0]?.leiaSe).toBe("45 dias.")
+  })
+})
