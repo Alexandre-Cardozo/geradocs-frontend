@@ -161,10 +161,14 @@ export default function MeuPerfil() {
           </div>
 
           <div className="mt-6 flex justify-end border-t border-border-soft pt-5">
+            <p id="motivo-salvar-perfil" className="sr-only">
+              Nome completo e e-mail são obrigatórios.
+            </p>
             <Button
               disabled={
                 salvar.isPending || nome.trim() === "" || email.trim() === ""
               }
+              ariaDescribedBy="motivo-salvar-perfil"
               onClick={() =>
                 salvar.mutate(
                   { nome, email, cargo, secretaria },

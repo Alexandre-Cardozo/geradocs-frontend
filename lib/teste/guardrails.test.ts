@@ -137,11 +137,34 @@ describe("6. valor monetário nunca aparece cru", () => {
   })
 })
 
-describe("pendência declarada", () => {
-  it.todo(
-    "7. botão desabilitado por regra de negócio precisa de aria-describedby — " +
-      "entra no Bloco 4, quando se souber quais botões sobrevivem à remoção do " +
-      "fluxo de aprovação; hoje os três casos vivem em telas que serão apagadas, " +
-      "e exige estender o Button do design system, o que pede ADR própria",
-  )
+describe("7. botão desabilitado por regra de negócio explica o que falta", () => {
+  /**
+   * Termos que significam "a requisição está em voo".
+   *
+   * Botão desabilitado enquanto salva não precisa de explicação: o próprio
+   * rótulo muda para "Salvando..." e o estado dura segundos. O que precisa é o
+   * botão travado por algo que a pessoa pode resolver — e que ela não consegue
+   * descobrir se o leitor de tela só anuncia "desabilitado".
+   */
+  const EM_VOO = /\b(\w+\.)?(isPending|isFetching)\b|\bpendente\b/g
+
+  it("nenhum <Button> travado por regra fica sem ariaDescribedBy", () => {
+    const infratores: string[] = []
+    for (const arquivo of codigoDaInterface.filter((a) => a.endsWith(".tsx"))) {
+      const conteudo = readFileSync(arquivo, "utf8")
+      for (const abertura of conteudo.matchAll(/<Button\b[^>]*?>/gs)) {
+        const bloco = abertura[0]
+        const disabled = /disabled=\{([^}]*(?:\{[^}]*\}[^}]*)*)\}/.exec(bloco)
+        if (!disabled) continue
+        const regraDeNegocio = disabled[1]!.replace(EM_VOO, "").replace(/[\s|&]+/g, "")
+        if (regraDeNegocio && !bloco.includes("ariaDescribedBy")) {
+          infratores.push(`${nome(arquivo)} — disabled={${disabled[1]!.trim()}}`)
+        }
+      }
+    }
+
+    // A explicação vai em `ariaDescribedBy`, e não em `title`: tooltip não é
+    // lida em navegação por teclado, que é exatamente quem fica sem saída.
+    expect(infratores, "botões travados sem dizer o que falta").toEqual([])
+  })
 })

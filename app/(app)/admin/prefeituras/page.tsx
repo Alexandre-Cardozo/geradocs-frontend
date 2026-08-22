@@ -72,7 +72,14 @@ export default function AdminPrefeituras() {
           </div>
           <div className="mt-4 flex gap-2.5">
             <Button variant="secondary" onClick={() => setNovo(false)}>Cancelar</Button>
-            <Button disabled={criar.isPending || orgao.trim() === ""} onClick={salvar}>
+            <p id="motivo-criar-prefeitura" className="sr-only">
+              O nome do órgão é obrigatório.
+            </p>
+            <Button
+              disabled={criar.isPending || orgao.trim() === ""}
+              ariaDescribedBy="motivo-criar-prefeitura"
+              onClick={salvar}
+            >
               {criar.isPending ? "Salvando..." : "Cadastrar"}
             </Button>
           </div>

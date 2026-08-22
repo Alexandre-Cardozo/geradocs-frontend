@@ -20,7 +20,9 @@ import {
   documentosPendentes,
   empilharVersao,
   entradaDeHistorico,
+  impactoTrocaModalidade,
   iniciaisDe,
+  motivoDaTrocaDeModalidade,
   numeroDeDocumento,
   numeroDeProcesso,
   primeiroNome,
@@ -58,6 +60,7 @@ import type {
   DocumentoGerado,
   EstatisticasDashboard,
   EventoProcesso,
+  Modalidade,
   NovoProcessoInput,
   ParecerDFD,
   PerfilAcesso,
@@ -293,6 +296,12 @@ export interface AtualizarProcessoInput {
   objetoDemanda?: string
   dfdArquivo?: string | null
   documentos?: Array<TipoDocumento>
+  modalidade?: Modalidade
+  /**
+   * Preenchida quando a lista de documentos é mantida divergindo da
+   * recomendação. Vai literal para a trilha — é ela que responde ao controle.
+   */
+  justificativaModalidade?: string
 }
 
 /** Edições feitas no hub do processo (secretaria, descrição, objeto da demanda, DFD, documentos). */
@@ -304,6 +313,26 @@ export async function atualizarProcesso(input: AtualizarProcessoInput): Promise<
   if (input.objeto !== undefined) proc.objeto = input.objeto
   if (input.objetoDemanda !== undefined) proc.objetoDemanda = input.objetoDemanda
   if (input.dfdArquivo !== undefined) proc.dfdArquivo = input.dfdArquivo
+  if (input.modalidade !== undefined && input.modalidade !== proc.modalidade) {
+    // Contra a lista que o processo tinha, e não contra a que está sendo salva:
+    // com a lista nova, o que a tela acabou de remover já não estaria lá, e a
+    // trilha registraria "nada removido" exatamente quando algo foi.
+    const impacto = impactoTrocaModalidade(
+      proc.modalidade,
+      input.modalidade,
+      proc.documentos,
+      docsGeradosDo(proc.id),
+    )
+    const anterior = proc.modalidade
+    proc.modalidade = input.modalidade
+    // O evento entra antes da lista mudar de valor no objeto clonado, mas
+    // depois de a modalidade trocar: a trilha precisa dizer de onde para onde.
+    registrarEvento(
+      proc,
+      "troca_modalidade",
+      motivoDaTrocaDeModalidade(anterior, input.modalidade, impacto, input.justificativaModalidade ?? ""),
+    )
+  }
   if (input.documentos !== undefined) proc.documentos = input.documentos
   proc.atualizadoEm = dataBrasiliaISO()
   return clone(proc)

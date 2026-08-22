@@ -103,10 +103,14 @@ export default function RedefinirSenha() {
                   />
                 </FormField>
                 {erro && <ValidationMsg type="error" msg={erro} />}
+                <p id="motivo-redefinir" className="sr-only">
+                  Preencha a nova senha e a confirmação.
+                </p>
                 <Button
                   size="lg"
                   className="w-full font-bold"
                   disabled={redefinir.isPending || senha === "" || confirmacao === ""}
+                  ariaDescribedBy="motivo-redefinir"
                   onClick={salvar}
                 >
                   {redefinir.isPending ? "Salvando..." : "Salvar Nova Senha"}

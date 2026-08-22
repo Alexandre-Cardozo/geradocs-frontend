@@ -284,9 +284,13 @@ export default function EditorDocumento() {
                   </InfoBanner>
                 )}
                 <div className="flex flex-wrap justify-between gap-2.5">
+                  <p id="motivo-secao-anterior" className="sr-only">
+                    Esta é a primeira seção do documento.
+                  </p>
                   <Button
                     variant="secondary"
                     disabled={activeSection === "1"}
+                    ariaDescribedBy={activeSection === "1" ? "motivo-secao-anterior" : undefined}
                     onClick={() => {
                       const idx = lista.findIndex((s) => s.id === activeSection)
                       const anterior = lista[idx - 1]

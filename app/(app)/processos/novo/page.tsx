@@ -677,9 +677,13 @@ export default function NovoProcesso() {
                 Voltar
               </Button>
             )}
+            <p id="motivo-avancar" className="sr-only">
+              Preencha os campos obrigatórios desta etapa para avançar.
+            </p>
             <Button
               size="lg"
               disabled={!canProceed || criarProcesso.isPending}
+              ariaDescribedBy="motivo-avancar"
               onClick={() => {
                 if (step < 3) setStep((s) => s + 1);
                 else handleCreate();

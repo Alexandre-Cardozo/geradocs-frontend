@@ -589,8 +589,12 @@ export default function Configuracoes() {
             </SectionBlock>
 
             <div className="flex gap-2.5">
+              <p id="motivo-salvar-pca" className="sr-only">
+                Selecione o arquivo do PCA para indexar.
+              </p>
               <Button
                 disabled={!pcaFile}
+                ariaDescribedBy="motivo-salvar-pca"
                 onClick={() =>
                   salvarTenant(
                     {
@@ -656,8 +660,13 @@ export default function Configuracoes() {
               </div>
               <div className="mt-4 flex gap-2.5">
                 <Button variant="secondary" onClick={() => setNovoServidor(false)}>Cancelar</Button>
+                <p id="motivo-criar-servidor-tenant" className="sr-only">
+                  Nome, CPF válido, e-mail, senha com no mínimo 12 caracteres e a
+                  prefeitura são obrigatórios.
+                </p>
                 <Button
                   disabled={criarServidor.isPending || nsNome.trim() === "" || !validaCPF(nsCpf) || nsEmail.trim() === "" || nsSenha.length < 12 || !prefeituraId}
+                  ariaDescribedBy="motivo-criar-servidor-tenant"
                   onClick={() =>
                     criarServidor.mutate(
                       { nome: nsNome, cpf: nsCpf, email: nsEmail, cargo: nsCargo, senha: nsSenha, perfilAcesso: nsPerfil, prefeituraId: prefeituraId ?? null },

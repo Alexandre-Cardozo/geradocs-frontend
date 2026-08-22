@@ -25,9 +25,11 @@ import {
   useProcesso,
   useSecoes,
 } from "@/lib/api/hooks"
+import { AlertaOrientacao } from "@/components/shared/alerta-orientacao"
 import { CATALOGO, documentosDaModalidade, ordenar, pendencias } from "@/lib/documentos"
+import { impactoTrocaModalidade } from "@/lib/dominio"
 import { formatBRL, formatData } from "@/lib/format"
-import { MODALIDADE_LABEL, type TipoDocumento } from "@/lib/types"
+import { MODALIDADE_LABEL, type Modalidade, type TipoDocumento } from "@/lib/types"
 
 export default function HubProcesso() {
   const searchParams = useSearchParams()
@@ -59,6 +61,9 @@ export default function HubProcesso() {
   const [objetoDemanda, setObjetoDemanda] = useState("")
   const [secretaria, setSecretaria] = useState("")
   const [dfd, setDfd] = useState<string | null>(null)
+  // Modalidade escolhida mas ainda não aplicada: fica pendente enquanto o
+  // alerta de impacto está na tela.
+  const [novaModalidade, setNovaModalidade] = useState<Modalidade | null>(null)
 
   const abrirEdicao = () => {
     if (!processo.data) return
@@ -100,6 +105,25 @@ export default function HubProcesso() {
 
   const proc = processo.data
   const docsGerados = (documentos.data ?? []).filter((d) => d.processoId === processoId)
+  const tiposGeradosAgora = docsGerados.map((d) => d.tipo)
+
+  const impacto =
+    novaModalidade === null
+      ? null
+      : impactoTrocaModalidade(proc.modalidade, novaModalidade, proc.documentos, tiposGeradosAgora)
+
+  const aplicarModalidade = (documentos: TipoDocumento[], justificativa?: string) => {
+    if (!novaModalidade) return
+    atualizar.mutate(
+      { id: processoId, modalidade: novaModalidade, documentos, justificativaModalidade: justificativa },
+      {
+        onSuccess: () => {
+          setNovaModalidade(null)
+          showToast(`Modalidade alterada para ${MODALIDADE_LABEL[novaModalidade]}. A troca está na trilha.`)
+        },
+      },
+    )
+  }
 
   const adicionarDocumento = (tipo: TipoDocumento) => {
     atualizar.mutate(
@@ -117,7 +141,6 @@ export default function HubProcesso() {
 
   // Encerramento: a plataforma termina quando os documentos estão prontos. O
   // protocolo e a aprovação acontecem no sistema administrativo da prefeitura.
-  const tiposGeradosAgora = docsGerados.map((d) => d.tipo)
   const documentosPendentes = ordenar(proc.documentos.filter((t) => !tiposGeradosAgora.includes(t)))
   const podeEncerrar = proc.status !== "concluido" && proc.documentos.length > 0
 
@@ -165,6 +188,15 @@ export default function HubProcesso() {
               <span className="font-mono text-xs text-text-muted">{proc.id}</span>
               <StatusBadge status={proc.status} size="sm" />
               <Tag tone="info">{MODALIDADE_LABEL[proc.modalidade]}</Tag>
+              {proc.status !== "concluido" && novaModalidade === null && (
+                <button
+                  type="button"
+                  onClick={() => setNovaModalidade(proc.modalidade)}
+                  className="cursor-pointer border-0 bg-transparent p-0 text-sm font-semibold text-royal"
+                >
+                  Trocar modalidade
+                </button>
+              )}
             </div>
             {!editando ? (
               <h1 className="mt-2 mb-0 font-display text-2xl font-extrabold tracking-tight text-text-1">{proc.objeto}</h1>
@@ -191,6 +223,67 @@ export default function HubProcesso() {
             </div>
           )}
         </div>
+
+        {novaModalidade !== null && (
+          <div className="mt-5 flex flex-col gap-3 rounded-xl border border-border bg-ice p-4">
+            <div className="max-w-sm">
+              <label className="mb-1 block text-sm font-semibold text-text-2">Nova modalidade</label>
+              <Dropdown
+                value={novaModalidade}
+                onChange={(v) => setNovaModalidade(v as Modalidade)}
+                ariaLabel="Nova modalidade do processo"
+                options={Object.entries(MODALIDADE_LABEL).map(([value, label]) => ({ value, label }))}
+              />
+            </div>
+
+            {impacto?.exigeJustificativa ? (
+              <AlertaOrientacao
+                titulo="A troca muda os documentos cabíveis"
+                recomendacao={`Ajustar a lista para o que ${MODALIDADE_LABEL[novaModalidade]} comporta.`}
+                detalhes={
+                  <ul className="m-0 flex list-disc flex-col gap-1 pl-4">
+                    {impacto.jaGeradosQueDeixamDeSerCabiveis.length > 0 && (
+                      <li>
+                        <strong>Já gerado e deixa de ser cabível:</strong>{" "}
+                        {impacto.jaGeradosQueDeixamDeSerCabiveis.join(", ")} — o arquivo continua no
+                        repositório e passa a contradizer o processo.
+                      </li>
+                    )}
+                    {impacto.deixamDeSerCabiveis.length > 0 && (
+                      <li>Deixa de ser cabível: {impacto.deixamDeSerCabiveis.join(", ")}.</li>
+                    )}
+                    {impacto.passamASerObrigatorios.length > 0 && (
+                      <li>Passa a ser obrigatório: {impacto.passamASerObrigatorios.join(", ")}.</li>
+                    )}
+                  </ul>
+                }
+                rotuloSeguir="Trocar e ajustar os documentos"
+                rotuloDivergir="Trocar e manter a lista"
+                placeholderJustificativa="Explique por que a lista de documentos permanece como está."
+                pendente={atualizar.isPending}
+                onSeguir={() => aplicarModalidade(impacto.documentosSugeridos)}
+                onDivergir={(justificativa) => aplicarModalidade(proc.documentos, justificativa)}
+                onCancelar={() => setNovaModalidade(null)}
+              />
+            ) : (
+              <div className="flex flex-wrap gap-2.5">
+                <p id="motivo-trocar-modalidade" className="sr-only">
+                  Escolha uma modalidade diferente da atual.
+                </p>
+                <Button
+                  disabled={atualizar.isPending || novaModalidade === proc.modalidade}
+                  ariaDescribedBy="motivo-trocar-modalidade"
+                  onClick={() => aplicarModalidade(proc.documentos)}
+                >
+                  {atualizar.isPending ? "Trocando..." : "Trocar modalidade"}
+                </Button>
+                <Button variant="ghost" onClick={() => setNovaModalidade(null)}>
+                  Cancelar
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
 
         <dl className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div>

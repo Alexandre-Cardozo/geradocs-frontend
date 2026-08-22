@@ -124,6 +124,9 @@ export default function Login() {
                   </button>
                 </div>
 
+                <p id="motivo-entrar" className="sr-only">
+                  Informe {IDENTIFICADOR.rotulo.toLowerCase()} e senha para entrar.
+                </p>
                 <Button
                   size="lg"
                   className="w-full font-bold"
@@ -131,6 +134,7 @@ export default function Login() {
                   disabled={
                     login.isPending || identificador.trim() === "" || senha === ""
                   }
+                  ariaDescribedBy="motivo-entrar"
                   onClick={entrar}
                 >
                   {login.isPending ? "Entrando..." : "Entrar"}
@@ -176,10 +180,14 @@ export default function Login() {
                     autoComplete="email"
                   />
                 </FormField>
+                <p id="motivo-recuperar" className="sr-only">
+                  Informe o e-mail cadastrado para receber as instruções.
+                </p>
                 <Button
                   size="lg"
                   className="w-full font-bold"
                   disabled={recuperar.isPending || emailRecuperar.trim() === ""}
+                  ariaDescribedBy="motivo-recuperar"
                   onClick={() =>
                     recuperar.mutate(emailRecuperar, {
                       onSuccess: () => setRecuperado(true),

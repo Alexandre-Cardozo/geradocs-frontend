@@ -138,7 +138,15 @@ export default function AdminServidores() {
           </div>
           <div className="mt-4 flex gap-2.5">
             <Button variant="secondary" onClick={() => setNovo(false)}>Cancelar</Button>
-            <Button disabled={criar.isPending || !podeSalvar} onClick={salvar}>
+            <p id="motivo-criar-servidor" className="sr-only">
+              Nome, CPF válido, e-mail, senha com no mínimo 12 caracteres e, para
+              perfis organizacionais, a prefeitura.
+            </p>
+            <Button
+              disabled={criar.isPending || !podeSalvar}
+              ariaDescribedBy="motivo-criar-servidor"
+              onClick={salvar}
+            >
               {criar.isPending ? "Salvando..." : "Cadastrar"}
             </Button>
           </div>
