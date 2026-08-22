@@ -32,3 +32,5 @@ export {
 } from "./secoes"
 export { impactoTrocaModalidade, motivoDaTrocaDeModalidade } from "./modalidade"
 export type { ImpactoTrocaModalidade } from "./modalidade"
+export { CAMPOS_SINTETICOS, DADOS_SINTETICOS } from "./sintetico"
+export type { CampoSintetico, DadoSintetico } from "./sintetico"

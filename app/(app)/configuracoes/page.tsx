@@ -34,6 +34,7 @@ import {
   useUsuarios,
 } from "@/lib/api/hooks";
 import { formatCPF, validaCPF } from "@/lib/auth/cpf";
+import { MarcaSintetica } from "@/components/shared/marca-sintetica";
 import { anoBrasilia, dataBrasiliaISO, formatData, formatDataHora } from "@/lib/format";
 import { PERFIL_ACESSO_LABEL, type PerfilAcesso, type Secretaria } from "@/lib/types";
 
@@ -133,6 +134,13 @@ function PreviewDocumento({
             ? "Assim o timbre aparecerá nos documentos gerados."
             : "Timbre desativado — documentos sem brasão."}
         </p>
+        {/*
+          A prévia é onde o valor fabricado engana melhor: ele aparece formatado,
+          dentro da moldura do documento, com cara de decisão tomada.
+        */}
+        <div className="mt-1.5 flex justify-center text-center">
+          <MarcaSintetica campo="cabecalho" />
+        </div>
       </div>
     </div>
   );
@@ -373,6 +381,7 @@ export default function Configuracoes() {
                       ? "ETP, TR, Cotação e demais documentos incluirão o brasão e identificação do órgão."
                       : "Documentos serão gerados com cabeçalho e rodapé em branco."}
                   </div>
+                  <MarcaSintetica campo="timbrado" />
                 </div>
               </div>
 
@@ -415,6 +424,7 @@ export default function Configuracoes() {
               title="Cabeçalho dos Documentos"
               hint="Texto exibido no topo de cada página dos documentos gerados. Use quebras de linha para organizar as informações. Variáveis disponíveis: {processo}, {data}, {secretaria}."
             >
+              <MarcaSintetica campo="cabecalho" />
               <Textarea
                 value={cabecalho}
                 onChange={(e) => setCabecalho(e.target.value)}
@@ -426,6 +436,7 @@ export default function Configuracoes() {
               title="Rodapé dos Documentos"
               hint="Texto exibido na parte inferior de cada página. Variáveis disponíveis: {processo}, {data}, {numero}, {pagina}."
             >
+              <MarcaSintetica campo="rodape" />
               <Textarea
                 value={rodape}
                 onChange={(e) => setRodape(e.target.value)}
@@ -523,6 +534,7 @@ export default function Configuracoes() {
                     ariaLabel="Ano de referência do PCA"
                     className="w-40"
                   />
+                  <MarcaSintetica campo="pcaAno" />
                 </FormField>
               </div>
 

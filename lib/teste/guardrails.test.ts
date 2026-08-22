@@ -4,6 +4,7 @@ import { join, relative } from "node:path"
 import { describe, expect, it } from "vitest"
 
 import { CATALOGO, ORDEM_FLUXO, REGRA_MODALIDADE } from "@/lib/documentos"
+import { CAMPOS_SINTETICOS } from "@/lib/dominio"
 import { secoesPorTipoBase } from "@/lib/documentos/secoes"
 import { MODALIDADE_LABEL, STATUS_PROCESSO_LABEL, type Modalidade } from "@/lib/types"
 
@@ -166,5 +167,19 @@ describe("7. botão desabilitado por regra de negócio explica o que falta", () 
     // A explicação vai em `ariaDescribedBy`, e não em `title`: tooltip não é
     // lida em navegação por teclado, que é exatamente quem fica sem saída.
     expect(infratores, "botões travados sem dizer o que falta").toEqual([])
+  })
+})
+
+describe("8. dado fabricado pela interface aparece marcado", () => {
+  it("todo campo sintético declarado é marcado em alguma tela", () => {
+    const marcados = codigoDaInterface
+      .filter((arquivo) => arquivo.endsWith(".tsx"))
+      .flatMap((arquivo) => [...readFileSync(arquivo, "utf8").matchAll(/<MarcaSintetica campo="(\w+)"/g)])
+      .map((ocorrencia) => ocorrencia[1])
+
+    // Declarar o campo e esquecer de marcá-lo é o pior dos dois mundos: a
+    // documentação diz que a plataforma avisa, e a tela não avisa.
+    const semMarca = CAMPOS_SINTETICOS.filter((campo) => !marcados.includes(campo))
+    expect(semMarca, "campo sintético declarado e não marcado na interface").toEqual([])
   })
 })
