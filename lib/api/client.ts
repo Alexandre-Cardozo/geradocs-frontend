@@ -13,10 +13,8 @@ import {
   usuarios as usuariosFixture,
 } from "@/lib/mocks/fixtures"
 import { CATALOGO } from "@/lib/documentos"
-import { podeEmitir, proximoStatus } from "@/lib/processos/fluxo"
 import {
   calcularIndicadores,
-  documentosPendentes,
   empilharVersao,
   entradaDeHistorico,
   impactoTrocaModalidade,
@@ -26,7 +24,6 @@ import {
   numeroDeDocumento,
   numeroDeProcesso,
   primeiroNome,
-  exigeJustificativaParaEncerrar,
   motivoDoEncerramento,
   noEscopo,
   prefeiturasVisiveis,
@@ -45,7 +42,9 @@ import {
 } from "@/lib/api/auth-client"
 import {
   criarDepartamento as criarDepartamentoNaApi,
+  atualizarPrefeitura as atualizarPrefeituraNaApi,
   criarPrefeitura as criarPrefeituraNaApi,
+  atualizarUsuario as atualizarUsuarioNaApi,
   criarUsuario as criarUsuarioNaApi,
   desativarDepartamento as desativarDepartamentoNaApi,
   desativarPrefeitura as desativarPrefeituraNaApi,
@@ -71,8 +70,10 @@ import {
   atualizarProcessoReal,
   consolidacaoDaDemanda,
   criarProcessoReal,
+  encerrarProcessoReal,
   listarProcessos,
   obterProcesso,
+  reabrirProcessoReal,
 } from "@/lib/api/procurement-client"
 import {
   citarNaSecao,
@@ -81,7 +82,7 @@ import {
   planoVigente,
   verificacaoDoProcesso,
 } from "@/lib/api/pca-client"
-import { dataBrasiliaISO, dataHoraBrasiliaISO } from "@/lib/format"
+import { dataHoraBrasiliaISO } from "@/lib/format"
 import type {
   DocumentoGerado,
   EstatisticasDashboard,
@@ -155,17 +156,16 @@ function usuarioLogado(): Usuario | null {
   return db.sessao?.usuario ?? null
 }
 
-/** Usuário logado ou erro (para operações que exigem sessão). */
-function exigeSessao(): Usuario {
-  const u = usuarioLogado()
-  if (!u) throw new Error("Sessão expirada. Faça login novamente.")
-  return u
-}
-
-/** Prefeitura de um usuário (null para admin geral). */
-function prefeituraDo(usuario: Usuario): Tenant | null {
-  if (db.sessao?.usuario.id === usuario.id) return db.sessao.prefeitura
-  return usuario.prefeituraId ? db.prefeituras.find((p) => p.id === usuario.prefeituraId) ?? null : null
+/**
+ * A sessão atual, ou erro.
+ *
+ * Devolve a sessão inteira, e não só o usuário: quem edita o próprio perfil
+ * precisa da prefeitura junto, e procurá-la de novo por id abriria caminho para
+ * devolver a de outra pessoa.
+ */
+function exigeSessao(): Sessao {
+  if (!db.sessao) throw new Error("Sessão expirada. Faça login novamente.")
+  return db.sessao
 }
 
 // Semeia o histórico de versões (v1) dos documentos já existentes nas fixtures,
@@ -178,10 +178,6 @@ for (const doc of db.documentos) {
 
 
 /* ── Autenticação / sessão ─────────────────────────────────────────────────── */
-
-function montarSessao(usuario: Usuario): Sessao {
-  return { usuario: clone(usuario), prefeitura: clone(prefeituraDo(usuario)) }
-}
 
 /**
  * Login real pela chave configurada + senha. O access token fica somente em
@@ -223,9 +219,9 @@ export async function resetarSenha(token: string, senha: string): Promise<void> 
 /** Atualiza a foto de perfil do usuário logado (data URL ou null para o padrão). */
 export async function atualizarAvatar(avatarDataUrl: string | null): Promise<Sessao> {
   await delay(200)
-  const usuario = exigeSessao()
+  const { usuario, prefeitura } = exigeSessao()
   usuario.avatarDataUrl = avatarDataUrl
-  return montarSessao(usuario)
+  return { usuario: clone(usuario), prefeitura: clone(prefeitura) }
 }
 
 /** Edição dos próprios dados (Meu Perfil). CPF e perfil de acesso não mudam aqui. */
@@ -239,7 +235,7 @@ export interface MeuPerfilInput {
 
 export async function atualizarMeuPerfil(input: MeuPerfilInput): Promise<Sessao> {
   await delay(400)
-  const usuario = exigeSessao()
+  const { usuario, prefeitura } = exigeSessao()
   if (input.nome != null && input.nome.trim() !== "") {
     usuario.nome = input.nome.trim()
     usuario.primeiroNome = primeiroNome(usuario.nome)
@@ -249,7 +245,7 @@ export async function atualizarMeuPerfil(input: MeuPerfilInput): Promise<Sessao>
   if (input.cargo != null) usuario.cargo = input.cargo.trim()
   if (input.secretaria !== undefined) usuario.secretaria = input.secretaria
   if (input.avatarDataUrl !== undefined) usuario.avatarDataUrl = input.avatarDataUrl
-  return montarSessao(usuario)
+  return { usuario: clone(usuario), prefeitura: clone(prefeitura) }
 }
 
 
@@ -425,22 +421,10 @@ export async function gerarSecao(processoId: string, tipo: TipoDocumento, secaoI
 
 /* ── Ciclo do processo ─────────────────────────────────────────────────────── */
 
-function processoOuErro(processoId: string): Processo {
-  const processo = db.processos.find((p) => p.id === processoId)
-  if (!processo) throw new Error(`Processo ${processoId} não encontrado`)
-  return processo
-}
-
 function docsGeradosDo(processoId: string): TipoDocumento[] {
   return db.documentos.filter((d) => d.processoId === processoId).map((d) => d.tipo)
 }
 
-/** Documentos do processo ainda não gerados. Vazio = o processo pode ser encerrado. */
-export function pendentesDoProcesso(processo: Processo): TipoDocumento[] {
-  return documentosPendentes(processo, docsGeradosDo(processo.id))
-}
-
-/** Registra um evento na trilha, aplicando a transição quando ela existir. */
 /**
  * Registra um evento na trilha de um processo que vive no servidor.
  *
@@ -474,26 +458,6 @@ function registrarEventoLocal(processoId: string, evento: EventoProcesso, coment
   db.trilhas.set(processoId, trilha)
 }
 
-function registrarEvento(
-  processo: Processo,
-  evento: EventoProcesso,
-  comentario: string,
-): void {
-  const usuario = usuarioLogado()
-  const para = proximoStatus(processo.status, evento) ?? processo.status
-  processo.trilha.unshift({
-    evento,
-    de: processo.status,
-    para,
-    autor: usuario?.nome ?? "Sistema",
-    papel: usuario?.perfilAcesso ?? "servidor",
-    data: dataHoraBrasiliaISO(),
-    comentario,
-  })
-  processo.status = para
-  processo.atualizadoEm = dataBrasiliaISO()
-}
-
 /**
  * Encerra o processo. A plataforma termina aqui: protocolo, assinatura e
  * aprovação acontecem no sistema de processo administrativo da prefeitura.
@@ -501,32 +465,26 @@ function registrarEvento(
  * Documento pendente **não impede** o encerramento — apenas exige justificativa.
  * A plataforma orienta; quem decide é o servidor.
  */
+/**
+ * Encerra o processo. A plataforma termina aqui: protocolo, assinatura e
+ * aprovação acontecem no sistema de processo administrativo da prefeitura.
+ *
+ * Documento pendente **não impede** o encerramento — apenas exige justificativa,
+ * e quem cobra isso é o servidor, que sabe o que já foi concluído. Até 22/08/2026
+ * esta função procurava o processo nas fixtures: todo processo real caía em
+ * "não encontrado", e o botão da tela de detalhe estourava.
+ */
 export async function encerrarProcesso(processoId: string, justificativa = ""): Promise<Processo> {
-  await delay(500)
-  const processo = processoOuErro(processoId)
-  const pendentes = pendentesDoProcesso(processo)
-  if (exigeJustificativaParaEncerrar(pendentes) && justificativa.trim() === "") {
-    throw new Error(
-      `Ainda faltam documentos: ${pendentes.map((t) => CATALOGO[t].titulo).join(", ")}. ` +
-        "Informe a justificativa para encerrar mesmo assim.",
-    )
-  }
-  if (!podeEmitir(processo.status, "encerramento")) {
-    throw new Error("Só é possível encerrar um processo em elaboração.")
-  }
-  registrarEvento(processo, "encerramento", motivoDoEncerramento(pendentes, justificativa))
-  return clone(processo)
+  const processo = await encerrarProcessoReal(processoId, justificativa)
+  registrarEventoLocal(processoId, "encerramento", motivoDoEncerramento(justificativa))
+  return processo
 }
 
 /** Reabre um processo encerrado para retificar documento. */
 export async function reabrirProcesso(processoId: string, motivo: string): Promise<Processo> {
-  await delay(400)
-  const processo = processoOuErro(processoId)
-  if (!podeEmitir(processo.status, "reabertura")) {
-    throw new Error("Só é possível reabrir um processo concluído.")
-  }
-  registrarEvento(processo, "reabertura", motivo)
-  return clone(processo)
+  const processo = await reabrirProcessoReal(processoId, motivo)
+  registrarEventoLocal(processoId, "reabertura", motivo)
+  return processo
 }
 
 
@@ -674,6 +632,16 @@ export interface GerarDocumentoInput {
  * identificador `DOC-`, formato e tamanho do arquivo, que só passam a existir de
  * verdade quando o Bloco 11 produzir o arquivo.
  */
+/**
+ * Acrescenta a entrada ao histórico do documento.
+ *
+ * A primeira geração e a regeração passam pelo mesmo caminho: separá-las daria
+ * duas formas de montar a mesma lista, e é assim que uma delas envelhece.
+ */
+function empilhar(chaveVersao: string, entrada: VersaoDocumento): void {
+  db.versoes.set(chaveVersao, empilharVersao(db.versoes.get(chaveVersao) ?? [], entrada))
+}
+
 export async function gerarDocumento(input: GerarDocumentoInput): Promise<DocumentoGerado> {
   const concluido = await concluirDocumento(input.processoId, input.tipo, input.retificacao)
   const processo = await obterProcesso(input.processoId)
@@ -696,12 +664,9 @@ export async function gerarDocumento(input: GerarDocumentoInput): Promise<Docume
     existente.geradoEm = geradoEm
     existente.tamanho = `${tamanhoKB} KB`
     existente.status = "final"
-    db.versoes.set(
+    empilhar(
       chaveVersao,
-      empilharVersao(
-        db.versoes.get(chaveVersao) ?? [],
-        entradaDeHistorico(existente.versao, geradoEm, `${tamanhoKB} KB`, input.retificacao),
-      ),
+      entradaDeHistorico(existente.versao, geradoEm, `${tamanhoKB} KB`, input.retificacao),
     )
     db.corpos.set(chaveVersao, concluido.corpo)
     if (input.retificacao) {
@@ -732,7 +697,7 @@ export async function gerarDocumento(input: GerarDocumentoInput): Promise<Docume
     versao: concluido.versao,
   }
   db.documentos.unshift(doc)
-  db.versoes.set(chaveVersao, [entradaDeHistorico(concluido.versao, geradoEm, `${tamanhoKB} KB`)])
+  empilhar(chaveVersao, entradaDeHistorico(concluido.versao, geradoEm, `${tamanhoKB} KB`))
   db.corpos.set(chaveVersao, concluido.corpo)
 
   // Indicadores da tela de Documentos e do dashboard acompanham a nova geração.
@@ -748,30 +713,27 @@ export async function gerarDocumento(input: GerarDocumentoInput): Promise<Docume
 
 /* ── Configurações da prefeitura ───────────────────────────────────────────── */
 
-/** Prefeitura em foco: a indicada, senão a do usuário logado, senão a primeira. */
-function prefeituraFoco(prefeituraId?: string): Tenant {
-  if (prefeituraId) {
-    const p = db.prefeituras.find((x) => x.id === prefeituraId)
-    if (!p) throw new Error(`Prefeitura ${prefeituraId} não encontrada`)
-    return p
-  }
-  const usuario = usuarioLogado()
-  const p = usuario?.prefeituraId ? db.prefeituras.find((x) => x.id === usuario.prefeituraId) : db.prefeituras[0]
-  if (!p) throw new Error("Nenhuma prefeitura no contexto")
-  return p
-}
-
 export async function getConfigTenant(prefeituraId?: string): Promise<Tenant> {
-  const id = prefeituraId ?? exigeSessao().prefeituraId
+  const id = prefeituraId ?? exigeSessao().usuario.prefeituraId
   if (!id) throw new Error("Selecione uma prefeitura para consultar as configurações.")
   return obterTenantNaApi(id)
 }
 
+/**
+ * Salva a configuração do órgão.
+ *
+ * Nome e unidade vão para o servidor; o resto — timbre, cabeçalho, rodapé —
+ * ainda é fabricado por `tenantDa()` e está marcado como sintético na tela
+ * (`lib/dominio/sintetico.ts`). Até 22/08/2026 **tudo** ia para uma fixture: a
+ * tela dizia "salvo" e o recarregamento desfazia.
+ */
 export async function atualizarConfigTenant(patch: Partial<Tenant>, prefeituraId?: string): Promise<Tenant> {
-  await delay(450)
-  const alvo = prefeituraFoco(prefeituraId)
-  Object.assign(alvo, clone({ ...patch, id: alvo.id })) // o id nunca é sobrescrito
-  return clone(alvo)
+  const id = prefeituraId ?? exigeSessao().usuario.prefeituraId
+  if (!id) throw new Error("Selecione uma prefeitura para salvar as configurações.")
+  const salvo = await atualizarPrefeituraNaApi(id, { orgao: patch.orgao, unidade: patch.unidade })
+  // Os campos que o servidor não guarda seguem no que a tela mandou, para que a
+  // prévia continue mostrando o que a pessoa acabou de escolher nesta sessão.
+  return { ...salvo, ...clone(patch), id: salvo.id }
 }
 
 /* ── Cadastro de prefeituras (admin geral) ─────────────────────────────────── */
@@ -835,26 +797,16 @@ export interface AtualizarUsuarioInput {
   ativo?: boolean
 }
 
+/**
+ * Edita o servidor no cadastro.
+ *
+ * Até 22/08/2026 esta função procurava o usuário nas fixtures: a lista já vinha
+ * do servidor, então editar qualquer pessoa real caía em "não encontrado".
+ * `ativo` não entra aqui — desativar tem caminho próprio, com o motivo que a
+ * trilha registra.
+ */
 export async function atualizarUsuario(input: AtualizarUsuarioInput): Promise<Usuario> {
-  await delay(450)
-  const usuario = db.usuarios.find((u) => u.id === input.id)
-  if (!usuario) throw new Error(`Usuário ${input.id} não encontrado`)
-  if (input.nome != null && input.nome.trim() !== "") {
-    usuario.nome = input.nome.trim()
-    usuario.primeiroNome = primeiroNome(usuario.nome)
-    usuario.iniciais = iniciaisDe(usuario.nome)
-  }
-  if (input.email != null) usuario.email = input.email.trim()
-  if (input.cargo != null) usuario.cargo = input.cargo.trim()
-  if (input.matricula !== undefined) usuario.matricula = input.matricula.trim() || undefined
-  if (input.decretoNomeacao !== undefined) {
-    usuario.decretoNomeacao = input.decretoNomeacao.trim() || undefined
-  }
-  if (input.perfilAcesso != null) usuario.perfilAcesso = input.perfilAcesso
-  if (input.prefeituraId !== undefined) usuario.prefeituraId = input.prefeituraId
-  if (input.secretaria !== undefined) usuario.secretaria = input.secretaria
-  if (input.ativo != null) usuario.ativo = input.ativo
-  return clone(usuario)
+  return atualizarUsuarioNaApi(input)
 }
 
 export async function removerUsuario(id: string): Promise<void> {

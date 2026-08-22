@@ -545,3 +545,181 @@ describe("desativarUsuario", () => {
     await expect(desativarUsuario(usuarioApi.id)).rejects.toThrow(/versão atual do usuário/i)
   })
 })
+
+describe("atualizarUsuario", () => {
+  it("relê a versão e manda o If-Match — duas edições não se sobrescrevem em silêncio", async () => {
+    let cabecalho: string | null = null
+    servidor.use(
+      http.get(`${urlDaApi}/users/${usuarioApi.id}`, () => HttpResponse.json(usuarioApi)),
+      http.patch(`${urlDaApi}/users/${usuarioApi.id}`, ({ request }) => {
+        cabecalho = request.headers.get("If-Match")
+        return HttpResponse.json({ ...usuarioApi, name: "Maria Costa" })
+      }),
+    )
+    const { atualizarUsuario } = await carregarClienteLimpo()
+
+    const usuario = await atualizarUsuario({ id: usuarioApi.id, nome: "Maria Costa" })
+
+    expect(cabecalho).toBe('"5"')
+    expect(usuario.nome).toBe("Maria Costa")
+  })
+
+  it("reenvia o que não muda — um PATCH que omitisse o e-mail o apagaria", async () => {
+    let corpo: Record<string, unknown> | undefined
+    servidor.use(
+      http.get(`${urlDaApi}/users/${usuarioApi.id}`, () => HttpResponse.json(usuarioApi)),
+      http.patch(`${urlDaApi}/users/${usuarioApi.id}`, async ({ request }) => {
+        corpo = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json(usuarioApi)
+      }),
+    )
+    const { atualizarUsuario } = await carregarClienteLimpo()
+
+    await atualizarUsuario({ id: usuarioApi.id, cargo: "Coordenadora" })
+
+    expect(corpo).toMatchObject({
+      name: usuarioApi.name,
+      email: usuarioApi.email,
+      jobTitle: "Coordenadora",
+      registrationNumber: usuarioApi.registrationNumber,
+      appointmentDecree: usuarioApi.appointmentDecree,
+      profileAccess: "SERVIDOR",
+      organizationId: organizacao.id,
+    })
+  })
+
+  it("promover a admin geral tira a lotação, que não faz sentido para quem não tem órgão", async () => {
+    let corpo: Record<string, unknown> | undefined
+    servidor.use(
+      http.get(`${urlDaApi}/users/${usuarioApi.id}`, () => HttpResponse.json(usuarioApi)),
+      http.patch(`${urlDaApi}/users/${usuarioApi.id}`, async ({ request }) => {
+        corpo = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json({ ...usuarioApi, profileAccess: "ADMIN_GERAL", memberships: [] })
+      }),
+    )
+    const { atualizarUsuario } = await carregarClienteLimpo()
+
+    await atualizarUsuario({ id: usuarioApi.id, perfilAcesso: "admin_geral" })
+
+    expect(corpo).toMatchObject({
+      profileAccess: "ADMIN_GERAL",
+      organizationId: null,
+      departmentId: null,
+    })
+  })
+
+  it("sem versão no recurso, recusa antes de gravar", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/users/${usuarioApi.id}`, () =>
+        HttpResponse.json({ ...usuarioApi, version: null }),
+      ),
+    )
+    const { atualizarUsuario } = await carregarClienteLimpo()
+
+    // Sem versão não há como pedir If-Match, e gravar sem ele é a colisão
+    // silenciosa que o cabeçalho existe para evitar.
+    await expect(atualizarUsuario({ id: usuarioApi.id, nome: "Maria" })).rejects.toThrow(
+      /versão atual/,
+    )
+  })
+})
+
+describe("atualizarPrefeitura", () => {
+  it("renomeia o órgão com a versão relida", async () => {
+    let cabecalho: string | null = null
+    let corpo: Record<string, unknown> | undefined
+    servidor.use(
+      http.get(`${urlDaApi}/organizations/${organizacao.id}`, () =>
+        HttpResponse.json(organizacao),
+      ),
+      http.get(`${urlDaApi}/organizations/${organizacao.id}/departments`, () =>
+        HttpResponse.json([]),
+      ),
+      http.patch(`${urlDaApi}/organizations/${organizacao.id}`, async ({ request }) => {
+        cabecalho = request.headers.get("If-Match")
+        corpo = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json({ ...organizacao, name: "Prefeitura de Ecoporanga" })
+      }),
+    )
+    const { atualizarPrefeitura } = await carregarClienteLimpo()
+
+    const tenant = await atualizarPrefeitura(organizacao.id, {
+      orgao: "  Prefeitura de Ecoporanga  ",
+    })
+
+    expect(cabecalho).toBe('"3"')
+    // Unidade não veio no patch: é reenviada como está, e não apagada.
+    expect(corpo).toEqual({ name: "Prefeitura de Ecoporanga", unit: organizacao.unit })
+    expect(tenant.orgao).toBe("Prefeitura de Ecoporanga")
+  })
+
+  it("nome em branco não apaga o nome do órgão", async () => {
+    let corpo: Record<string, unknown> | undefined
+    servidor.use(
+      http.get(`${urlDaApi}/organizations/${organizacao.id}`, () =>
+        HttpResponse.json(organizacao),
+      ),
+      http.patch(`${urlDaApi}/organizations/${organizacao.id}`, async ({ request }) => {
+        corpo = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json(organizacao)
+      }),
+    )
+    const { atualizarPrefeitura } = await carregarClienteLimpo()
+
+    await atualizarPrefeitura(organizacao.id, { orgao: "   ", unidade: "" })
+
+    expect(corpo).toEqual({ name: organizacao.name, unit: "" })
+  })
+})
+
+describe("edição de cadastro incompleto", () => {
+  it("campo que o servidor não tem vira null explícito, e não some do corpo", async () => {
+    const semNada = {
+      ...usuarioApi,
+      jobTitle: null,
+      registrationNumber: null,
+      appointmentDecree: null,
+      memberships: [],
+    }
+    let corpo: Record<string, unknown> | undefined
+    servidor.use(
+      http.get(`${urlDaApi}/users/${usuarioApi.id}`, () => HttpResponse.json(semNada)),
+      http.patch(`${urlDaApi}/users/${usuarioApi.id}`, async ({ request }) => {
+        corpo = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json(semNada)
+      }),
+    )
+    const { atualizarUsuario } = await carregarClienteLimpo()
+
+    await atualizarUsuario({ id: usuarioApi.id, nome: "Maria Costa" })
+
+    // Omitir a chave e mandar `null` são coisas diferentes para o contrato: a
+    // primeira deixaria o campo indefinido no PATCH que troca o recurso inteiro.
+    expect(corpo).toMatchObject({
+      jobTitle: null,
+      registrationNumber: null,
+      appointmentDecree: null,
+      organizationId: null,
+      departmentId: null,
+    })
+  })
+
+  it("órgão sem unidade continua sem unidade depois de renomear", async () => {
+    const semUnidade = { ...organizacao, unit: undefined }
+    let corpo: Record<string, unknown> | undefined
+    servidor.use(
+      http.get(`${urlDaApi}/organizations/${organizacao.id}`, () =>
+        HttpResponse.json(semUnidade),
+      ),
+      http.patch(`${urlDaApi}/organizations/${organizacao.id}`, async ({ request }) => {
+        corpo = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json(semUnidade)
+      }),
+    )
+    const { atualizarPrefeitura } = await carregarClienteLimpo()
+
+    await atualizarPrefeitura(organizacao.id, { orgao: "Prefeitura de Ecoporanga" })
+
+    expect(corpo).toEqual({ name: "Prefeitura de Ecoporanga", unit: null })
+  })
+})

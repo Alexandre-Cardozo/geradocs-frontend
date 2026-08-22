@@ -321,3 +321,62 @@ describe("atualizarProcessoReal", () => {
     expect(ifMatch).toBe('"0"')
   })
 })
+
+describe("encerrarProcessoReal", () => {
+  it("manda a justificativa aparada e devolve o processo encerrado", async () => {
+    let corpo: Record<string, unknown> | undefined
+    servidor.use(
+      http.post(`${urlDaApi}/procurement-processes/${processoApi.id}/closure`, async ({ request }) => {
+        corpo = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json({
+          ...processoApi,
+          status: "CLOSED",
+          closedAt: "2026-08-22T18:00:00-03:00",
+          closureNote: "Contratação cancelada.",
+        })
+      }),
+    )
+    const { encerrarProcessoReal } = await carregarClienteLimpo()
+
+    const processo = await encerrarProcessoReal(processoApi.id, "  Contratação cancelada.  ")
+
+    expect(corpo).toEqual({ justification: "Contratação cancelada." })
+    expect(processo.status).toBe("concluido")
+    expect(processo.encerradoEm).toBe("2026-08-22T18:00:00-03:00")
+    expect(processo.justificativaEncerramento).toBe("Contratação cancelada.")
+  })
+
+  it("justificativa vazia vira ausente, e não uma string de espaços", async () => {
+    let corpo: Record<string, unknown> | undefined
+    servidor.use(
+      http.post(`${urlDaApi}/procurement-processes/${processoApi.id}/closure`, async ({ request }) => {
+        corpo = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json({ ...processoApi, status: "CLOSED", closedAt: "2026-08-22T18:00:00-03:00" })
+      }),
+    )
+    const { encerrarProcessoReal } = await carregarClienteLimpo()
+
+    await encerrarProcessoReal(processoApi.id, "   ")
+
+    expect(corpo).toEqual({ justification: null })
+  })
+})
+
+describe("reabrirProcessoReal", () => {
+  it("manda o motivo e o processo volta ao rascunho", async () => {
+    let corpo: Record<string, unknown> | undefined
+    servidor.use(
+      http.post(`${urlDaApi}/procurement-processes/${processoApi.id}/reopening`, async ({ request }) => {
+        corpo = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json(processoApi)
+      }),
+    )
+    const { reabrirProcessoReal } = await carregarClienteLimpo()
+
+    const processo = await reabrirProcessoReal(processoApi.id, "Retificar o ETP.")
+
+    expect(corpo).toEqual({ reason: "Retificar o ETP." })
+    expect(processo.status).toBe("rascunho")
+    expect(processo.encerradoEm).toBeUndefined()
+  })
+})

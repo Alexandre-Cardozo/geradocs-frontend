@@ -411,3 +411,25 @@ O Art. 18, § 1º, II exige **demonstração** da previsão no Plano de Contrata
 **Um defeito anterior apareceu no caminho.** Desde que o front deixou o mock (§31), as seções vêm da API — e a API não conhece `painel`, que é assunto da tela. O campo morria no mapeamento, e os painéis de quantidades, ATA e valor **não apareciam mais**. Nenhum teste percebeu porque nenhum testava a seção *depois* da volta pelo servidor. `painelDaSecao(tipo, codigo)` faz a junção pelo código, e o teste que o guarda diz por que existe.
 
 **`FormField` ganhou `htmlFor`.** O rótulo não envolve o controle — vem antes, como irmão —, então sem `htmlFor` não havia associação nenhuma: leitor de tela anuncia um campo sem nome e clicar no texto não move o foco. Os campos deste painel passaram a usá-lo; **os demais formulários do produto continuam sem**, e isso é dívida aberta, não trabalho concluído.
+
+## 33. O ciclo de vida do processo sai do mock, e a cobertura deixa de ter exclusões
+
+Ao auditar o Bloco 10 a pedido, apareceram **três defeitos da mesma família**: o dado passou a vir do servidor e a escrita continuou na fixture.
+
+| Onde | O que acontecia |
+|---|---|
+| **Encerrar / reabrir processo** | `processoOuErro` procurava em `processosFixture`. Todo processo criado pela API caía em "não encontrado" — o botão da tela de detalhe **estourava** |
+| **Editar usuário** | `atualizarUsuario` procurava em `usuariosFixture`. A lista já vinha do servidor: editar qualquer pessoa real falhava |
+| **Salvar a configuração do órgão** | Gravava na fixture e a tela dizia "salvo". Recarregar desfazia — e este é o pior dos três, porque **parecia funcionar** |
+
+Os três foram para a API. O backend ganhou `CLOSED`, `POST .../closure` e `POST .../reopening`, com a regra de produto onde ela pertence: **documento pendente não impede o encerramento, exige justificativa** — e quem sabe o que falta é o servidor, que conhece os documentos concluídos. `exigeJustificativaParaEncerrar` saiu do front-end: manter a regra dos dois lados é como eles divergem.
+
+**A cobertura não estava em 100%.** Estava em 100% *do que o gate media*. `lib/api/client.ts` e `lib/api/hooks.ts` estavam excluídos desde o Bloco 7, com justificativa registrada no §27 — um era "o mock encolhendo", o outro "invólucro do TanStack". As duas envelheceram: **22 das 58 funções da fachada já falavam com o servidor**, e as escolhas de invalidação dos hooks são regra de produto, não de biblioteca (citar o PCA grava texto no documento, e por isso precisa invalidar as seções e o corpo).
+
+Excluídas, elas escondiam exatamente os defeitos acima. **As exclusões acabaram** — o gate cobre `lib/**` inteiro, em 100% de linha, branch, statement e função.
+
+Cobrir revelou três trechos **sem caminho de execução**, e eles saíram em vez de ganharem teste: a busca da prefeitura por id em `montarSessao` (só quem está logado edita o próprio perfil), o fallback `?? []` do histórico de versões (todo documento tem histórico desde a criação) e um `pendingDocuments` público que ninguém chamava.
+
+**Rótulo sem campo.** `FormField` renderiza o `<label>` como irmão do controle. Sem ligação explícita não havia associação nenhuma: **47 dos 49 campos do produto** eram anunciados como "caixa de edição" e nada mais. A ligação é por `aria-labelledby` a partir de um contexto, e não por `htmlFor`, porque um `FormField` pode envolver mais de um controle — dois elementos com o mesmo `id` seriam DOM inválido, e o segundo voltaria a ficar sem nome. `aria-label` escrito à mão continua vencendo. Um teste prova a ligação para **cada tipo de controle**, porque um controle novo entraria sem nome e ninguém notaria.
+
+**Cinco `saiEm` apontavam para blocos errados.** Timbre, cabeçalho e rodapé diziam "Bloco 10", que não os entrega — foram para o 11.1, com os templates publicados. Parecer do DFD e indicadores não tinham bloco nenhum, e por isso o plano ganhou o **Bloco 12**, que é o endereço do que a interface ainda fabrica. O guarda-corpo exige o formato "Bloco N" e é o que impede a lista de virar permanente; ele não tem como cobrar que o bloco declarado exista.

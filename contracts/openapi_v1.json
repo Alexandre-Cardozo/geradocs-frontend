@@ -104,6 +104,16 @@
         "required" : [ "dispensed", "sectionCode", "text", "title" ],
         "type" : "object"
       },
+      "CloseProcurementProcessRequest" : {
+        "properties" : {
+          "justification" : {
+            "maxLength" : 1000,
+            "minLength" : 0,
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
       "ConsolidatedItemView" : {
         "properties" : {
           "byDepartment" : {
@@ -881,6 +891,13 @@
       },
       "ProcurementProcessResponse" : {
         "properties" : {
+          "closedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "closureNote" : {
+            "type" : "string"
+          },
           "createdAt" : {
             "format" : "date-time",
             "type" : "string"
@@ -938,7 +955,7 @@
             "type" : "string"
           },
           "status" : {
-            "enum" : [ "DRAFT" ],
+            "enum" : [ "DRAFT", "CLOSED" ],
             "type" : "string"
           },
           "updatedAt" : {
@@ -954,6 +971,17 @@
           }
         },
         "required" : [ "createdAt", "documents", "id", "modality", "objectDescription", "organizationId", "processNumber", "status", "updatedAt", "urgency", "version" ],
+        "type" : "object"
+      },
+      "ReopenProcurementProcessRequest" : {
+        "properties" : {
+          "reason" : {
+            "maxLength" : 1000,
+            "minLength" : 0,
+            "type" : "string"
+          }
+        },
+        "required" : [ "reason" ],
         "type" : "object"
       },
       "ReorderSectionsRequest" : {
@@ -1896,7 +1924,7 @@
           "name" : "status",
           "required" : false,
           "schema" : {
-            "enum" : [ "DRAFT" ],
+            "enum" : [ "DRAFT", "CLOSED" ],
             "type" : "string"
           }
         }, {
@@ -2035,6 +2063,43 @@
         "tags" : [ "procurement-process-controller" ]
       }
     },
+    "/api/v1/procurement-processes/{id}/closure" : {
+      "post" : {
+        "operationId" : "close",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CloseProcurementProcessRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProcurementProcessResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "procurement-process-controller" ]
+      }
+    },
     "/api/v1/procurement-processes/{id}/demand-consolidation" : {
       "get" : {
         "operationId" : "consolidation",
@@ -2118,6 +2183,43 @@
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProcessDfdResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "procurement-process-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{id}/reopening" : {
+      "post" : {
+        "operationId" : "reopen",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ReopenProcurementProcessRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProcurementProcessResponse"
                 }
               }
             },

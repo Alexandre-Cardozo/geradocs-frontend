@@ -31,7 +31,15 @@ export interface DadoSintetico {
   rotulo: string
   /** De onde o valor sai hoje, em uma frase. */
   origem: string
-  /** Bloco da ordem de implementação em que o campo passa a vir do servidor. */
+  /**
+   * Bloco da ordem de implementação em que o campo passa a vir do servidor.
+   *
+   * O guarda-corpo exige o formato "Bloco N", e é isso que impede a lista de
+   * virar permanente. Ele não tem como cobrar que o bloco declarado exista — em
+   * 22/08/2026 três campos apontavam para o Bloco 10, que não os entregava, e
+   * dois para um Bloco 12 que ainda não estava no plano. Os dois lados foram
+   * corrigidos: os rótulos aqui e os passos lá.
+   */
   saiEm: string
 }
 

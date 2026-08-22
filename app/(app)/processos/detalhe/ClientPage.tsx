@@ -29,7 +29,12 @@ import { ConsolidacaoDaDemanda } from "@/components/processos/consolidacao-da-de
 import { PainelRetificacao } from "@/components/processos/painel-retificacao"
 import { AlertaOrientacao } from "@/components/shared/alerta-orientacao"
 import { CATALOGO, documentosDaModalidade, ordenar, pendencias } from "@/lib/documentos"
-import { impactoTrocaModalidade, rotuloDaVersao, type Retificacao } from "@/lib/dominio"
+import {
+  documentosPendentes,
+  impactoTrocaModalidade,
+  rotuloDaVersao,
+  type Retificacao,
+} from "@/lib/dominio"
 import { formatBRL, formatData } from "@/lib/format"
 import { MODALIDADE_LABEL, type Modalidade, type TipoDocumento } from "@/lib/types"
 
@@ -146,20 +151,22 @@ export default function HubProcesso() {
 
   // Encerramento: a plataforma termina quando os documentos estão prontos. O
   // protocolo e a aprovação acontecem no sistema administrativo da prefeitura.
-  const documentosPendentes = ordenar(proc.documentos.filter((t) => !tiposGeradosAgora.includes(t)))
+  // A regra é do domínio, e não uma filtragem repetida aqui: o servidor cobra a
+  // mesma coisa ao encerrar, e duas cópias da regra é como elas divergem.
+  const pendentes = documentosPendentes(proc, tiposGeradosAgora)
   const podeEncerrar = proc.status !== "concluido" && proc.documentos.length > 0
 
   const encerrarProcesso = () => {
     // Pendência não impede: exige justificativa. A plataforma orienta, não trava.
     const justificativa =
-      documentosPendentes.length === 0
+      pendentes.length === 0
         ? ""
         : (window.prompt(
-            `Faltam ${documentosPendentes.length} documento(s): ${documentosPendentes
+            `Faltam ${pendentes.length} documento(s): ${pendentes
               .map((t) => CATALOGO[t].titulo)
               .join(", ")}.\n\nInforme a justificativa para encerrar mesmo assim:`,
           ) ?? "")
-    if (documentosPendentes.length > 0 && justificativa.trim() === "") return
+    if (pendentes.length > 0 && justificativa.trim() === "") return
     encerrar.mutate(
       { processoId, justificativa },
       {
@@ -555,9 +562,9 @@ export default function HubProcesso() {
           <div className="min-w-0 flex-1">
             <div className="font-display text-md font-bold text-text-1">Encerrar Processo</div>
             <p id="ajuda-encerrar" className="m-0 mt-1 text-sm text-text-3">
-              {documentosPendentes.length === 0
+              {pendentes.length === 0
                 ? "Todos os documentos foram gerados. Encerre o processo e protocole os arquivos no sistema administrativo da prefeitura."
-                : `Ainda faltam: ${documentosPendentes
+                : `Ainda faltam: ${pendentes
                     .map((t) => CATALOGO[t].titulo)
                     .join(", ")}. É possível encerrar assim mesmo, mediante justificativa.`}
             </p>

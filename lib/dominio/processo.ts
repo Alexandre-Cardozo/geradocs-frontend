@@ -23,21 +23,22 @@ export function documentosPendentes(processo: Processo, gerados: TipoDocumento[]
   return ordenar(processo.documentos.filter((tipo) => !gerados.includes(tipo)))
 }
 
-/** Encerrar com pendência exige justificativa — orientar sem travar. */
-export function exigeJustificativaParaEncerrar(pendentes: TipoDocumento[]): boolean {
-  return pendentes.length > 0
-}
-
 /**
  * Texto do evento de encerramento na trilha.
  *
  * Registrar *por que* o processo foi encerrado com pendência é o que separa uma
  * decisão do servidor de um descuido.
+ *
+ * Não recebe mais a lista de pendências: desde 22/08/2026 é o servidor que cobra
+ * a justificativa, e ele só aceita encerrar sem ela quando não falta documento.
+ * Justificativa vazia, portanto, *significa* que não havia pendência — e manter
+ * a regra também aqui daria duas fontes para a mesma decisão, que é o jeito de
+ * elas divergirem.
  */
-export function motivoDoEncerramento(pendentes: TipoDocumento[], justificativa: string): string {
-  return pendentes.length > 0
-    ? `Encerrado com pendências. ${justificativa.trim()}`
-    : "Todos os documentos foram gerados."
+export function motivoDoEncerramento(justificativa: string): string {
+  return justificativa.trim() === ""
+    ? "Todos os documentos foram gerados."
+    : `Encerrado com pendências. ${justificativa.trim()}`
 }
 
 /**

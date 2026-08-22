@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest"
 import {
   documentosPendentes,
   statusDoDocumentoNoProcesso,
-  exigeJustificativaParaEncerrar,
   motivoDoEncerramento,
   tiposGerados,
 } from "@/lib/dominio"
@@ -76,23 +75,18 @@ describe("documentosPendentes", () => {
 })
 
 describe("encerramento", () => {
-  it("exige justificativa quando falta documento", () => {
-    expect(exigeJustificativaParaEncerrar(["TR"])).toBe(true)
-  })
-
-  it("não exige nada quando está tudo pronto", () => {
-    expect(exigeJustificativaParaEncerrar([])).toBe(false)
-  })
-
   it("registra na trilha o motivo de encerrar com pendência", () => {
     // Registrar o porquê é o que separa uma decisão do servidor de um descuido.
-    expect(motivoDoEncerramento(["TR"], "  O TR será elaborado no processo apenso.  ")).toBe(
+    expect(motivoDoEncerramento("  O TR será elaborado no processo apenso.  ")).toBe(
       "Encerrado com pendências. O TR será elaborado no processo apenso.",
     )
   })
 
   it("registra a conclusão normal quando não há pendência", () => {
-    expect(motivoDoEncerramento([], "")).toBe("Todos os documentos foram gerados.")
+    // Quem cobra a justificativa é o servidor, e ele só aceita encerrar sem ela
+    // quando não falta documento — justificativa vazia significa isso.
+    expect(motivoDoEncerramento("")).toBe("Todos os documentos foram gerados.")
+    expect(motivoDoEncerramento("   ")).toBe("Todos os documentos foram gerados.")
   })
 })
 

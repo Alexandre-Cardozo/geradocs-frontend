@@ -7,6 +7,14 @@ import { defineConfig } from "vitest/config"
  * mora domínio e dados; telas e componentes são cobertos por cenário nomeado, não
  * por percentual.
  *
+ * **Sem exclusões de conveniência desde 22/08/2026.** `client.ts` e `hooks.ts`
+ * ficaram de fora até o Bloco 10, sob a justificativa de que um era "o mock
+ * encolhendo" e o outro, "invólucro do TanStack". As duas envelheceram: 22
+ * funções da fachada já falavam com o servidor, e as escolhas de invalidação dos
+ * hooks são regra de produto. Fora do gate, elas escondiam dois defeitos reais —
+ * encerrar processo e editar usuário procuravam nas fixtures gente que só
+ * existia no servidor.
+ *
  * Sem plugin do React: o transformador do Vite resolve TSX sozinho. O arquivo é
  * `.mts` porque o `package.json` não declara `type: module` — como `.ts`, o Vite
  * o carregaria como CommonJS e avisaria a cada execução.
@@ -29,23 +37,6 @@ export default defineConfig({
         "lib/teste/**",
         "lib/api/gerado/**",
         "**/*.test.ts",
-        // 21/08/2026, revisto ao fechar o Bloco 7.
-        //
-        // Tudo o que está no gate está em 100% — linha, branch, statement e
-        // função. Estes dois continuam de fora, e o motivo não é dívida:
-        //
-        // `client.ts` é o banco em memória que o back-end vem substituindo
-        // fatia por fatia; hoje ele é 4% de cobertura de funções finas sobre
-        // arrays de fixture, e some junto com os Blocos 8 a 11.
-        //
-        // `hooks.ts` é invólucro do TanStack Query: `useQuery` com uma chave e
-        // uma função. Testá-lo mediria o TanStack, não o produto.
-        //
-        // Cobri-los levaria o número a 100% sem que uma regra a mais ficasse
-        // verificada — o oposto do que cobertura deveria significar. Ver §27 de
-        // docs/decisions.md.
-        "lib/api/client.ts",
-        "lib/api/hooks.ts",
       ],
       reporter: ["text", "lcov"],
       thresholds: {

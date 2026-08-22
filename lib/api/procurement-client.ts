@@ -40,7 +40,9 @@ interface ProcessoApi {
   urgency: boolean;
   documents: TipoDocumento[];
   dfdFileName?: string;
-  status: "DRAFT";
+  status: "DRAFT" | "CLOSED";
+  closedAt?: string;
+  closureNote?: string;
   createdAt: string;
   updatedAt: string;
   version: number;
@@ -80,7 +82,9 @@ function mapear(item: ProcessoApi): Processo {
     objetoDemanda: item.demandObject,
     modalidade,
     secretaria: item.departmentName,
-    status: "rascunho",
+    status: item.status === "CLOSED" ? "concluido" : "rascunho",
+    encerradoEm: item.closedAt,
+    justificativaEncerramento: item.closureNote,
     valorEstimado: Number(item.estimatedValue),
     responsavel: item.responsibleUserName,
     criadoEm: item.createdAt,
@@ -191,6 +195,39 @@ export async function atualizarProcessoReal(
     },
   );
   return mapear(processo);
+}
+
+/**
+ * Encerra o processo.
+ *
+ * <p>Documento pendente não trava — o servidor exige justificativa e devolve
+ * 400 dizendo o que falta. Quem decide encerrar assim mesmo é o servidor.
+ */
+export async function encerrarProcessoReal(
+  id: string,
+  justificativa: string,
+): Promise<Processo> {
+  return mapear(
+    await requisicaoProtegida<ProcessoApi>(
+      `/procurement-processes/${encodeURIComponent(id)}/closure`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          justification: justificativa.trim() === "" ? null : justificativa.trim(),
+        }),
+      },
+    ),
+  );
+}
+
+/** Reabre o processo encerrado. O motivo é obrigatório e vai para a trilha. */
+export async function reabrirProcessoReal(id: string, motivo: string): Promise<Processo> {
+  return mapear(
+    await requisicaoProtegida<ProcessoApi>(
+      `/procurement-processes/${encodeURIComponent(id)}/reopening`,
+      { method: "POST", body: JSON.stringify({ reason: motivo }) },
+    ),
+  );
 }
 
 /** O que pode divergir entre DFDs consolidados no mesmo processo. */

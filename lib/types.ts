@@ -82,6 +82,10 @@ export interface Processo {
   modalidade: Modalidade
   secretaria: string
   status: StatusProcesso
+  /** Quando a plataforma deixou de acompanhar o processo. */
+  encerradoEm?: string
+  /** Por que foi encerrado com documento faltando — responde ao controle depois. */
+  justificativaEncerramento?: string
   /** Valor estimado em centavos não — em reais (number); formatar com formatBRL. */
   valorEstimado: number
   responsavel: string
