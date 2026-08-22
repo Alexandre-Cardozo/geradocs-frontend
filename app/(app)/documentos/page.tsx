@@ -10,6 +10,7 @@ import { Th } from "@/components/shared/tabela"
 import { useToast } from "@/components/shared/providers"
 import { useDocumentos, useResumoDocumentos } from "@/lib/api/hooks"
 import { CATALOGO, ORDEM_FLUXO } from "@/lib/documentos"
+import { ConteudoDoDocumento } from "@/components/documentos/conteudo-do-documento"
 import { foiRetificado, rotuloDaVersao } from "@/lib/dominio"
 import { formatDataHora } from "@/lib/format"
 import type { DocumentoGerado, TipoDocumento } from "@/lib/types"
@@ -31,6 +32,9 @@ export default function Documentos() {
   const [filtroTipo, setFiltroTipo] = useState<TipoDocumento | null>(null)
   const [filtroProcesso, setFiltroProcesso] = useState("")
   const [filtroVersao, setFiltroVersao] = useState("")
+  // Um documento aberto por vez: dois conteúdos longos lado a lado na tabela
+  // fazem perder de vista qual linha é qual.
+  const [aberto, setAberto] = useState<string | null>(null)
 
   const todos = useMemo(() => documentos.data ?? [], [documentos.data])
 
@@ -117,7 +121,7 @@ export default function Documentos() {
                 </tr>
               </thead>
               <tbody>
-                {docs.map((doc, i) => (
+                {docs.flatMap((doc, i) => [
                   <tr key={doc.id} className={`transition-colors hover:bg-ice ${i < docs.length - 1 ? "border-b border-ice" : ""}`}>
                     <td className="px-4 py-3.25">
                       <div className="text-base font-semibold text-text-1">{nomeProcesso(doc)}</div>
@@ -159,17 +163,27 @@ export default function Documentos() {
                         </button>
                         <button
                           type="button"
-                          title="Visualizar"
+                          title={aberto === doc.id ? "Ocultar conteúdo" : "Visualizar conteúdo"}
                           aria-label={`Visualizar ${doc.titulo}`}
-                          onClick={() => showToast("Pré-visualização disponível na integração com o backend.")}
-                          className="flex size-7 cursor-pointer items-center justify-center rounded-sm border border-border bg-ice text-text-3"
+                          aria-expanded={aberto === doc.id}
+                          onClick={() => setAberto(aberto === doc.id ? null : doc.id)}
+                          className={`flex size-7 cursor-pointer items-center justify-center rounded-sm border border-border ${
+                            aberto === doc.id ? "bg-tint-royal-bg text-royal" : "bg-ice text-text-3"
+                          }`}
                         >
                           <IconEye size={13} strokeWidth={2.5} />
                         </button>
                       </div>
                     </td>
-                  </tr>
-                ))}
+                  </tr>,
+                  aberto === doc.id ? (
+                    <tr key={`${doc.id}-conteudo`} className="border-b border-ice bg-ice">
+                      <td colSpan={7} className="px-4 py-4">
+                        <ConteudoDoDocumento processoId={doc.processoId} tipo={doc.tipo} />
+                      </td>
+                    </tr>
+                  ) : null,
+                ])}
               </tbody>
             </table>
           </div>

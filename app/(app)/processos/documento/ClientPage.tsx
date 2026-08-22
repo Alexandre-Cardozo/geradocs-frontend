@@ -19,7 +19,14 @@ import {
 } from "@/lib/api/hooks"
 import { CATALOGO, porSlug } from "@/lib/documentos"
 import { DispensaDeSecao } from "@/components/documentos/dispensa-de-secao"
-import { dispensadasSemJustificativa, foiDispensada, foiRetificado, rotuloDaVersao } from "@/lib/dominio"
+import { PreviaDoDocumento } from "@/components/documentos/previa-do-documento"
+import {
+  corpoDoDocumento,
+  dispensadasSemJustificativa,
+  foiDispensada,
+  foiRetificado,
+  rotuloDaVersao,
+} from "@/lib/dominio"
 import { concluidas, obrigatoriasPendentes, podeGerar, progresso } from "@/lib/dominio"
 import { type SecaoDocumento, type StatusDocumento } from "@/lib/types"
 
@@ -318,6 +325,11 @@ export default function EditorDocumento() {
                     Conclua as seções obrigatórias para gerar o {meta.titulo}. Faltam:{" "}
                     <strong>{secoesPendentes.map((s) => s.titulo).join(", ")}</strong>.
                   </InfoBanner>
+                )}
+                {isLast && (
+                  // Na última seção, antes de gerar: é o único momento em que
+                  // olhar o resultado ainda muda alguma coisa.
+                  <PreviaDoDocumento blocos={corpoDoDocumento(lista)} />
                 )}
                 {isLast && lacunasSilenciosas.length > 0 && (
                   <InfoBanner tone="info">

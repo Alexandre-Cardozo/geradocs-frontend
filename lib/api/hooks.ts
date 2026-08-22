@@ -211,6 +211,15 @@ export function useReabrirProcesso() {
   })
 }
 
+/** O texto do documento como ele saiu na geração. Vazio antes da primeira. */
+export function useCorpoDocumento(processoId: string, tipo: TipoDocumento) {
+  return useQuery({
+    queryKey: ["corpo-documento", processoId, tipo],
+    queryFn: () => api.getCorpoDocumento(processoId, tipo),
+    enabled: processoId !== "",
+  })
+}
+
 export function useHistoricoVersoes(processoId: string, tipo: TipoDocumento) {
   return useQuery({
     queryKey: chaves.historicoVersoes(processoId, tipo),
@@ -238,6 +247,7 @@ export function useGerarDocumento() {
       void queryClient.invalidateQueries({ queryKey: ["processos"] })
       void queryClient.invalidateQueries({ queryKey: ["secoes"] })
       void queryClient.invalidateQueries({ queryKey: ["versoes"] })
+      void queryClient.invalidateQueries({ queryKey: ["corpo-documento"] })
       void queryClient.invalidateQueries({ queryKey: chaves.processo(input.processoId) })
     },
   })

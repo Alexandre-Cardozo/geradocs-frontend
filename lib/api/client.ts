@@ -17,6 +17,7 @@ import { CATALOGO, secoesPorTipoBase } from "@/lib/documentos"
 import { podeEmitir, proximoStatus } from "@/lib/processos/fluxo"
 import {
   calcularIndicadores,
+  corpoDoDocumento,
   documentosPendentes,
   empilharVersao,
   foiDispensada,
@@ -40,7 +41,7 @@ import {
   tituloComRotuloDeVersao,
   tituloDoDocumento,
 } from "@/lib/dominio"
-import type { Retificacao } from "@/lib/dominio"
+import type { BlocoDoDocumento, Retificacao } from "@/lib/dominio"
 import {
   autenticar,
   encerrarSessao,
@@ -109,6 +110,14 @@ const db = {
   documentos: clone(documentosFixture),
   /** Histórico de versões por documento — chave `${processoId}:${tipo}`. */
   versoes: new Map<string, VersaoDocumento[]>(),
+  /**
+   * Corpo congelado na geração — chave `${processoId}:${tipo}`.
+   *
+   * Congelado, e não recalculado a cada leitura: o documento gerado é um
+   * retrato. Editar uma seção depois não pode mudar o que já saiu — é
+   * exatamente para isso que regerar incrementa a versão.
+   */
+  corpos: new Map<string, BlocoDoDocumento[]>(),
   estatisticas: clone(estatisticasFixture),
   resumoDocumentos: clone(resumoDocumentosFixture),
   seqProcesso: 90,
@@ -508,6 +517,20 @@ export async function getResumoDocumentos(): Promise<ResumoDocumentos> {
   return resumirDocumentos(noEscopo(db.documentos, escopo))
 }
 
+/**
+ * O texto do documento como ele saiu na geração.
+ *
+ * Vazio quando o documento ainda não foi gerado — não há retrato de algo que
+ * não aconteceu.
+ */
+export async function getCorpoDocumento(
+  processoId: string,
+  tipo: TipoDocumento,
+): Promise<BlocoDoDocumento[]> {
+  await delay()
+  return clone(db.corpos.get(`${processoId}:${tipo}`) ?? [])
+}
+
 export async function getHistoricoVersoes(processoId: string, tipo: TipoDocumento): Promise<VersaoDocumento[]> {
   await delay()
   return clone(db.versoes.get(`${processoId}:${tipo}`) ?? [])
@@ -562,6 +585,7 @@ export async function gerarDocumento(input: GerarDocumentoInput): Promise<Docume
         entradaDeHistorico(existente.versao, geradoEm, `${tamanhoKB} KB`, input.retificacao),
       ),
     )
+    db.corpos.set(chaveVersao, corpoDoDocumento(secoesDoDocumento(input.processoId, input.tipo)))
     if (processo) {
       processo.atualizadoEm = dataBrasiliaISO()
       if (input.retificacao) {
@@ -594,6 +618,7 @@ export async function gerarDocumento(input: GerarDocumentoInput): Promise<Docume
   }
   db.documentos.unshift(doc)
   db.versoes.set(chaveVersao, [entradaDeHistorico(1, geradoEm, `${tamanhoKB} KB`)])
+  db.corpos.set(chaveVersao, corpoDoDocumento(secoesDoDocumento(input.processoId, input.tipo)))
 
   // Indicadores da tela de Documentos e do dashboard acompanham a nova geração.
   db.resumoDocumentos.total += 1
