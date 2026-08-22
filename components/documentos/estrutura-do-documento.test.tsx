@@ -1,5 +1,5 @@
 import { HttpResponse, http } from "msw"
-import { describe, expect, it, vi } from "vitest"
+import { describe, expect, it } from "vitest"
 
 import { EstruturaDoDocumento } from "@/components/documentos/estrutura-do-documento"
 import { documentoApi } from "@/lib/teste/fixtures-api"
