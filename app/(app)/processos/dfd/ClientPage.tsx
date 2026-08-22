@@ -19,6 +19,7 @@ import {
 import { ErrorState, LoadingState } from "@/components/shared/estados"
 import { useToast } from "@/components/shared/providers"
 import { useAnalisarDFD, useParecerDFD, useProcesso } from "@/lib/api/hooks"
+import { MarcaSintetica } from "@/components/shared/marca-sintetica";
 import { CATALOGO, ordenar, totalSecoes } from "@/lib/documentos"
 import { formatDataHora } from "@/lib/format"
 import type { AchadoDFD } from "@/lib/types"
@@ -280,6 +281,11 @@ export default function VerificacaoDFD() {
                 <p className="m-0 text-base text-text-3">
                   {parecer.data.arquivo} · Analisado em {formatDataHora(parecer.data.analisadoEm).replace(" — ", " às ")}
                 </p>
+                {/*
+                  O parecer é o dado fabricado que mais engana: nota, achados e
+                  fundamentação têm exatamente a forma de uma análise real.
+                */}
+                <MarcaSintetica campo="parecerDfd" />
               </div>
               <div className="shrink-0 rounded-xl border border-tint-warning-border bg-tint-warning-bg px-4.5 py-2.5 text-center">
                 <div className="font-display text-score font-extrabold tracking-stat text-tint-warning-fg">

@@ -1,7 +1,10 @@
+import { HttpResponse, http } from "msw"
 import { describe, expect, it, vi } from "vitest"
 
 import { PainelRetificacao } from "@/components/processos/painel-retificacao"
+import { urlDaApi } from "@/lib/teste/handlers"
 import { renderizar, screen, userEvent } from "@/lib/teste/renderizar"
+import { servidor } from "@/lib/teste/servidor-msw"
 
 /**
  * Retificar exige dizer **o quê** e **de que natureza** — é essa a informação
@@ -54,6 +57,18 @@ describe("painel de retificação", () => {
   })
 
   it("mostra o histórico junto, com o motivo de cada versão", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id/documents/:tipo/versions`, () =>
+        HttpResponse.json([
+          {
+            version: 1,
+            note: "Geração inicial",
+            generatedAt: "2026-08-22T12:00:00-03:00",
+            body: [],
+          },
+        ]),
+      ),
+    )
     renderizar(<PainelRetificacao {...padrao} onConfirmar={vi.fn()} onCancelar={vi.fn()} />)
 
     // A pergunta que antecede toda retificação é "o que já foi retificado aqui

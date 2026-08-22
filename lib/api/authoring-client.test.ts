@@ -165,3 +165,64 @@ describe("concluir documento", () => {
     expect(documento.corpo[1]?.dispensada).toBe(true)
   })
 })
+
+describe("histórico de versões", () => {
+  it("traduz nota, data e o texto congelado", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id/documents/:tipo/versions`, () =>
+        HttpResponse.json([
+          {
+            version: 2,
+            note: "Retificação (Erro material): Valor trocado.",
+            generatedAt: "2026-08-22T12:00:00-03:00",
+            body: [{ sectionCode: "1", title: "Seção 1", text: "Necessidade.", dispensed: false }],
+          },
+        ]),
+      ),
+    )
+    const { historicoDeVersoes, corpoDaVersaoVigente } = await carregarClienteLimpo()
+
+    const historico = await historicoDeVersoes(PROCESSO, "ETP")
+    expect(historico[0]?.versao).toBe(2)
+    expect(historico[0]?.nota).toContain("Erro material")
+
+    // O corpo é o congelado da versão vigente, não o rascunho de agora.
+    expect((await corpoDaVersaoVigente(PROCESSO, "ETP"))[0]?.texto).toBe("Necessidade.")
+  })
+
+  it("documento nunca gerado não tem corpo nem histórico", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id/documents/:tipo/versions`, () =>
+        HttpResponse.json([]),
+      ),
+    )
+    const { historicoDeVersoes, corpoDaVersaoVigente } = await carregarClienteLimpo()
+
+    // Não há retrato de algo que não aconteceu — e a tela precisa de uma lista
+    // vazia, não de um erro.
+    expect(await historicoDeVersoes(PROCESSO, "ETP")).toEqual([])
+    expect(await corpoDaVersaoVigente(PROCESSO, "ETP")).toEqual([])
+  })
+
+  it("a retificação vai ao servidor com a natureza traduzida", async () => {
+    let corpo: Record<string, unknown> = {}
+    servidor.use(
+      http.post(
+        `${urlDaApi}/procurement-processes/:id/documents/:tipo/finalize`,
+        async ({ request }) => {
+          corpo = (await request.json()) as Record<string, unknown>
+          return HttpResponse.json({ ...documentoApi, finalized: true, currentVersion: 2 })
+        },
+      ),
+    )
+    const { concluirDocumento } = await carregarClienteLimpo()
+
+    await concluirDocumento(PROCESSO, "ETP", {
+      motivo: "alteracao_substancial",
+      detalhe: "Prazo alterado.",
+    })
+
+    expect(corpo.rectificationKind).toBe("SUBSTANTIAL_CHANGE")
+    expect(corpo.rectificationDetail).toBe("Prazo alterado.")
+  })
+})

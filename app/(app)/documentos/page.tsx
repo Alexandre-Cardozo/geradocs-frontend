@@ -9,6 +9,7 @@ import { EmptyState, ErrorState, SkeletonRows } from "@/components/shared/estado
 import { Th } from "@/components/shared/tabela"
 import { useToast } from "@/components/shared/providers"
 import { useDocumentos, useResumoDocumentos } from "@/lib/api/hooks"
+import { MarcaSintetica } from "@/components/shared/marca-sintetica"
 import { CATALOGO, ORDEM_FLUXO } from "@/lib/documentos"
 import { ConteudoDoDocumento } from "@/components/documentos/conteudo-do-documento"
 import { foiRetificado, rotuloDaVersao } from "@/lib/dominio"
@@ -66,6 +67,10 @@ export default function Documentos() {
         <StatCard label="Total de Documentos" value={r ? String(r.total) : "—"} icon={IconFileText} tone="royal" />
         <StatCard label="Gerados este Mês" value={r ? String(r.esteMes) : "—"} icon={IconCalendar} tone="teal" />
         <StatCard label="Armazenamento Usado" value={r ? `${r.armazenamentoMB} MB` : "—"} icon={IconDatabase} tone="success" />
+      </div>
+      <div className="mb-6 -mt-3">
+        {/* Contagens e tamanho vêm do acervo local; o arquivo ainda não existe. */}
+        <MarcaSintetica campo="acervoDocumento" />
       </div>
 
       {/* Tabela */}

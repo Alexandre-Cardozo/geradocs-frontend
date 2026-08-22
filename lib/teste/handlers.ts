@@ -30,6 +30,9 @@ export const handlers = [
     `${API}/procurement-processes/:id/documents/:tipo/finalize`,
     () => HttpResponse.json({ ...documentoApi, finalized: true, currentVersion: 1 }),
   ),
+  http.get(`${API}/procurement-processes/:id/documents/:tipo/versions`, () =>
+    HttpResponse.json([]),
+  ),
 ]
 
 export const urlDaApi = API

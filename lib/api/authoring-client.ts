@@ -2,7 +2,13 @@ import "client-only";
 
 import { requisicaoProtegida } from "@/lib/api/auth-client";
 import type { BlocoDoDocumento } from "@/lib/dominio";
-import type { SecaoDocumento, StatusDocumento, TipoDocumento } from "@/lib/types";
+import type { MotivoRetificacao, Retificacao } from "@/lib/dominio"
+import type {
+  SecaoDocumento,
+  StatusDocumento,
+  TipoDocumento,
+  VersaoDocumento,
+} from "@/lib/types";
 
 /**
  * A elaboração de documento, servida pelo back-end.
@@ -164,15 +170,79 @@ export async function gerarTextoDaSecao(
   return gerada.text;
 }
 
-/** Conclui o documento, se as indispensáveis estiverem resolvidas. */
+/** Natureza da retificação, no vocabulário do contrato. */
+const naturezas: Record<MotivoRetificacao, string> = {
+  erro_material: "MATERIAL_ERROR",
+  alteracao_substancial: "SUBSTANTIAL_CHANGE",
+};
+
+/**
+ * Conclui o documento, se as indispensáveis estiverem resolvidas.
+ *
+ * @param retificacao presente quando a conclusão é uma retificação declarada;
+ *                    ausente, é regeração — e a diferença vai para o histórico
+ */
 export async function concluirDocumento(
   processoId: string,
   tipo: TipoDocumento,
+  retificacao?: Retificacao,
 ): Promise<DocumentoEmElaboracao> {
   return mapear(
     await requisicaoProtegida<DocumentoApi>(`${rota(processoId, tipo)}/finalize`, {
       method: "POST",
+      body: JSON.stringify(
+        retificacao
+          ? {
+              rectificationKind: naturezas[retificacao.motivo],
+              rectificationDetail: retificacao.detalhe,
+            }
+          : {},
+      ),
     }),
     tipo,
   );
+}
+
+interface VersaoApi {
+  version: number;
+  note: string;
+  generatedAt: string;
+  body: { sectionCode: string; title: string; text: string; dispensed: boolean }[];
+}
+
+/**
+ * O histórico de versões do documento, da mais recente para a mais antiga.
+ *
+ * Vem do servidor desde o Bloco 9: guardá-lo na memória do navegador o perderia
+ * justamente para quem abre o processo depois — e é exigência de controle poder
+ * mostrar o que mudou e quando.
+ */
+export async function historicoDeVersoes(
+  processoId: string,
+  tipo: TipoDocumento,
+): Promise<VersaoDocumento[]> {
+  const versoes = await requisicaoProtegida<VersaoApi[]>(`${rota(processoId, tipo)}/versions`);
+  return versoes.map((versao) => ({
+    versao: versao.version,
+    geradoEm: versao.generatedAt,
+    // O tamanho do arquivo só existe quando o arquivo existir (Bloco 11).
+    tamanho: "—",
+    nota: versao.note,
+  }));
+}
+
+/** O texto congelado da versão vigente. Vazio antes da primeira geração. */
+export async function corpoDaVersaoVigente(
+  processoId: string,
+  tipo: TipoDocumento,
+): Promise<BlocoDoDocumento[]> {
+  const versoes = await requisicaoProtegida<VersaoApi[]>(`${rota(processoId, tipo)}/versions`);
+  const vigente = versoes[0];
+  if (!vigente) return [];
+  return vigente.body.map((bloco) => ({
+    id: bloco.sectionCode,
+    titulo: bloco.title,
+    texto: bloco.text,
+    dispensada: bloco.dispensed,
+  }));
 }

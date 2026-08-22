@@ -308,6 +308,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["versions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/users": {
         parameters: {
             query?: never;
@@ -453,6 +469,20 @@ export interface components {
             progress: number;
             sections: components["schemas"]["SectionResponseView"][];
             silentGaps: string[];
+        };
+        DocumentVersionResponse: {
+            body: components["schemas"]["BlockView"][];
+            /** Format: date-time */
+            generatedAt: string;
+            note: string;
+            /** Format: int32 */
+            version: number;
+        };
+        FinalizeDocumentRequest: {
+            rectificationDescribed?: boolean;
+            rectificationDetail?: string;
+            /** @enum {string} */
+            rectificationKind?: "MATERIAL_ERROR" | "SUBSTANTIAL_CHANGE";
         };
         GeneratedSectionResponse: {
             text: string;
@@ -1190,7 +1220,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["FinalizeDocumentRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -1251,6 +1285,29 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["GeneratedSectionResponse"];
+                };
+            };
+        };
+    };
+    versions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                processId: string;
+                documentType: "COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DocumentVersionResponse"][];
                 };
             };
         };

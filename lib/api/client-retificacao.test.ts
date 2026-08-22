@@ -19,22 +19,37 @@ async function carregarClienteLimpo() {
 }
 
 /**
- * O servidor conta as conclusões, como faz de verdade: cada `finalize` devolve
- * a versão seguinte.
+ * O servidor conta as conclusões e guarda o histórico, como faz de verdade:
+ * cada `finalize` devolve a versão seguinte e empilha a nota correspondente.
  */
 function servidorQueConclui() {
-  let versao = 0
+  const versoes: { version: number; note: string; generatedAt: string; body: unknown[] }[] = []
   servidor.use(
     http.get(`${urlDaApi}/procurement-processes/:id`, () => HttpResponse.json(processoApi)),
-    http.post(`${urlDaApi}/procurement-processes/:id/documents/:tipo/finalize`, () => {
-      versao += 1
-      return HttpResponse.json({
-        ...documentoApi,
-        finalized: true,
-        currentVersion: versao,
-        body: [{ sectionCode: "1", title: "Seção 1", text: "Necessidade.", dispensed: false }],
-      })
-    }),
+    http.post(
+      `${urlDaApi}/procurement-processes/:id/documents/:tipo/finalize`,
+      async ({ request }) => {
+        const corpo = (await request.json()) as { rectificationKind?: string; rectificationDetail?: string }
+        const versao = versoes.length + 1
+        const nota = corpo.rectificationKind
+          ? `Retificação (${
+              corpo.rectificationKind === "MATERIAL_ERROR" ? "Erro material" : "Alteração substancial"
+            }): ${corpo.rectificationDetail}`
+          : versao === 1
+            ? "Geração inicial"
+            : "Regeração"
+        versoes.unshift({
+          version: versao,
+          note: nota,
+          generatedAt: "2026-08-22T12:00:00-03:00",
+          body: [{ sectionCode: "1", title: "Seção 1", text: "Necessidade.", dispensed: false }],
+        })
+        return HttpResponse.json({ ...documentoApi, finalized: true, currentVersion: versao })
+      },
+    ),
+    http.get(`${urlDaApi}/procurement-processes/:id/documents/:tipo/versions`, () =>
+      HttpResponse.json(versoes),
+    ),
   )
 }
 

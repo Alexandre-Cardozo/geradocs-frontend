@@ -15,7 +15,14 @@
  * teste de guarda-corpo cobra que cada entrada diga em que bloco ela sai.
  */
 
-export type CampoSintetico = "timbrado" | "cabecalho" | "rodape" | "pcaAno"
+export type CampoSintetico =
+  | "timbrado"
+  | "cabecalho"
+  | "rodape"
+  | "pcaAno"
+  | "parecerDfd"
+  | "indicadores"
+  | "acervoDocumento"
 
 export interface DadoSintetico {
   /** Como o campo aparece na tela. */
@@ -46,6 +53,21 @@ export const DADOS_SINTETICOS: Record<CampoSintetico, DadoSintetico> = {
     rotulo: "Exercício do PCA",
     origem: "Ano corrente do calendário — não é o exercício do plano vigente.",
     saiEm: "Bloco 10",
+  },
+  parecerDfd: {
+    rotulo: "Parecer do DFD",
+    origem: "Achados e nota fixos, iguais para todo processo — nenhum modelo leu este arquivo.",
+    saiEm: "Bloco 10",
+  },
+  indicadores: {
+    rotulo: "Indicadores",
+    origem: "Contagens de demonstração; não refletem o acervo do órgão.",
+    saiEm: "Bloco 10",
+  },
+  acervoDocumento: {
+    rotulo: "Identificador, formato e tamanho do arquivo",
+    origem: "Estimados por tipo de documento — o arquivo em si ainda não é gerado.",
+    saiEm: "Bloco 11",
   },
 }
 

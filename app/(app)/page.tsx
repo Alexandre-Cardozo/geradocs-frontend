@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { useRouter } from "next/navigation"
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
-import { StatCard, StatusBadge } from "@/components/ui"
+import { StatCard, StatusBadge } from "@/components/ui";
 import {
   IconCheckCircle,
   IconClipboardList,
@@ -13,24 +13,25 @@ import {
   IconFileText,
   IconPlus,
   IconSearch,
-} from "@/components/ui/icons"
-import { ErrorState, SkeletonRows } from "@/components/shared/estados"
-import { Th } from "@/components/shared/tabela"
-import { useEstatisticas, useProcessos, useSessao } from "@/lib/api/hooks"
-import { dataPorExtenso, formatBRL, formatData, saudacao } from "@/lib/format"
-import PainelAdmin from "@/app/(app)/admin/PainelAdmin"
+} from "@/components/ui/icons";
+import { ErrorState, SkeletonRows } from "@/components/shared/estados";
+import { Th } from "@/components/shared/tabela";
+import { useEstatisticas, useProcessos, useSessao } from "@/lib/api/hooks";
+import { MarcaSintetica } from "@/components/shared/marca-sintetica";
+import { dataPorExtenso, formatBRL, formatData, saudacao } from "@/lib/format";
+import PainelAdmin from "@/app/(app)/admin/PainelAdmin";
 
 export default function Dashboard() {
-  const router = useRouter()
-  const { data: sessao } = useSessao()
-  const usuario = sessao?.usuario
-  const estatisticas = useEstatisticas()
-  const processos = useProcessos({ porPagina: 5 })
+  const router = useRouter();
+  const { data: sessao } = useSessao();
+  const usuario = sessao?.usuario;
+  const estatisticas = useEstatisticas();
+  const processos = useProcessos({ porPagina: 5 });
 
-  const recentes = processos.data?.itens ?? []
+  const recentes = processos.data?.itens ?? [];
 
   // O admin geral vê um painel de sistema (prefeituras e servidores), não o fluxo de processos.
-  if (usuario?.perfilAcesso === "admin_geral") return <PainelAdmin />
+  if (usuario?.perfilAcesso === "admin_geral") return <PainelAdmin />;
 
   return (
     <div className="max-w-content p-4 sm:p-5 lg:p-7">
@@ -43,9 +44,7 @@ export default function Dashboard() {
           <h2 className="m-0 font-display text-3xl font-extrabold tracking-tight text-text-1" suppressHydrationWarning>
             {saudacao()}, {usuario?.primeiroNome ?? "..."}
           </h2>
-          {sessao?.prefeitura && (
-            <p className="m-0 mt-0.5 text-sm text-text-muted">{sessao.prefeitura.orgao}</p>
-          )}
+          {sessao?.prefeitura && <p className="m-0 mt-0.5 text-sm text-text-muted">{sessao.prefeitura.orgao}</p>}
         </div>
         <Link
           href="/processos/novo"
@@ -62,40 +61,49 @@ export default function Dashboard() {
           <ErrorState onRetry={() => void estatisticas.refetch()} />
         </div>
       ) : (
-        <div className="mb-5 grid grid-cols-1 gap-3 xs:grid-cols-2 lg:mb-6 lg:grid-cols-4 lg:gap-4">
-          {estatisticas.isPending ? (
-            Array.from({ length: 4 }, (_, i) => (
-              <div key={i} aria-hidden className="h-31 rounded-card border border-border bg-surface" />
-            ))
-          ) : (
-            <>
-              <StatCard
-                label="Processos Ativos"
-                value={String(estatisticas.data.processosAtivos)}
-                icon={IconFile}
-                tone="royal"
-              />
-              <StatCard
-                label="Em Elaboração"
-                value={String(estatisticas.data.processosEmElaboracao)}
-                icon={IconClock}
-                tone="warning"
-              />
-              <StatCard
-                label="Documentos Gerados"
-                value={String(estatisticas.data.documentosGerados)}
-                icon={IconDownload}
-                tone="teal"
-              />
-              <StatCard
-                label="ETPs Concluídos"
-                value={String(estatisticas.data.etpsConcluidos)}
-                icon={IconCheckCircle}
-                tone="success"
-              />
-            </>
-          )}
-        </div>
+        <>
+          <div className="mb-5 grid grid-cols-1 gap-3 xs:grid-cols-2 lg:mb-6 lg:grid-cols-4 lg:gap-4">
+            {estatisticas.isPending ? (
+              Array.from({ length: 4 }, (_, i) => (
+                <div key={i} aria-hidden className="h-31 rounded-card border border-border bg-surface" />
+              ))
+            ) : (
+              <>
+                <StatCard
+                  label="Processos Ativos"
+                  value={String(estatisticas.data.processosAtivos)}
+                  icon={IconFile}
+                  tone="royal"
+                />
+                <StatCard
+                  label="Em Elaboração"
+                  value={String(estatisticas.data.processosEmElaboracao)}
+                  icon={IconClock}
+                  tone="warning"
+                />
+                <StatCard
+                  label="Documentos Gerados"
+                  value={String(estatisticas.data.documentosGerados)}
+                  icon={IconDownload}
+                  tone="teal"
+                />
+                <StatCard
+                  label="ETPs Concluídos"
+                  value={String(estatisticas.data.etpsConcluidos)}
+                  icon={IconCheckCircle}
+                  tone="success"
+                />
+              </>
+            )}
+          </div>
+          {/*
+          Os números são de demonstração. Painel com contagem inventada é pior
+          que painel vazio: a pessoa decide onde olhar a partir deles.
+        */}
+          <div className="mb-6 -mt-3">
+            <MarcaSintetica campo="indicadores" />
+          </div>
+        </>
       )}
 
       <div className="grid grid-cols-1 gap-4 min-[1080px]:grid-cols-[1fr_340px] min-[1080px]:gap-5">
@@ -163,8 +171,8 @@ export default function Dashboard() {
             {estatisticas.isError && <ErrorState onRetry={() => void estatisticas.refetch()} />}
             {estatisticas.isSuccess && (
               <div className="px-4.5 py-4 text-base text-text-3">
-                Documentos escolhidos nos processos abertos que ainda não foram gerados. A
-                plataforma encerra o processo quando todos estiverem prontos.
+                Documentos escolhidos nos processos abertos que ainda não foram gerados. A plataforma encerra o processo
+                quando todos estiverem prontos.
               </div>
             )}
             <div className="border-t border-border-soft px-4.5 py-3">
@@ -202,5 +210,5 @@ export default function Dashboard() {
         </div>
       </div>
     </div>
-  )
+  );
 }

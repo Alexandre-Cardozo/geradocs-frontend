@@ -300,6 +300,46 @@
         "required" : [ "body", "canGenerate", "currentVersion", "documentType", "finalized", "id", "pendingRequiredSections", "processId", "progress", "sections", "silentGaps" ],
         "type" : "object"
       },
+      "DocumentVersionResponse" : {
+        "properties" : {
+          "body" : {
+            "items" : {
+              "$ref" : "#/components/schemas/BlockView"
+            },
+            "type" : "array"
+          },
+          "generatedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "note" : {
+            "type" : "string"
+          },
+          "version" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "body", "generatedAt", "note", "version" ],
+        "type" : "object"
+      },
+      "FinalizeDocumentRequest" : {
+        "properties" : {
+          "rectificationDescribed" : {
+            "type" : "boolean"
+          },
+          "rectificationDetail" : {
+            "maxLength" : 2000,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "rectificationKind" : {
+            "enum" : [ "MATERIAL_ERROR", "SUBSTANTIAL_CHANGE" ],
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
       "GeneratedSectionResponse" : {
         "properties" : {
           "text" : {
@@ -1587,6 +1627,15 @@
             "type" : "string"
           }
         } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FinalizeDocumentRequest"
+              }
+            }
+          }
+        },
         "responses" : {
           "200" : {
             "content" : {
@@ -1687,6 +1736,44 @@
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/GeneratedSectionResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "document-authoring-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/versions" : {
+      "get" : {
+        "operationId" : "versions",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "documentType",
+          "required" : true,
+          "schema" : {
+            "enum" : [ "COTACAO", "ETP", "MAPA", "TR", "EDITAL", "CONTRATO" ],
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/DocumentVersionResponse"
+                  },
+                  "type" : "array"
                 }
               }
             },

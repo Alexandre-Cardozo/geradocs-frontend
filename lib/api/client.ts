@@ -57,7 +57,9 @@ import {
 import {
   abrirDocumento,
   concluirDocumento,
+  corpoDaVersaoVigente,
   gerarTextoDaSecao,
+  historicoDeVersoes,
   salvarSecao,
 } from "@/lib/api/authoring-client"
 import {
@@ -540,13 +542,11 @@ export async function getCorpoDocumento(
   processoId: string,
   tipo: TipoDocumento,
 ): Promise<BlocoDoDocumento[]> {
-  await delay()
-  return clone(db.corpos.get(`${processoId}:${tipo}`) ?? [])
+  return corpoDaVersaoVigente(processoId, tipo)
 }
 
 export async function getHistoricoVersoes(processoId: string, tipo: TipoDocumento): Promise<VersaoDocumento[]> {
-  await delay()
-  return clone(db.versoes.get(`${processoId}:${tipo}`) ?? [])
+  return historicoDeVersoes(processoId, tipo)
 }
 
 export interface GerarDocumentoInput {
@@ -576,7 +576,7 @@ export interface GerarDocumentoInput {
  * verdade quando o Bloco 11 produzir o arquivo.
  */
 export async function gerarDocumento(input: GerarDocumentoInput): Promise<DocumentoGerado> {
-  const concluido = await concluirDocumento(input.processoId, input.tipo)
+  const concluido = await concluirDocumento(input.processoId, input.tipo, input.retificacao)
   const processo = await obterProcesso(input.processoId)
   const objeto = processo.objeto
   const meta = CATALOGO[input.tipo]
