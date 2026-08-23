@@ -428,7 +428,16 @@ export default function HubProcesso() {
           return (
             <div
               key={tipo}
-              className={`flex flex-col rounded-card border border-border bg-surface p-5 ${bloqueado ? "opacity-70" : ""}`}
+              /*
+               * Bloqueado muda a superfície, não a opacidade.
+               *
+               * `opacity-70` no cartão inteiro apagava o texto junto: a 70% os
+               * cinzas caem para 3,2:1, abaixo dos 4,5:1 da WCAG AA — e apagava
+               * justamente a etiqueta que diz o que falta para desbloquear.
+               */
+              className={`flex flex-col rounded-card border border-border p-5 ${
+                bloqueado ? "bg-ice" : "bg-surface"
+              }`}
             >
               <div className="mb-3 flex items-start gap-3">
                 <span className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${meta.chip}`}>

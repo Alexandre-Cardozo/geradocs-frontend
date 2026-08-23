@@ -33,15 +33,27 @@
   --color-slate: #64748B;
   --color-ice: #F8FAFC;
 
-  /* ── Cores — neutros ────────────────────────────────────────────────────── */
+  /*
+   * ── Cores — neutros ──────────────────────────────────────────────────────
+   *
+   * Os três cinzas de texto foram escurecidos em 22/08/2026 para atingir os
+   * 4,5:1 da WCAG AA sobre **todas** as superfícies claras do produto — inclusive
+   * `#F1F5F9`, que é a mais escura delas e por isso a que manda.
+   *
+   * Antes: `text-3` #64748B (4,34:1 sobre `#F1F5F9`), `text-muted` #94A3B8
+   * (2,45:1) e `text-faint` #CBD5E1 (**1,35:1** — texto que quase ninguém lê).
+   * A escala continua com três níveis distintos; ela só deixou de ter níveis
+   * ilegíveis. `text-3` entrou junto porque, sem ele, ficaria mais claro que os
+   * dois que vêm depois — e uma escala fora de ordem confunde mais que ajuda.
+   */
   --color-surface: #FFFFFF;
   --color-border: #E2E8F0;
   --color-border-soft: #F1F5F9;
   --color-text-1: #071A3D;
   --color-text-2: #374151;
-  --color-text-3: #64748B;
-  --color-text-muted: #94A3B8;
-  --color-text-faint: #CBD5E1;
+  --color-text-3: #4E5A6E;
+  --color-text-muted: #556074;
+  --color-text-faint: #5F6B80;
 
   /* ── Cores — semânticas ─────────────────────────────────────────────────── */
   --color-success: #10B981;

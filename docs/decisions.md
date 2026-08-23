@@ -451,6 +451,22 @@ A segunda auditoria do Bloco 10 não procurou defeitos: procurou **o que os test
 | `text-text-muted` `#94a3b8` | `#f8fafc` | **2,45:1** | passos do formulário |
 | `text-text-muted` `#94a3b8` | branco | **2,56:1** | rótulos do resumo |
 
-A WCAG AA exige 4,5:1. A decisão de manter a regra fora do gate continua de pé pelo motivo original — **mudar valor de token é de quem mantém o design system**, não deste teste. O que mudou é o escopo declarado: a exceção falava de um problema de sidebar, e o problema é do produto inteiro. `text-text-faint` a 1,35:1 não é escolha de estilo; é texto que quase ninguém lê. **Fica aguardando a decisão de quem mantém os tokens.**
+A WCAG AA exige 4,5:1. **A decisão de quem mantém os tokens foi corrigir**, e ela veio no mesmo dia:
+
+| Token | Antes | Agora | Pior razão em superfície clara |
+|---|---|---|---|
+| `--color-text-3` | `#64748B` | `#4E5A6E` | 4,34 → **6,37** |
+| `--color-text-muted` | `#94A3B8` | `#556074` | 2,45 → **5,79** |
+| `--color-text-faint` | `#CBD5E1` | `#5F6B80` | 1,35 → **4,91** |
+
+`text-3` entrou junto sem ter sido pedido, e o motivo é que sem ele a escala ficaria fora de ordem — o nível mais escuro dos três seria o mais claro na tela. A escala continua com três níveis distintos; ela só deixou de ter níveis ilegíveis.
+
+**`color-contrast` passou a valer no gate**, e a exclusão que sobrou é **por token, não por página**: só o que estiver sobre o navy (`text-on-dark-*`, de 2,65:1 a 3,73:1) fica de fora, porque corrigi-lo é mexer na paleta da sidebar. Excluir a `<nav>` inteira por seletor apagaria as outras regras graves justamente onde fica a navegação.
+
+**O gate morde**: com o token antigo de volta, a suíte reprova em cinco telas.
+
+**E ele achou um defeito de verdade no primeiro uso.** O cartão de documento bloqueado usava `opacity-70` no contêiner inteiro. A 70% os cinzas caem para ~3,2:1 — e o que ficava ilegível incluía a etiqueta "Requer ETP e TR", ou seja, exatamente a frase que explica por que o cartão está bloqueado. Trocado por `bg-ice`: a distinção visual continua, o texto volta a ser legível.
+
+Esse defeito aparecia como **teste intermitente** — reprovava em duas de cada três execuções da suíte inteira e passava sempre quando rodava sozinho, porque quantos cartões estão bloqueados depende de a consulta de documentos ter respondido ou não. É o pior formato de defeito: some quando se vai investigá-lo. Cinco execuções seguidas da suíte, 20/20, depois da correção.
 
 **Código morto que mentia.** `getProximoNumeroProcesso` devolvia `PROC-2024-091` de um contador de fixture, enquanto o servidor emite `PROC-2026-000014`. Nenhuma tela o usava — mas ele estava exportado, com hook e chave de cache, esperando alguém chamá-lo. Saiu, junto com `db.usuarios`, `db.prefeituras` e três contadores que ninguém lia mais.

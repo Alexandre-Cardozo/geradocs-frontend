@@ -14,32 +14,49 @@ import { comProcessoEDocumento, comSessao, processo, rota, semSessao } from "./a
 const graves = ["serious", "critical"]
 
 /**
- * `color-contrast` está fora do gate por decisão registrada, não por conveniência.
+ * A varredura roda com movimento reduzido, e não é preferência de estilo: o axe
+ * compõe a cor de um elemento **no instante em que olha**, e um card ainda a
+ * meio caminho da transição de opacidade tem contraste menor que o do repouso.
  *
- * Em 21/08/2026 a varredura encontrou 12 ocorrências no painel e 6 na lista de
- * processos, todas na sidebar navy: os tokens `text-on-dark-40` e vizinhos dão
- * de 2,65:1 a 3,73:1 sobre `#071a3d`, em textos de 10–11px que a WCAG AA exige
- * a 4,5:1. Corrigir significa mudar valor de token — o design system é normativo
- * e a decisão é de quem o mantém, não deste teste.
+ * Sem isto, o teste do detalhe do processo reprovava em duas de cada três
+ * execuções da suíte inteira — e passava sempre quando rodava sozinho, que é o
+ * pior formato de defeito de teste: some justamente quando se vai investigá-lo.
  *
- * Enquanto isso, **todas as outras regras graves continuam valendo**: excluir a
- * suíte inteira por causa de uma regra seria trocar um defeito conhecido por
- * cegueira completa.
- *
- * **22/08/2026 — o escopo desta exceção estava errado.** Ela dizia "todas na
- * sidebar navy" porque a varredura nunca tinha visitado tela de formulário. Com
- * as quatro telas novas abaixo, aparecem violações em superfície clara e piores:
- * `text-text-faint` dá **1,48:1** sobre branco no "Não definido" do resumo do
- * processo, e `text-text-muted`, **2,56:1** nos rótulos ao lado. A exceção
- * continua valendo pelo mesmo motivo — token é decisão de quem mantém o design
- * system —, mas agora ela descreve o tamanho real do problema.
+ * De quebra, exercita o produto no modo que a própria folha de estilo declara
+ * respeitar.
  */
-const REGRA_EM_ABERTO = "color-contrast"
+test.use({ reducedMotion: "reduce" })
+
+/**
+ * `color-contrast` **entrou no gate em 22/08/2026**, para superfície clara.
+ *
+ * A exceção anterior tirava a regra inteira e dizia que as violações eram "todas
+ * na sidebar navy". A parte da sidebar era verdade; o "todas" não — a varredura
+ * nunca tinha visitado uma tela de formulário. Ao visitar, apareceu
+ * `text-faint` a **1,35:1** sobre `#F1F5F9`, em texto de conteúdo.
+ *
+ * Os três cinzas de texto foram escurecidos (ver `app/globals.css`) e a regra
+ * passou a valer. O que continua fora é **só o que está sobre o navy**: os
+ * tokens `text-on-dark-*` dão de 2,65:1 a 3,73:1 sobre `#071a3d`, e corrigi-los
+ * é mudar a paleta da sidebar — decisão de quem mantém o design system, com o
+ * problema medido e registrado no plano.
+ *
+ * A exclusão é por token, e não por seletor de página: excluir a `<nav>` inteira
+ * apagaria também as outras regras graves justamente onde fica a navegação.
+ */
+const TOKENS_SOBRE_NAVY = /text-on-dark-\d+/
 
 async function violacoesGraves(page: Parameters<typeof AxeBuilder>[0]["page"]) {
-  const { violations } = await new AxeBuilder({ page }).disableRules([REGRA_EM_ABERTO]).analyze()
+  const { violations } = await new AxeBuilder({ page }).analyze()
   return violations
     .filter((violacao) => graves.includes(violacao.impact ?? ""))
+    .map((violacao) => ({
+      ...violacao,
+      nodes: violacao.nodes.filter(
+        (no) => !(violacao.id === "color-contrast" && TOKENS_SOBRE_NAVY.test(no.html ?? "")),
+      ),
+    }))
+    .filter((violacao) => violacao.nodes.length > 0)
     .map((violacao) => `${violacao.id} (${violacao.impact}): ${violacao.nodes.length} ocorrência(s)`)
 }
 
