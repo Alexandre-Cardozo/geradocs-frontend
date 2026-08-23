@@ -1,6 +1,6 @@
 import { HttpResponse, http } from "msw"
 
-import { autenticacao, documentoApi, processoApi, sessaoServidor } from "@/lib/teste/fixtures-api"
+import { autenticacao, documentoApi, geracaoApi, processoApi, sessaoServidor } from "@/lib/teste/fixtures-api"
 
 const API = "http://localhost:8080/api/v1"
 
@@ -32,6 +32,14 @@ export const handlers = [
   ),
   http.get(`${API}/procurement-processes/:id/documents/:tipo/versions`, () =>
     HttpResponse.json([]),
+  ),
+  // A impressão do arquivo, desde o 11.1: gerar um documento passa por aqui, e
+  // sem a rota toda geração no teste falharia por rota ausente.
+  http.post(`${API}/procurement-processes/:id/documents/:tipo/generations`, () =>
+    HttpResponse.json(geracaoApi),
+  ),
+  http.get(`${API}/procurement-processes/:id/documents/:tipo/generations`, () =>
+    HttpResponse.json([geracaoApi]),
   ),
 ]
 

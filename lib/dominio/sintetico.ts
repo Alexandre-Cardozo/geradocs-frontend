@@ -6,7 +6,14 @@
  * padrão, não de uma escolha da prefeitura.
  *
  * O exercício do PCA saiu desta lista em 22/08/2026, no passo 10.5: o ano agora
- * é o do plano importado, e não o do calendário.
+ * é o do plano importado, e não o do calendário. O identificador, o formato e o
+ * tamanho do arquivo saíram em 23/08/2026, no 11.1: o arquivo passou a existir,
+ * e o que a tela mostra é o que o servidor mediu.
+ *
+ * Timbre, cabeçalho e rodapé **não** saíram no Bloco 11, e eu tinha escrito que
+ * sairiam. O 11.1 publicou template de **layout** — margem, fonte, tamanho —, e
+ * não configuração por órgão: o brasão da prefeitura continua sem lugar onde
+ * morar. Foram para o Bloco 12, com um passo que os entrega.
  *
  * **Configuração inventada exibida como real é pior que campo vazio.** Campo
  * vazio a pessoa preenche; valor plausível ela confere uma vez, aceita, e o
@@ -24,7 +31,6 @@ export type CampoSintetico =
   | "rodape"
   | "parecerDfd"
   | "indicadores"
-  | "acervoDocumento"
 
 export interface DadoSintetico {
   /** Como o campo aparece na tela. */
@@ -47,17 +53,17 @@ export const DADOS_SINTETICOS: Record<CampoSintetico, DadoSintetico> = {
   timbrado: {
     rotulo: "Timbre ativado",
     origem: "Ligado por padrão — a prefeitura ainda não escolheu.",
-    saiEm: "Bloco 11",
+    saiEm: "Bloco 12",
   },
   cabecalho: {
     rotulo: "Cabeçalho",
     origem: "Montado do nome e da unidade do órgão, em maiúsculas.",
-    saiEm: "Bloco 11",
+    saiEm: "Bloco 12",
   },
   rodape: {
     rotulo: "Rodapé",
     origem: "Texto padrão da plataforma, igual para todo órgão.",
-    saiEm: "Bloco 11",
+    saiEm: "Bloco 12",
   },
   parecerDfd: {
     rotulo: "Parecer do DFD",
@@ -68,11 +74,6 @@ export const DADOS_SINTETICOS: Record<CampoSintetico, DadoSintetico> = {
     rotulo: "Indicadores",
     origem: "Contagens de demonstração; não refletem o acervo do órgão.",
     saiEm: "Bloco 12",
-  },
-  acervoDocumento: {
-    rotulo: "Identificador, formato e tamanho do arquivo",
-    origem: "Estimados por tipo de documento — o arquivo em si ainda não é gerado.",
-    saiEm: "Bloco 11",
   },
 }
 

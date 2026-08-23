@@ -470,3 +470,22 @@ A WCAG AA exige 4,5:1. **A decisão de quem mantém os tokens foi corrigir**, e 
 Esse defeito aparecia como **teste intermitente** — reprovava em duas de cada três execuções da suíte inteira e passava sempre quando rodava sozinho, porque quantos cartões estão bloqueados depende de a consulta de documentos ter respondido ou não. É o pior formato de defeito: some quando se vai investigá-lo. Cinco execuções seguidas da suíte, 20/20, depois da correção.
 
 **Código morto que mentia.** `getProximoNumeroProcesso` devolvia `PROC-2024-091` de um contador de fixture, enquanto o servidor emite `PROC-2026-000014`. Nenhuma tela o usava — mas ele estava exportado, com hook e chave de cache, esperando alguém chamá-lo. Saiu, junto com `db.usuarios`, `db.prefeituras` e três contadores que ninguém lia mais.
+
+## 35. O arquivo passa a existir na tela, e três rótulos meus estavam errados
+
+O Bloco 11.1 fez o servidor imprimir DOCX e PDF de verdade. A tela continuou mostrando o que fabricava — e é a mesma família de defeito que este projeto já corrigiu três vezes: **o dado passou a existir de um lado e o outro seguiu inventando**.
+
+| O que a tela mostrava | De onde vinha | Agora |
+|---|---|---|
+| Formato (`"DOCX + PDF"`) | Constante por tipo de documento, igual para todo processo | Os formatos que foram impressos |
+| Tamanho (`"196 KB"`) | Constante por tipo, no catálogo | Os bytes que o servidor mediu |
+| Identificador (`DOC-2024-0159`) | Contador local | O identificador da geração no servidor |
+| Botão de download | `showToast("disponível na integração com o backend")` | Baixa o arquivo, autenticado |
+
+**O download não podia ser uma âncora.** `href` apontando para a rota do arquivo daria **401** — a autorização vai no cabeçalho, e âncora não leva cabeçalho. Os bytes vêm por `baixarProtegido`, que passa pela mesma renovação de token das demais chamadas; o nome do arquivo vem do `Content-Disposition`, porque é o servidor que sabe o número do processo e a versão.
+
+**Um indicador parou de interpretar de volta o que a interface tinha escrito.** `resumirDocumentos` somava armazenamento fazendo `parseInt("312 KB")` — número que a própria tela fabricou, formatado como texto e depois lido como número para virar métrica de painel. Agora soma os bytes.
+
+**Três `saiEm` que eu mesmo tinha escrito estavam errados.** Em 22/08 movi timbre, cabeçalho e rodapé para o "Bloco 11", dizendo que "nascem com os templates publicados". O 11.1 publicou template de **layout** — margem, fonte, tamanho — e não configuração por órgão. Foram para o Bloco 12, que ganhou um passo (12.2b) descrevendo o que falta de verdade: onde o brasão mora, e como o layout do órgão convive com um template que é imutável de propósito.
+
+**E faltava um guarda.** O `contracts/openapi_v1.json` daqui ficou dois passos atrás do que o back-end publicava, e nada avisou: `npm run tipos` é manual, e tipo velho não dá erro de compilação — ele descreve um servidor que não existe mais, e a tela só descobre em produção. Agora um teste compara os tipos gerados com o contrato versionado, e `npm run contrato:conferir` compara o contrato com o do back-end. O teste alcança a metade local; a outra depende dos dois repositórios lado a lado, e isso está escrito nele.

@@ -19,7 +19,6 @@ import {
   iniciaisDe,
   motivoDaTrocaDeModalidade,
   notaDaVersao,
-  numeroDeDocumento,
   primeiroNome,
   motivoDoEncerramento,
   noEscopo,
@@ -28,6 +27,7 @@ import {
   statusAposEditar,
   tituloComRotuloDeVersao,
   tituloDoDocumento,
+  totalDeBytes,
 } from "@/lib/dominio"
 import type { BlocoDoDocumento, Retificacao } from "@/lib/dominio"
 import {
@@ -79,6 +79,7 @@ import {
   planoVigente,
   verificacaoDoProcesso,
 } from "@/lib/api/pca-client"
+import { baixarArquivo, gerarArquivos } from "@/lib/api/generation-client"
 import { dataHoraBrasiliaISO } from "@/lib/format"
 import type {
   DocumentoGerado,
@@ -109,8 +110,6 @@ import type {
 
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T
 
-/** Ano-série do identificador do documento gerado (DOC-), até o Bloco 11 produzi-lo. */
-const ANO_SERIE = "2024"
 
 function delay(ms = 350 + Math.random() * 350): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
@@ -163,7 +162,7 @@ function exigeSessao(): Sessao {
 // para que getHistoricoVersoes seja coerente desde o início.
 for (const doc of db.documentos) {
   db.versoes.set(`${doc.processoId}:${doc.tipo}`, [
-    { versao: doc.versao, geradoEm: doc.geradoEm, tamanho: doc.tamanho, nota: "Geração inicial" },
+    { versao: doc.versao, geradoEm: doc.geradoEm, nota: "Geração inicial" },
   ])
 }
 
@@ -631,70 +630,79 @@ function empilhar(chaveVersao: string, entrada: VersaoDocumento): void {
 export async function gerarDocumento(input: GerarDocumentoInput): Promise<DocumentoGerado> {
   const concluido = await concluirDocumento(input.processoId, input.tipo, input.retificacao)
   const processo = await obterProcesso(input.processoId)
-  const objeto = processo.objeto
-  const meta = CATALOGO[input.tipo]
-  const tamanhoKB = meta.tamanhoKB
   const chaveVersao = `${input.processoId}:${input.tipo}`
 
-  const existente = db.documentos.find((d) => d.processoId === input.processoId && d.tipo === input.tipo)
-  const geradoEm = dataHoraBrasiliaISO()
-
-  if (existente) {
-    // A versão vem do servidor: é ele que conta as conclusões, e contar aqui
-    // faria duas abas divergirem sobre qual é a versão vigente.
-    existente.versao = concluido.versao
-    existente.titulo = tituloComRotuloDeVersao(
-      tituloDoDocumento(input.tipo, objeto),
-      existente.versao,
-    )
-    existente.geradoEm = geradoEm
-    existente.tamanho = `${tamanhoKB} KB`
-    existente.status = "final"
-    empilhar(
-      chaveVersao,
-      entradaDeHistorico(existente.versao, geradoEm, `${tamanhoKB} KB`, input.retificacao),
-    )
-    db.corpos.set(chaveVersao, concluido.corpo)
-    if (input.retificacao) {
-      // Só a retificação declarada entra na trilha do processo. Regeração
-      // corriqueira fica no histórico do documento, que é onde ela pertence.
-      registrarEventoLocal(
-        input.processoId,
-        "retificacao",
-        `${CATALOGO[input.tipo].titulo} retificado (v${existente.versao}) — ${notaDaVersao(
-          existente.versao,
-          input.retificacao,
-        )}`,
-      )
-    }
-    return clone(existente)
-  }
+  // O arquivo é impresso pelo servidor, a partir da versão que acabou de ser
+  // congelada. Até 23/08/2026 o formato e o tamanho eram constantes por tipo de
+  // documento — iguais para todo processo, e sem arquivo nenhum por trás.
+  const geracao = await gerarArquivos(input.processoId, input.tipo)
+  const geradoEm = geracao.arquivos[0]?.geradoEm ?? dataHoraBrasiliaISO()
+  const arquivos = geracao.arquivos.map((arquivo) => ({
+    id: arquivo.id,
+    formato: arquivo.formato,
+    nomeDoArquivo: arquivo.nomeDoArquivo,
+    bytes: arquivo.bytes,
+    checksum: arquivo.checksum,
+  }))
 
   const doc: DocumentoGerado = {
-    id: numeroDeDocumento(ANO_SERIE, ++db.seqDocumento),
+    // O identificador é o da geração no servidor, e não um contador local: é por
+    // ele que se pede o arquivo de volta.
+    id: geracao.id,
     prefeituraId: processo.prefeituraId,
     processoId: input.processoId,
-    titulo: tituloDoDocumento(input.tipo, objeto),
+    titulo: tituloComRotuloDeVersao(
+      tituloDoDocumento(input.tipo, processo.objeto),
+      concluido.versao,
+    ),
     tipo: input.tipo,
-    formato: meta.formato,
     geradoEm,
-    tamanho: `${tamanhoKB} KB`,
     status: "final",
     versao: concluido.versao,
+    arquivos,
   }
-  db.documentos.unshift(doc)
-  empilhar(chaveVersao, entradaDeHistorico(concluido.versao, geradoEm, `${tamanhoKB} KB`))
+
+  const anterior = db.documentos.findIndex(
+    (d) => d.processoId === input.processoId && d.tipo === input.tipo,
+  )
+  if (anterior >= 0) {
+    db.documentos.splice(anterior, 1, doc)
+  } else {
+    db.documentos.unshift(doc)
+    db.resumoDocumentos.total += 1
+    db.resumoDocumentos.esteMes += 1
+    db.estatisticas.documentosGerados += 1
+    db.estatisticas.documentosSemana += 1
+    if (input.tipo === "ETP") db.estatisticas.etpsConcluidos += 1
+  }
+  db.resumoDocumentos.armazenamentoMB =
+    Math.round((db.resumoDocumentos.armazenamentoMB + totalDeBytes(arquivos) / 1_048_576) * 10) / 10
+
+  empilhar(chaveVersao, entradaDeHistorico(concluido.versao, geradoEm, input.retificacao))
   db.corpos.set(chaveVersao, concluido.corpo)
 
-  // Indicadores da tela de Documentos e do dashboard acompanham a nova geração.
-  db.resumoDocumentos.total += 1
-  db.resumoDocumentos.esteMes += 1
-  db.resumoDocumentos.armazenamentoMB = Math.round((db.resumoDocumentos.armazenamentoMB + tamanhoKB / 1024) * 10) / 10
-  db.estatisticas.documentosGerados += 1
-  db.estatisticas.documentosSemana += 1
-  if (input.tipo === "ETP") db.estatisticas.etpsConcluidos += 1
-
+  if (anterior >= 0 && input.retificacao) {
+    // Só a retificação declarada entra na trilha do processo. Regeração
+    // corriqueira fica no histórico do documento, que é onde ela pertence.
+    registrarEventoLocal(
+      input.processoId,
+      "retificacao",
+      `${CATALOGO[input.tipo].titulo} retificado (v${concluido.versao}) — ${notaDaVersao(
+        concluido.versao,
+        input.retificacao,
+      )}`,
+    )
+  }
   return clone(doc)
+}
+
+/** Baixa um arquivo gerado, autenticado, e entrega ao navegador. */
+export async function baixarArquivoGerado(
+  processoId: string,
+  tipo: TipoDocumento,
+  arquivoId: string,
+) {
+  return baixarArquivo(processoId, tipo, arquivoId)
 }
 
 /* ── Configurações da prefeitura ───────────────────────────────────────────── */

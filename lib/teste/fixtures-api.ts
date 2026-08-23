@@ -126,4 +126,36 @@ export const documentoApi = {
   body: [] as { sectionCode: string; title: string; text: string; dispensed: boolean }[],
 }
 
+/** Uma geração como o servidor a devolve, com dois arquivos impressos. */
+export const geracaoApi = {
+  id: "7d6c5b4a-1111-4222-8333-444455556666",
+  documentVersion: 1,
+  requestedAt: "2026-08-23T10:00:00-03:00",
+  finishedAt: "2026-08-23T10:00:01-03:00",
+  succeeded: true,
+  attempts: 1,
+  files: [
+    {
+      id: "a1b2c3d4-1111-4222-8333-444455556666",
+      format: "DOCX" as const,
+      fileName: "PROC-2026-000007-ETP-v1.docx",
+      byteSize: 14_336,
+      sha256: "1".repeat(64),
+      documentVersion: 1,
+      templateVersion: 1,
+      generatedAt: "2026-08-23T10:00:01-03:00",
+    },
+    {
+      id: "b2c3d4e5-1111-4222-8333-444455556666",
+      format: "PDF" as const,
+      fileName: "PROC-2026-000007-ETP-v1.pdf",
+      byteSize: 21_504,
+      sha256: "2".repeat(64),
+      documentVersion: 1,
+      templateVersion: 1,
+      generatedAt: "2026-08-23T10:00:01-03:00",
+    },
+  ],
+}
+
 export { secaoApi }

@@ -4,15 +4,16 @@ import Link from "next/link"
 import { useMemo, useState } from "react"
 
 import { DocPill, Dropdown, Input, StatCard } from "@/components/ui"
-import { IconCalendar, IconDatabase, IconDownload, IconEye, IconFileText, IconPlus } from "@/components/ui/icons"
+import { IconCalendar, IconDatabase, IconEye, IconFileText, IconPlus } from "@/components/ui/icons"
 import { EmptyState, ErrorState, SkeletonRows } from "@/components/shared/estados"
 import { Th } from "@/components/shared/tabela"
-import { useToast } from "@/components/shared/providers"
 import { useDocumentos, useResumoDocumentos } from "@/lib/api/hooks"
 import { MarcaSintetica } from "@/components/shared/marca-sintetica"
 import { CATALOGO, ORDEM_FLUXO } from "@/lib/documentos"
 import { ConteudoDoDocumento } from "@/components/documentos/conteudo-do-documento"
-import { foiRetificado, rotuloDaVersao } from "@/lib/dominio"
+import { foiRetificado, rotuloDaVersao, totalDeBytes } from "@/lib/dominio"
+import { BaixarArquivos } from "@/components/documentos/baixar-arquivos"
+import { formatarBytes } from "@/lib/format"
 import { formatDataHora } from "@/lib/format"
 import type { DocumentoGerado, TipoDocumento } from "@/lib/types"
 
@@ -27,7 +28,6 @@ function nomeProcesso(doc: DocumentoGerado): string {
 }
 
 export default function Documentos() {
-  const showToast = useToast()
   const documentos = useDocumentos()
   const resumoDados = useResumoDocumentos()
   const [filtroTipo, setFiltroTipo] = useState<TipoDocumento | null>(null)
@@ -69,8 +69,9 @@ export default function Documentos() {
         <StatCard label="Armazenamento Usado" value={r ? `${r.armazenamentoMB} MB` : "—"} icon={IconDatabase} tone="success" />
       </div>
       <div className="mb-6 -mt-3">
-        {/* Contagens e tamanho vêm do acervo local; o arquivo ainda não existe. */}
-        <MarcaSintetica campo="acervoDocumento" />
+        {/* As contagens ainda vêm do acervo em memória. O tamanho, não: desde o
+            11.1 ele soma os bytes que o servidor mediu em cada arquivo. */}
+        <MarcaSintetica campo="indicadores" />
       </div>
 
       {/* Tabela */}
@@ -146,9 +147,15 @@ export default function Documentos() {
                     <td className="px-4 py-3.25">
                       <DocPill status={doc.tipo} classes={CATALOGO[doc.tipo].chip} />
                     </td>
-                    <td className="px-4 py-3.25 text-sm text-text-3">{doc.formato}</td>
+                    <td className="px-4 py-3.25 text-sm text-text-3">
+                      {/* Os formatos que existem de verdade, e não uma constante
+                          por tipo de documento. */}
+                      {doc.arquivos.map((arquivo) => arquivo.formato).join(" + ") || "—"}
+                    </td>
                     <td className="px-4 py-3.25 text-sm whitespace-nowrap text-text-3">{formatDataHora(doc.geradoEm)}</td>
-                    <td className="px-4 py-3.25 font-mono text-sm text-text-muted">{doc.tamanho}</td>
+                    <td className="px-4 py-3.25 font-mono text-sm text-text-muted">
+                      {doc.arquivos.length > 0 ? formatarBytes(totalDeBytes(doc.arquivos)) : "—"}
+                    </td>
                     <td className="px-4 py-3.25">
                       <DocPill
                         status={doc.status === "final" ? "Final" : "Rascunho"}
@@ -157,15 +164,7 @@ export default function Documentos() {
                     </td>
                     <td className="px-4 py-3.25">
                       <div className="flex gap-1.5">
-                        <button
-                          type="button"
-                          title="Download DOCX/PDF"
-                          aria-label={`Baixar ${doc.titulo}`}
-                          onClick={() => showToast("Exportação DOCX/PDF com timbre disponível na integração com o backend.")}
-                          className="flex size-7 cursor-pointer items-center justify-center rounded-sm border border-border bg-ice text-royal"
-                        >
-                          <IconDownload size={13} strokeWidth={2.5} />
-                        </button>
+                        <BaixarArquivos documento={doc} />
                         <button
                           type="button"
                           title={aberto === doc.id ? "Ocultar conteúdo" : "Visualizar conteúdo"}

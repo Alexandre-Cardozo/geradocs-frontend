@@ -64,10 +64,9 @@ export function proximaVersao(versaoAtual?: number): number {
 export function entradaDeHistorico(
   versao: number,
   geradoEm: string,
-  tamanho: string,
   retificacao?: Retificacao,
 ): VersaoDocumento {
-  return { versao, geradoEm, tamanho, nota: notaDaVersao(versao, retificacao) }
+  return { versao, geradoEm, nota: notaDaVersao(versao, retificacao) }
 }
 
 /**

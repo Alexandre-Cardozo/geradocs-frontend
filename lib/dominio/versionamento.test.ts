@@ -24,16 +24,18 @@ describe("proximaVersao", () => {
 
 describe("entradaDeHistorico", () => {
   it("distingue a geração inicial da regeração", () => {
-    expect(entradaDeHistorico(1, "2026-08-21T10:00:00", "312 KB").nota).toBe("Geração inicial")
-    expect(entradaDeHistorico(2, "2026-08-21T11:00:00", "312 KB").nota).toBe("Regeração")
+    expect(entradaDeHistorico(1, "2026-08-21T10:00:00").nota).toBe("Geração inicial")
+    expect(entradaDeHistorico(2, "2026-08-21T11:00:00").nota).toBe("Regeração")
   })
 
-  it("guarda quando foi gerada e o tamanho", () => {
-    const entrada = entradaDeHistorico(2, "2026-08-21T11:00:00", "348 KB")
+  it("guarda quando foi gerada, e não fabrica tamanho", () => {
+    const entrada = entradaDeHistorico(2, "2026-08-21T11:00:00")
 
     expect(entrada.versao).toBe(2)
     expect(entrada.geradoEm).toBe("2026-08-21T11:00:00")
-    expect(entrada.tamanho).toBe("348 KB")
+    // O tamanho é do arquivo, e o arquivo é do servidor. Escrever "348 KB" aqui
+    // seria a interface medindo algo que ela não tem.
+    expect(entrada.tamanho).toBeUndefined()
   })
 })
 
@@ -41,9 +43,9 @@ describe("empilharVersao", () => {
   it("põe a mais recente no topo e preserva as anteriores", () => {
     // Regerar nunca sobrescreve sem rastro: é exigência de controle sobre um
     // documento que instrui processo de contratação.
-    const historico = [entradaDeHistorico(1, "2026-08-20T10:00:00", "312 KB")]
+    const historico = [entradaDeHistorico(1, "2026-08-20T10:00:00")]
 
-    const atualizado = empilharVersao(historico, entradaDeHistorico(2, "2026-08-21T10:00:00", "315 KB"))
+    const atualizado = empilharVersao(historico, entradaDeHistorico(2, "2026-08-21T10:00:00"))
 
     expect(atualizado.map((v) => v.versao)).toEqual([2, 1])
     expect(historico).toHaveLength(1)
@@ -91,7 +93,7 @@ describe("retificação", () => {
   })
 
   it("a entrada do histórico carrega a nota da retificação", () => {
-    const entrada = entradaDeHistorico(2, "2026-08-22T10:00:00", "48 KB", {
+    const entrada = entradaDeHistorico(2, "2026-08-22T10:00:00", {
       motivo: "erro_material",
       detalhe: "Nome do fornecedor.",
     })

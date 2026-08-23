@@ -445,11 +445,12 @@ function construirDocumentos(): DocumentoGerado[] {
       processoId: pid,
       titulo: `${CATALOGO[tipo].titulo} — ${processoDe(pid)?.objeto ?? "Processo de Contratação"}`,
       tipo,
-      formato: CATALOGO[tipo].formato,
       geradoEm,
-      tamanho: `${CATALOGO[tipo].tamanhoKB} KB`,
       status,
       versao: 1,
+      // Sem arquivo: estes documentos vêm de fixture e nunca passaram pelo
+      // impressor. A tela mostra "—" em vez de um tamanho que ninguém mediu.
+      arquivos: [],
     }));
 
   return [
@@ -470,11 +471,10 @@ function construirDocumentos(): DocumentoGerado[] {
       processoId: "PROC-2024-079",
       titulo: "ETP — Serviços de Vigilância Armada",
       tipo: "ETP",
-      formato: "DOCX + PDF",
       geradoEm: "2024-06-25T09:55:00",
-      tamanho: "266 KB",
       status: "rascunho",
       versao: 1,
+      arquivos: [],
     },
     {
       id: "DOC-2024-0158",
@@ -482,11 +482,10 @@ function construirDocumentos(): DocumentoGerado[] {
       processoId: "PROC-2024-078",
       titulo: "Mapa de Riscos — TI 2024",
       tipo: "Mapa",
-      formato: "PDF",
       geradoEm: "2024-06-24T14:30:00",
-      tamanho: "128 KB",
       status: "final",
       versao: 1,
+      arquivos: [],
     },
   ];
 }

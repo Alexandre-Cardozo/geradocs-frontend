@@ -122,6 +122,49 @@ export async function requisicaoProtegida<T>(path: string, init: RequestInit = {
   return requisicaoAutenticada<T>(path, init)
 }
 
+/**
+ * Baixa bytes autenticado.
+ *
+ * Existe porque uma âncora comum não leva o cabeçalho de autorização: apontar o
+ * `href` para a rota do arquivo daria 401 e a pessoa veria um download quebrado
+ * sem nenhuma explicação. Aqui a resposta vem pela mesma porta das demais, com a
+ * mesma renovação de token, e só então é entregue ao navegador.
+ */
+export async function baixarProtegido(
+  path: string,
+  permiteRenovar = true,
+): Promise<{ conteudo: Blob; nomeSugerido: string | null }> {
+  if (!accessToken) await renovarToken()
+  let response: Response
+  try {
+    response = await fetch(`${API_URL}${path}`, {
+      credentials: "include",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+  } catch {
+    throw new ApiError("Não foi possível conectar ao servidor. Verifique se o backend está em execução.", 0)
+  }
+  if (response.status === 401 && permiteRenovar) {
+    accessToken = null
+    await renovarToken()
+    return baixarProtegido(path, false)
+  }
+  if (!response.ok) throw await erroDa(response, "Não foi possível baixar o arquivo.")
+  return {
+    conteudo: await response.blob(),
+    // O nome vem do servidor: ele conhece o número do processo e a versão, e é
+    // isso que torna o arquivo recuperável numa pasta de downloads.
+    nomeSugerido: nomeNoCabecalho(response.headers.get("Content-Disposition")),
+  }
+}
+
+/** O `filename` do `Content-Disposition`, quando o servidor o envia. */
+function nomeNoCabecalho(cabecalho: string | null): string | null {
+  if (!cabecalho) return null
+  const achado = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(cabecalho)
+  return achado?.[1] ? decodeURIComponent(achado[1]) : null
+}
+
 type PerfilBackend = NonNullable<NonNullable<BackendSession["user"]>["profileAccess"]>
 
 const perfis: Record<PerfilBackend, PerfilAcesso> = {

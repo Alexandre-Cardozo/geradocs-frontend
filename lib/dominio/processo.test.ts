@@ -35,11 +35,10 @@ function documento(processoId: string, tipo: TipoDocumento): DocumentoGerado {
     processoId,
     titulo: `${tipo} — Aquisição`,
     tipo,
-    formato: "DOCX + PDF",
     geradoEm: "2026-08-21T10:00:00",
-    tamanho: "312 KB",
     status: "final",
     versao: 1,
+    arquivos: [],
   }
 }
 

@@ -14,6 +14,7 @@
     "coverage": "vitest run --coverage",
     "e2e": "playwright test",
     "contrato:sync": "cp ../geradocs-backend/docs/reference/openapi_v1.json contracts/openapi_v1.json",
+    "contrato:conferir": "diff -q ../geradocs-backend/docs/reference/openapi_v1.json contracts/openapi_v1.json && echo 'contrato em dia'",
     "tipos": "openapi-typescript contracts/openapi_v1.json -o lib/api/gerado/v1.d.ts",
     "deps:sync": "docker run --rm -v \"$PWD\":/app -w /app node:24-slim npm install --package-lock-only --no-audit --no-fund && npm install",
     "check": "npm run lint && npm run lint:ds && npm run typecheck && npm test",

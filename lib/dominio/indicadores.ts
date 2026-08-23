@@ -3,7 +3,7 @@
  * documentos — nunca guardados como contador que pode divergir do que existe.
  */
 
-import type { DocumentoGerado, Processo, ResumoDocumentos } from "@/lib/types"
+import type { ArquivoDoDocumento, DocumentoGerado, Processo, ResumoDocumentos } from "@/lib/types"
 
 export interface Indicadores {
   /** Processos que ainda não foram encerrados. */
@@ -32,18 +32,21 @@ export function calcularIndicadores(processos: Processo[], documentos: Documento
 /**
  * Resumo do repositório de documentos: quantidade e armazenamento.
  *
- * O tamanho vem como texto ("312 KB") porque é o que a interface exibe; a soma
- * ignora o que não for numérico em vez de estourar — um documento sem tamanho
- * registrado não pode derrubar o indicador inteiro.
+ * O armazenamento soma os bytes que o servidor mediu em cada arquivo. Até
+ * 23/08/2026 ele interpretava de volta um texto ("312 KB") que a própria
+ * interface tinha fabricado — número que saía do nada e voltava para o painel
+ * parecendo medida.
  */
+/** A soma dos arquivos de um documento, em bytes. */
+export function totalDeBytes(arquivos: ArquivoDoDocumento[]): number {
+  return arquivos.reduce((soma, arquivo) => soma + arquivo.bytes, 0)
+}
+
 export function resumirDocumentos(documentos: DocumentoGerado[]): ResumoDocumentos {
-  const totalKB = documentos.reduce(
-    (soma, documento) => soma + (Number.parseInt(documento.tamanho, 10) || 0),
-    0,
-  )
+  const bytes = documentos.reduce((soma, documento) => soma + totalDeBytes(documento.arquivos), 0)
   return {
     total: documentos.length,
     esteMes: documentos.length,
-    armazenamentoMB: Math.round((totalKB / 1024) * 10) / 10,
+    armazenamentoMB: Math.round((bytes / 1_048_576) * 10) / 10,
   }
 }

@@ -225,26 +225,37 @@ export interface EventoDoProcesso {
  */
 export type TipoDocumento = "Cotação" | "ETP" | "Mapa" | "TR" | "Edital" | "Contrato"
 
+/** Um arquivo que o servidor imprimiu, com o que ele mediu. */
+export interface ArquivoDoDocumento {
+  id: string
+  formato: "DOCX" | "PDF"
+  nomeDoArquivo: string
+  bytes: number
+  /** SHA-256 do arquivo, para conferir o que foi baixado. */
+  checksum: string
+}
+
 export interface DocumentoGerado {
-  /** Formato DOC-AAAA-NNNN. */
+  /** Identificador da geração no servidor. */
   id: string
   prefeituraId: string
   processoId: string
   titulo: string
   tipo: TipoDocumento
-  formato: string
   geradoEm: string
-  tamanho: string
   status: "final" | "rascunho"
   /** Versão vigente (1 na primeira geração; incrementa a cada regeração/retificação). */
   versao: number
+  /** Os arquivos impressos desta geração. Vazio só em documento ainda não gerado. */
+  arquivos: ArquivoDoDocumento[]
 }
 
 /** Entrada do histórico de versões de um documento (rastreabilidade — não sobrescreve). */
 export interface VersaoDocumento {
   versao: number
   geradoEm: string
-  tamanho: string
+  /** Tamanho do arquivo daquela versão; ausente quando não há arquivo guardado. */
+  tamanho?: string
   /** Motivo da versão: "Geração inicial", "Regeração", "Retificação: <apontamento>". */
   nota: string
 }

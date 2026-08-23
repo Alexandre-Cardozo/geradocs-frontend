@@ -7,6 +7,7 @@ import {
   dataPorExtenso,
   formatBRL,
   formatData,
+  formatarBytes,
   formatDataHora,
   formatNumeroBR,
   horaBrasilia,
@@ -174,5 +175,21 @@ describe("fuso de Brasília", () => {
     expect(dataHoraBrasiliaISO()).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/)
     expect(dataPorExtenso()).toMatch(/de \d{4}$/)
     expect(saudacao()).toMatch(/^(Bom dia|Boa tarde|Boa noite)$/)
+  })
+})
+
+describe("formatarBytes", () => {
+  it("mostra bytes, quilobytes e megabytes em pt-BR", () => {
+    // O tamanho vem do que o servidor mediu; formatar é trabalho da tela.
+    expect(formatarBytes(512)).toBe("512 B")
+    // Uma casa só abaixo de 10 KB: "14,0 KB" numa coluna de acervo é ruído.
+    expect(formatarBytes(1_024)).toBe("1,0 KB")
+    expect(formatarBytes(14_336)).toBe("14 KB")
+    expect(formatarBytes(524_288)).toBe("512 KB")
+    expect(formatarBytes(1_572_864)).toBe("1,5 MB")
+  })
+
+  it("arquivo vazio não quebra a coluna", () => {
+    expect(formatarBytes(0)).toBe("0 B")
   })
 })

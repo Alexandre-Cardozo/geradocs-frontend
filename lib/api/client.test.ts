@@ -5,6 +5,7 @@ import * as acesso from "@/lib/api/access-client"
 import * as contratacao from "@/lib/api/procurement-client"
 import * as elaboracao from "@/lib/api/authoring-client"
 import * as pca from "@/lib/api/pca-client"
+import * as impressao from "@/lib/api/generation-client"
 
 /**
  * A fachada de dados.
@@ -24,6 +25,7 @@ vi.mock("@/lib/api/access-client")
 vi.mock("@/lib/api/procurement-client")
 vi.mock("@/lib/api/authoring-client")
 vi.mock("@/lib/api/pca-client")
+vi.mock("@/lib/api/generation-client")
 
 const PROCESSO = "3f2b1a00-1111-4222-8333-444455556666"
 const PREFEITURA = "1b7c8e10-2d3f-4a5b-8c9d-0e1f2a3b4c5d"
@@ -115,6 +117,7 @@ describe("a fachada liga cada chamada no lugar certo", () => {
     ["recuperarSenha", (a) => a.recuperarSenha("  a@b.gov.br  "), autenticacao.solicitarRedefinicao, ["a@b.gov.br"]],
     ["resetarSenha", (a) => a.resetarSenha("t", "s"), autenticacao.redefinirSenha, ["t", "s"]],
     ["logout", (a) => a.logout(), autenticacao.encerrarSessao, []],
+    ["baixarArquivoGerado", (a) => a.baixarArquivoGerado(PROCESSO, "ETP", "arq-1"), impressao.baixarArquivo, [PROCESSO, "ETP", "arq-1"]],
   ] as Array<[string, (a: typeof import("@/lib/api/client")) => Promise<unknown>, unknown, unknown[]]>)(
     "%s",
     async (_nome, chamar, destino, argumentos) => {
@@ -252,6 +255,13 @@ describe("processo", () => {
       processo({ documentos: ["ETP", "TR", "Edital"] }) as never,
     )
     vi.mocked(elaboracao.concluirDocumento).mockResolvedValue({ versao: 1, corpo: [] } as never)
+    vi.mocked(impressao.gerarArquivos).mockResolvedValue({
+      id: "GER-EDITAL",
+      versaoDoDocumento: 1,
+      pedidaEm: "2026-08-23T10:00:00-03:00",
+      concluida: true,
+      arquivos: [],
+    } as never)
     // O caso que importa: o Edital já foi gerado quando a modalidade muda para
     // uma em que ele não é cabível. O impacto é medido contra o que existe.
     await api.gerarDocumento({ processoId: PROCESSO, tipo: "Edital" })
@@ -376,9 +386,32 @@ describe("seções do documento", () => {
 describe("geração de documento", () => {
   const concluido = { versao: 1, corpo: [{ sectionCode: "1", titulo: "N", texto: "t" }] }
 
+  /** O que o impressor do servidor devolve: arquivos com bytes medidos. */
+  function geracao(versao = 1) {
+    return {
+      id: `GER-${versao}`,
+      versaoDoDocumento: versao,
+      pedidaEm: "2026-08-23T10:00:00-03:00",
+      concluida: true,
+      arquivos: [
+        {
+          id: `ARQ-DOCX-${versao}`,
+          formato: "DOCX" as const,
+          nomeDoArquivo: `PROC-ETP-v${versao}.docx`,
+          bytes: 524_288,
+          checksum: "1".repeat(64),
+          versaoDoDocumento: versao,
+          versaoDoTemplate: 1,
+          geradoEm: "2026-08-23T10:00:01-03:00",
+        },
+      ],
+    }
+  }
+
   beforeEach(() => {
     vi.mocked(elaboracao.concluirDocumento).mockResolvedValue(concluido as never)
     vi.mocked(contratacao.obterProcesso).mockResolvedValue(processo() as never)
+    vi.mocked(impressao.gerarArquivos).mockResolvedValue(geracao() as never)
   })
 
   it("a primeira geração cria o documento e move os indicadores", async () => {

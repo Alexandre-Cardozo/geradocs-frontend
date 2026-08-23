@@ -356,6 +356,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/generations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["history"];
+        put?: never;
+        post: operations["generate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/generations/files/{fileId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["download"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/procurement-processes/{processId}/documents/{documentType}/sections": {
         parameters: {
             query?: never;
@@ -734,8 +766,42 @@ export interface components {
             quantity?: number;
             unit?: string;
         };
+        GenerateDocumentRequest: {
+            formats: ("DOCX" | "PDF")[];
+        };
+        GeneratedFileResponse: {
+            /** Format: int64 */
+            byteSize: number;
+            /** Format: int32 */
+            documentVersion: number;
+            fileName: string;
+            /** @enum {string} */
+            format: "DOCX" | "PDF";
+            /** Format: date-time */
+            generatedAt: string;
+            /** Format: uuid */
+            id: string;
+            sha256: string;
+            /** Format: int32 */
+            templateVersion: number;
+        };
         GeneratedSectionResponse: {
             text: string;
+        };
+        GenerationJobResponse: {
+            /** Format: int32 */
+            attempts: number;
+            /** Format: int32 */
+            documentVersion: number;
+            error?: string;
+            files: components["schemas"]["GeneratedFileResponse"][];
+            /** Format: date-time */
+            finishedAt?: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            requestedAt: string;
+            succeeded: boolean;
         };
         ImportPcaPlanRequest: {
             content: string;
@@ -1716,6 +1782,80 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["DocumentResponse"];
+                };
+            };
+        };
+    };
+    history: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                processId: string;
+                documentType: "COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GenerationJobResponse"][];
+                };
+            };
+        };
+    };
+    generate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                processId: string;
+                documentType: "COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GenerateDocumentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GenerationJobResponse"];
+                };
+            };
+        };
+    };
+    download: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                processId: string;
+                documentType: "COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO";
+                fileId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string;
                 };
             };
         };

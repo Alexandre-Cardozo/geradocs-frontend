@@ -20,16 +20,22 @@ function usuario(prefeituraId: string | null): Usuario {
   }
 }
 
-function documento(prefeituraId: string, tamanho: string): DocumentoGerado {
+/** @param bytes o que o servidor mediu; zero significa documento sem arquivo. */
+function documento(prefeituraId: string, bytes = 0): DocumentoGerado {
   return {
-    id: `DOC-${prefeituraId}-${tamanho}`,
+    id: `DOC-${prefeituraId}-${bytes}`,
     prefeituraId,
     processoId: "PROC-2026-001",
     titulo: "ETP",
     tipo: "ETP",
-    formato: "DOCX",
     geradoEm: "2026-08-21T10:00:00",
-    tamanho,
+    arquivos: bytes === 0 ? [] : [{
+      id: `ARQ-${bytes}`,
+      formato: "PDF",
+      nomeDoArquivo: "etp.pdf",
+      bytes,
+      checksum: "0".repeat(64),
+    }],
     status: "final",
     versao: 1,
   }
@@ -52,13 +58,13 @@ describe("prefeiturasVisiveis", () => {
 
 describe("noEscopo", () => {
   it("filtra pelo escopo informado", () => {
-    const documentos = [documento("PREF-001", "100 KB"), documento("PREF-002", "200 KB")]
+    const documentos = [documento("PREF-001"), documento("PREF-002")]
 
     expect(noEscopo(documentos, ["PREF-001"])).toHaveLength(1)
   })
 
   it("escopo nulo devolve tudo", () => {
-    const documentos = [documento("PREF-001", "100 KB"), documento("PREF-002", "200 KB")]
+    const documentos = [documento("PREF-001"), documento("PREF-002")]
 
     expect(noEscopo(documentos, null)).toHaveLength(2)
   })
@@ -66,21 +72,27 @@ describe("noEscopo", () => {
   it("escopo vazio não devolve nada", () => {
     // Lista vazia e ausência de filtro são coisas diferentes: a primeira é "não
     // pode ver nada", a segunda é "pode ver tudo".
-    expect(noEscopo([documento("PREF-001", "100 KB")], [])).toHaveLength(0)
+    expect(noEscopo([documento("PREF-001")], [])).toHaveLength(0)
   })
 })
 
 describe("resumirDocumentos", () => {
-  it("soma o armazenamento em megabytes com uma casa", () => {
-    const resumo = resumirDocumentos([documento("PREF-001", "512 KB"), documento("PREF-001", "512 KB")])
+  it("soma os bytes que o servidor mediu, em megabytes com uma casa", () => {
+    const meioMega = 524_288
+    const resumo = resumirDocumentos([
+      documento("PREF-001", meioMega),
+      documento("PREF-001", meioMega),
+    ])
 
     expect(resumo.total).toBe(2)
     expect(resumo.armazenamentoMB).toBe(1)
   })
 
-  it("ignora tamanho não numérico em vez de estourar", () => {
-    // Um documento sem tamanho registrado não pode derrubar o indicador inteiro.
-    const resumo = resumirDocumentos([documento("PREF-001", "312 KB"), documento("PREF-001", "—")])
+  it("documento sem arquivo conta no total e não no armazenamento", () => {
+    // Documento de fixture, anterior à geração real: existe no acervo e não
+    // ocupa espaço nenhum. Antes o indicador interpretava de volta um texto que
+    // a própria interface tinha fabricado.
+    const resumo = resumirDocumentos([documento("PREF-001", 314_572), documento("PREF-001")])
 
     expect(resumo.total).toBe(2)
     expect(resumo.armazenamentoMB).toBe(0.3)

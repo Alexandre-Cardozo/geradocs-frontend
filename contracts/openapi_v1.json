@@ -107,7 +107,7 @@
       "CloseProcurementProcessRequest" : {
         "properties" : {
           "justification" : {
-            "maxLength" : 1000,
+            "maxLength" : 500,
             "minLength" : 0,
             "type" : "string"
           }
@@ -585,6 +585,56 @@
         "required" : [ "demand", "foreseen" ],
         "type" : "object"
       },
+      "GenerateDocumentRequest" : {
+        "properties" : {
+          "formats" : {
+            "items" : {
+              "enum" : [ "DOCX", "PDF" ],
+              "type" : "string"
+            },
+            "minItems" : 1,
+            "type" : "array"
+          }
+        },
+        "required" : [ "formats" ],
+        "type" : "object"
+      },
+      "GeneratedFileResponse" : {
+        "properties" : {
+          "byteSize" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "documentVersion" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "fileName" : {
+            "type" : "string"
+          },
+          "format" : {
+            "enum" : [ "DOCX", "PDF" ],
+            "type" : "string"
+          },
+          "generatedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "sha256" : {
+            "type" : "string"
+          },
+          "templateVersion" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "byteSize", "documentVersion", "fileName", "format", "generatedAt", "id", "sha256", "templateVersion" ],
+        "type" : "object"
+      },
       "GeneratedSectionResponse" : {
         "properties" : {
           "text" : {
@@ -592,6 +642,44 @@
           }
         },
         "required" : [ "text" ],
+        "type" : "object"
+      },
+      "GenerationJobResponse" : {
+        "properties" : {
+          "attempts" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "documentVersion" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "error" : {
+            "type" : "string"
+          },
+          "files" : {
+            "items" : {
+              "$ref" : "#/components/schemas/GeneratedFileResponse"
+            },
+            "type" : "array"
+          },
+          "finishedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "requestedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "succeeded" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "attempts", "documentVersion", "files", "id", "requestedAt", "succeeded" ],
         "type" : "object"
       },
       "ImportPcaPlanRequest" : {
@@ -976,7 +1064,7 @@
       "ReopenProcurementProcessRequest" : {
         "properties" : {
           "reason" : {
-            "maxLength" : 1000,
+            "maxLength" : 500,
             "minLength" : 0,
             "type" : "string"
           }
@@ -2306,6 +2394,131 @@
           }
         },
         "tags" : [ "document-authoring-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/generations" : {
+      "get" : {
+        "operationId" : "history",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "documentType",
+          "required" : true,
+          "schema" : {
+            "enum" : [ "COTACAO", "ETP", "MAPA", "TR", "EDITAL", "CONTRATO" ],
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/GenerationJobResponse"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "document-generation-controller" ]
+      },
+      "post" : {
+        "operationId" : "generate",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "documentType",
+          "required" : true,
+          "schema" : {
+            "enum" : [ "COTACAO", "ETP", "MAPA", "TR", "EDITAL", "CONTRATO" ],
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/GenerateDocumentRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/GenerationJobResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "document-generation-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/generations/files/{fileId}" : {
+      "get" : {
+        "operationId" : "download",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "documentType",
+          "required" : true,
+          "schema" : {
+            "enum" : [ "COTACAO", "ETP", "MAPA", "TR", "EDITAL", "CONTRATO" ],
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "fileId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "format" : "binary",
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "document-generation-controller" ]
       }
     },
     "/api/v1/procurement-processes/{processId}/documents/{documentType}/sections" : {
