@@ -7,10 +7,8 @@ import {
   documentos as documentosFixture,
   estatisticas as estatisticasFixture,
   parecerDFDBase,
-  prefeituras as prefeiturasFixture,
   processos as processosFixture,
   resumoDocumentos as resumoDocumentosFixture,
-  usuarios as usuariosFixture,
 } from "@/lib/mocks/fixtures"
 import { CATALOGO } from "@/lib/documentos"
 import {
@@ -22,7 +20,6 @@ import {
   motivoDaTrocaDeModalidade,
   notaDaVersao,
   numeroDeDocumento,
-  numeroDeProcesso,
   primeiroNome,
   motivoDoEncerramento,
   noEscopo,
@@ -112,7 +109,7 @@ import type {
 
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T
 
-/** Ano-série dos identificadores do órgão (PROC-/DOC-). Mantém a numeração coerente com o acervo. */
+/** Ano-série do identificador do documento gerado (DOC-), até o Bloco 11 produzi-lo. */
 const ANO_SERIE = "2024"
 
 function delay(ms = 350 + Math.random() * 350): Promise<void> {
@@ -121,8 +118,6 @@ function delay(ms = 350 + Math.random() * 350): Promise<void> {
 
 /* ── Estado em memória (persiste durante a sessão) ─────────────────────────── */
 const db = {
-  usuarios: clone(usuariosFixture),
-  prefeituras: clone(prefeiturasFixture),
   /** Sessão real usada como identidade pelos módulos ainda mockados. */
   sessao: null as Sessao | null,
   processos: clone(processosFixture),
@@ -143,12 +138,8 @@ const db = {
   corpos: new Map<string, BlocoDoDocumento[]>(),
   estatisticas: clone(estatisticasFixture),
   resumoDocumentos: clone(resumoDocumentosFixture),
-  seqProcesso: 90,
   // Acima do maior id gerado pelas fixtures (evita colisão com novos documentos).
   seqDocumento: 200,
-  seqApontamento: 0,
-  seqUsuario: usuariosFixture.length,
-  seqPrefeitura: prefeiturasFixture.length,
 }
 
 /** Usuário logado, ou null. */
@@ -286,11 +277,6 @@ export async function getProcessos(params: ListaProcessosParams = {}): Promise<P
 
 export async function getProcesso(id: string): Promise<Processo> {
   return obterProcesso(id)
-}
-
-export async function getProximoNumeroProcesso(): Promise<string> {
-  await delay(150)
-  return numeroDeProcesso(ANO_SERIE, db.seqProcesso)
 }
 
 export async function criarProcesso(input: NovoProcessoInput): Promise<Processo> {

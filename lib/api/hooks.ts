@@ -17,7 +17,6 @@ export const chaves = {
   estatisticas: ["estatisticas"] as const,
   processos: (params: ListaProcessosParams) => ["processos", params] as const,
   processo: (id: string) => ["processo", id] as const,
-  proximoNumero: ["processos", "proximo-numero"] as const,
   parecerDFD: (id: string) => ["parecer-dfd", id] as const,
   secoes: (id: string, tipo: TipoDocumento) => ["secoes", id, tipo] as const,
   documentos: ["documentos"] as const,
@@ -107,10 +106,6 @@ export function useProcesso(id: string) {
     queryFn: () => api.getProcesso(id),
     enabled: id !== "",
   })
-}
-
-export function useProximoNumeroProcesso() {
-  return useQuery({ queryKey: chaves.proximoNumero, queryFn: api.getProximoNumeroProcesso })
 }
 
 export function useCriarProcesso() {

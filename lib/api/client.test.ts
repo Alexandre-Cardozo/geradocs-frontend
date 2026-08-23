@@ -232,12 +232,6 @@ describe("escopo: quem vê o quê", () => {
 })
 
 describe("processo", () => {
-  it("o próximo número segue a série do órgão", async () => {
-    const api = await fachadaLimpa()
-
-    expect(await api.getProximoNumeroProcesso()).toMatch(/^PROC-2024-\d{3}$/)
-  })
-
   it("editar sem trocar a modalidade não registra nada na trilha", async () => {
     const api = await fachadaLimpa()
     vi.mocked(contratacao.obterProcesso).mockResolvedValue(processo() as never)

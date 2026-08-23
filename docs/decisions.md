@@ -410,7 +410,7 @@ O Art. 18, § 1º, II exige **demonstração** da previsão no Plano de Contrata
 
 **Um defeito anterior apareceu no caminho.** Desde que o front deixou o mock (§31), as seções vêm da API — e a API não conhece `painel`, que é assunto da tela. O campo morria no mapeamento, e os painéis de quantidades, ATA e valor **não apareciam mais**. Nenhum teste percebeu porque nenhum testava a seção *depois* da volta pelo servidor. `painelDaSecao(tipo, codigo)` faz a junção pelo código, e o teste que o guarda diz por que existe.
 
-**`FormField` ganhou `htmlFor`.** O rótulo não envolve o controle — vem antes, como irmão —, então sem `htmlFor` não havia associação nenhuma: leitor de tela anuncia um campo sem nome e clicar no texto não move o foco. Os campos deste painel passaram a usá-lo; **os demais formulários do produto continuam sem**, e isso é dívida aberta, não trabalho concluído.
+**`FormField` ganhou `htmlFor`.** O rótulo não envolve o controle — vem antes, como irmão —, então sem ligação explícita não havia associação nenhuma. Os campos deste painel passaram a usá-lo, e os demais ficaram como dívida aberta. **Fechada no mesmo dia, no §33:** a ligação passou a ser automática, por contexto, e alcança os 49 campos.
 
 ## 33. O ciclo de vida do processo sai do mock, e a cobertura deixa de ter exclusões
 
@@ -430,6 +430,27 @@ Excluídas, elas escondiam exatamente os defeitos acima. **As exclusões acabara
 
 Cobrir revelou três trechos **sem caminho de execução**, e eles saíram em vez de ganharem teste: a busca da prefeitura por id em `montarSessao` (só quem está logado edita o próprio perfil), o fallback `?? []` do histórico de versões (todo documento tem histórico desde a criação) e um `pendingDocuments` público que ninguém chamava.
 
-**Rótulo sem campo.** `FormField` renderiza o `<label>` como irmão do controle. Sem ligação explícita não havia associação nenhuma: **47 dos 49 campos do produto** eram anunciados como "caixa de edição" e nada mais. A ligação é por `aria-labelledby` a partir de um contexto, e não por `htmlFor`, porque um `FormField` pode envolver mais de um controle — dois elementos com o mesmo `id` seriam DOM inválido, e o segundo voltaria a ficar sem nome. `aria-label` escrito à mão continua vencendo. Um teste prova a ligação para **cada tipo de controle**, porque um controle novo entraria sem nome e ninguém notaria.
+**Rótulo sem campo.** `FormField` renderiza o `<label>` como irmão do controle. Sem ligação explícita não havia associação nenhuma em **47 dos 49 campos do produto**. *Correção de 22/08/2026, medida depois:* o efeito não era "campo sem nome nenhum" — quase todo controle tem `placeholder`, e o leitor de tela anunciava o placeholder. O defeito é real e menor do que a primeira redação deste parágrafo dizia: placeholder **não é rótulo** — ele some quando a pessoa começa a digitar, e some justamente para quem precisa reler o que o campo pede. A ligação é por `aria-labelledby` a partir de um contexto, e não por `htmlFor`, porque um `FormField` pode envolver mais de um controle — dois elementos com o mesmo `id` seriam DOM inválido, e o segundo voltaria a ficar sem nome. `aria-label` escrito à mão continua vencendo. Um teste prova a ligação para **cada tipo de controle**, porque um controle novo entraria sem nome e ninguém notaria.
 
 **Cinco `saiEm` apontavam para blocos errados.** Timbre, cabeçalho e rodapé diziam "Bloco 10", que não os entrega — foram para o 11.1, com os templates publicados. Parecer do DFD e indicadores não tinham bloco nenhum, e por isso o plano ganhou o **Bloco 12**, que é o endereço do que a interface ainda fabrica. O guarda-corpo exige o formato "Bloco N" e é o que impede a lista de virar permanente; ele não tem como cobrar que o bloco declarado exista.
+
+## 34. O que os guarda-corpos não alcançavam
+
+A segunda auditoria do Bloco 10 não procurou defeitos: procurou **o que os testes existentes não conseguiriam ver**. Achou três coisas.
+
+**O e2e de acessibilidade nunca tinha visitado uma tela de formulário.** Visitava login, painel e lista. Agora visita também `/processos/novo`, `/configuracoes`, o editor de documento e o detalhe do processo — quatro páginas onde os campos vivem.
+
+**Mas ele não teria pego o defeito de rótulo, e isso foi medido, não suposto.** Com a associação removida de propósito, o axe relata exatamente o mesmo resultado: ele aceita `placeholder` como nome acessível. Duas consequências. A primeira é que o parágrafo do §33 sobre "anunciados como caixa de edição e nada mais" estava **errado** e foi corrigido — o leitor de tela anunciava o placeholder. O defeito continua sendo defeito, porque placeholder some quando a pessoa começa a digitar, e some justamente para quem precisa reler o que o campo pede. A segunda é que o guarda daquela regra é o teste de unidade, controle a controle, e isso está escrito nos dois lugares para ninguém confundir de novo.
+
+**A exceção de `color-contrast` descrevia um problema menor do que o real.** Ela dizia "12 no painel e 6 na lista, todas na sidebar navy" — porque a varredura nunca tinha visitado formulário. Nas telas novas aparecem violações em **superfície clara**, e piores que as da sidebar:
+
+| Token | Sobre | Razão | Onde aparece |
+|---|---|---|---|
+| `text-text-faint` `#cbd5e1` | `#f1f5f9` | **1,35:1** | atalho ⌘K |
+| `text-text-faint` `#cbd5e1` | branco | **1,48:1** | "Não definido" no resumo do processo |
+| `text-text-muted` `#94a3b8` | `#f8fafc` | **2,45:1** | passos do formulário |
+| `text-text-muted` `#94a3b8` | branco | **2,56:1** | rótulos do resumo |
+
+A WCAG AA exige 4,5:1. A decisão de manter a regra fora do gate continua de pé pelo motivo original — **mudar valor de token é de quem mantém o design system**, não deste teste. O que mudou é o escopo declarado: a exceção falava de um problema de sidebar, e o problema é do produto inteiro. `text-text-faint` a 1,35:1 não é escolha de estilo; é texto que quase ninguém lê. **Fica aguardando a decisão de quem mantém os tokens.**
+
+**Código morto que mentia.** `getProximoNumeroProcesso` devolvia `PROC-2024-091` de um contador de fixture, enquanto o servidor emite `PROC-2026-000014`. Nenhuma tela o usava — mas ele estava exportado, com hook e chave de cache, esperando alguém chamá-lo. Saiu, junto com `db.usuarios`, `db.prefeituras` e três contadores que ninguém lia mais.

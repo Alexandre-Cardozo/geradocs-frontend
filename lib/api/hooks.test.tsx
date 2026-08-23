@@ -73,12 +73,6 @@ describe("consultas: cada uma pede ao servidor o que a sua chave promete", () =>
     ["useEstatisticas", () => hooks.useEstatisticas(), chaves.estatisticas, "getEstatisticas"],
     ["useProcessos", () => hooks.useProcessos(), chaves.processos({}), "getProcessos"],
     ["useProcesso", () => hooks.useProcesso(PROCESSO), chaves.processo(PROCESSO), "getProcesso"],
-    [
-      "useProximoNumeroProcesso",
-      () => hooks.useProximoNumeroProcesso(),
-      chaves.proximoNumero,
-      "getProximoNumeroProcesso",
-    ],
     ["useParecerDFD", () => hooks.useParecerDFD(PROCESSO), chaves.parecerDFD(PROCESSO), "getParecerDFD"],
     ["useSecoes", () => hooks.useSecoes(PROCESSO, "ETP"), chaves.secoes(PROCESSO, "ETP"), "getSecoes"],
     ["useDocumentos", () => hooks.useDocumentos(), chaves.documentos, "getDocumentos"],

@@ -15,8 +15,13 @@ import { renderizar, screen } from "@/lib/teste/renderizar"
  * O rótulo do `FormField` nomeia o controle que ele rotula.
  *
  * Até 22/08/2026 não nomeava: o `<label>` vem antes do campo, como irmão, e sem
- * ligação explícita não havia associação nenhuma — quarenta e sete campos do
- * produto eram anunciados como "caixa de edição" e nada mais.
+ * ligação explícita não havia associação nenhuma em quarenta e sete campos.
+ *
+ * Este teste existe porque **o axe não pega isso**. Medido: com a associação
+ * removida, a varredura relata exatamente o mesmo, porque aceita `placeholder`
+ * como nome acessível. Placeholder não é rótulo — ele some quando a pessoa
+ * começa a digitar, e some justamente para quem precisa reler o que o campo
+ * pede. Um controle novo entraria sem rótulo e nenhum gate de tela notaria.
  *
  * Este teste é a prova de que a ligação existe para **cada tipo de controle**.
  * Sem ele, um controle novo entraria sem nome acessível e ninguém notaria: a

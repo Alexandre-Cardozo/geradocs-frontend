@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright"
 import { expect, test } from "@playwright/test"
 
-import { comSessao, rota, semSessao } from "./api"
+import { comProcessoEDocumento, comSessao, processo, rota, semSessao } from "./api"
 
 /**
  * Acessibilidade tem peso próprio aqui: o produto é usado por servidores
@@ -25,6 +25,14 @@ const graves = ["serious", "critical"]
  * Enquanto isso, **todas as outras regras graves continuam valendo**: excluir a
  * suíte inteira por causa de uma regra seria trocar um defeito conhecido por
  * cegueira completa.
+ *
+ * **22/08/2026 — o escopo desta exceção estava errado.** Ela dizia "todas na
+ * sidebar navy" porque a varredura nunca tinha visitado tela de formulário. Com
+ * as quatro telas novas abaixo, aparecem violações em superfície clara e piores:
+ * `text-text-faint` dá **1,48:1** sobre branco no "Não definido" do resumo do
+ * processo, e `text-text-muted`, **2,56:1** nos rótulos ao lado. A exceção
+ * continua valendo pelo mesmo motivo — token é decisão de quem mantém o design
+ * system —, mas agora ela descreve o tamanho real do problema.
  */
 const REGRA_EM_ABERTO = "color-contrast"
 
@@ -52,6 +60,47 @@ test("o painel não tem violação grave", async ({ page }) => {
 test("a lista de processos não tem violação grave", async ({ page }) => {
   await comSessao(page)
   await page.goto(rota("/processos"))
+
+  expect(await violacoesGraves(page)).toEqual([])
+})
+
+/**
+ * As telas de formulário entraram em 22/08/2026, e não deviam ter demorado: até
+ * então a varredura visitava login, painel e lista — **nenhuma com formulário**.
+ *
+ * O que estas quatro **não** guardam é a associação entre rótulo e campo. Isso
+ * foi medido, e não suposto: com a associação removida de propósito, o axe
+ * relata exatamente o mesmo, porque aceita `placeholder` como nome acessível.
+ * Quem guarda aquela regra é `components/ui/forms.test.tsx`, controle a
+ * controle. Registrar isso aqui evita que alguém leia estas quatro linhas como
+ * cobertura que elas não dão.
+ */
+test("o cadastro de processo não tem violação grave", async ({ page }) => {
+  await comSessao(page)
+  await page.goto(rota("/processos/novo"))
+
+  expect(await violacoesGraves(page)).toEqual([])
+})
+
+test("as configurações não têm violação grave", async ({ page }) => {
+  await comSessao(page)
+  await page.goto(rota("/configuracoes"))
+
+  expect(await violacoesGraves(page)).toEqual([])
+})
+
+test("o editor de documento não tem violação grave", async ({ page }) => {
+  await comSessao(page)
+  await comProcessoEDocumento(page)
+  await page.goto(rota(`/processos/documento?id=${encodeURIComponent(processo.id)}&tipo=etp`))
+
+  expect(await violacoesGraves(page)).toEqual([])
+})
+
+test("o detalhe do processo não tem violação grave", async ({ page }) => {
+  await comSessao(page)
+  await comProcessoEDocumento(page)
+  await page.goto(rota(`/processos/detalhe?id=${encodeURIComponent(processo.id)}`))
 
   expect(await violacoesGraves(page)).toEqual([])
 })
