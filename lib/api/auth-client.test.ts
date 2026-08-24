@@ -463,3 +463,34 @@ describe("tenant sintetizado (ponte temporária)", () => {
     expect(prefeitura).not.toHaveProperty("pca")
   })
 })
+
+/** Ver a nota do gitleaks em `TrocaDeSenhaObrigatoria.test.tsx`. */
+const PROVISORIA = "provisoria-16-chars"
+const ESCOLHIDA = "EscolhidaPorMim2026"
+
+describe("trocarPropriaSenha", () => {
+  it("troca a senha e devolve a sessão já liberada", async () => {
+    let corpo: Record<string, unknown> | undefined
+    servidor.use(
+      http.post(`${urlDaApi}/auth/refresh`, () => HttpResponse.json(autenticacao)),
+      http.post(`${urlDaApi}/auth/password-change`, async ({ request }) => {
+        corpo = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json({
+          ...sessaoServidor,
+          user: { ...sessaoServidor.user, passwordChangeRequired: false },
+        })
+      }),
+    )
+    const { trocarPropriaSenha } = await carregarClienteLimpo()
+
+    const sessao = await trocarPropriaSenha(PROVISORIA, ESCOLHIDA)
+
+    expect(corpo).toEqual({
+      currentPassword: PROVISORIA,
+      newPassword: ESCOLHIDA,
+    })
+    // Sessão liberada na mesma resposta: o marcador é lido do banco a cada
+    // requisição, então o token que a pessoa já tem passa a valer para tudo.
+    expect(sessao.usuario.precisaTrocarSenha).toBe(false)
+  })
+})

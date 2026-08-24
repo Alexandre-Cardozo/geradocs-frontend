@@ -7,6 +7,7 @@ import { IconPlus, IconTrash } from "@/components/ui/icons"
 import { EmptyState, ErrorState, SkeletonRows } from "@/components/shared/estados"
 import { Th } from "@/components/shared/tabela"
 import { useToast } from "@/components/shared/providers"
+import { SenhaProvisoria } from "@/components/shared/senha-provisoria"
 import { useCriarUsuario, usePrefeituras, useRemoverUsuario, useUsuarios } from "@/lib/api/hooks"
 import { formatCPF, validaCPF } from "@/lib/auth/cpf"
 import { formatDataHora } from "@/lib/format"
@@ -34,7 +35,7 @@ export default function AdminServidores() {
   const [cargo, setCargo] = useState("")
   const [matricula, setMatricula] = useState("")
   const [decreto, setDecreto] = useState("")
-  const [senha, setSenha] = useState("")
+  const [senhaProvisoria, setSenhaProvisoria] = useState<{ nome: string; senha: string } | null>(null)
   const [perfil, setPerfil] = useState<PerfilAcesso>("servidor")
   const [prefeituraId, setPrefeituraId] = useState("")
 
@@ -48,22 +49,25 @@ export default function AdminServidores() {
 
   const cpfValido = validaCPF(cpf)
   const precisaPrefeitura = perfil !== "admin_geral"
-  const podeSalvar = nome.trim() !== "" && cpfValido && email.trim() !== "" && senha.length >= 12 && (!precisaPrefeitura || prefeituraId !== "")
+  const podeSalvar = nome.trim() !== "" && cpfValido && email.trim() !== "" && (!precisaPrefeitura || prefeituraId !== "")
 
   const salvar = () => {
     if (!podeSalvar) return
     criar.mutate(
       {
-        nome, cpf, email, cargo, matricula, decretoNomeacao: decreto, senha,
+        nome, cpf, email, cargo, matricula, decretoNomeacao: decreto,
         perfilAcesso: perfil,
         prefeituraId: precisaPrefeitura ? prefeituraId : null,
       },
       {
-        onSuccess: () => {
-          showToast("Servidor cadastrado com a senha inicial informada.")
+        onSuccess: (criado) => {
+          // A senha volta uma única vez: guardá-la aqui é o que permite
+          // mostrá-la para ser entregue.
+          setSenhaProvisoria({ nome: criado.usuario.nome, senha: criado.senhaProvisoria })
+          showToast("Servidor cadastrado.")
           setNovo(false)
           setNome(""); setCpf(""); setEmail(""); setCargo(""); setMatricula(""); setDecreto("")
-          setSenha(""); setPerfil("servidor"); setPrefeituraId("")
+          setPerfil("servidor"); setPrefeituraId("")
         },
         onError: (e) => showToast(e instanceof Error ? e.message : "Não foi possível cadastrar."),
       }
@@ -107,9 +111,6 @@ export default function AdminServidores() {
             <FormField label="Decreto de Nomeação" hint="Para comissionados, é o número que a pessoa costuma lembrar.">
               <Input value={decreto} onChange={(e) => setDecreto(e.target.value)} placeholder="Ex: Decreto 1.234/2026" />
             </FormField>
-            <FormField label="Senha inicial" required hint="Mínimo de 12 caracteres.">
-              <Input value={senha} onChange={(e) => setSenha(e.target.value)} type="password" autoComplete="new-password" />
-            </FormField>
             <FormField label="Perfil de Acesso" required>
               <Dropdown
                 value={perfil}
@@ -136,6 +137,15 @@ export default function AdminServidores() {
               </FormField>
             )}
           </div>
+          {senhaProvisoria && (
+            <div className="mb-4">
+              <SenhaProvisoria
+                nome={senhaProvisoria.nome}
+                senha={senhaProvisoria.senha}
+                onFechar={() => setSenhaProvisoria(null)}
+              />
+            </div>
+          )}
           <div className="mt-4 flex gap-2.5">
             <Button variant="secondary" onClick={() => setNovo(false)}>Cancelar</Button>
             <p id="motivo-criar-servidor" className="sr-only">

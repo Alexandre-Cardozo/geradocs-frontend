@@ -220,6 +220,7 @@ function mapearSessao(session: BackendSession | undefined): Sessao {
     prefeituraId: session?.organization?.id ?? null,
     avatarDataUrl: null,
     ultimoAcesso: user.lastAccessAt ?? "",
+    precisaTrocarSenha: user.passwordChangeRequired ?? false,
     ativo: user.status === "ACTIVE",
   }
   return { usuario, prefeitura: tenantDa(session?.organization ?? null) }
@@ -249,6 +250,21 @@ export async function autenticar(identifier: string, password: string): Promise<
     }
     throw error
   }
+}
+
+/**
+ * Troca a própria senha e devolve a sessão já liberada.
+ *
+ * <p>É o caminho do primeiro acesso: a senha sorteada no cadastro é conhecida
+ * por quem a entregou, e enquanto ela valer a sessão não faz mais nada.
+ */
+export async function trocarPropriaSenha(senhaAtual: string, novaSenha: string): Promise<Sessao> {
+  return mapearSessao(
+    await requisicaoAutenticada<BackendSession>("/auth/password-change", {
+      method: "POST",
+      body: JSON.stringify({ currentPassword: senhaAtual, newPassword: novaSenha }),
+    }),
+  )
 }
 
 export async function obterSessao(): Promise<Sessao | null> {

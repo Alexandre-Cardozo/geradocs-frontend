@@ -36,6 +36,7 @@ import {
   obterSessao,
   redefinirSenha,
   solicitarRedefinicao,
+  trocarPropriaSenha as trocarSenhaNaApi,
 } from "@/lib/api/auth-client"
 import {
   criarDepartamento as criarDepartamentoNaApi,
@@ -765,17 +766,28 @@ export interface NovoUsuarioInput {
   cargo: string
   matricula?: string
   decretoNomeacao?: string
-  senha: string
   perfilAcesso: PerfilAcesso
   prefeituraId: string | null
   secretaria?: string
 }
 
-export async function criarUsuario(input: NovoUsuarioInput): Promise<Usuario> {
+/**
+ * Cadastra o servidor. A senha vem sorteada do servidor, uma única vez.
+ *
+ * <p>Até 23/08/2026 quem cadastrava digitava a senha de quem era cadastrado —
+ * e ela valia para sempre. Escolher significa saber, e saber a senha de outra
+ * pessoa é poder agir como ela.
+ */
+export async function criarUsuario(input: NovoUsuarioInput) {
   return criarUsuarioNaApi({
     ...input,
     departamentoId: input.secretaria,
   })
+}
+
+/** Troca a própria senha — o que libera a sessão no primeiro acesso. */
+export async function trocarPropriaSenha(senhaAtual: string, novaSenha: string) {
+  return trocarSenhaNaApi(senhaAtual, novaSenha)
 }
 
 export interface AtualizarUsuarioInput {

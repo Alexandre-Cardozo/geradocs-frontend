@@ -104,6 +104,22 @@
         "required" : [ "dispensed", "sectionCode", "text", "title" ],
         "type" : "object"
       },
+      "ChangePasswordRequest" : {
+        "properties" : {
+          "currentPassword" : {
+            "maxLength" : 72,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "newPassword" : {
+            "maxLength" : 72,
+            "minLength" : 12,
+            "type" : "string"
+          }
+        },
+        "required" : [ "currentPassword", "newPassword" ],
+        "type" : "object"
+      },
       "CloseProcurementProcessRequest" : {
         "properties" : {
           "justification" : {
@@ -157,6 +173,10 @@
       },
       "CreateOrganizationRequest" : {
         "properties" : {
+          "entityType" : {
+            "enum" : [ "PREFEITURA", "CAMARA", "AUTARQUIA", "FUNDACAO", "CONSORCIO", "OUTRO" ],
+            "type" : "string"
+          },
           "name" : {
             "maxLength" : 200,
             "minLength" : 0,
@@ -255,11 +275,6 @@
             "format" : "uuid",
             "type" : "string"
           },
-          "password" : {
-            "maxLength" : 72,
-            "minLength" : 12,
-            "type" : "string"
-          },
           "profileAccess" : {
             "enum" : [ "ADMIN_GERAL", "COORDENADOR", "SERVIDOR" ],
             "type" : "string"
@@ -270,7 +285,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "cpf", "email", "name", "password", "profileAccess" ],
+        "required" : [ "cpf", "email", "name", "profileAccess" ],
         "type" : "object"
       },
       "DeactivationRequest" : {
@@ -773,6 +788,10 @@
             "format" : "date-time",
             "type" : "string"
           },
+          "entityType" : {
+            "enum" : [ "PREFEITURA", "CAMARA", "AUTARQUIA", "FUNDACAO", "CONSORCIO", "OUTRO" ],
+            "type" : "string"
+          },
           "id" : {
             "format" : "uuid",
             "type" : "string"
@@ -796,7 +815,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "createdAt", "id", "name", "status", "updatedAt", "version" ],
+        "required" : [ "createdAt", "entityType", "id", "name", "status", "updatedAt", "version" ],
         "type" : "object"
       },
       "PageProcurementProcessResponse" : {
@@ -1208,6 +1227,9 @@
           "name" : {
             "type" : "string"
           },
+          "passwordChangeRequired" : {
+            "type" : "boolean"
+          },
           "profileAccess" : {
             "enum" : [ "ADMIN_GERAL", "COORDENADOR", "SERVIDOR" ],
             "type" : "string"
@@ -1220,7 +1242,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "email", "id", "name", "profileAccess", "status" ],
+        "required" : [ "email", "id", "name", "passwordChangeRequired", "profileAccess", "status" ],
         "type" : "object"
       },
       "SortObject" : {
@@ -1255,6 +1277,10 @@
       },
       "UpdateOrganizationRequest" : {
         "properties" : {
+          "entityType" : {
+            "enum" : [ "PREFEITURA", "CAMARA", "AUTARQUIA", "FUNDACAO", "CONSORCIO", "OUTRO" ],
+            "type" : "string"
+          },
           "name" : {
             "maxLength" : 200,
             "minLength" : 0,
@@ -1393,8 +1419,14 @@
           "name" : {
             "type" : "string"
           },
+          "passwordChangeRequired" : {
+            "type" : "boolean"
+          },
           "profileAccess" : {
             "enum" : [ "ADMIN_GERAL", "COORDENADOR", "SERVIDOR" ],
+            "type" : "string"
+          },
+          "provisionalPassword" : {
             "type" : "string"
           },
           "registrationNumber" : {
@@ -1413,7 +1445,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "createdAt", "email", "id", "memberships", "name", "profileAccess", "status", "updatedAt", "version" ],
+        "required" : [ "createdAt", "email", "id", "memberships", "name", "passwordChangeRequired", "profileAccess", "status", "updatedAt", "version" ],
         "type" : "object"
       },
       "UserSummaryResponse" : {
@@ -1547,6 +1579,34 @@
         "operationId" : "logout",
         "responses" : {
           "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "authentication-controller" ]
+      }
+    },
+    "/api/v1/auth/password-change" : {
+      "post" : {
+        "operationId" : "changePassword",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ChangePasswordRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SessionResponse"
+                }
+              }
+            },
             "description" : "OK"
           }
         },

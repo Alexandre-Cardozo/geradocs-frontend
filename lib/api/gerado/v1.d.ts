@@ -52,6 +52,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/password-change": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["changePassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/password-recovery": {
         parameters: {
             query?: never;
@@ -616,6 +632,10 @@ export interface components {
             text: string;
             title: string;
         };
+        ChangePasswordRequest: {
+            currentPassword: string;
+            newPassword: string;
+        };
         CloseProcurementProcessRequest: {
             justification?: string;
         };
@@ -631,6 +651,8 @@ export interface components {
             name: string;
         };
         CreateOrganizationRequest: {
+            /** @enum {string} */
+            entityType?: "PREFEITURA" | "CAMARA" | "AUTARQUIA" | "FUNDACAO" | "CONSORCIO" | "OUTRO";
             name: string;
             unit?: string;
         };
@@ -658,7 +680,6 @@ export interface components {
             name: string;
             /** Format: uuid */
             organizationId?: string;
-            password: string;
             /** @enum {string} */
             profileAccess: "ADMIN_GERAL" | "COORDENADOR" | "SERVIDOR";
             registrationNumber?: string;
@@ -838,6 +859,8 @@ export interface components {
         OrganizationResponse: {
             /** Format: date-time */
             createdAt: string;
+            /** @enum {string} */
+            entityType: "PREFEITURA" | "CAMARA" | "AUTARQUIA" | "FUNDACAO" | "CONSORCIO" | "OUTRO";
             /** Format: uuid */
             id: string;
             name: string;
@@ -995,6 +1018,7 @@ export interface components {
             /** Format: date-time */
             lastAccessAt?: string;
             name: string;
+            passwordChangeRequired: boolean;
             /** @enum {string} */
             profileAccess: "ADMIN_GERAL" | "COORDENADOR" | "SERVIDOR";
             registrationNumber?: string;
@@ -1011,6 +1035,8 @@ export interface components {
             name: string;
         };
         UpdateOrganizationRequest: {
+            /** @enum {string} */
+            entityType?: "PREFEITURA" | "CAMARA" | "AUTARQUIA" | "FUNDACAO" | "CONSORCIO" | "OUTRO";
             name: string;
             unit?: string;
         };
@@ -1052,8 +1078,10 @@ export interface components {
             lastAccessAt?: string;
             memberships: components["schemas"]["MembershipResponse"][];
             name: string;
+            passwordChangeRequired: boolean;
             /** @enum {string} */
             profileAccess: "ADMIN_GERAL" | "COORDENADOR" | "SERVIDOR";
+            provisionalPassword?: string;
             registrationNumber?: string;
             /** @enum {string} */
             status: "ACTIVE" | "INACTIVE" | "PENDING_ACTIVATION";
@@ -1156,6 +1184,30 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    changePassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangePasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SessionResponse"];
+                };
             };
         };
     };

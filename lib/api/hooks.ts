@@ -56,6 +56,22 @@ export function useLogout() {
   })
 }
 
+/**
+ * Troca a própria senha. É o que libera a sessão no primeiro acesso.
+ *
+ * <p>Grava a sessão devolvida em vez de invalidá-la: a resposta já traz o
+ * usuário sem o marcador, e invalidar faria a tela piscar de volta para a troca
+ * antes de a consulta responder.
+ */
+export function useTrocarPropriaSenha() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { atual: string; nova: string }) =>
+      api.trocarPropriaSenha(input.atual, input.nova),
+    onSuccess: (sessao) => queryClient.setQueryData(chaves.sessao, sessao),
+  })
+}
+
 export function useRecuperarSenha() {
   return useMutation({ mutationFn: (email: string) => api.recuperarSenha(email) })
 }

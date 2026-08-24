@@ -489,3 +489,15 @@ O Bloco 11.1 fez o servidor imprimir DOCX e PDF de verdade. A tela continuou mos
 **Três `saiEm` que eu mesmo tinha escrito estavam errados.** Em 22/08 movi timbre, cabeçalho e rodapé para o "Bloco 11", dizendo que "nascem com os templates publicados". O 11.1 publicou template de **layout** — margem, fonte, tamanho — e não configuração por órgão. Foram para o Bloco 12, que ganhou um passo (12.2b) descrevendo o que falta de verdade: onde o brasão mora, e como o layout do órgão convive com um template que é imutável de propósito.
 
 **E faltava um guarda.** O `contracts/openapi_v1.json` daqui ficou dois passos atrás do que o back-end publicava, e nada avisou: `npm run tipos` é manual, e tipo velho não dá erro de compilação — ele descreve um servidor que não existe mais, e a tela só descobre em produção. Agora um teste compara os tipos gerados com o contrato versionado, e `npm run contrato:conferir` compara o contrato com o do back-end. O teste alcança a metade local; a outra depende dos dois repositórios lado a lado, e isso está escrito nele.
+
+## 36. Primeiro acesso: a tela deixa de pedir a senha de outra pessoa
+
+O back-end passou a sortear a senha de quem é cadastrado (ADR-021). A tela pedia essa senha ao coordenador — e ela ficaria valendo para sempre, conhecida por quem a digitou.
+
+**O campo "Senha inicial" saiu dos dois formulários.** No lugar, depois de cadastrar, a senha sorteada aparece **uma vez**, com botão de copiar e o aviso de que não volta a aparecer. É o único instante em que ela existe fora do hash: quem fecha a caixa sem anotar precisa recadastrar ou usar a recuperação por e-mail — e o componente diz isso antes, não depois.
+
+**A troca no primeiro acesso substitui a aplicação inteira**, e não é mais um aviso dentro dela. O servidor recusa qualquer outra rota enquanto a senha for provisória; sem esta tela, a primeira ação daria **403** e pareceria falta de permissão.
+
+**É a única trava do produto que não "orienta e deixa seguir" (§24).** A diferença é de quem é a decisão. As outras travas tirariam do servidor uma escolha que é dele — encerrar processo com pendência, contratar fora do PCA. Esta não tira decisão nenhuma: ela impede que **outra pessoa**, quem cadastrou e leu a senha, trabalhe como se fosse ele.
+
+**Os impedimentos são ditos, não só desabilitados.** Senha curta, confirmação diferente e "repetiu a provisória" têm mensagem própria no `aria-describedby` do botão — o guarda-corpo nº 7 aplicado a uma tela que, por definição, é a primeira que a pessoa vê.

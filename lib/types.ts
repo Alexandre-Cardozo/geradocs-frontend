@@ -329,6 +329,13 @@ export interface Usuario {
   avatarDataUrl: string | null
   /** Último acesso em ISO; atualizado no login. */
   ultimoAcesso: string
+  /**
+   * A senha ainda é a provisória do cadastro.
+   *
+   * Enquanto for verdade, a sessão só troca a senha: ela é conhecida por quem a
+   * entregou, e trabalhar com ela seria trabalhar com credencial compartilhada.
+   */
+  precisaTrocarSenha?: boolean
   ativo: boolean
 }
 

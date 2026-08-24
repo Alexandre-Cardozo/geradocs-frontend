@@ -19,6 +19,8 @@ const organizacao = {
   version: 3,
 }
 
+const SENHA_SORTEADA = "aBcD3fGh4JkLmN5p"
+
 const usuarioApi = {
   id: "9f1c1c62-0f1a-4a6e-9a53-2a9f4b7f1a01",
   name: "Maria Costa Andrade",
@@ -313,7 +315,7 @@ describe("criarUsuario", () => {
     servidor.use(
       http.post(`${urlDaApi}/users`, async ({ request }) => {
         corpo = (await request.json()) as Record<string, unknown>
-        return HttpResponse.json({ ...usuarioApi, profileAccess: "ADMIN_GERAL", memberships: [] })
+        return HttpResponse.json({ ...usuarioApi, provisionalPassword: SENHA_SORTEADA })
       }),
     )
     const { criarUsuario } = await carregarClienteLimpo()
@@ -323,7 +325,6 @@ describe("criarUsuario", () => {
       cpf: "11144477735",
       email: "ana@geradocs.local",
       cargo: "Administradora",
-      senha: "UmaSenhaSegura!2026",
       perfilAcesso: "admin_geral",
       prefeituraId: organizacao.id,
     })
@@ -340,7 +341,7 @@ describe("criarUsuario", () => {
     servidor.use(
       http.post(`${urlDaApi}/users`, async ({ request }) => {
         corpo = (await request.json()) as Record<string, unknown>
-        return HttpResponse.json(usuarioApi)
+        return HttpResponse.json({ ...usuarioApi, provisionalPassword: SENHA_SORTEADA })
       }),
     )
     const { criarUsuario } = await carregarClienteLimpo()
@@ -349,7 +350,6 @@ describe("criarUsuario", () => {
       cpf: "11144477735",
       email: "ana@ecoporanga.es.gov.br",
       cargo: "Servidora",
-      senha: "UmaSenhaSegura!2026",
       perfilAcesso: "servidor" as const,
       prefeituraId: organizacao.id,
     }
@@ -373,7 +373,7 @@ describe("criarUsuario", () => {
     servidor.use(
       http.post(`${urlDaApi}/users`, async ({ request }) => {
         corpo = (await request.json()) as Record<string, unknown>
-        return HttpResponse.json(usuarioApi)
+        return HttpResponse.json({ ...usuarioApi, provisionalPassword: SENHA_SORTEADA })
       }),
     )
     const { criarUsuario } = await carregarClienteLimpo()
@@ -383,7 +383,6 @@ describe("criarUsuario", () => {
       cpf: "33333333333",
       email: "maria@ecoporanga.es.gov.br",
       cargo: "   ",
-      senha: "UmaSenhaSegura!2026",
       perfilAcesso: "servidor",
       prefeituraId: organizacao.id,
     })
@@ -396,7 +395,7 @@ describe("criarUsuario", () => {
     servidor.use(
       http.post(`${urlDaApi}/users`, async ({ request }) => {
         corpo = (await request.json()) as Record<string, unknown>
-        return HttpResponse.json(usuarioApi)
+        return HttpResponse.json({ ...usuarioApi, provisionalPassword: SENHA_SORTEADA })
       }),
     )
     const { criarUsuario } = await carregarClienteLimpo()
@@ -406,7 +405,6 @@ describe("criarUsuario", () => {
       cpf: "11144477735",
       email: "carlos@ecoporanga.es.gov.br",
       cargo: "Procurador",
-      senha: "UmaSenhaSegura!2026",
       perfilAcesso: "coordenador",
       prefeituraId: organizacao.id,
       departamentoId: departamento.id,
@@ -721,5 +719,27 @@ describe("edição de cadastro incompleto", () => {
     await atualizarPrefeitura(organizacao.id, { orgao: "Prefeitura de Ecoporanga" })
 
     expect(corpo).toEqual({ name: "Prefeitura de Ecoporanga", unit: null })
+  })
+})
+
+describe("senha provisória", () => {
+  it("cadastro sem a senha na resposta diz o que fazer, em vez de devolver acesso inutilizável", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/organizations/${organizacao.id}`, () => HttpResponse.json(organizacao)),
+      // Sem a senha não há como entregar o acesso — e o cadastro já foi gravado.
+      http.post(`${urlDaApi}/users`, () => HttpResponse.json(usuarioApi)),
+    )
+    const { criarUsuario } = await carregarClienteLimpo()
+
+    await expect(
+      criarUsuario({
+        nome: "Maria Costa",
+        cpf: "111.444.777-35",
+        email: "maria@x.gov.br",
+        cargo: "Servidora",
+        perfilAcesso: "servidor",
+        prefeituraId: organizacao.id,
+      }),
+    ).rejects.toThrow(/recuperação de senha/)
   })
 })

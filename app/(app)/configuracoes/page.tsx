@@ -33,6 +33,7 @@ import {
 } from "@/lib/api/hooks";
 import { formatCPF, validaCPF } from "@/lib/auth/cpf";
 import { ImportarPca } from "@/components/configuracoes/importar-pca";
+import { SenhaProvisoria } from "@/components/shared/senha-provisoria";
 import { MarcaSintetica } from "@/components/shared/marca-sintetica";
 import { anoBrasilia, dataBrasiliaISO, formatData, formatDataHora } from "@/lib/format";
 import { PERFIL_ACESSO_LABEL, type PerfilAcesso, type Secretaria } from "@/lib/types";
@@ -163,7 +164,7 @@ export default function Configuracoes() {
   const [nsCpf, setNsCpf] = useState("");
   const [nsEmail, setNsEmail] = useState("");
   const [nsCargo, setNsCargo] = useState("");
-  const [nsSenha, setNsSenha] = useState("");
+  const [senhaProvisoria, setSenhaProvisoria] = useState<{ nome: string; senha: string } | null>(null);
   const [nsPerfil, setNsPerfil] = useState<PerfilAcesso>("servidor");
 
   // Estado local dos formulários, semeado quando o tenant carrega.
@@ -544,9 +545,6 @@ export default function Configuracoes() {
                 <FormField label="Cargo">
                   <Input value={nsCargo} onChange={(e) => setNsCargo(e.target.value)} placeholder="Ex: Servidor de Compras" />
                 </FormField>
-                <FormField label="Senha inicial" required hint="Mínimo de 12 caracteres.">
-                  <Input value={nsSenha} onChange={(e) => setNsSenha(e.target.value)} type="password" autoComplete="new-password" />
-                </FormField>
                 <FormField label="Perfil de Acesso" required>
                   <Dropdown
                     value={nsPerfil}
@@ -559,23 +557,36 @@ export default function Configuracoes() {
                   />
                 </FormField>
               </div>
+              {senhaProvisoria && (
+                <div className="mb-4">
+                  <SenhaProvisoria
+                    nome={senhaProvisoria.nome}
+                    senha={senhaProvisoria.senha}
+                    onFechar={() => setSenhaProvisoria(null)}
+                  />
+                </div>
+              )}
               <div className="mt-4 flex gap-2.5">
                 <Button variant="secondary" onClick={() => setNovoServidor(false)}>Cancelar</Button>
                 <p id="motivo-criar-servidor-tenant" className="sr-only">
-                  Nome, CPF válido, e-mail, senha com no mínimo 12 caracteres e a
-                  prefeitura são obrigatórios.
+                  Nome, CPF válido, e-mail e a prefeitura são obrigatórios. A
+                  senha é sorteada pelo sistema e aparece depois de cadastrar.
                 </p>
                 <Button
-                  disabled={criarServidor.isPending || nsNome.trim() === "" || !validaCPF(nsCpf) || nsEmail.trim() === "" || nsSenha.length < 12 || !prefeituraId}
+                  disabled={criarServidor.isPending || nsNome.trim() === "" || !validaCPF(nsCpf) || nsEmail.trim() === "" || !prefeituraId}
                   ariaDescribedBy="motivo-criar-servidor-tenant"
                   onClick={() =>
                     criarServidor.mutate(
-                      { nome: nsNome, cpf: nsCpf, email: nsEmail, cargo: nsCargo, senha: nsSenha, perfilAcesso: nsPerfil, prefeituraId: prefeituraId ?? null },
+                      { nome: nsNome, cpf: nsCpf, email: nsEmail, cargo: nsCargo, perfilAcesso: nsPerfil, prefeituraId: prefeituraId ?? null },
                       {
-                        onSuccess: () => {
-                          showToast("Servidor cadastrado com a senha inicial informada.");
+                        onSuccess: (criado) => {
+                          setSenhaProvisoria({
+                            nome: criado.usuario.nome,
+                            senha: criado.senhaProvisoria,
+                          });
+                          showToast("Servidor cadastrado.");
                           setNovoServidor(false);
-                          setNsNome(""); setNsCpf(""); setNsEmail(""); setNsCargo(""); setNsSenha(""); setNsPerfil("servidor");
+                          setNsNome(""); setNsCpf(""); setNsEmail(""); setNsCargo(""); setNsPerfil("servidor");
                         },
                         onError: (e) => showToast(e instanceof Error ? e.message : "Não foi possível cadastrar."),
                       }

@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { useEffect, type ReactNode } from "react"
 
 import { Button } from "@/components/ui"
+import { TrocaDeSenhaObrigatoria } from "@/components/layout/TrocaDeSenhaObrigatoria"
 import { useSessao } from "@/lib/api/hooks"
 import { rotaPermitida } from "@/lib/auth/acesso"
 
@@ -49,6 +50,13 @@ export default function GuardaSessao({ children }: { children: ReactNode }) {
         </div>
       </div>
     )
+  }
+
+  // Antes de qualquer tela: a senha provisória é conhecida por quem a entregou,
+  // e o servidor recusa tudo o mais enquanto ela valer. Sem esta troca, a
+  // primeira ação daria 403 e pareceria falta de permissão.
+  if (sessao.data?.usuario.precisaTrocarSenha) {
+    return <TrocaDeSenhaObrigatoria nome={sessao.data.usuario.primeiroNome} />
   }
 
   return <>{children}</>

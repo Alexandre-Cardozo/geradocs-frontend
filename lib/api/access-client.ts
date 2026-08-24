@@ -30,6 +30,9 @@ interface BackendMembership {
 }
 
 interface BackendUser {
+  /** A senha sorteada; só vem na resposta do cadastro. */
+  provisionalPassword?: string
+  passwordChangeRequired?: boolean
   id: string
   name: string
   cpf: string
@@ -117,7 +120,6 @@ export interface NovoUsuarioInput {
   cargo: string
   matricula?: string
   decretoNomeacao?: string
-  senha: string
   perfilAcesso: PerfilAcesso
   prefeituraId: string | null
   departamentoId?: string | null
@@ -207,7 +209,16 @@ export async function listarUsuarios(organizationId?: string, busca?: string): P
   return users.map(usuarioDa)
 }
 
-export async function criarUsuario(input: NovoUsuarioInput): Promise<Usuario> {
+/**
+ * Cadastra o servidor. A senha é sorteada pelo servidor, não escolhida aqui.
+ *
+ * <p>Volta **uma vez**, para ser entregue a quem foi cadastrado, e o primeiro
+ * acesso obriga a troca. Quem cadastra escolher a senha significaria saber a
+ * senha de outra pessoa — e poder agir como ela.
+ */
+export async function criarUsuario(
+  input: NovoUsuarioInput,
+): Promise<{ usuario: Usuario; senhaProvisoria: string }> {
   const profileAccess = perfilBackend(input.perfilAcesso)
   const user = await requisicaoProtegida<BackendUser>("/users", {
     method: "POST",
@@ -218,14 +229,22 @@ export async function criarUsuario(input: NovoUsuarioInput): Promise<Usuario> {
       jobTitle: input.cargo.trim() || null,
       registrationNumber: input.matricula?.trim() || null,
       appointmentDecree: input.decretoNomeacao?.trim() || null,
-      password: input.senha,
       profileAccess,
       organizationId: input.perfilAcesso === "admin_geral" ? null : input.prefeituraId,
       departmentId: input.perfilAcesso === "admin_geral" ? null : input.departamentoId ?? null,
     }),
   })
-  return usuarioDa(user)
+  if (!user.provisionalPassword) {
+    // Sem ela não há como entregar o acesso, e o cadastro já foi gravado: dizer
+    // isso é melhor que devolver um cadastro que ninguém consegue usar.
+    throw new Error(
+      "O servidor foi cadastrado, mas a senha provisória não veio na resposta. " +
+        "Use a recuperação de senha para liberar o primeiro acesso.",
+    )
+  }
+  return { usuario: usuarioDa(user), senhaProvisoria: user.provisionalPassword }
 }
+
 
 /**
  * Edita o servidor no cadastro.

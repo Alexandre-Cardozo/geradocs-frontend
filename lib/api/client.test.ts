@@ -117,6 +117,7 @@ describe("a fachada liga cada chamada no lugar certo", () => {
     ["recuperarSenha", (a) => a.recuperarSenha("  a@b.gov.br  "), autenticacao.solicitarRedefinicao, ["a@b.gov.br"]],
     ["resetarSenha", (a) => a.resetarSenha("t", "s"), autenticacao.redefinirSenha, ["t", "s"]],
     ["logout", (a) => a.logout(), autenticacao.encerrarSessao, []],
+    ["trocarPropriaSenha", (a) => a.trocarPropriaSenha("atual", "nova"), autenticacao.trocarPropriaSenha, ["atual", "nova"]],
     ["baixarArquivoGerado", (a) => a.baixarArquivoGerado(PROCESSO, "ETP", "arq-1"), impressao.baixarArquivo, [PROCESSO, "ETP", "arq-1"]],
   ] as Array<[string, (a: typeof import("@/lib/api/client")) => Promise<unknown>, unknown, unknown[]]>)(
     "%s",
