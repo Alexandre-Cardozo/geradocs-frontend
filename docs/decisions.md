@@ -521,3 +521,11 @@ O §36 foi escrito contra o contrato, não contra alguém usando o produto. O pr
 **Dois campos do contrato eram descartados na tradução.** `mapearSessao` não copiava `registrationNumber` nem `appointmentDecree`, e a tela de perfil mostrava "—" para dois dados que o servidor conhece desde sempre. É a mesma família de defeito do §33 e do §35 — o dado passou a vir do servidor e este lado continuou inventando —, agora com teste que fixa os dois campos.
 
 **O piso da senha caiu de 12 para 8 caracteres**, por decisão do cliente (ADR-022). Os dois lados do limite estão em teste: enfraquecer um parâmetro de segurança sem verificação é como ele acaba enfraquecido de novo, sem ninguém decidir.
+
+## 38. A linha inteira abre a ficha, e o CPF se revela sob pedido
+
+**O nome deixa de ser hiperlink.** A linha inteira da tabela abre a ficha do servidor — clicar na matrícula ou na prefeitura faz o mesmo que clicar no nome. O nome continua sendo um `<button>`, agora sem sublinhado e na cor do texto: `<tr>` não recebe foco, e sem esse controle a ficha seria inalcançável pelo teclado. Ele não tem `onClick` próprio — o clique, inclusive o vindo do Enter, sobe para a linha; um segundo handler alternaria a ficha duas vezes e ela fecharia sozinha. O botão de desativar interrompe a propagação, senão desativar abriria a ficha de quem acabou de ser desativado.
+
+**O CPF ganha um botão de revelar, e revelar é um pedido ao servidor (ADR-023).** Não é `toggle` de aparência: a listagem mascara no servidor, o número inteiro não chega à tela antes de alguém pedir, e cada pedido vira linha de auditoria com quem revelou, de quem e quando. Revelado, o botão sai — clicar de novo só geraria outra linha na trilha. Fechar a ficha volta ao mascarado: o número não fica guardado na aplicação.
+
+A tela de servidores entrou na suíte de acessibilidade. É onde "abre no clique mas não no teclado" passaria despercebido.

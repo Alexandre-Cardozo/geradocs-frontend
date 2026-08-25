@@ -239,11 +239,22 @@ export default function AdminServidores() {
               </thead>
               <tbody>
                 {listaFiltrada.map((u, i) => (
-                  <tr key={u.id} className={i < listaFiltrada.length - 1 ? "border-b border-ice" : ""}>
+                  <tr
+                    key={u.id}
+                    // A linha inteira abre a ficha. O nome continua sendo um
+                    // botão de verdade — sem ele, quem navega por teclado não
+                    // teria como chegar aqui: `<tr>` não recebe foco.
+                    onClick={() => setFichaAberta(fichaAberta === u.id ? null : u.id)}
+                    className={`cursor-pointer transition-colors hover:bg-ice ${
+                      fichaAberta === u.id ? "bg-ice" : ""
+                    } ${i < listaFiltrada.length - 1 ? "border-b border-ice" : ""}`}
+                  >
                     <td className="px-4 py-3.25">
                       <button
                         type="button"
-                        onClick={() => setFichaAberta(fichaAberta === u.id ? null : u.id)}
+                        // Sem `onClick` próprio: o clique — inclusive o que vem
+                        // do Enter no teclado — sobe para a linha, que trata.
+                        // Um handler aqui alternaria a ficha duas vezes.
                         aria-expanded={fichaAberta === u.id}
                         className="flex cursor-pointer items-center gap-2.5 border-0 bg-transparent p-0 text-left"
                       >
@@ -254,7 +265,7 @@ export default function AdminServidores() {
                           className="shrink-0 text-xs"
                         />
                         <span className="block">
-                          <span className="block text-base font-semibold text-royal underline">
+                          <span className="block text-base font-semibold text-text-1">
                             {u.nome}
                           </span>
                           <span className="block text-xs text-text-muted">{u.cargo}</span>
@@ -273,10 +284,20 @@ export default function AdminServidores() {
                         type="button"
                         aria-label={`Desativar ${u.nome}`}
                         disabled={remover.isPending}
-                        onClick={() => remover.mutate(u.id, {
-                          onSuccess: () => showToast(`${u.nome} desativado.`),
-                          onError: (error) => showToast(error instanceof Error ? error.message : "Não foi possível desativar o servidor."),
-                        })}
+                        onClick={(evento) => {
+                          // Sem isto, desativar também abriria a ficha de quem
+                          // acabou de ser desativado.
+                          evento.stopPropagation()
+                          remover.mutate(u.id, {
+                            onSuccess: () => showToast(`${u.nome} desativado.`),
+                            onError: (error) =>
+                              showToast(
+                                error instanceof Error
+                                  ? error.message
+                                  : "Não foi possível desativar o servidor.",
+                              ),
+                          })
+                        }}
                         className="flex size-7 cursor-pointer items-center justify-center rounded-sm border border-border bg-ice text-danger transition-colors hover:bg-tint-danger-bg disabled:opacity-50"
                       >
                         <IconTrash size={13} />

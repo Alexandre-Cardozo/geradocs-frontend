@@ -3,7 +3,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useEffect, useMemo, useState } from "react"
 
-import { redefinirSenhaDeUsuario } from "@/lib/api/access-client"
+import { redefinirSenhaDeUsuario, revelarCpf } from "@/lib/api/access-client"
 import {
   enviarFotoDePerfil,
   obterFotoDePerfil,
@@ -150,6 +150,17 @@ export function useRemoverFotoDePerfil(usuarioId: string | undefined) {
  */
 export function useRedefinirSenhaDeServidor() {
   return useMutation({ mutationFn: (id: string) => redefinirSenhaDeUsuario(id) })
+}
+
+/**
+ * Revela o CPF inteiro de um servidor.
+ *
+ * <p>Mutação, e não consulta, embora leia: cada revelação vira uma linha de
+ * auditoria, e uma consulta seria refeita sozinha ao remontar a tela ou ao
+ * voltar o foco da aba — enchendo a trilha de revelações que ninguém pediu.
+ */
+export function useRevelarCpf() {
+  return useMutation({ mutationFn: (id: string) => revelarCpf(id) })
 }
 
 export function useEstatisticas() {

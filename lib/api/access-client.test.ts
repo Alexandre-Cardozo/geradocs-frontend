@@ -770,3 +770,26 @@ describe("redefinirSenhaDeUsuario", () => {
     await expect(redefinirSenhaDeUsuario(usuarioApi.id)).rejects.toThrow(/Redefina novamente/)
   })
 })
+
+describe("revelarCpf", () => {
+  it("devolve o número inteiro do servidor indicado", async () => {
+    let caminho = ""
+    servidor.use(
+      http.get(`${urlDaApi}/users/:id/cpf`, ({ params }) => {
+        caminho = String(params.id)
+        return HttpResponse.json({ cpf: "11144477735" })
+      }),
+    )
+    const { revelarCpf } = await carregarClienteLimpo()
+
+    await expect(revelarCpf(usuarioApi.id)).resolves.toBe("11144477735")
+    expect(caminho).toBe(usuarioApi.id)
+  })
+
+  it("resposta sem o CPF é dita, e não vira número em branco na tela", async () => {
+    servidor.use(http.get(`${urlDaApi}/users/:id/cpf`, () => HttpResponse.json({})))
+    const { revelarCpf } = await carregarClienteLimpo()
+
+    await expect(revelarCpf(usuarioApi.id)).rejects.toThrow(/não devolveu o CPF/)
+  })
+})

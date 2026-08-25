@@ -136,6 +136,70 @@ describe("ficha do servidor", () => {
     expect(screen.getByRole("button", { name: /Redefinir senha/ })).toBeInTheDocument()
   })
 
+  it("o CPF só aparece inteiro quando alguém pede, e o pedido vai ao servidor", async () => {
+    comCadastro()
+    let pediu = 0
+    servidor.use(
+      http.get(`${urlDaApi}/users/:id/cpf`, () => {
+        pediu += 1
+        return HttpResponse.json({ cpf: "11144477735" })
+      }),
+    )
+    renderizar(<AdminServidores />)
+    await userEvent.click(await screen.findByRole("button", { name: /^Maria Costa Andrade/ }))
+
+    // Abrir a ficha não revela nada: o número inteiro nem chega à tela antes do
+    // pedido, e cada pedido vira uma linha de auditoria (ADR-023).
+    expect(pediu).toBe(0)
+    expect(screen.getAllByText("***.***.***-35").length).toBeGreaterThan(0)
+
+    await userEvent.click(screen.getByRole("button", { name: /Ver o CPF completo de Maria/ }))
+
+    expect(await screen.findByText("111.444.777-35")).toBeInTheDocument()
+    expect(pediu).toBe(1)
+    // Revelado, o botão sai: clicar de novo só geraria outra linha na trilha.
+    expect(screen.queryByRole("button", { name: /Ver o CPF completo/ })).not.toBeInTheDocument()
+  })
+
+  it("fechar a ficha volta a mascarar o CPF", async () => {
+    comCadastro()
+    servidor.use(
+      http.get(`${urlDaApi}/users/:id/cpf`, () => HttpResponse.json({ cpf: "11144477735" })),
+    )
+    renderizar(<AdminServidores />)
+    await userEvent.click(await screen.findByRole("button", { name: /^Maria Costa Andrade/ }))
+    await userEvent.click(screen.getByRole("button", { name: /Ver o CPF completo de Maria/ }))
+    await screen.findByText("111.444.777-35")
+
+    await userEvent.click(screen.getByRole("button", { name: "Fechar ficha do servidor" }))
+    await userEvent.click(screen.getByRole("button", { name: /^Maria Costa Andrade/ }))
+
+    // O número não fica guardado na aplicação depois que a ficha fecha.
+    expect(await screen.findByRole("button", { name: /Ver o CPF completo de Maria/ })).toBeInTheDocument()
+    expect(screen.queryByText("111.444.777-35")).not.toBeInTheDocument()
+  })
+
+  it("recusa do servidor ao revelar o CPF não inventa número nenhum", async () => {
+    comCadastro()
+    servidor.use(
+      http.get(`${urlDaApi}/users/:id/cpf`, () =>
+        HttpResponse.json(
+          { detail: "Acesso negado.", status: 403 },
+          { status: 403, headers: { "Content-Type": "application/problem+json" } },
+        ),
+      ),
+    )
+    renderizar(<AdminServidores />)
+    await userEvent.click(await screen.findByRole("button", { name: /^Maria Costa Andrade/ }))
+
+    await userEvent.click(screen.getByRole("button", { name: /Ver o CPF completo de Maria/ }))
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /Ver o CPF completo de Maria/ })).toBeEnabled(),
+    )
+    expect(screen.queryByText("111.444.777-35")).not.toBeInTheDocument()
+  })
+
   it("redefinir senha pede confirmação antes de derrubar o acesso", async () => {
     comCadastro()
     let pediu = false
@@ -177,6 +241,46 @@ describe("ficha do servidor", () => {
 
     expect(pediu).toBe(false)
     expect(screen.queryByText(/deixa de valer/)).not.toBeInTheDocument()
+  })
+
+  it("clicar em qualquer ponto da linha abre a ficha, e não só o nome", async () => {
+    comCadastro()
+    renderizar(<AdminServidores />)
+    await screen.findByRole("button", { name: /^Maria Costa Andrade/ })
+
+    // A matrícula fica na outra ponta da linha: se ela abre a ficha, a linha
+    // inteira abre.
+    await userEvent.click(screen.getByText("MAT-4471"))
+
+    expect(await screen.findByText("Decreto 1.234/2026")).toBeInTheDocument()
+  })
+
+  it("desativar não abre a ficha de quem acabou de ser desativado", async () => {
+    comCadastro()
+    servidor.use(
+      http.post(`${urlDaApi}/users/:id/deactivate`, () => new HttpResponse(null, { status: 204 })),
+    )
+    renderizar(<AdminServidores />)
+    await screen.findByRole("button", { name: /^Maria Costa Andrade/ })
+
+    await userEvent.click(screen.getByRole("button", { name: /Desativar Maria/ }))
+
+    await waitFor(() =>
+      expect(screen.queryByText("Decreto 1.234/2026")).not.toBeInTheDocument(),
+    )
+  })
+
+  it("o nome continua sendo um controle de verdade, para quem usa teclado", async () => {
+    comCadastro()
+    renderizar(<AdminServidores />)
+    const nome = await screen.findByRole("button", { name: /^Maria Costa Andrade/ })
+
+    nome.focus()
+    await userEvent.keyboard("{Enter}")
+
+    // `<tr>` não recebe foco: sem este botão, a ficha seria inalcançável pelo
+    // teclado.
+    expect(await screen.findByText("Decreto 1.234/2026")).toBeInTheDocument()
   })
 
   it("fecha e volta à listagem", async () => {

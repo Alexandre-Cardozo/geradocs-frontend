@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright"
 import { expect, test } from "@playwright/test"
 
-import { comProcessoEDocumento, comSessao, processo, rota, semSessao } from "./api"
+import { comProcessoEDocumento, comSessao, processo, rota, sessaoAdmin, semSessao } from "./api"
 
 /**
  * Acessibilidade tem peso próprio aqui: o produto é usado por servidores
@@ -103,6 +103,15 @@ test("as configurações não têm violação grave", async ({ page }) => {
   await comSessao(page)
   await page.goto(rota("/configuracoes"))
 
+  expect(await violacoesGraves(page)).toEqual([])
+})
+
+test("a administração de servidores não tem violação grave", async ({ page }) => {
+  await comSessao(page, sessaoAdmin)
+  await page.goto(rota("/admin/servidores"))
+
+  // Tabela com linha clicável: é onde "abre no clique mas não no teclado"
+  // passaria despercebido.
   expect(await violacoesGraves(page)).toEqual([])
 })
 

@@ -171,6 +171,15 @@
         "required" : [ "byDepartment", "description", "summable", "total", "unit" ],
         "type" : "object"
       },
+      "CpfResponse" : {
+        "properties" : {
+          "cpf" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "cpf" ],
+        "type" : "object"
+      },
       "CreateDepartmentRequest" : {
         "properties" : {
           "acronym" : {
@@ -3212,6 +3221,33 @@
                 "schema" : {
                   "format" : "byte",
                   "type" : "string"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "user-controller" ]
+      }
+    },
+    "/api/v1/users/{userId}/cpf" : {
+      "get" : {
+        "operationId" : "cpf",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "userId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CpfResponse"
                 }
               }
             },

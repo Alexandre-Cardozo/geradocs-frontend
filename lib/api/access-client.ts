@@ -321,3 +321,18 @@ export async function redefinirSenhaDeUsuario(id: string): Promise<string> {
   }
   return resposta.provisionalPassword
 }
+
+/**
+ * O CPF inteiro de um servidor.
+ *
+ * <p>A listagem mascara de propósito, e revelar é um pedido à parte: fica
+ * registrado na trilha quem revelou, de quem e quando (ADR-023). Não existe
+ * caminho que devolva a coluna inteira em claro.
+ */
+export async function revelarCpf(id: string): Promise<string> {
+  const resposta = await requisicaoProtegida<{ cpf?: string }>(`/users/${id}/cpf`)
+  if (!resposta.cpf) {
+    throw new Error("O servidor não devolveu o CPF.")
+  }
+  return resposta.cpf
+}
