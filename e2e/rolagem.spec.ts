@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test"
 
-import { comSessao, rota } from "./api"
+import { comSessao, processo, rota } from "./api"
 
 /**
  * Uma rolagem só, e nada de faixa branca no fim.
@@ -69,5 +69,30 @@ test.describe("rolagem do shell", () => {
 
     // Rolar até o fim não pode revelar área fora do shell.
     expect(estouroVertical).toBeLessThanOrEqual(1)
+  })
+
+  test("objeto longo não arrasta a listagem de processos", async ({ page }) => {
+    await comSessao(page)
+    await page.route("**/api/v1/procurement-processes**", (rotaApi) =>
+      rotaApi.fulfill({
+        json: {
+          content: [{ ...processo, objectDescription: `Objeto ${TEXTO_SEM_ESPACO}` }],
+          totalElements: 1,
+          number: 0,
+          totalPages: 1,
+        },
+      }),
+    )
+    await page.goto(rota("/processos"))
+    const celula = page.getByText(/Objeto aaa/)
+    await celula.waitFor()
+
+    const estouroDaCelula = await celula.evaluate((e) => e.scrollWidth - e.clientWidth)
+
+    // Medir o `main` não bastava: a tabela tem rolagem própria, então o
+    // transbordo não chegava a mexer no contêiner de fora — ele aparecia
+    // **dentro** da célula, escrevendo por cima da coluna vizinha.
+    expect(estouroDaCelula).toBeLessThanOrEqual(1)
+    expect((await medir(page)).estouroHorizontalDaPagina).toBeLessThanOrEqual(1)
   })
 })

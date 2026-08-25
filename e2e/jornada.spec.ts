@@ -173,8 +173,13 @@ test.describe("elaboração do ETP", () => {
     // A citação está no documento, e a justificativa do que ficou de fora está
     // visível entre colchetes, em vez de sumir.
     await expect(page.getByText(/Item 2026-0142/).first()).toBeVisible()
+    // No corpo da seção, e não em qualquer lugar: o mesmo texto aparece também
+    // no resumo ao lado, e sem escopo o localizador casava com os dois — passava
+    // ou falhava conforme qual dos dois tivesse renderizado primeiro.
     await expect(
-      page.getByText(/\[justificar a contratação não prevista no Plano de Contratações Anual\]/),
+      page
+        .locator("pre")
+        .getByText(/\[justificar a contratação não prevista no Plano de Contratações Anual\]/),
     ).toBeVisible()
   })
 })

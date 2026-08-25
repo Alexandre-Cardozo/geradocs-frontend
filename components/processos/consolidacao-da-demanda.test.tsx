@@ -138,6 +138,20 @@ describe("consolidação da demanda", () => {
     comConsolidacao({ items: [], incongruences: [] })
     renderizar(<ConsolidacaoDaDemanda processoId={PROCESSO} />)
 
-    expect(await screen.findByText(/Nenhum DFD com itens/i)).toBeInTheDocument()
+    expect(await screen.findByText(/Nenhum DFD foi anexado/i)).toBeInTheDocument()
+  })
+
+  it("com DFD anexado e sem itens, não desmente a própria tela", async () => {
+    comConsolidacao({ items: [], incongruences: [] })
+    renderizar(
+      <ConsolidacaoDaDemanda processoId={PROCESSO} dfdAnexado="DFD-CE-003.2026.pdf" />,
+    )
+
+    // Dizer "nenhum DFD foi anexado" logo abaixo do nome do arquivo anexado é
+    // contradizer o que a tela acabou de mostrar. São dois estados: o arquivo
+    // está registrado, e os itens dele é que não foram informados.
+    expect(await screen.findByText(/está registrado neste/i)).toBeInTheDocument()
+    expect(screen.getByText("DFD-CE-003.2026.pdf")).toBeInTheDocument()
+    expect(screen.queryByText(/Nenhum DFD foi anexado/i)).not.toBeInTheDocument()
   })
 })

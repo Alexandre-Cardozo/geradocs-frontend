@@ -138,7 +138,7 @@ export default function Dashboard() {
                       className={`cursor-pointer transition-colors hover:bg-ice ${i < recentes.length - 1 ? "border-b border-ice" : ""}`}
                     >
                       <td className="px-4 py-3.25">
-                        <div className="text-base font-semibold text-text-1">{p.objeto}</div>
+                        <div className="max-w-100 text-base font-semibold break-words text-text-1">{p.objeto}</div>
                         <div className="mt-0.5 font-mono text-xs text-text-muted">{p.id}</div>
                       </td>
                       <td className="px-4 py-3.25 text-sm text-text-3">{p.secretaria}</td>

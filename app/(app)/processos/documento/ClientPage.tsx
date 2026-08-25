@@ -155,7 +155,7 @@ export default function EditorDocumento() {
           </Link>
           <div className="mb-3.5">
             <div className="font-mono text-xs text-text-muted">{processo.data.id}</div>
-            <div className="mt-0.5 text-base leading-snug font-bold text-text-1">{processo.data.objeto}</div>
+            <div className="mt-0.5 text-base leading-snug font-bold break-words text-text-1">{processo.data.objeto}</div>
             <div className="mt-0.75 text-xs text-text-3">{processo.data.secretaria}</div>
             {documentoGerado && foiRetificado(documentoGerado.versao) && (
               // O cabeçalho é onde quem está editando descobre que trabalha

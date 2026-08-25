@@ -107,7 +107,7 @@ export default function Processos() {
                     className={`cursor-pointer transition-colors hover:bg-ice ${i < itens.length - 1 ? "border-b border-ice" : ""}`}
                   >
                     <td className="px-4 py-3.5">
-                      <div className="max-w-65 text-base font-semibold text-text-1">{p.objeto}</div>
+                      <div className="max-w-65 text-base font-semibold break-words text-text-1">{p.objeto}</div>
                       <div className="mt-0.75 font-mono text-xs text-text-muted">{p.id}</div>
                     </td>
                     <td className="max-w-40 px-4 py-3.5 text-sm text-text-3">{p.secretaria}</td>

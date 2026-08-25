@@ -290,7 +290,6 @@ export default function NovoProcesso() {
     );
   };
 
-  const primeiroDocumento = documentosEscolhidos[0];
   const destinoAposCriar = "à lista de processos como rascunho";
 
   return (
@@ -728,11 +727,10 @@ export default function NovoProcesso() {
               {criarProcesso.isPending
                 ? "Criando processo..."
                 : step === 3
-                  ? includeDFDVerification
-                    ? "Criar Processo e Verificar DFD →"
-                    : primeiroDocumento
-                      ? `Criar Processo e Iniciar ${primeiroDocumento} →`
-                      : "Criar Processo →"
+                  ? // O rótulo prometia levar ao ETP (ou ao DFD) e levava à
+                    // lista. Promessa de navegação que não se cumpre é pior que
+                    // rótulo genérico: a pessoa procura a tela que não abriu.
+                    "Criar Processo →"
                   : "Continuar →"}
             </Button>
           </div>

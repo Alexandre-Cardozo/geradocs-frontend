@@ -17,7 +17,14 @@ import { useConsolidacaoDaDemanda } from "@/lib/api/hooks"
  * travar transformaria orientação em obstáculo. O que a plataforma faz é não
  * deixar passar em silêncio.
  */
-export function ConsolidacaoDaDemanda({ processoId }: { processoId: string }) {
+export function ConsolidacaoDaDemanda({
+  processoId,
+  dfdAnexado,
+}: {
+  processoId: string
+  /** Nome do arquivo de DFD registrado no processo, quando há um. */
+  dfdAnexado?: string | null
+}) {
   const consolidacao = useConsolidacaoDaDemanda(processoId)
 
   if (consolidacao.isPending) {
@@ -29,7 +36,21 @@ export function ConsolidacaoDaDemanda({ processoId }: { processoId: string }) {
   if (consolidacao.data.itens.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-border bg-surface px-4 py-3.5 text-sm text-text-muted">
-        Nenhum DFD com itens foi anexado a este processo.
+        {dfdAnexado ? (
+          <>
+            {/*
+              Dizer "nenhum DFD foi anexado" logo abaixo do nome do arquivo
+              anexado é desmentir a própria tela. São dois estados diferentes: o
+              arquivo está registrado, e os itens dele é que não foram lidos.
+            */}
+            O DFD <span className="font-mono">{dfdAnexado}</span> está registrado neste
+            processo, mas os <strong>itens</strong> dele ainda não foram informados — é deles
+            que sai a consolidação. A plataforma guarda o arquivo como comprovação; a leitura
+            automática de itens de PDF não existe.
+          </>
+        ) : (
+          "Nenhum DFD foi anexado a este processo."
+        )}
       </div>
     )
   }

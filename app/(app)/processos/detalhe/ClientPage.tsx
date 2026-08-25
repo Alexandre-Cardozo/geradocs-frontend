@@ -211,7 +211,7 @@ export default function HubProcesso() {
               )}
             </div>
             {!editando ? (
-              <h1 className="mt-2 mb-0 font-display text-2xl font-extrabold tracking-tight text-text-1">{proc.objeto}</h1>
+              <h1 className="mt-2 mb-0 font-display text-2xl font-extrabold tracking-tight break-words text-text-1">{proc.objeto}</h1>
             ) : (
               <div className="mt-3 max-w-xl">
                 <label className="mb-1 block text-sm font-semibold text-text-2">Descrição do Processo</label>
@@ -398,7 +398,7 @@ export default function HubProcesso() {
             Alimenta o painel de quantidades do ETP e a Cotação.
           </span>
         </div>
-        <ConsolidacaoDaDemanda processoId={processoId} />
+        <ConsolidacaoDaDemanda processoId={processoId} dfdAnexado={proc.dfdArquivo} />
       </div>
 
       {/* Documentos do processo — na ordem canônica do fluxo de contratação */}
