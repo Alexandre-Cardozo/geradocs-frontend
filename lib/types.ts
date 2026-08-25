@@ -325,15 +325,13 @@ export interface Usuario {
   prefeituraId: string | null
   /** Secretaria em que atua (nome). */
   secretaria?: string
-  /** Foto de perfil em data URL; null = usa o avatar padrão (iniciais). */
-  avatarDataUrl: string | null
   /** Último acesso em ISO; atualizado no login. */
   ultimoAcesso: string
   /**
-   * A senha ainda é a provisória do cadastro.
+   * A senha ainda é a que o sistema sorteou.
    *
-   * Enquanto for verdade, a sessão só troca a senha: ela é conhecida por quem a
-   * entregou, e trabalhar com ela seria trabalhar com credencial compartilhada.
+   * Enquanto for verdade a tela avisa, sem travar: a senha é conhecida por quem
+   * a entregou, e trocá-la é do interesse de quem recebeu (ADR-022).
    */
   precisaTrocarSenha?: boolean
   ativo: boolean

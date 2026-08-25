@@ -1,8 +1,14 @@
 "use client"
 
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 
+import { redefinirSenhaDeUsuario } from "@/lib/api/access-client"
+import {
+  enviarFotoDePerfil,
+  obterFotoDePerfil,
+  removerFotoDePerfil,
+} from "@/lib/api/avatar-client"
 import * as api from "@/lib/api/client"
 import type { ListaProcessosParams } from "@/lib/api/client"
 import type { TipoDocumento, Tenant } from "@/lib/types"
@@ -25,6 +31,7 @@ export const chaves = {
   tenant: (prefeituraId?: string) => ["tenant", prefeituraId ?? "sessao"] as const,
   usuarios: (prefeituraId?: string, busca = "") => ["usuarios", prefeituraId ?? "todos", busca] as const,
   prefeituras: ["prefeituras"] as const,
+  foto: (usuarioId: string | undefined) => ["foto-de-perfil", usuarioId] as const,
 }
 
 /* ── Sessão / autenticação ─────────────────────────────────────────────────── */
@@ -88,20 +95,61 @@ export function usePerfil() {
   return data?.usuario.perfilAcesso
 }
 
-export function useAtualizarAvatar() {
+/* ── Foto de perfil ────────────────────────────────────────────────────────── */
+
+/**
+ * A foto de uma pessoa, já como URL utilizável em `<img>`.
+ *
+ * <p>A rota é autenticada, então os bytes vêm por `fetch` e viram um object URL.
+ * Ele é revogado quando o cache o descarta: sem isso, cada troca de foto deixaria
+ * o blob anterior preso na memória da aba pelo resto da sessão.
+ */
+export function useFotoDePerfil(usuarioId: string | undefined) {
+  const query = useQuery({
+    queryKey: chaves.foto(usuarioId),
+    queryFn: () => obterFotoDePerfil(usuarioId as string),
+    enabled: usuarioId !== undefined,
+    staleTime: Infinity,
+  })
+  const blob = query.data ?? null
+  const url = useMemo(() => (blob ? URL.createObjectURL(blob) : null), [blob])
+
+  // Revoga o anterior quando a foto muda e ao desmontar: sem isto cada troca
+  // deixaria o blob antigo preso na memória da aba pelo resto da sessão.
+  useEffect(() => {
+    if (!url) return
+    return () => URL.revokeObjectURL(url)
+  }, [url])
+
+  return { url, carregando: query.isPending && usuarioId !== undefined }
+}
+
+export function useEnviarFotoDePerfil(usuarioId: string | undefined) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (avatarDataUrl: string | null) => api.atualizarAvatar(avatarDataUrl),
-    onSuccess: (sessao) => queryClient.setQueryData(chaves.sessao, sessao),
+    mutationFn: (arquivo: File) => enviarFotoDePerfil(arquivo),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: chaves.foto(usuarioId) }),
   })
 }
 
-export function useAtualizarMeuPerfil() {
+export function useRemoverFotoDePerfil(usuarioId: string | undefined) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (input: api.MeuPerfilInput) => api.atualizarMeuPerfil(input),
-    onSuccess: (sessao) => queryClient.setQueryData(chaves.sessao, sessao),
+    mutationFn: () => removerFotoDePerfil(),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: chaves.foto(usuarioId) }),
   })
+}
+
+/**
+ * A administração redefine a senha de um servidor.
+ *
+ * <p>Não invalida a listagem: nada do que ela mostra mudou. O que muda é a
+ * credencial, e ela volta na resposta para ser entregue.
+ */
+export function useRedefinirSenhaDeServidor() {
+  return useMutation({ mutationFn: (id: string) => redefinirSenhaDeUsuario(id) })
 }
 
 export function useEstatisticas() {

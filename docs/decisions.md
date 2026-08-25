@@ -501,3 +501,23 @@ O back-end passou a sortear a senha de quem é cadastrado (ADR-021). A tela pedi
 **É a única trava do produto que não "orienta e deixa seguir" (§24).** A diferença é de quem é a decisão. As outras travas tirariam do servidor uma escolha que é dele — encerrar processo com pendência, contratar fora do PCA. Esta não tira decisão nenhuma: ela impede que **outra pessoa**, quem cadastrou e leu a senha, trabalhe como se fosse ele.
 
 **Os impedimentos são ditos, não só desabilitados.** Senha curta, confirmação diferente e "repetiu a provisória" têm mensagem própria no `aria-describedby` do botão — o guarda-corpo nº 7 aplicado a uma tela que, por definição, é a primeira que a pessoa vê.
+
+## 37. O primeiro uso real: a senha que ninguém viu, o perfil que ninguém alcançava
+
+O §36 foi escrito contra o contrato, não contra alguém usando o produto. O primeiro teste real derrubou três coisas dele.
+
+**A senha sorteada nunca aparecia.** O banner das credenciais era montado **dentro** do painel de cadastro, e o mesmo `onSuccess` que o preenchia chamava `setNovo(false)` — ele nascia desmontado. O servidor era gravado no banco e ninguém conseguia acessá-lo. O mesmo defeito, linha por linha, estava na aba de servidores das Configurações. Agora o banner vive fora do painel, e há teste de tela que fecha o painel e cobra a senha na tela depois disso.
+
+**A senha sozinha não era o que precisava ser entregue.** Mostrar só a senha obrigava quem cadastra a lembrar sozinho de que se entra com o CPF. O componente passa a mostrar o par — acesso e senha — com um botão que copia os dois de uma vez.
+
+**A trava do primeiro acesso vira aviso (ADR-022).** A tela que substituía a aplicação inteira saiu; no lugar, uma faixa no alto com o caminho da troca a um clique e um "Agora não" que vale enquanto a aba estiver aberta. Isto reverte o §36 na parte da trava e realinha o primeiro acesso com a regra do produto (§24): a plataforma orienta e não trava. O §36 abria exceção a ela; esta seção fecha a exceção. O argumento de segurança do §36 continua verdadeiro — durante a janela, quem cadastrou pode agir como a pessoa —, mas a trava não fechava essa janela: ela começa quando a senha é entregue, fora do sistema, e recusar tudo a quem já provou a credencial só empurrava a pessoa a trocar sem ler o que assinou.
+
+**Ninguém alcançava o próprio perfil.** O menu do usuário escondia "Meu Perfil" para o `admin_geral` — e a página, quando alcançada, editava um objeto em memória: recarregar apagava tudo. Agora o cartão do usuário na barra lateral leva ao perfil, para todo perfil de acesso, e a página mudou de natureza: **os dados cadastrais são leitura**. Nome, CPF, matrícula e decreto compõem o registro dos processos que a pessoa assina; quem os altera é a administração, em Servidores, e a tela diz isso. O que é da pessoa — a foto e a senha — ela muda ali.
+
+**A foto de perfil não viaja no JSON.** Vem de rota autenticada, o que impede apontar o `src` de um `<img>` direto para ela: os bytes são buscados com o token e viram object URL, revogado quando a foto muda. Um componente só (`FotoDePerfil`) atende barra lateral, perfil e ficha do servidor — repetir esse arranjo em cada tela é como uma delas acaba mostrando iniciais para quem já pôs foto.
+
+**A administração redefine a senha de quem esqueceu.** Ficha do servidor aberta pela listagem, com confirmação antes: a senha atual deixa de valer e as sessões abertas caem. A senha nova aparece no mesmo componente de credenciais, uma vez.
+
+**Dois campos do contrato eram descartados na tradução.** `mapearSessao` não copiava `registrationNumber` nem `appointmentDecree`, e a tela de perfil mostrava "—" para dois dados que o servidor conhece desde sempre. É a mesma família de defeito do §33 e do §35 — o dado passou a vir do servidor e este lado continuou inventando —, agora com teste que fixa os dois campos.
+
+**O piso da senha caiu de 12 para 8 caracteres**, por decisão do cliente (ADR-022). Os dois lados do limite estão em teste: enfraquecer um parâmetro de segurança sem verificação é como ele acaba enfraquecido de novo, sem ninguém decidir.

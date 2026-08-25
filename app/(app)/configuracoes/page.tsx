@@ -33,7 +33,7 @@ import {
 } from "@/lib/api/hooks";
 import { formatCPF, validaCPF } from "@/lib/auth/cpf";
 import { ImportarPca } from "@/components/configuracoes/importar-pca";
-import { SenhaProvisoria } from "@/components/shared/senha-provisoria";
+import { CredenciaisIniciais } from "@/components/admin/credenciais-iniciais";
 import { MarcaSintetica } from "@/components/shared/marca-sintetica";
 import { anoBrasilia, dataBrasiliaISO, formatData, formatDataHora } from "@/lib/format";
 import { PERFIL_ACESSO_LABEL, type PerfilAcesso, type Secretaria } from "@/lib/types";
@@ -164,7 +164,7 @@ export default function Configuracoes() {
   const [nsCpf, setNsCpf] = useState("");
   const [nsEmail, setNsEmail] = useState("");
   const [nsCargo, setNsCargo] = useState("");
-  const [senhaProvisoria, setSenhaProvisoria] = useState<{ nome: string; senha: string } | null>(null);
+  const [credenciais, setCredenciais] = useState<{ nome: string; chave: string; senha: string } | null>(null);
   const [nsPerfil, setNsPerfil] = useState<PerfilAcesso>("servidor");
 
   // Estado local dos formulários, semeado quando o tenant carrega.
@@ -529,6 +529,19 @@ export default function Configuracoes() {
       {/* ── Usuários ── */}
       {activeTab === "usuarios" && (
         <div>
+          {/* Fora do painel de cadastro: ele fecha no sucesso, e o aviso nascia
+              desmontado — o servidor era gravado e a senha nunca aparecia. */}
+          {credenciais && (
+            <div className="mb-4">
+              <CredenciaisIniciais
+                nome={credenciais.nome}
+                chave={credenciais.chave}
+                senha={credenciais.senha}
+                titulo="Credenciais de primeiro acesso"
+                onFechar={() => setCredenciais(null)}
+              />
+            </div>
+          )}
           {novoServidor && (
             <div className="mb-4 rounded-card border border-border bg-surface p-5">
               <h3 className="m-0 mb-4 font-display text-md font-bold text-text-1">Adicionar Servidor à Prefeitura</h3>
@@ -557,15 +570,6 @@ export default function Configuracoes() {
                   />
                 </FormField>
               </div>
-              {senhaProvisoria && (
-                <div className="mb-4">
-                  <SenhaProvisoria
-                    nome={senhaProvisoria.nome}
-                    senha={senhaProvisoria.senha}
-                    onFechar={() => setSenhaProvisoria(null)}
-                  />
-                </div>
-              )}
               <div className="mt-4 flex gap-2.5">
                 <Button variant="secondary" onClick={() => setNovoServidor(false)}>Cancelar</Button>
                 <p id="motivo-criar-servidor-tenant" className="sr-only">
@@ -580,8 +584,9 @@ export default function Configuracoes() {
                       { nome: nsNome, cpf: nsCpf, email: nsEmail, cargo: nsCargo, perfilAcesso: nsPerfil, prefeituraId: prefeituraId ?? null },
                       {
                         onSuccess: (criado) => {
-                          setSenhaProvisoria({
+                          setCredenciais({
                             nome: criado.usuario.nome,
+                            chave: criado.usuario.cpf,
                             senha: criado.senhaProvisoria,
                           });
                           showToast("Servidor cadastrado.");

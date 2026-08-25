@@ -64,7 +64,11 @@ async function requisicaoPublica<T>(path: string, init: RequestInit): Promise<T>
       credentials: "include",
       headers: {
         Accept: "application/json",
-        ...(init.body ? { "Content-Type": "application/json" } : {}),
+        // FormData não leva Content-Type nosso: quem escreve o `boundary` é o
+        // navegador, e fixar "application/json" aqui quebraria todo envio de arquivo.
+        ...(init.body && !(init.body instanceof FormData)
+          ? { "Content-Type": "application/json" }
+          : {}),
         ...init.headers,
       },
     })
@@ -99,7 +103,11 @@ async function requisicaoAutenticada<T>(path: string, init: RequestInit = {}, pe
       credentials: "include",
       headers: {
         Accept: "application/json",
-        ...(init.body ? { "Content-Type": "application/json" } : {}),
+        // FormData não leva Content-Type nosso: quem escreve o `boundary` é o
+        // navegador, e fixar "application/json" aqui quebraria todo envio de arquivo.
+        ...(init.body && !(init.body instanceof FormData)
+          ? { "Content-Type": "application/json" }
+          : {}),
         ...init.headers,
         Authorization: `Bearer ${accessToken}`,
       },
@@ -156,6 +164,39 @@ export async function baixarProtegido(
     // isso que torna o arquivo recuperável numa pasta de downloads.
     nomeSugerido: nomeNoCabecalho(response.headers.get("Content-Disposition")),
   }
+}
+
+/**
+ * Busca uma imagem autenticada.
+ *
+ * Separado de `baixarProtegido` por causa do 404: aqui ele não é erro, é "esta
+ * pessoa não pôs foto" — o caso mais comum. Tratá-lo como falha encheria a tela
+ * de aviso para um estado normal.
+ */
+export async function imagemProtegida(
+  path: string,
+  permiteRenovar = true,
+): Promise<Blob | null> {
+  if (!accessToken) await renovarToken()
+  let response: Response
+  try {
+    response = await fetch(`${API_URL}${path}`, {
+      credentials: "include",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+  } catch {
+    throw new ApiError("Não foi possível conectar ao servidor. Verifique se o backend está em execução.", 0)
+  }
+  if (response.status === 401 && permiteRenovar) {
+    accessToken = null
+    await renovarToken()
+    return imagemProtegida(path, false)
+  }
+  // 403 junto com 404: quem não pode ver a foto de outra pessoa vê as iniciais,
+  // e não uma mensagem de erro no meio de uma listagem.
+  if (response.status === 404 || response.status === 403) return null
+  if (!response.ok) throw await erroDa(response, "Não foi possível carregar a foto de perfil.")
+  return response.blob()
 }
 
 /** O `filename` do `Content-Disposition`, quando o servidor o envia. */
@@ -216,9 +257,12 @@ function mapearSessao(session: BackendSession | undefined): Sessao {
     cpf: user.cpf ?? "",
     email: user.email,
     cargo: user.jobTitle ?? "",
+    // Vinham no contrato e eram descartados aqui: a tela de perfil mostrava "—"
+    // para dois campos que o servidor conhece.
+    matricula: user.registrationNumber ?? undefined,
+    decretoNomeacao: user.appointmentDecree ?? undefined,
     perfilAcesso: perfis[user.profileAccess],
     prefeituraId: session?.organization?.id ?? null,
-    avatarDataUrl: null,
     ultimoAcesso: user.lastAccessAt ?? "",
     precisaTrocarSenha: user.passwordChangeRequired ?? false,
     ativo: user.status === "ACTIVE",

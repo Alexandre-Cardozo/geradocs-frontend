@@ -9,7 +9,6 @@ import geradocsLogo from "@/public/geradocs-mark-white.png";
 
 import {
   IconBuilding,
-  IconCamera,
   IconDashboard,
   IconDownload,
   IconFileText,
@@ -18,11 +17,8 @@ import {
   IconSettings,
   IconUser,
 } from "@/components/ui/icons";
-import {
-  useAtualizarAvatar,
-  useLogout,
-  useSessao,
-} from "@/lib/api/hooks";
+import { FotoDePerfil } from "@/components/shared/foto-de-perfil";
+import { useLogout, useSessao } from "@/lib/api/hooks";
 import { navPrincipal, navSistema, type IconeNav } from "@/lib/auth/acesso";
 import { PERFIL_ACESSO_LABEL } from "@/lib/types";
 
@@ -108,7 +104,6 @@ export default function Sidebar({
   const pathname = usePathname();
   const router = useRouter();
   const { data: sessao } = useSessao();
-  const atualizarAvatar = useAtualizarAvatar();
   const logout = useLogout();
   const [menuAberto, setMenuAberto] = useState(false);
 
@@ -221,73 +216,37 @@ export default function Sidebar({
         )}
       </nav>
 
-      {/* Usuário — avatar (troca a foto) + linha clicável que abre o menu (Meu Perfil / Sair) */}
+      {/* Usuário — o cartão inteiro abre o menu (Meu Perfil / Sair) */}
       <div className="relative border-t border-on-dark-border p-2">
-        <div
-          className={`flex items-center gap-2.5 rounded-lg p-1.5 transition-colors ${
-            menuAberto ? "bg-on-dark-fill" : ""
+        <button
+          type="button"
+          onClick={() => setMenuAberto((v) => !v)}
+          aria-label="Abrir menu do usuário"
+          aria-expanded={menuAberto}
+          className={`flex w-full cursor-pointer items-center gap-2.5 rounded-lg border-0 p-1.5 text-left transition-colors ${
+            menuAberto ? "bg-on-dark-fill" : "bg-transparent"
           }`}
         >
-          <label
-            className="group relative size-9 shrink-0 cursor-pointer"
-            title="Alterar foto de perfil"
+          <FotoDePerfil
+            usuarioId={usuario?.id}
+            iniciais={usuario?.iniciais ?? "—"}
+            tamanho={36}
+            className="shrink-0 text-base"
+          />
+          <span className="block min-w-0 flex-1">
+            <span className="block truncate text-base font-semibold text-on-dark">
+              {usuario?.nome ?? "Carregando..."}
+            </span>
+            <span className="block truncate text-xs text-on-dark-40">
+              {usuario ? PERFIL_ACESSO_LABEL[usuario.perfilAcesso] : ""}
+            </span>
+          </span>
+          <span
+            className={`flex shrink-0 transition-colors ${menuAberto ? "text-on-dark" : "text-on-dark-30"}`}
           >
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/webp,image/svg+xml"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (!f) return;
-                const reader = new FileReader();
-                reader.onload = () =>
-                  atualizarAvatar.mutate(
-                    typeof reader.result === "string" ? reader.result : null,
-                  );
-                reader.readAsDataURL(f);
-              }}
-            />
-            {usuario?.avatarDataUrl ? (
-              <Image
-                src={usuario.avatarDataUrl}
-                alt="Foto de perfil"
-                width={36}
-                height={36}
-                unoptimized
-                className="size-9 rounded-full object-cover"
-              />
-            ) : (
-              <span className="flex size-9 items-center justify-center rounded-full text-base font-bold text-on-dark gradient-user">
-                {usuario?.iniciais ?? "—"}
-              </span>
-            )}
-            <span className="absolute inset-0 flex items-center justify-center rounded-full bg-navy/55 text-on-dark opacity-0 transition-opacity group-hover:opacity-100">
-              <IconCamera size={14} />
-            </span>
-          </label>
-
-          <button
-            type="button"
-            onClick={() => setMenuAberto((v) => !v)}
-            aria-label="Abrir menu do usuário"
-            aria-expanded={menuAberto}
-            className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 border-0 bg-transparent p-0 text-left"
-          >
-            <span className="block min-w-0 flex-1">
-              <span className="block truncate text-base font-semibold text-on-dark">
-                {usuario?.nome ?? "Carregando..."}
-              </span>
-              <span className="block truncate text-xs text-on-dark-40">
-                {usuario ? PERFIL_ACESSO_LABEL[usuario.perfilAcesso] : ""}
-              </span>
-            </span>
-            <span
-              className={`flex shrink-0 transition-colors ${menuAberto ? "text-on-dark" : "text-on-dark-30"}`}
-            >
-              <IconMoreVertical size={16} />
-            </span>
-          </button>
-        </div>
+            <IconMoreVertical size={16} />
+          </span>
+        </button>
 
         {menuAberto && (
           <>
@@ -297,28 +256,33 @@ export default function Sidebar({
               onClick={() => setMenuAberto(false)}
             />
             <div className="absolute inset-x-2 bottom-full z-20 mb-2 overflow-hidden rounded-xl border border-border bg-surface shadow-knob">
-              {/* Cabeçalho — nome completo + e-mail (o nome trunca na barra) */}
-              <div className="border-b border-border-soft px-3.5 py-3">
+              {/* Cabeçalho — clicável: é onde a pessoa procura os próprios dados */}
+              <Link
+                href="/perfil"
+                onClick={() => {
+                  setMenuAberto(false);
+                  onNavigate?.();
+                }}
+                className="block border-b border-border-soft px-3.5 py-3 no-underline transition-colors hover:bg-ice"
+              >
                 <div className="truncate text-sm font-bold text-text-1">
                   {usuario?.nome}
                 </div>
                 <div className="truncate text-xs text-text-muted">
                   {usuario?.email}
                 </div>
-              </div>
+              </Link>
               <div className="p-1">
-                {perfil !== "admin_geral" && (
-                  <Link
-                    href="/perfil"
-                    onClick={() => {
-                      setMenuAberto(false);
-                      onNavigate?.();
-                    }}
-                    className="flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm font-medium text-text-2 no-underline transition-colors hover:bg-ice"
-                  >
-                    <IconUser size={15} /> Meu Perfil
-                  </Link>
-                )}
+                <Link
+                  href="/perfil"
+                  onClick={() => {
+                    setMenuAberto(false);
+                    onNavigate?.();
+                  }}
+                  className="flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm font-medium text-text-2 no-underline transition-colors hover:bg-ice"
+                >
+                  <IconUser size={15} /> Meu Perfil
+                </Link>
                 <button
                   type="button"
                   onClick={sair}

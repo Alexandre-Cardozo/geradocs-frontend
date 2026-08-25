@@ -106,6 +106,15 @@ test("as configurações não têm violação grave", async ({ page }) => {
   expect(await violacoesGraves(page)).toEqual([])
 })
 
+test("o meu perfil não tem violação grave", async ({ page }) => {
+  await comSessao(page)
+  await page.goto(rota("/perfil"))
+
+  // Tela de formulário com campos de senha e um seletor de arquivo escondido —
+  // é exatamente onde rótulo sem associação passa despercebido.
+  expect(await violacoesGraves(page)).toEqual([])
+})
+
 test("o editor de documento não tem violação grave", async ({ page }) => {
   await comSessao(page)
   await comProcessoEDocumento(page)

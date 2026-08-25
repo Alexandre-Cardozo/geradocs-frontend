@@ -108,6 +108,9 @@ export async function comSessao(page: Page, sessao: Sessao = sessaoServidor) {
     rota.fulfill({ json: { content: [], totalElements: 0, number: 0, totalPages: 1 } }),
   )
   await page.route(`${API}/organizations**`, (rota) => rota.fulfill({ json: [] }))
+  // Antes de `/users**`: a rota da foto é mais específica e devolve binário, não
+  // JSON. Sem ela, `[]` chegaria como se fosse uma imagem.
+  await page.route(`${API}/users/*/avatar`, (rota) => rota.fulfill({ status: 404, body: "" }))
   await page.route(`${API}/users**`, (rota) => rota.fulfill({ json: [] }))
 }
 

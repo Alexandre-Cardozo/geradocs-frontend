@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react"
 
+import { AvisoDeSenhaProvisoria } from "@/components/layout/AvisoDeSenhaProvisoria"
 import Header from "@/components/layout/Header"
 import Sidebar from "@/components/layout/Sidebar"
 
@@ -25,6 +26,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
       )}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <Header onMenuClick={() => setSidebarAberta(true)} />
+        <AvisoDeSenhaProvisoria />
         <main className="flex-1 overflow-y-auto">{children}</main>
       </div>
     </div>

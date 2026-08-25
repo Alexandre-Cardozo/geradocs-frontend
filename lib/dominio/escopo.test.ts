@@ -14,7 +14,6 @@ function usuario(prefeituraId: string | null): Usuario {
     cargo: "Servidora",
     perfilAcesso: prefeituraId ? "servidor" : "admin_geral",
     prefeituraId,
-    avatarDataUrl: null,
     ultimoAcesso: "",
     ativo: true,
   }

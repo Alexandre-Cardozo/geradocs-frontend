@@ -16,10 +16,8 @@ import {
   empilharVersao,
   entradaDeHistorico,
   impactoTrocaModalidade,
-  iniciaisDe,
   motivoDaTrocaDeModalidade,
   notaDaVersao,
-  primeiroNome,
   motivoDoEncerramento,
   noEscopo,
   prefeiturasVisiveis,
@@ -206,39 +204,6 @@ export async function recuperarSenha(email: string): Promise<void> {
 export async function resetarSenha(token: string, senha: string): Promise<void> {
   await redefinirSenha(token, senha)
 }
-
-/** Atualiza a foto de perfil do usuário logado (data URL ou null para o padrão). */
-export async function atualizarAvatar(avatarDataUrl: string | null): Promise<Sessao> {
-  await delay(200)
-  const { usuario, prefeitura } = exigeSessao()
-  usuario.avatarDataUrl = avatarDataUrl
-  return { usuario: clone(usuario), prefeitura: clone(prefeitura) }
-}
-
-/** Edição dos próprios dados (Meu Perfil). CPF e perfil de acesso não mudam aqui. */
-export interface MeuPerfilInput {
-  nome?: string
-  email?: string
-  cargo?: string
-  secretaria?: string
-  avatarDataUrl?: string | null
-}
-
-export async function atualizarMeuPerfil(input: MeuPerfilInput): Promise<Sessao> {
-  await delay(400)
-  const { usuario, prefeitura } = exigeSessao()
-  if (input.nome != null && input.nome.trim() !== "") {
-    usuario.nome = input.nome.trim()
-    usuario.primeiroNome = primeiroNome(usuario.nome)
-    usuario.iniciais = iniciaisDe(usuario.nome)
-  }
-  if (input.email != null) usuario.email = input.email.trim()
-  if (input.cargo != null) usuario.cargo = input.cargo.trim()
-  if (input.secretaria !== undefined) usuario.secretaria = input.secretaria
-  if (input.avatarDataUrl !== undefined) usuario.avatarDataUrl = input.avatarDataUrl
-  return { usuario: clone(usuario), prefeitura: clone(prefeitura) }
-}
-
 
 /** Estatísticas do dashboard, escopadas à prefeitura do usuário logado. */
 export async function getEstatisticas(): Promise<EstatisticasDashboard> {

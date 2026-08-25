@@ -93,7 +93,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["resetPassword"];
+        post: operations["resetPassword_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -127,6 +127,22 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/avatar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["upload"];
+        post?: never;
+        delete: operations["remove"];
         options?: never;
         head?: never;
         patch?: never;
@@ -580,6 +596,22 @@ export interface paths {
         patch: operations["update"];
         trace?: never;
     };
+    "/api/v1/users/{userId}/avatar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["avatar"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/users/{userId}/deactivate": {
         parameters: {
             query?: never;
@@ -590,6 +622,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["deactivate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{userId}/password-reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["resetPassword"];
         delete?: never;
         options?: never;
         head?: never;
@@ -625,6 +673,13 @@ export interface components {
             expiresIn: number;
             session: components["schemas"]["SessionResponse"];
             tokenType: string;
+        };
+        AvatarResponse: {
+            /** Format: int32 */
+            byteSize: number;
+            mediaType: string;
+            /** Format: date-time */
+            updatedAt: string;
         };
         BlockView: {
             dispensed: boolean;
@@ -970,6 +1025,9 @@ export interface components {
             /** Format: int64 */
             version: number;
         };
+        ProvisionalPasswordResponse: {
+            provisionalPassword: string;
+        };
         ReopenProcurementProcessRequest: {
             reason: string;
         };
@@ -1233,7 +1291,7 @@ export interface operations {
             };
         };
     };
-    resetPassword: {
+    resetPassword_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -1292,6 +1350,51 @@ export interface operations {
                 content: {
                     "*/*": components["schemas"]["SessionResponse"];
                 };
+            };
+        };
+    };
+    upload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AvatarResponse"];
+                };
+            };
+        };
+    };
+    remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -2258,6 +2361,30 @@ export interface operations {
             };
         };
     };
+    avatar: {
+        parameters: {
+            query?: never;
+            header?: {
+                "If-None-Match"?: string;
+            };
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string;
+                };
+            };
+        };
+    };
     deactivate: {
         parameters: {
             query?: never;
@@ -2282,6 +2409,28 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["UserResponse"];
+                };
+            };
+        };
+    };
+    resetPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ProvisionalPasswordResponse"];
                 };
             };
         };

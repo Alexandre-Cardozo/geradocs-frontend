@@ -13,6 +13,8 @@ export const sessaoServidor = {
     cpf: "33333333333",
     email: "maria.costa@ecoporanga.es.gov.br",
     jobTitle: "Servidora de Compras",
+    registrationNumber: "MAT-4471",
+    appointmentDecree: "Decreto 1.234/2026",
     profileAccess: "SERVIDOR" as const,
     status: "ACTIVE" as const,
     lastAccessAt: "2026-08-20T14:30:00-03:00",

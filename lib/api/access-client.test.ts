@@ -743,3 +743,30 @@ describe("senha provisória", () => {
     ).rejects.toThrow(/recuperação de senha/)
   })
 })
+
+describe("redefinirSenhaDeUsuario", () => {
+  it("devolve a senha sorteada para ser entregue", async () => {
+    let metodo = ""
+    servidor.use(
+      http.post(`${urlDaApi}/users/:id/password-reset`, ({ request }) => {
+        metodo = request.method
+        return HttpResponse.json({ provisionalPassword: SENHA_SORTEADA })
+      }),
+    )
+    const { redefinirSenhaDeUsuario } = await carregarClienteLimpo()
+
+    await expect(redefinirSenhaDeUsuario(usuarioApi.id)).resolves.toBe(SENHA_SORTEADA)
+    expect(metodo).toBe("POST")
+  })
+
+  it("resposta sem a senha vira erro que diz o que fazer, e não silêncio", async () => {
+    servidor.use(
+      http.post(`${urlDaApi}/users/:id/password-reset`, () => HttpResponse.json({})),
+    )
+    const { redefinirSenhaDeUsuario } = await carregarClienteLimpo()
+
+    // A senha já foi trocada no servidor a esta altura: fingir que nada
+    // aconteceu deixaria a pessoa sem acesso e sem explicação.
+    await expect(redefinirSenhaDeUsuario(usuarioApi.id)).rejects.toThrow(/Redefina novamente/)
+  })
+})

@@ -88,7 +88,6 @@ function usuarioDa(user: BackendUser): Usuario {
     perfilAcesso: perfis[user.profileAccess],
     prefeituraId: membership?.organizationId ?? null,
     secretaria: membership?.departmentId ?? undefined,
-    avatarDataUrl: null,
     ultimoAcesso: user.lastAccessAt ?? "",
     ativo: user.status === "ACTIVE",
   }
@@ -298,4 +297,27 @@ export async function desativarUsuario(id: string): Promise<void> {
     headers: { "If-Match": ifMatch(user.version) },
     body: JSON.stringify({ reason: "Desativado pela administração." }),
   })
+}
+
+/**
+ * A administração devolve o acesso de quem perdeu a senha.
+ *
+ * <p>A senha volta **uma vez**, como no cadastro, e a pessoa retorna ao estado
+ * de primeiro acesso: as sessões abertas dela caem e o aviso de troca reaparece
+ * (ADR-022). Quem redefine precisa entregar a senha — não há segunda chance de
+ * lê-la.
+ */
+export async function redefinirSenhaDeUsuario(id: string): Promise<string> {
+  const resposta = await requisicaoProtegida<{ provisionalPassword?: string }>(
+    `/users/${id}/password-reset`,
+    { method: "POST" },
+  )
+  if (!resposta.provisionalPassword) {
+    // A senha já foi trocada no servidor a esta altura: dizer isso é melhor do
+    // que deixar a pessoa achar que nada aconteceu e tentar de novo.
+    throw new Error(
+      "A senha foi redefinida, mas não veio na resposta. Redefina novamente para obter uma nova.",
+    )
+  }
+  return resposta.provisionalPassword
 }

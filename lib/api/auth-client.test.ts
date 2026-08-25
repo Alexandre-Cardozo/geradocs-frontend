@@ -464,7 +464,10 @@ describe("tenant sintetizado (ponte temporária)", () => {
   })
 })
 
-/** Ver a nota do gitleaks em `TrocaDeSenhaObrigatoria.test.tsx`. */
+/**
+ * Senhas de teste em constante nomeada: o gitleaks lê literal de senha no diff
+ * como credencial vazada e recusa o commit.
+ */
 const PROVISORIA = "provisoria-16-chars"
 const ESCOLHIDA = "EscolhidaPorMim2026"
 
@@ -492,5 +495,94 @@ describe("trocarPropriaSenha", () => {
     // Sessão liberada na mesma resposta: o marcador é lido do banco a cada
     // requisição, então o token que a pessoa já tem passa a valer para tudo.
     expect(sessao.usuario.precisaTrocarSenha).toBe(false)
+  })
+})
+
+describe("imagemProtegida", () => {
+  /** Sem sessão prévia o cliente renova o token antes de qualquer leitura. */
+  function comRefresh() {
+    servidor.use(http.post(`${urlDaApi}/auth/refresh`, () => HttpResponse.json(autenticacao)))
+  }
+
+  it("devolve os bytes com o cabeçalho de autorização", async () => {
+    comRefresh()
+    let autorizacao: string | null = null
+    servidor.use(
+      http.get(`${urlDaApi}/users/:id/avatar`, ({ request }) => {
+        autorizacao = request.headers.get("Authorization")
+        return HttpResponse.arrayBuffer(new Uint8Array([1, 2, 3]).buffer, {
+          headers: { "Content-Type": "image/png" },
+        })
+      }),
+    )
+    const { imagemProtegida } = await carregarClienteLimpo()
+
+    const blob = await imagemProtegida("/users/u1/avatar")
+
+    expect(await blob?.arrayBuffer()).toEqual(new Uint8Array([1, 2, 3]).buffer)
+    // Uma âncora comum não leva este cabeçalho: é por isso que a imagem não pode
+    // ir direto no `src` de um `<img>`.
+    expect(autorizacao).toBe(`Bearer ${autenticacao.accessToken}`)
+  })
+
+  it("404 e 403 são ausência de foto, não erro na tela", async () => {
+    for (const status of [404, 403]) {
+      comRefresh()
+      servidor.use(
+        http.get(`${urlDaApi}/users/:id/avatar`, () => new HttpResponse(null, { status })),
+      )
+      const { imagemProtegida } = await carregarClienteLimpo()
+
+      await expect(imagemProtegida("/users/u1/avatar")).resolves.toBeNull()
+    }
+  })
+
+  it("renova o token uma vez quando o access token expirou", async () => {
+    let tentativas = 0
+    servidor.use(
+      http.post(`${urlDaApi}/auth/refresh`, () => HttpResponse.json(autenticacao)),
+      http.get(`${urlDaApi}/users/:id/avatar`, () => {
+        tentativas += 1
+        return tentativas === 1
+          ? new HttpResponse(null, { status: 401 })
+          : HttpResponse.arrayBuffer(new Uint8Array([9]).buffer)
+      }),
+    )
+    const { imagemProtegida } = await carregarClienteLimpo()
+
+    await expect(imagemProtegida("/users/u1/avatar")).resolves.not.toBeNull()
+    expect(tentativas).toBe(2)
+  })
+
+  it("401 depois de renovar vira erro, e não foto vazia", async () => {
+    servidor.use(
+      http.post(`${urlDaApi}/auth/refresh`, () => HttpResponse.json(autenticacao)),
+      http.get(`${urlDaApi}/users/:id/avatar`, () => new HttpResponse(null, { status: 401 })),
+    )
+    const { imagemProtegida } = await carregarClienteLimpo()
+
+    await expect(imagemProtegida("/users/u1/avatar")).rejects.toThrow(/foto de perfil/i)
+  })
+
+  it("servidor fora do ar é dito como tal", async () => {
+    comRefresh()
+    servidor.use(http.get(`${urlDaApi}/users/:id/avatar`, () => HttpResponse.error()))
+    const { imagemProtegida } = await carregarClienteLimpo()
+
+    await expect(imagemProtegida("/users/u1/avatar")).rejects.toThrow(/conectar ao servidor/)
+  })
+})
+
+describe("dados cadastrais na sessão", () => {
+  it("matrícula e decreto chegam do servidor, e não como travessão na tela", async () => {
+    servidor.use(http.post(`${urlDaApi}/auth/refresh`, () => HttpResponse.json(autenticacao)))
+    const { obterSessao } = await carregarClienteLimpo()
+
+    const sessao = await obterSessao()
+
+    // O contrato sempre os trouxe; o mapeamento é que os descartava, e a tela de
+    // perfil mostrava "—" para dois campos que o servidor conhece.
+    expect(sessao?.usuario.matricula).toBe("MAT-4471")
+    expect(sessao?.usuario.decretoNomeacao).toBe("Decreto 1.234/2026")
   })
 })

@@ -234,20 +234,17 @@ describe("sessão", () => {
     await waitFor(() => expect(api[fn]).toHaveBeenCalled())
   })
 
-  it("trocar avatar e perfil grava a sessão nova sem recarregar tudo", async () => {
-    const sessao = { usuario: { id: "u1" } }
-    for (const [usar, entrada, fn] of [
-      [() => hooks.useAtualizarAvatar(), "data:image/png;base64,x", "atualizarAvatar"],
-      [() => hooks.useAtualizarMeuPerfil(), { nome: "Maria" }, "atualizarMeuPerfil"],
-    ] as const) {
-      const { wrapper, gravou } = ambiente()
-      vi.mocked(api[fn] as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(sessao)
+  it("trocar a própria senha grava a sessão nova sem recarregar tudo", async () => {
+    const sessao = { usuario: { id: "u1", precisaTrocarSenha: false } }
+    const { wrapper, gravou } = ambiente()
+    vi.mocked(api.trocarPropriaSenha).mockResolvedValue(sessao as never)
 
-      const { result } = renderHook(comoMutacao(usar), { wrapper })
-      result.current.mutate(entrada as never)
+    const { result } = renderHook(() => hooks.useTrocarPropriaSenha(), { wrapper })
+    result.current.mutate({ atual: "a-que-veio", nova: "a-que-escolhi" })
 
-      await waitFor(() => expect(gravou).toHaveBeenCalledWith(chaves.sessao, sessao))
-    }
+    // Gravar em vez de invalidar: a resposta já traz o usuário sem o marcador,
+    // e invalidar faria o aviso de senha provisória piscar de volta.
+    await waitFor(() => expect(gravou).toHaveBeenCalledWith(chaves.sessao, sessao))
   })
 })
 

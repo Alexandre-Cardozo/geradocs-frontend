@@ -5,13 +5,15 @@ import { useState } from "react"
 import { Button, Dropdown, FormField, Input, Tag } from "@/components/ui"
 import { IconPlus, IconTrash } from "@/components/ui/icons"
 import { EmptyState, ErrorState, SkeletonRows } from "@/components/shared/estados"
+import { FotoDePerfil } from "@/components/shared/foto-de-perfil"
 import { Th } from "@/components/shared/tabela"
 import { useToast } from "@/components/shared/providers"
-import { SenhaProvisoria } from "@/components/shared/senha-provisoria"
+import { CredenciaisIniciais } from "@/components/admin/credenciais-iniciais"
+import { FichaDoServidor } from "@/components/admin/ficha-do-servidor"
 import { useCriarUsuario, usePrefeituras, useRemoverUsuario, useUsuarios } from "@/lib/api/hooks"
 import { formatCPF, validaCPF } from "@/lib/auth/cpf"
 import { formatDataHora } from "@/lib/format"
-import { PERFIL_ACESSO_LABEL, type PerfilAcesso } from "@/lib/types"
+import { PERFIL_ACESSO_LABEL, type PerfilAcesso, type Usuario } from "@/lib/types"
 
 const perfilTone = (p: PerfilAcesso) => (p === "admin_geral" ? "warning" : p === "coordenador" ? "success" : "neutral")
 
@@ -35,7 +37,8 @@ export default function AdminServidores() {
   const [cargo, setCargo] = useState("")
   const [matricula, setMatricula] = useState("")
   const [decreto, setDecreto] = useState("")
-  const [senhaProvisoria, setSenhaProvisoria] = useState<{ nome: string; senha: string } | null>(null)
+  const [credenciais, setCredenciais] = useState<{ nome: string; chave: string; senha: string } | null>(null)
+  const [fichaAberta, setFichaAberta] = useState<string | null>(null)
   const [perfil, setPerfil] = useState<PerfilAcesso>("servidor")
   const [prefeituraId, setPrefeituraId] = useState("")
 
@@ -62,8 +65,14 @@ export default function AdminServidores() {
       {
         onSuccess: (criado) => {
           // A senha volta uma única vez: guardá-la aqui é o que permite
-          // mostrá-la para ser entregue.
-          setSenhaProvisoria({ nome: criado.usuario.nome, senha: criado.senhaProvisoria })
+          // mostrá-la para ser entregue. Fica **fora** do painel de cadastro,
+          // que fecha na linha seguinte — a primeira versão a mostrava dentro
+          // dele, e o aviso nascia desmontado.
+          setCredenciais({
+            nome: criado.usuario.nome,
+            chave: criado.usuario.cpf,
+            senha: criado.senhaProvisoria,
+          })
           showToast("Servidor cadastrado.")
           setNovo(false)
           setNome(""); setCpf(""); setEmail(""); setCargo(""); setMatricula(""); setDecreto("")
@@ -73,6 +82,11 @@ export default function AdminServidores() {
       }
     )
   }
+
+  // Da própria listagem: ela já traz tudo o que a ficha mostra, e uma leitura a
+  // mais só produziria a chance de as duas divergirem na tela.
+  const servidorDaFicha: Usuario | undefined =
+    fichaAberta === null ? undefined : listaFiltrada.find((u) => u.id === fichaAberta)
 
   const nomePrefeitura = (id: string | null) =>
     id ? prefeituras.data?.find((p) => p.id === id)?.orgao ?? id : "—"
@@ -88,6 +102,26 @@ export default function AdminServidores() {
           Novo Servidor
         </Button>
       </div>
+
+      {credenciais && (
+        <div className="mb-5">
+          <CredenciaisIniciais
+            nome={credenciais.nome}
+            chave={credenciais.chave}
+            senha={credenciais.senha}
+            titulo="Credenciais de primeiro acesso"
+            onFechar={() => setCredenciais(null)}
+          />
+        </div>
+      )}
+
+      {servidorDaFicha && (
+        <FichaDoServidor
+          servidor={servidorDaFicha}
+          prefeitura={nomePrefeitura(servidorDaFicha.prefeituraId)}
+          onFechar={() => setFichaAberta(null)}
+        />
+      )}
 
       {novo && (
         <div className="mb-5 rounded-card border border-border bg-surface p-5">
@@ -137,20 +171,11 @@ export default function AdminServidores() {
               </FormField>
             )}
           </div>
-          {senhaProvisoria && (
-            <div className="mb-4">
-              <SenhaProvisoria
-                nome={senhaProvisoria.nome}
-                senha={senhaProvisoria.senha}
-                onFechar={() => setSenhaProvisoria(null)}
-              />
-            </div>
-          )}
           <div className="mt-4 flex gap-2.5">
             <Button variant="secondary" onClick={() => setNovo(false)}>Cancelar</Button>
             <p id="motivo-criar-servidor" className="sr-only">
-              Nome, CPF válido, e-mail, senha com no mínimo 12 caracteres e, para
-              perfis organizacionais, a prefeitura.
+              Nome, CPF válido, e-mail e, para perfis organizacionais, a
+              prefeitura. A senha é sorteada pelo sistema.
             </p>
             <Button
               disabled={criar.isPending || !podeSalvar}
@@ -216,15 +241,25 @@ export default function AdminServidores() {
                 {listaFiltrada.map((u, i) => (
                   <tr key={u.id} className={i < listaFiltrada.length - 1 ? "border-b border-ice" : ""}>
                     <td className="px-4 py-3.25">
-                      <div className="flex items-center gap-2.5">
-                        <span className="flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-on-dark gradient-user">
-                          {u.iniciais}
+                      <button
+                        type="button"
+                        onClick={() => setFichaAberta(fichaAberta === u.id ? null : u.id)}
+                        aria-expanded={fichaAberta === u.id}
+                        className="flex cursor-pointer items-center gap-2.5 border-0 bg-transparent p-0 text-left"
+                      >
+                        <FotoDePerfil
+                          usuarioId={u.id}
+                          iniciais={u.iniciais}
+                          tamanho={32}
+                          className="shrink-0 text-xs"
+                        />
+                        <span className="block">
+                          <span className="block text-base font-semibold text-royal underline">
+                            {u.nome}
+                          </span>
+                          <span className="block text-xs text-text-muted">{u.cargo}</span>
                         </span>
-                        <div>
-                          <div className="text-base font-semibold text-text-1">{u.nome}</div>
-                          <div className="text-xs text-text-muted">{u.cargo}</div>
-                        </div>
-                      </div>
+                      </button>
                     </td>
                     <td className="px-4 py-3.25 font-mono text-sm text-text-3">{u.cpf.includes("*") ? u.cpf : formatCPF(u.cpf)}</td>
                     <td className="px-4 py-3.25 font-mono text-sm text-text-3">{u.matricula ?? "—"}</td>

@@ -167,42 +167,14 @@ describe("sessão", () => {
     expect((await api.getSessao())?.usuario.cpf).toBe("33333333333")
   })
 
-  it("mexer no perfil sem sessão é recusado", async () => {
+  it("consultar configuração sem sessão é recusado, e não devolve a de outra prefeitura", async () => {
     const api = await fachadaLimpa()
 
-    await expect(api.atualizarAvatar(null)).rejects.toThrow(/Sessão expirada/)
-    await expect(api.atualizarMeuPerfil({ nome: "Maria" })).rejects.toThrow(/Sessão expirada/)
+    // Sem sessão não há prefeitura de referência. Cair para uma qualquer seria
+    // mostrar a configuração de um órgão a quem não entrou em nenhum.
+    await expect(api.getConfigTenant()).rejects.toThrow(/Sessão expirada/)
   })
 
-  it("trocar o avatar e o perfil recalcula iniciais e apara o resto", async () => {
-    const api = await fachadaLogada()
-
-    const comAvatar = await api.atualizarAvatar("data:image/png;base64,x")
-    expect(comAvatar.usuario.avatarDataUrl).toBe("data:image/png;base64,x")
-
-    const editado = await api.atualizarMeuPerfil({
-      nome: "  Ana Paula Ribeiro  ",
-      email: "  ana@x.gov.br ",
-      cargo: "  Coordenadora ",
-      secretaria: "s2",
-      avatarDataUrl: null,
-    })
-    expect(editado.usuario.nome).toBe("Ana Paula Ribeiro")
-    // Primeiro e último nome: "Ana Paula Ribeiro" é AR, não AP.
-    expect(editado.usuario.iniciais).toBe("AR")
-    expect(editado.usuario.primeiroNome).toBe("Ana")
-    expect(editado.usuario.email).toBe("ana@x.gov.br")
-    expect(editado.usuario.cargo).toBe("Coordenadora")
-    expect(editado.usuario.avatarDataUrl).toBeNull()
-  })
-
-  it("nome em branco não apaga o nome de quem está logado", async () => {
-    const api = await fachadaLogada()
-
-    const igual = await api.atualizarMeuPerfil({ nome: "   " })
-
-    expect(igual.usuario.nome).toBe("Maria Costa Andrade")
-  })
 })
 
 describe("escopo: quem vê o quê", () => {
