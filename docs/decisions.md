@@ -533,3 +533,15 @@ A tela de servidores entrou na suíte de acessibilidade. É onde "abre no clique
 **Duas correções no dia seguinte, do primeiro uso.** A caixa de credenciais mostrava como "Acesso" o CPF **mascarado** — `***.***.***-74` copiado e entregue não abre porta nenhuma. No cadastro, a chave passa a ser o CPF que quem cadastra acabou de digitar; na redefinição, a ficha revela o número (a mesma revelação da ADR-023, reaproveitada — uma linha na trilha, não duas). Se a revelação falhar, a senha continua aparecendo com a chave mascarada: perdê-la seria irreversível, e a chave a pessoa consegue de outro jeito.
 
 E o botão do CPF virou de fato um botão de dois estados — antes ele sumia ao revelar, e não havia como voltar a esconder sem fechar a ficha. Ganhou `IconEyeOff`, `aria-pressed` e o par de rótulos. Ocultar não desfaz a revelação: mostrar de novo não repete o pedido ao servidor, porque a revelação já aconteceu e já está registrada.
+
+## 39. Uma rolagem, um beco a menos e um número que não existe ainda
+
+**O `sr-only` esticava o documento.** O shell é `h-dvh overflow-hidden` com o conteúdo rolando dentro do `main` — uma barra de rolagem, portanto. Havia duas, e a página terminava numa faixa branca. A causa: `sr-only` é `position: absolute`, e o `main` não era bloco de contenção de ninguém. Um aviso de leitor de tela no fim de um formulário longo aterrissava na sua posição estática, centenas de pixels abaixo da dobra, **fora** do `main` — e o documento crescia com ele. Medido: `documentElement.scrollHeight` 1077 numa janela de 720; com `position: relative` no `main`, 720. O ajuste é de uma palavra e vale para toda tela do shell, não só para o assistente.
+
+**Palavra longa sem espaço arrastava a tela.** O resumo lateral repete o que foi digitado; sem `break-words`, 120 caracteres sem espaço empurravam o painel 549 px para fora. Rolagem horizontal esconde conteúdo sem avisar.
+
+Nenhum dos dois aparece em teste de componente — jsdom não faz layout. Foram para o Playwright, e os três testes falham com a correção revertida.
+
+**"Será definido pelo servidor" saiu.** Ambíguo justamente aqui: nesta plataforma *servidor* é a pessoa que usa o sistema. E vinha em monoespaçada destacada — a formatação reservada a identificador de verdade (`PROC-2026-000007`), o que fazia parecer que já existia um número. Virou "Gerado na criação", em texto secundário.
+
+**Órgão sem secretaria era um beco.** O seletor trazia só "Selecione a secretaria...", "Continuar" ficava desabilitado e a tela não dizia por quê nem quem resolve. O servidor **exige** a secretaria — é dela que sai a lotação do processo —, então a saída não é liberar o passo, e sim dizer de quem é a próxima ação: o coordenador recebe o link para Configurações; quem não cadastra secretaria recebe o recado de pedir a ele. É a §24 aplicada a um caso em que orientar não é opcional.

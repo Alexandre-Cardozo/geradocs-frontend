@@ -145,18 +145,6 @@ function usuarioLogado(): Usuario | null {
   return db.sessao?.usuario ?? null
 }
 
-/**
- * A sessão atual, ou erro.
- *
- * Devolve a sessão inteira, e não só o usuário: quem edita o próprio perfil
- * precisa da prefeitura junto, e procurá-la de novo por id abriria caminho para
- * devolver a de outra pessoa.
- */
-function exigeSessao(): Sessao {
-  if (!db.sessao) throw new Error("Sessão expirada. Faça login novamente.")
-  return db.sessao
-}
-
 // Semeia o histórico de versões (v1) dos documentos já existentes nas fixtures,
 // para que getHistoricoVersoes seja coerente desde o início.
 for (const doc of db.documentos) {
@@ -673,10 +661,8 @@ export async function baixarArquivoGerado(
 
 /* ── Configurações da prefeitura ───────────────────────────────────────────── */
 
-export async function getConfigTenant(prefeituraId?: string): Promise<Tenant> {
-  const id = prefeituraId ?? exigeSessao().usuario.prefeituraId
-  if (!id) throw new Error("Selecione uma prefeitura para consultar as configurações.")
-  return obterTenantNaApi(id)
+export async function getConfigTenant(prefeituraId: string): Promise<Tenant> {
+  return obterTenantNaApi(prefeituraId)
 }
 
 /**
@@ -687,10 +673,8 @@ export async function getConfigTenant(prefeituraId?: string): Promise<Tenant> {
  * (`lib/dominio/sintetico.ts`). Até 22/08/2026 **tudo** ia para uma fixture: a
  * tela dizia "salvo" e o recarregamento desfazia.
  */
-export async function atualizarConfigTenant(patch: Partial<Tenant>, prefeituraId?: string): Promise<Tenant> {
-  const id = prefeituraId ?? exigeSessao().usuario.prefeituraId
-  if (!id) throw new Error("Selecione uma prefeitura para salvar as configurações.")
-  const salvo = await atualizarPrefeituraNaApi(id, { orgao: patch.orgao, unidade: patch.unidade })
+export async function atualizarConfigTenant(patch: Partial<Tenant>, prefeituraId: string): Promise<Tenant> {
+  const salvo = await atualizarPrefeituraNaApi(prefeituraId, { orgao: patch.orgao, unidade: patch.unidade })
   // Os campos que o servidor não guarda seguem no que a tela mandou, para que a
   // prévia continue mostrando o que a pessoa acabou de escolher nesta sessão.
   return { ...salvo, ...clone(patch), id: salvo.id }

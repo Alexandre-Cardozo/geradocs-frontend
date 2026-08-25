@@ -27,7 +27,14 @@ export default function AppShell({ children }: { children: ReactNode }) {
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <Header onMenuClick={() => setSidebarAberta(true)} />
         <AvisoDeSenhaProvisoria />
-        <main className="flex-1 overflow-y-auto">{children}</main>
+        {/*
+          `relative` não é enfeite: `sr-only` é `position: absolute`, e sem um
+          ancestral posicionado o bloco de contenção dele vira a página inteira.
+          Um aviso de leitor de tela no fim de um formulário longo escapava do
+          `main`, esticava o documento e produzia uma segunda barra de rolagem
+          com uma faixa branca no fim da página.
+        */}
+        <main className="relative flex-1 overflow-y-auto">{children}</main>
       </div>
     </div>
   )

@@ -438,19 +438,36 @@ export function useGerarDocumento() {
   })
 }
 
-/** Config da prefeitura em foco (sem id = a da sessão). */
+/**
+ * Config da prefeitura em foco — sem id, a da sessão.
+ *
+ * <p>Quem resolve "a da sessão" é este hook, e não a fachada. Antes o `enabled`
+ * exigia um id vindo da tela, e as telas que dependem da prefeitura da própria
+ * pessoa — o cadastro de processo, o detalhe — chamavam sem id: a consulta
+ * nunca saía, e o seletor de secretaria ficava permanentemente vazio sem
+ * nenhum erro na tela.
+ *
+ * <p>O `enabled` continua existindo, agora pelo motivo certo: esperar a sessão
+ * chegar. Um administrador geral não tem prefeitura, e para ele não há o que
+ * consultar até que uma seja escolhida.
+ */
 export function useConfigTenant(prefeituraId?: string) {
+  const { data: sessao } = useSessao()
+  const id = prefeituraId ?? sessao?.prefeitura?.id
   return useQuery({
-    queryKey: chaves.tenant(prefeituraId),
-    queryFn: () => api.getConfigTenant(prefeituraId),
-    enabled: prefeituraId != null,
+    queryKey: chaves.tenant(id),
+    queryFn: () => api.getConfigTenant(id as string),
+    enabled: id != null,
   })
 }
 
-export function useAtualizarConfigTenant(prefeituraId?: string) {
+export function useAtualizarConfigTenant(prefeituraId: string | undefined) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (patch: Partial<Tenant>) => api.atualizarConfigTenant(patch, prefeituraId),
+    mutationFn: (patch: Partial<Tenant>) => {
+      if (!prefeituraId) throw new Error("Prefeitura não identificada.")
+      return api.atualizarConfigTenant(patch, prefeituraId)
+    },
     onSuccess: (tenant) => {
       queryClient.setQueryData(chaves.tenant(prefeituraId), tenant)
       void queryClient.invalidateQueries({ queryKey: chaves.prefeituras })

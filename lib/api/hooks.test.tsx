@@ -146,7 +146,6 @@ describe("consultas que só disparam quando têm o que perguntar", () => {
       () => hooks.useConsolidacaoDaDemanda(""),
       "getConsolidacaoDaDemanda",
     ],
-    ["useConfigTenant sem prefeitura", () => hooks.useConfigTenant(), "getConfigTenant"],
     [
       "useComparacaoDeVersoes sem as duas versões",
       () => hooks.useComparacaoDeVersoes(PROCESSO, "ETP", 1, null),
@@ -576,5 +575,66 @@ describe("chaves", () => {
     expect(chaves.tenant()).toEqual(["tenant", "sessao"])
     expect(chaves.usuarios()).toEqual(["usuarios", "todos", ""])
     expect(chaves.usuarios(PREFEITURA, "maria")).toEqual(["usuarios", PREFEITURA, "maria"])
+  })
+})
+
+describe("configuração do órgão: de quem é a prefeitura", () => {
+  const DA_SESSAO = "1b7c8e10-2d3f-4a5b-8c9d-0e1f2a3b4c5d"
+
+  it("sem id, consulta a prefeitura da sessão", async () => {
+    const { wrapper } = ambiente()
+    vi.mocked(api.getSessao).mockResolvedValue({
+      usuario: { id: "u1" },
+      prefeitura: { id: DA_SESSAO },
+    } as never)
+    vi.mocked(api.getConfigTenant).mockResolvedValue({ id: DA_SESSAO } as never)
+
+    renderHook(() => hooks.useConfigTenant(), { wrapper })
+
+    // O `enabled` exigia um id vindo da tela. As telas que dependem da
+    // prefeitura da própria pessoa chamam sem id — e o seletor de secretaria
+    // ficava vazio para sempre, sem erro nenhum aparecer.
+    await waitFor(() => expect(api.getConfigTenant).toHaveBeenCalledWith(DA_SESSAO))
+  })
+
+  it("quem não tem prefeitura não pergunta nada", async () => {
+    const { wrapper } = ambiente()
+    vi.mocked(api.getSessao).mockResolvedValue({
+      usuario: { id: "u1" },
+      prefeitura: null,
+    } as never)
+
+    const { result } = renderHook(
+      () => ({ sessao: hooks.useSessao(), tenant: hooks.useConfigTenant() }),
+      { wrapper },
+    )
+
+    // Administrador geral não tem órgão: não há configuração a consultar até
+    // que ele escolha uma.
+    await waitFor(() => expect(result.current.sessao.isSuccess).toBe(true))
+    expect(api.getConfigTenant).not.toHaveBeenCalled()
+  })
+
+  it("id explícito vence o da sessão", async () => {
+    const { wrapper } = ambiente()
+    vi.mocked(api.getSessao).mockResolvedValue({
+      usuario: { id: "u1" },
+      prefeitura: { id: DA_SESSAO },
+    } as never)
+    vi.mocked(api.getConfigTenant).mockResolvedValue({ id: "outra" } as never)
+
+    renderHook(() => hooks.useConfigTenant("outra"), { wrapper })
+
+    await waitFor(() => expect(api.getConfigTenant).toHaveBeenCalledWith("outra"))
+  })
+
+  it("salvar sem prefeitura identificada é recusado antes de sair da tela", async () => {
+    const { wrapper } = ambiente()
+
+    const { result } = renderHook(() => hooks.useAtualizarConfigTenant(undefined), { wrapper })
+    result.current.mutate({ orgao: "Prefeitura" })
+
+    await waitFor(() => expect(result.current.isError).toBe(true))
+    expect(api.atualizarConfigTenant).not.toHaveBeenCalled()
   })
 })

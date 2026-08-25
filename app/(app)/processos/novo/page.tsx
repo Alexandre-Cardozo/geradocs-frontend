@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -33,6 +34,7 @@ import {
 import {
   useConfigTenant,
   useCriarProcesso,
+  usePerfil,
 } from "@/lib/api/hooks";
 import {
   CATALOGO,
@@ -171,8 +173,14 @@ const labelClasses = "text-base font-semibold text-text-2";
 
 export default function NovoProcesso() {
   const router = useRouter();
-  const { data: tenant } = useConfigTenant();
+  const { data: tenant, isSuccess: tenantCarregado } = useConfigTenant();
   const criarProcesso = useCriarProcesso();
+  const perfil = usePerfil();
+
+  // Só depois da resposta: enquanto carrega, a lista vazia é ausência de dado,
+  // e não ausência de secretaria.
+  const semSecretariaCadastrada =
+    tenantCarregado && (tenant?.secretarias.length ?? 0) === 0;
 
   const [step, setStep] = useState(1);
 
@@ -242,7 +250,9 @@ export default function NovoProcesso() {
 
   // A numeração é atribuída de forma atômica pelo back-end na criação.
   // Não antecipamos um número no cliente para evitar colisões entre usuários.
-  const numeroProcesso = "Será definido pelo servidor";
+  // "pelo servidor" era ambíguo justamente aqui: nesta plataforma "servidor" é
+  // a pessoa que usa o sistema, não a máquina que responde.
+  const numeroProcesso = "Gerado na criação";
   const secretariaNome = tenant?.secretarias.find((item) => item.id === secretaria)?.nome ?? "";
 
   const handleCreate = () => {
@@ -420,13 +430,40 @@ export default function NovoProcesso() {
                       })),
                     ]}
                   />
-                  {secretaria === "" && (
+                  {/*
+                    Sem secretaria cadastrada, o seletor só tem o texto de
+                    instrução — e a tela virava um beco: exigia uma escolha que
+                    não existia e não dizia por quê. O servidor exige a
+                    secretaria (é dela que sai a lotação do processo), então a
+                    saída não é liberar: é dizer quem resolve.
+                  */}
+                  {semSecretariaCadastrada ? (
                     <div className="mt-2">
-                      <ValidationMsg
-                        type="error"
-                        msg="Selecione a secretaria requisitante para continuar."
-                      />
+                      <InfoBanner tone="warning">
+                        Este órgão ainda não tem secretaria cadastrada, e todo processo
+                        pertence a uma.{" "}
+                        {perfil === "coordenador" ? (
+                          <>
+                            Cadastre a primeira em{" "}
+                            <Link href="/configuracoes" className="font-semibold underline">
+                              Configurações
+                            </Link>
+                            .
+                          </>
+                        ) : (
+                          "Peça ao coordenador do órgão para cadastrá-la em Configurações."
+                        )}
+                      </InfoBanner>
                     </div>
+                  ) : (
+                    secretaria === "" && (
+                      <div className="mt-2">
+                        <ValidationMsg
+                          type="error"
+                          msg="Selecione a secretaria requisitante para continuar."
+                        />
+                      </div>
+                    )
                   )}
                 </FormField>
 
@@ -659,9 +696,8 @@ export default function NovoProcesso() {
               </div>
 
               <InfoBanner tone="warning">
-                O processo será criado com o número{" "}
-                <strong className="font-mono">{numeroProcesso}</strong>. Após a
-                criação você será direcionado {destinoAposCriar}.
+                O número do processo é gerado na criação. Depois dela você será
+                direcionado {destinoAposCriar}.
               </InfoBanner>
             </div>
           )}
@@ -709,10 +745,10 @@ export default function NovoProcesso() {
               Resumo do Processo
             </h3>
             <p className="m-0 mb-4 text-sm text-text-3">
-              Número{" "}
-              <span className="font-mono font-semibold text-royal">
-                {numeroProcesso}
-              </span>
+              {/* Sem monoespaçada nem destaque: monoespaçada é para
+                  identificador de verdade (PROC-2026-000007), e esta é uma
+                  frase — destacá-la faz parecer que já existe um número. */}
+              Número <span className="text-text-muted">{numeroProcesso}</span>
             </p>
             <dl className="flex flex-col gap-3">
               {[
@@ -743,7 +779,7 @@ export default function NovoProcesso() {
                   <dt className="text-2xs font-semibold tracking-caps text-text-muted uppercase">
                     {item.rotulo}
                   </dt>
-                  <dd className="m-0 mt-0.5 text-base text-text-1">
+                  <dd className="m-0 mt-0.5 text-base break-words text-text-1">
                     {item.valor ? (
                       item.valor
                     ) : (

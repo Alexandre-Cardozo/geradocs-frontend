@@ -167,14 +167,6 @@ describe("sessão", () => {
     expect((await api.getSessao())?.usuario.cpf).toBe("33333333333")
   })
 
-  it("consultar configuração sem sessão é recusado, e não devolve a de outra prefeitura", async () => {
-    const api = await fachadaLimpa()
-
-    // Sem sessão não há prefeitura de referência. Cair para uma qualquer seria
-    // mostrar a configuração de um órgão a quem não entrou em nenhum.
-    await expect(api.getConfigTenant()).rejects.toThrow(/Sessão expirada/)
-  })
-
 })
 
 describe("escopo: quem vê o quê", () => {
@@ -452,12 +444,14 @@ describe("geração de documento", () => {
 })
 
 describe("configuração do órgão", () => {
-  it("sem prefeitura indicada, usa a de quem está logado", async () => {
-    const api = await fachadaLogada()
+  it("consulta a prefeitura indicada, e só ela", async () => {
+    const api = await fachadaLimpa()
     vi.mocked(acesso.obterTenant).mockResolvedValue({ id: PREFEITURA } as never)
 
-    await api.getConfigTenant()
+    await api.getConfigTenant(PREFEITURA)
 
+    // Quem resolve "a da sessão" é o hook, e não esta função: enquanto isso
+    // morava aqui, a resposta dependia de um objeto em memória do mock.
     expect(acesso.obterTenant).toHaveBeenCalledWith(PREFEITURA)
   })
 
@@ -470,15 +464,6 @@ describe("configuração do órgão", () => {
     expect(acesso.obterTenant).toHaveBeenCalledWith("outra")
   })
 
-  it("administrador geral sem prefeitura escolhida precisa escolher uma", async () => {
-    const api = await fachadaLogada(usuario({ perfilAcesso: "admin_geral", prefeituraId: null }))
-
-    await expect(api.getConfigTenant()).rejects.toThrow(/Selecione uma prefeitura/)
-    await expect(api.atualizarConfigTenant({ orgao: "P" })).rejects.toThrow(
-      /Selecione uma prefeitura/,
-    )
-  })
-
   it("salvar manda ao servidor o que ele guarda e devolve o resto como veio", async () => {
     const api = await fachadaLogada()
     vi.mocked(acesso.atualizarPrefeitura).mockResolvedValue({
@@ -488,11 +473,14 @@ describe("configuração do órgão", () => {
       timbrado: true,
     } as never)
 
-    const salvo = await api.atualizarConfigTenant({
-      orgao: "Prefeitura de Ecoporanga",
-      unidade: "Administração",
-      timbrado: false,
-    })
+    const salvo = await api.atualizarConfigTenant(
+      {
+        orgao: "Prefeitura de Ecoporanga",
+        unidade: "Administração",
+        timbrado: false,
+      },
+      PREFEITURA,
+    )
 
     expect(acesso.atualizarPrefeitura).toHaveBeenCalledWith(PREFEITURA, {
       orgao: "Prefeitura de Ecoporanga",
