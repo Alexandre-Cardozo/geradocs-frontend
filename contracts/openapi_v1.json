@@ -41,6 +41,66 @@
         "required" : [ "anchorSectionCode", "nested", "title" ],
         "type" : "object"
       },
+      "ArchiveSummaryResponse" : {
+        "properties" : {
+          "finishedEtps" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "lastSevenDays" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "storageBytes" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "thisMonth" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "total" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "finishedEtps", "lastSevenDays", "storageBytes", "thisMonth", "total" ],
+        "type" : "object"
+      },
+      "ArchivedDocumentResponse" : {
+        "properties" : {
+          "documentType" : {
+            "enum" : [ "COTACAO", "ETP", "MAPA", "TR", "EDITAL", "CONTRATO" ],
+            "type" : "string"
+          },
+          "documentVersion" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "files" : {
+            "items" : {
+              "$ref" : "#/components/schemas/GeneratedFileResponse"
+            },
+            "type" : "array"
+          },
+          "generatedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "processId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "processNumber" : {
+            "type" : "string"
+          },
+          "processObject" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "documentType", "documentVersion", "files", "generatedAt", "processId", "processNumber", "processObject" ],
+        "type" : "object"
+      },
       "AttachDfdRequest" : {
         "properties" : {
           "departmentId" : {
@@ -1022,6 +1082,36 @@
         "required" : [ "departmentId", "departmentName", "fileName", "id", "items", "submittedAt" ],
         "type" : "object"
       },
+      "ProcessStatisticsResponse" : {
+        "properties" : {
+          "active" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "closed" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "completionRate" : {
+            "format" : "double",
+            "type" : "number"
+          },
+          "createdThisMonth" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "pendingDocuments" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "started" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "active", "closed", "completionRate", "createdThisMonth", "pendingDocuments", "started" ],
+        "type" : "object"
+      },
       "ProcessTrailEntryResponse" : {
         "properties" : {
           "actorName" : {
@@ -1732,6 +1822,45 @@
         "tags" : [ "authentication-controller" ]
       }
     },
+    "/api/v1/generated-documents" : {
+      "get" : {
+        "operationId" : "archive",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/ArchivedDocumentResponse"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "document-archive-controller" ]
+      }
+    },
+    "/api/v1/generated-documents/summary" : {
+      "get" : {
+        "operationId" : "summary",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ArchiveSummaryResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "document-archive-controller" ]
+      }
+    },
     "/api/v1/me" : {
       "get" : {
         "operationId" : "me",
@@ -2235,6 +2364,24 @@
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProcurementProcessResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "procurement-process-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/statistics" : {
+      "get" : {
+        "operationId" : "statistics",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProcessStatisticsResponse"
                 }
               }
             },

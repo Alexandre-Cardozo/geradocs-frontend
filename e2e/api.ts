@@ -107,6 +107,26 @@ export async function comSessao(page: Page, sessao: Sessao = sessaoServidor) {
   await page.route(`${API}/procurement-processes**`, (rota) =>
     rota.fulfill({ json: { content: [], totalElements: 0, number: 0, totalPages: 1 } }),
   )
+  // Antes de `/procurement-processes**`: as rotas mais específicas primeiro, ou
+  // a página de processos responderia à contagem do painel.
+  await page.route(`${API}/procurement-processes/statistics`, (rota) =>
+    rota.fulfill({
+      json: {
+        active: 0,
+        closed: 0,
+        createdThisMonth: 0,
+        started: 0,
+        pendingDocuments: 0,
+        completionRate: 0,
+      },
+    }),
+  )
+  await page.route(`${API}/generated-documents`, (rota) => rota.fulfill({ json: [] }))
+  await page.route(`${API}/generated-documents/summary`, (rota) =>
+    rota.fulfill({
+      json: { total: 0, thisMonth: 0, lastSevenDays: 0, storageBytes: 0, finishedEtps: 0 },
+    }),
+  )
   await page.route(`${API}/organizations**`, (rota) => rota.fulfill({ json: [] }))
   // Antes de `/users**`: a rota da foto é mais específica e devolve binário, não
   // JSON. Sem ela, `[]` chegaria como se fosse uma imagem.

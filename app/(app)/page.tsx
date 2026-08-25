@@ -17,7 +17,6 @@ import {
 import { ErrorState, SkeletonRows } from "@/components/shared/estados";
 import { Th } from "@/components/shared/tabela";
 import { useEstatisticas, useProcessos, useSessao } from "@/lib/api/hooks";
-import { MarcaSintetica } from "@/components/shared/marca-sintetica";
 import { dataPorExtenso, formatBRL, formatData, saudacao } from "@/lib/format";
 import PainelAdmin from "@/app/(app)/admin/PainelAdmin";
 
@@ -95,13 +94,6 @@ export default function Dashboard() {
                 />
               </>
             )}
-          </div>
-          {/*
-          Os números são de demonstração. Painel com contagem inventada é pior
-          que painel vazio: a pessoa decide onde olhar a partir deles.
-        */}
-          <div className="mb-6 -mt-3">
-            <MarcaSintetica campo="indicadores" />
           </div>
         </>
       )}

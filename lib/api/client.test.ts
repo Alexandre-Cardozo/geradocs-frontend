@@ -169,42 +169,63 @@ describe("sessão", () => {
 
 })
 
-describe("escopo: quem vê o quê", () => {
-  it("servidor de uma prefeitura só conta o acervo dela", async () => {
-    const api = await fachadaLogada()
+/*
+ * O bloco "escopo: quem vê o quê" saiu no 12.3. Ele verificava o recorte por
+ * prefeitura feito **aqui**; agora quem recorta é o servidor, e há teste de
+ * integração cobrando que o acervo da vizinha não apareça. Mantê-lo exigiria
+ * remontar na fachada o filtro que acabou de ser removido, para ter o que testar.
+ */
 
-    const estatisticas = await api.getEstatisticas()
-    const documentos = await api.getDocumentos()
-
-    expect(documentos.every((d) => d.prefeituraId === PREFEITURA)).toBe(true)
-    expect(estatisticas.documentosGerados).toBeGreaterThanOrEqual(0)
-  })
-
-  it("administrador geral vê o acervo inteiro, e o resumo pronto", async () => {
-    const api = await fachadaLogada(usuario({ perfilAcesso: "admin_geral", prefeituraId: null }))
-
-    const semEscopo = await api.getDocumentos()
-    const doServidor = await (await fachadaLogada()).getDocumentos()
-
-    expect(semEscopo.length).toBeGreaterThanOrEqual(doServidor.length)
-    // Sem prefeitura em foco, o resumo é o do acervo inteiro e não precisa ser
-    // recalculado por prefeitura.
-    expect((await api.getResumoDocumentos()).total).toBeGreaterThanOrEqual(0)
-  })
-
-  it("sem sessão, o acervo não é recortado para a prefeitura de ninguém", async () => {
+describe("o painel soma dois assuntos", () => {
+  it("junta os números de processo com os do acervo", async () => {
     const api = await fachadaLimpa()
+    vi.mocked(contratacao.estatisticasDeProcesso).mockResolvedValue({
+      ativos: 7,
+      encerrados: 3,
+      criadosNoMes: 2,
+      iniciados: 5,
+      documentosPendentes: 11,
+      taxaConclusao: 0.3,
+    })
+    vi.mocked(impressao.resumoDoAcervo).mockResolvedValue({
+      total: 141,
+      esteMes: 14,
+      ultimosSeteDias: 3,
+      bytesArmazenados: 53_477_376,
+      etpsConcluidos: 27,
+    })
 
-    // Não é caso hipotético: a tela monta antes de a sessão responder. Sem este
-    // ramo, `escopoPrefeituras` procuraria a prefeitura de um usuário que ainda
-    // não existe.
-    expect((await api.getResumoDocumentos()).total).toBeGreaterThanOrEqual(0)
+    const painel = await api.getEstatisticas()
+
+    // Nenhum módulo do servidor conta pelo outro: quem soma é a tela (ADR-025).
+    expect(painel.processosAtivos).toBe(7)
+    expect(painel.documentosPendentes).toBe(11)
+    expect(painel.documentosGerados).toBe(141)
+    expect(painel.etpsConcluidos).toBe(27)
+    expect(painel.taxaConclusao).toBe(0.3)
   })
 
-  it("resumo de quem tem prefeitura é recalculado no escopo dela", async () => {
-    const api = await fachadaLogada()
+  it("o armazenamento é convertido para MB só na apresentação", async () => {
+    const api = await fachadaLimpa()
+    vi.mocked(impressao.resumoDoAcervo).mockResolvedValue({
+      total: 141,
+      esteMes: 14,
+      ultimosSeteDias: 3,
+      bytesArmazenados: 53_477_376,
+      etpsConcluidos: 27,
+    })
 
-    expect((await api.getResumoDocumentos()).total).toBeGreaterThanOrEqual(0)
+    // O servidor mede em bytes; fixar MB lá obrigaria a desfazer a conta para
+    // mostrar KB quando for pouco.
+    expect((await api.getResumoDocumentos()).armazenamentoMB).toBe(51)
+  })
+
+  it("a lista de documentos é o acervo do servidor", async () => {
+    const api = await fachadaLimpa()
+    vi.mocked(impressao.acervoDoOrgao).mockResolvedValue([])
+
+    expect(await api.getDocumentos()).toEqual([])
+    expect(impressao.acervoDoOrgao).toHaveBeenCalled()
   })
 })
 
@@ -377,38 +398,27 @@ describe("geração de documento", () => {
     vi.mocked(impressao.gerarArquivos).mockResolvedValue(geracao() as never)
   })
 
-  it("a primeira geração cria o documento e move os indicadores", async () => {
+  it("a primeira geração cria o documento com a versão e o título certos", async () => {
     const api = await fachadaLogada()
-    const antes = await api.getResumoDocumentos()
 
     const doc = await api.gerarDocumento({ processoId: PROCESSO, tipo: "ETP" })
 
     expect(doc.versao).toBe(1)
     expect(doc.titulo).toContain("Aquisição de material de expediente")
-    expect((await api.getResumoDocumentos()).total).toBe(antes.total + 1)
     expect(await api.getCorpoDocumento(PROCESSO, "ETP")).toBeDefined()
+    // Que gerar move o indicador é verificado contra o banco, no
+    // DocumentGenerationIntegrationTest: contar aqui contaria o mock.
   })
 
-  it("regerar troca a versão do documento existente em vez de criar outro", async () => {
+  it("regerar troca a versão do documento em vez de criar outro", async () => {
     const api = await fachadaLogada()
     await api.gerarDocumento({ processoId: PROCESSO, tipo: "ETP" })
-    const depoisDaPrimeira = (await api.getDocumentos()).length
 
     vi.mocked(elaboracao.concluirDocumento).mockResolvedValue({ ...concluido, versao: 2 } as never)
     const regerado = await api.gerarDocumento({ processoId: PROCESSO, tipo: "ETP" })
 
     expect(regerado.versao).toBe(2)
     expect(regerado.titulo).toContain("v2")
-    expect((await api.getDocumentos()).length).toBe(depoisDaPrimeira)
-  })
-
-  it("documento que não é ETP não move o contador de ETPs concluídos", async () => {
-    const api = await fachadaLogada()
-    const antes = (await api.getEstatisticas()).etpsConcluidos
-
-    await api.gerarDocumento({ processoId: PROCESSO, tipo: "TR" })
-
-    expect((await api.getEstatisticas()).etpsConcluidos).toBe(antes)
   })
 
   it("o histórico de versões acompanha cada geração", async () => {

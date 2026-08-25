@@ -11,14 +11,10 @@ import {
   resumoDocumentos as resumoDocumentosFixture,
 } from "@/lib/mocks/fixtures"
 import {
-  calcularIndicadores,
   empilharVersao,
   entradaDeHistorico,
   impactoTrocaModalidade,
   motivoDaTrocaDeModalidade,
-  noEscopo,
-  prefeiturasVisiveis,
-  resumirDocumentos,
   statusAposEditar,
   tituloComRotuloDeVersao,
   tituloDoDocumento,
@@ -47,6 +43,10 @@ import {
   obterTenant as obterTenantNaApi,
 } from "@/lib/api/access-client"
 import {
+  acervoDoOrgao,
+  resumoDoAcervo,
+} from "@/lib/api/generation-client"
+import {
   abrirDocumento,
   acrescentarSecao,
   compararVersoes as compararVersoesNaApi,
@@ -67,6 +67,7 @@ import {
   listarProcessos,
   obterProcesso,
   reabrirProcessoReal,
+  estatisticasDeProcesso,
   trilhaDoProcesso,
 } from "@/lib/api/procurement-client"
 import {
@@ -183,13 +184,27 @@ export async function resetarSenha(token: string, senha: string): Promise<void> 
   await redefinirSenha(token, senha)
 }
 
-/** Estatísticas do dashboard, escopadas à prefeitura do usuário logado. */
+/**
+ * Os indicadores do painel.
+ *
+ * Duas chamadas porque são dois assuntos: quantos processos existem e em que
+ * estado (contratação), e quantos arquivos foram impressos e quando (acervo).
+ * Nenhum módulo do servidor conta pelo outro — a soma é da tela (ADR-025).
+ */
 export async function getEstatisticas(): Promise<EstatisticasDashboard> {
-  await delay()
-  const escopo = escopoPrefeituras()
+  const [processos, acervo] = await Promise.all([
+    estatisticasDeProcesso(),
+    resumoDoAcervo(),
+  ])
   return {
-    ...clone(db.estatisticas),
-    ...calcularIndicadores(noEscopo(db.processos, escopo), noEscopo(db.documentos, escopo)),
+    processosAtivos: processos.ativos,
+    processosNovosMes: processos.criadosNoMes,
+    processosEmElaboracao: processos.iniciados,
+    documentosPendentes: processos.documentosPendentes,
+    documentosGerados: acervo.total,
+    documentosSemana: acervo.ultimosSeteDias,
+    etpsConcluidos: acervo.etpsConcluidos,
+    taxaConclusao: processos.taxaConclusao,
   }
 }
 
@@ -209,12 +224,6 @@ export interface Paginado<T> {
   totalPaginas: number
 }
 
-/** Ids de prefeitura visíveis ao usuário logado (admin vê todas). */
-function escopoPrefeituras(): string[] | null {
-  // `db.sessao ? ... : null` e não `?.usuario ?? null`: a sessão sempre tem
-  // usuário, então o segundo ramo do `??` era código sem caminho.
-  return prefeiturasVisiveis(db.sessao ? db.sessao.usuario : null)
-}
 
 export async function getProcessos(params: ListaProcessosParams = {}): Promise<Paginado<Processo>> {
   return listarProcessos(params)
@@ -389,17 +398,25 @@ export async function reabrirProcesso(processoId: string, motivo: string): Promi
 
 /* ── Documentos ────────────────────────────────────────────────────────────── */
 
+/** O acervo do órgão, como o servidor o guarda. */
 export async function getDocumentos(): Promise<DocumentoGerado[]> {
-  await delay()
-  const docs = noEscopo(db.documentos, escopoPrefeituras())
-  return clone(docs)
+  return acervoDoOrgao()
 }
 
+/**
+ * Os números acima da lista de Documentos.
+ *
+ * Contados no banco, e não deduzidos da lista: a lista é o que cabe mostrar, e
+ * o acervo é o que existe.
+ */
 export async function getResumoDocumentos(): Promise<ResumoDocumentos> {
-  await delay()
-  const escopo = escopoPrefeituras()
-  if (!escopo) return clone(db.resumoDocumentos)
-  return resumirDocumentos(noEscopo(db.documentos, escopo))
+  const resumo = await resumoDoAcervo()
+  return {
+    total: resumo.total,
+    esteMes: resumo.esteMes,
+    // O servidor mede em bytes; converter é decisão de apresentação.
+    armazenamentoMB: Math.round(resumo.bytesArmazenados / 1024 / 1024),
+  }
 }
 
 /**

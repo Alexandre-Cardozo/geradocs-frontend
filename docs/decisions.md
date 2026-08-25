@@ -557,3 +557,17 @@ O passo dizia que a trilha "vive em memória do navegador". Ao implementar, a pr
 **Sumiram os registros paralelos.** Encerrar e reabrir gravavam um evento local *além* de chamar o servidor; retificação e regeração gravavam só local. Os dois primeiros eram duplicata — o servidor já registra, com a justificativa. Os dois últimos continuam registrados onde o servidor os grava: **no histórico de versões do documento**, que é onde pertencem. Duplicar em dois lugares é como os dois passam a divergir.
 
 **A justificativa da troca de modalidade deixou de ser descartada.** A plataforma calcula qual documento deixou de ser cabível e por quê; esse texto ia para a trilha em memória e morria ali. Agora acompanha a edição como `changeNote` e é o servidor que o registra — a trilha dizia que o processo mudou sem dizer por quê, que é metade do registro.
+
+## 41. O painel conta o acervo (12.3)
+
+As contagens do painel e o resumo de Documentos saíam de `lib/mocks`: a tela mostrava zero com dois processos no banco, e listava um acervo que nunca existiu. Marcar como sintético segurou a mentira enquanto o servidor não respondia; agora ele responde.
+
+**Duas chamadas, porque são dois assuntos.** Quantos processos existem e em que estado é pergunta da contratação; quantos arquivos foram impressos, quando e ocupando quanto é pergunta do acervo. Nenhum módulo do servidor conta pelo outro — a soma acontece aqui, que é onde o painel mora (ADR-025).
+
+**O que sumiu junto.** O recorte por prefeitura feito nesta camada perdeu o objeto: quem recorta é o servidor, e há teste de integração cobrando que o acervo da vizinha não apareça. Saíram `escopoPrefeituras`, `prefeiturasVisiveis`, `noEscopo`, `calcularIndicadores` e `resumirDocumentos` — e os testes que verificavam o filtro removido. Manter o bloco exigiria remontar na fachada o filtro que acabou de sair, só para ter o que testar.
+
+**O armazenamento vem em bytes.** Converter para MB é decisão de apresentação: fixá-la no servidor obrigaria a tela a desfazer a conta para mostrar KB quando for pouco.
+
+**Um tipo de documento que a interface não conhece é filtrado, não vira linha sem rótulo.** O servidor pode ganhar um tipo antes desta tela — e há teste para isso.
+
+O selo "ainda não vem do servidor" saiu do painel e da tela de Documentos, e `indicadores` saiu de `sintetico.ts`. O aviso não deve sobreviver ao dado real.

@@ -1,7 +1,7 @@
 import "client-only";
 
 import { baixarProtegido, requisicaoProtegida } from "@/lib/api/auth-client";
-import type { TipoDocumento } from "@/lib/types";
+import type { DocumentoGerado, TipoDocumento } from "@/lib/types";
 
 /** Os formatos que a plataforma imprime. */
 export type FormatoArquivo = "DOCX" | "PDF";
@@ -122,4 +122,84 @@ export async function baixarArquivo(
   return baixarProtegido(
     `${rota(processoId, tipo)}/files/${encodeURIComponent(arquivoId)}`,
   );
+}
+
+/* ── Acervo do órgão (ADR-025) ─────────────────────────────────────────────── */
+
+/** O inverso de `tipos`: o servidor nomeia em maiúsculas sem acento. */
+const tiposDoServidor: Record<string, TipoDocumento> = Object.fromEntries(
+  Object.entries(tipos).map(([rotulo, doServidor]) => [doServidor, rotulo as TipoDocumento]),
+) as Record<string, TipoDocumento>
+
+interface AcervoDaApi {
+  processId: string
+  processNumber: string
+  processObject: string
+  documentType: string
+  documentVersion: number
+  generatedAt: string
+  files: ArquivoApi[]
+}
+
+interface ResumoDoAcervoDaApi {
+  total: number
+  thisMonth: number
+  lastSevenDays: number
+  storageBytes: number
+  finishedEtps: number
+}
+
+/** Os números do acervo, contados pelo servidor. */
+export interface ResumoDoAcervo {
+  total: number
+  esteMes: number
+  ultimosSeteDias: number
+  bytesArmazenados: number
+  etpsConcluidos: number
+}
+
+/**
+ * O acervo do órgão: um documento por linha, com os arquivos da geração vigente.
+ *
+ * <p>Antes do 12.3 esta lista vinha de fixture, e o resumo acima dela também —
+ * duas invenções que por acaso combinavam.
+ */
+export async function acervoDoOrgao(): Promise<DocumentoGerado[]> {
+  const acervo = await requisicaoProtegida<AcervoDaApi[]>("/generated-documents")
+  // `flatMap` e não `map`: um tipo que a interface não conhece — porque o
+  // servidor ganhou um antes desta tela — não pode virar linha sem rótulo.
+  return acervo.flatMap((documento) => {
+    const tipo = tiposDoServidor[documento.documentType]
+    if (tipo === undefined) return []
+    return [{
+      // Um documento por processo e tipo: é a chave que a tela já usa para
+      // saber se um documento existe.
+      id: `${documento.processId}:${tipo}`,
+      prefeituraId: "",
+      processoId: documento.processId,
+      titulo: `${documento.processNumber} — ${documento.processObject}`,
+      tipo,
+      geradoEm: documento.generatedAt,
+      status: "final" as const,
+      versao: documento.documentVersion,
+      arquivos: documento.files.map((arquivo) => ({
+        id: arquivo.id,
+        formato: arquivo.format,
+        nomeDoArquivo: arquivo.fileName,
+        bytes: arquivo.byteSize,
+        checksum: arquivo.sha256,
+      })),
+    }]
+  })
+}
+
+export async function resumoDoAcervo(): Promise<ResumoDoAcervo> {
+  const resumo = await requisicaoProtegida<ResumoDoAcervoDaApi>("/generated-documents/summary")
+  return {
+    total: resumo.total,
+    esteMes: resumo.thisMonth,
+    ultimosSeteDias: resumo.lastSevenDays,
+    bytesArmazenados: resumo.storageBytes,
+    etpsConcluidos: resumo.finishedEtps,
+  }
 }

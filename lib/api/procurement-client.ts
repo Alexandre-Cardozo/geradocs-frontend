@@ -362,3 +362,36 @@ export async function trilhaDoProcesso(processoId: string): Promise<EventoDoProc
         ]
   })
 }
+
+/** Os números de processo do painel, contados pelo servidor (ADR-025). */
+export interface EstatisticasDeProcesso {
+  ativos: number
+  encerrados: number
+  criadosNoMes: number
+  iniciados: number
+  documentosPendentes: number
+  taxaConclusao: number
+}
+
+interface EstatisticasDaApi {
+  active: number
+  closed: number
+  createdThisMonth: number
+  started: number
+  pendingDocuments: number
+  completionRate: number
+}
+
+export async function estatisticasDeProcesso(): Promise<EstatisticasDeProcesso> {
+  const numeros = await requisicaoProtegida<EstatisticasDaApi>(
+    "/procurement-processes/statistics",
+  )
+  return {
+    ativos: numeros.active,
+    encerrados: numeros.closed,
+    criadosNoMes: numeros.createdThisMonth,
+    iniciados: numeros.started,
+    documentosPendentes: numeros.pendingDocuments,
+    taxaConclusao: numeros.completionRate,
+  }
+}

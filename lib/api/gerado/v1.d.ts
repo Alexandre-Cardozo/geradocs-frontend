@@ -116,6 +116,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/generated-documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["archive"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/generated-documents/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["summary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me": {
         parameters: {
             query?: never;
@@ -270,6 +302,22 @@ export interface paths {
         get: operations["list_1"];
         put?: never;
         post: operations["create_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/procurement-processes/statistics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["statistics"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -691,6 +739,31 @@ export interface components {
             nested: boolean;
             title: string;
         };
+        ArchiveSummaryResponse: {
+            /** Format: int64 */
+            finishedEtps: number;
+            /** Format: int64 */
+            lastSevenDays: number;
+            /** Format: int64 */
+            storageBytes: number;
+            /** Format: int64 */
+            thisMonth: number;
+            /** Format: int64 */
+            total: number;
+        };
+        ArchivedDocumentResponse: {
+            /** @enum {string} */
+            documentType: "COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO";
+            /** Format: int32 */
+            documentVersion: number;
+            files: components["schemas"]["GeneratedFileResponse"][];
+            /** Format: date-time */
+            generatedAt: string;
+            /** Format: uuid */
+            processId: string;
+            processNumber: string;
+            processObject: string;
+        };
         AttachDfdRequest: {
             /** Format: uuid */
             departmentId: string;
@@ -1026,6 +1099,20 @@ export interface components {
             items: components["schemas"]["DemandItemView"][];
             /** Format: date-time */
             submittedAt: string;
+        };
+        ProcessStatisticsResponse: {
+            /** Format: int64 */
+            active: number;
+            /** Format: int64 */
+            closed: number;
+            /** Format: double */
+            completionRate: number;
+            /** Format: int64 */
+            createdThisMonth: number;
+            /** Format: int64 */
+            pendingDocuments: number;
+            /** Format: int64 */
+            started: number;
         };
         ProcessTrailEntryResponse: {
             actorName?: string;
@@ -1372,6 +1459,46 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["AuthenticationResponse"];
+                };
+            };
+        };
+    };
+    archive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ArchivedDocumentResponse"][];
+                };
+            };
+        };
+    };
+    summary: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ArchiveSummaryResponse"];
                 };
             };
         };
@@ -1758,6 +1885,26 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ProcurementProcessResponse"];
+                };
+            };
+        };
+    };
+    statistics: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ProcessStatisticsResponse"];
                 };
             };
         };

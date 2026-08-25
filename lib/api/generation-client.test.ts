@@ -212,3 +212,83 @@ describe("download com sessão expirada", () => {
     )
   })
 })
+
+describe("acervo do órgão", () => {
+  const documentoDoAcervo = {
+    processId: "3f2b1a00-1111-4222-8333-444455556666",
+    processNumber: "PROC-2026-000007",
+    processObject: "Aquisição de material de expediente",
+    documentType: "ETP",
+    documentVersion: 2,
+    generatedAt: "2026-08-25T14:00:00-03:00",
+    files: [
+      {
+        id: "f1",
+        format: "PDF" as const,
+        fileName: "etp-v2.pdf",
+        byteSize: 4096,
+        sha256: "a".repeat(64),
+        documentVersion: 2,
+        templateVersion: 1,
+        generatedAt: "2026-08-25T14:00:00-03:00",
+      },
+    ],
+  }
+
+  it("traz o documento com os arquivos da geração vigente", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/generated-documents`, () => HttpResponse.json([documentoDoAcervo])),
+    )
+    const { acervoDoOrgao } = await carregarClienteLimpo()
+
+    const [documento] = await acervoDoOrgao()
+
+    expect(documento?.tipo).toBe("ETP")
+    expect(documento?.versao).toBe(2)
+    expect(documento?.titulo).toContain("PROC-2026-000007")
+    expect(documento?.arquivos[0]?.bytes).toBe(4096)
+  })
+
+  it("tipo que a interface não conhece não vira linha sem rótulo", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/generated-documents`, () =>
+        HttpResponse.json([
+          { ...documentoDoAcervo, documentType: "ALGO_QUE_AINDA_NAO_EXISTE" },
+          documentoDoAcervo,
+        ]),
+      ),
+    )
+    const { acervoDoOrgao } = await carregarClienteLimpo()
+
+    // O servidor pode ganhar um tipo de documento antes desta tela.
+    expect(await acervoDoOrgao()).toHaveLength(1)
+  })
+
+  it("o resumo vem contado do servidor, e não deduzido da lista", async () => {
+    let pediuALista = false
+    servidor.use(
+      http.get(`${urlDaApi}/generated-documents`, () => {
+        pediuALista = true
+        return HttpResponse.json([])
+      }),
+      http.get(`${urlDaApi}/generated-documents/summary`, () =>
+        HttpResponse.json({
+          total: 141,
+          thisMonth: 14,
+          lastSevenDays: 3,
+          storageBytes: 53_477_376,
+          finishedEtps: 27,
+        }),
+      ),
+    )
+    const { resumoDoAcervo } = await carregarClienteLimpo()
+
+    const resumo = await resumoDoAcervo()
+
+    // A lista é o que cabe mostrar; o acervo é o que existe.
+    expect(pediuALista).toBe(false)
+    expect(resumo.total).toBe(141)
+    expect(resumo.bytesArmazenados).toBe(53_477_376)
+    expect(resumo.etpsConcluidos).toBe(27)
+  })
+})

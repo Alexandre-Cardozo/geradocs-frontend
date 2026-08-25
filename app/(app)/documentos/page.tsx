@@ -8,7 +8,6 @@ import { IconCalendar, IconDatabase, IconEye, IconFileText, IconPlus } from "@/c
 import { EmptyState, ErrorState, SkeletonRows } from "@/components/shared/estados"
 import { Th } from "@/components/shared/tabela"
 import { useDocumentos, useResumoDocumentos } from "@/lib/api/hooks"
-import { MarcaSintetica } from "@/components/shared/marca-sintetica"
 import { CATALOGO, ORDEM_FLUXO } from "@/lib/documentos"
 import { ConteudoDoDocumento } from "@/components/documentos/conteudo-do-documento"
 import { foiRetificado, rotuloDaVersao, totalDeBytes } from "@/lib/dominio"
@@ -68,12 +67,6 @@ export default function Documentos() {
         <StatCard label="Gerados este Mês" value={r ? String(r.esteMes) : "—"} icon={IconCalendar} tone="teal" />
         <StatCard label="Armazenamento Usado" value={r ? `${r.armazenamentoMB} MB` : "—"} icon={IconDatabase} tone="success" />
       </div>
-      <div className="mb-6 -mt-3">
-        {/* As contagens ainda vêm do acervo em memória. O tamanho, não: desde o
-            11.1 ele soma os bytes que o servidor mediu em cada arquivo. */}
-        <MarcaSintetica campo="indicadores" />
-      </div>
-
       {/* Tabela */}
       <div className="overflow-hidden rounded-card border border-border bg-surface">
         <div className="flex flex-wrap items-center gap-2.5 border-b border-border-soft px-5 py-4">

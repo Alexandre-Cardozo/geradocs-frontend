@@ -380,3 +380,27 @@ describe("reabrirProcessoReal", () => {
     expect(processo.encerradoEm).toBeUndefined()
   })
 })
+
+describe("estatisticasDeProcesso", () => {
+  it("traduz os números do painel", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/statistics`, () =>
+        HttpResponse.json({
+          active: 7,
+          closed: 3,
+          createdThisMonth: 2,
+          started: 5,
+          pendingDocuments: 11,
+          completionRate: 0.3,
+        }),
+      ),
+    )
+    const { estatisticasDeProcesso } = await carregarClienteLimpo()
+
+    const numeros = await estatisticasDeProcesso()
+
+    expect(numeros.ativos).toBe(7)
+    expect(numeros.documentosPendentes).toBe(11)
+    expect(numeros.taxaConclusao).toBe(0.3)
+  })
+})
