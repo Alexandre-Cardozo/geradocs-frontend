@@ -9,25 +9,33 @@ import { servidor } from "@/lib/teste/servidor-msw"
  * O caso da reunião: um processo montado como Pregão Eletrônico vira Dispensa
  * do Art. 75.
  *
- * O processo em si vive no servidor desde o Bloco 9. O que ainda é do front-end
- * — e é o que se testa aqui — é o **registro na trilha**: qual documento deixou
- * de ser cabível, qual passou a ser obrigatório, e a justificativa de quem
- * decidiu manter a lista assim mesmo.
+ * O processo vive no servidor desde o Bloco 9, e a trilha desde o 12.1. O que
+ * continua sendo do front-end — e é o que se testa aqui — é **calcular o porquê**:
+ * qual documento deixou de ser cabível, qual passou a ser obrigatório, e a
+ * justificativa de quem decidiu manter a lista assim mesmo. Esse texto ia para
+ * uma trilha em memória; agora acompanha a edição como `changeNote`, e é o
+ * servidor que o registra.
  */
 async function carregarClienteLimpo() {
   vi.resetModules()
   return import("@/lib/api/client")
 }
 
-/** Responde a leitura com o processo dado e ecoa a edição de volta. */
+/**
+ * Responde a leitura com o processo dado e ecoa a edição de volta.
+ *
+ * @returns o que a tela enviou no PATCH, para conferir o `changeNote`
+ */
 function servidorComProcesso(processo: Record<string, unknown> = processoApi) {
+  const enviado: { corpo: Record<string, unknown> } = { corpo: {} }
   servidor.use(
     http.get(`${urlDaApi}/procurement-processes/:id`, () => HttpResponse.json(processo)),
     http.patch(`${urlDaApi}/procurement-processes/:id`, async ({ request }) => {
-      const corpo = (await request.json()) as Record<string, unknown>
-      return HttpResponse.json({ ...processo, ...corpo, version: 1 })
+      enviado.corpo = (await request.json()) as Record<string, unknown>
+      return HttpResponse.json({ ...processo, ...enviado.corpo, version: 1 })
     }),
   )
+  return enviado
 }
 
 const PROCESSO = processoApi.id
@@ -73,9 +81,9 @@ describe("troca de modalidade", () => {
     expect(ifMatch).toBe('"7"')
   })
 
-  it("registra na trilha o que deixou de ser cabível", async () => {
-    servidorComProcesso()
-    const { atualizarProcesso, getTrilha } = await carregarClienteLimpo()
+  it("o que deixou de ser cabível acompanha a edição, para o servidor registrar", async () => {
+    const enviado = servidorComProcesso()
+    const { atualizarProcesso } = await carregarClienteLimpo()
 
     await atualizarProcesso({
       id: PROCESSO,
@@ -83,16 +91,15 @@ describe("troca de modalidade", () => {
       documentos: ["ETP", "TR"],
     })
 
-    const evento = (await getTrilha(PROCESSO))[0]
-    expect(evento?.evento).toBe("troca_modalidade")
-    expect(evento?.comentario).toContain("Pregão Eletrônico")
-    expect(evento?.comentario).toContain("Dispensa Art. 75")
-    expect(evento?.comentario).toContain("removidos por deixarem de ser cabíveis: Edital")
+    const motivo = String(enviado.corpo.changeNote)
+    expect(motivo).toContain("Pregão Eletrônico")
+    expect(motivo).toContain("Dispensa Art. 75")
+    expect(motivo).toContain("removidos por deixarem de ser cabíveis: Edital")
   })
 
-  it("mantendo a lista, a justificativa vai literal para a trilha", async () => {
-    servidorComProcesso()
-    const { atualizarProcesso, getTrilha } = await carregarClienteLimpo()
+  it("mantendo a lista, a justificativa vai literal para o servidor", async () => {
+    const enviado = servidorComProcesso()
+    const { atualizarProcesso } = await carregarClienteLimpo()
 
     await atualizarProcesso({
       id: PROCESSO,
@@ -102,30 +109,19 @@ describe("troca de modalidade", () => {
 
     // É a justificativa que responde ao controle por que o processo ficou com um
     // documento que a modalidade vigente não comporta.
-    expect((await getTrilha(PROCESSO))[0]?.comentario).toContain(
+    expect(String(enviado.corpo.changeNote)).toContain(
       "O edital já foi publicado e será anulado por ato próprio.",
     )
   })
 
-  it("a trilha registra quem trocou e quando", async () => {
-    servidorComProcesso()
-    const { atualizarProcesso, getTrilha } = await carregarClienteLimpo()
-
-    await atualizarProcesso({ id: PROCESSO, modalidade: "Dispensa Art. 75" })
-
-    const evento = (await getTrilha(PROCESSO))[0]
-    expect(evento?.autor).not.toBe("")
-    expect(evento?.data).toMatch(/^\d{4}-\d{2}-\d{2}T/)
-  })
-
-  it("salvar sem trocar a modalidade não polui a trilha", async () => {
-    servidorComProcesso()
-    const { atualizarProcesso, getTrilha } = await carregarClienteLimpo()
+  it("salvar sem trocar a modalidade não inventa motivo", async () => {
+    const enviado = servidorComProcesso()
+    const { atualizarProcesso } = await carregarClienteLimpo()
 
     await atualizarProcesso({ id: PROCESSO, objeto: "Descrição revisada" })
 
-    // Evento sem mudança transformaria a trilha em log de cliques, e o que
+    // Motivo em toda edição transformaria a trilha em log de cliques, e o que
     // importa deixaria de ser encontrável no meio.
-    expect(await getTrilha(PROCESSO)).toEqual([])
+    expect(enviado.corpo.changeNote).toBeNull()
   })
 })

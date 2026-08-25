@@ -91,9 +91,9 @@ describe("retificação de documento", () => {
     )
   })
 
-  it("a retificação entra na trilha do processo", async () => {
+  it("a retificação fica registrada no histórico do documento", async () => {
     servidorQueConclui()
-    const { gerarDocumento, getTrilha } = await carregarClienteLimpo()
+    const { gerarDocumento, getHistoricoVersoes } = await carregarClienteLimpo()
     await gerarDocumento({ processoId: PROCESSO, tipo: "ETP" })
 
     await gerarDocumento({
@@ -102,15 +102,17 @@ describe("retificação de documento", () => {
       retificacao: { motivo: "alteracao_substancial", detalhe: "Prazo de entrega alterado." },
     })
 
-    const evento = (await getTrilha(PROCESSO))[0]
-    expect(evento?.evento).toBe("retificacao")
-    expect(evento?.comentario).toContain("Alteração substancial")
-    expect(evento?.comentario).toContain("Prazo de entrega alterado.")
+    // No histórico do documento, e não na trilha do processo: é lá que o
+    // servidor grava, e a trilha mostra só o que foi registrado (ADR-024).
+    // Duplicar em dois lugares é como os dois passam a divergir.
+    const nota = (await getHistoricoVersoes(PROCESSO, "ETP"))[0]?.nota
+    expect(nota).toContain("Alteração substancial")
+    expect(nota).toContain("Prazo de entrega alterado.")
   })
 
   it("regerar sem declarar retificação não vira retificação", async () => {
     servidorQueConclui()
-    const { gerarDocumento, getHistoricoVersoes, getTrilha } = await carregarClienteLimpo()
+    const { gerarDocumento, getHistoricoVersoes } = await carregarClienteLimpo()
 
     await gerarDocumento({ processoId: PROCESSO, tipo: "ETP" })
     await gerarDocumento({ processoId: PROCESSO, tipo: "ETP" })
@@ -118,7 +120,6 @@ describe("retificação de documento", () => {
     // Regeração acontece enquanto o documento ainda está sendo elaborado.
     // Marcá-la como retificação esvaziaria a palavra onde ela tem peso.
     expect((await getHistoricoVersoes(PROCESSO, "ETP"))[0]?.nota).toBe("Regeração")
-    expect(await getTrilha(PROCESSO)).toEqual([])
   })
 
   it("o corpo guardado é o que o servidor congelou", async () => {

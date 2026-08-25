@@ -1022,6 +1022,25 @@
         "required" : [ "departmentId", "departmentName", "fileName", "id", "items", "submittedAt" ],
         "type" : "object"
       },
+      "ProcessTrailEntryResponse" : {
+        "properties" : {
+          "actorName" : {
+            "type" : "string"
+          },
+          "event" : {
+            "type" : "string"
+          },
+          "occurredAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "reason" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "event", "occurredAt" ],
+        "type" : "object"
+      },
       "ProcurementProcessResponse" : {
         "properties" : {
           "closedAt" : {
@@ -1332,6 +1351,11 @@
       },
       "UpdateProcurementProcessRequest" : {
         "properties" : {
+          "changeNote" : {
+            "maxLength" : 500,
+            "minLength" : 0,
+            "type" : "string"
+          },
           "demandObject" : {
             "maxLength" : 2000,
             "minLength" : 3,
@@ -2446,6 +2470,36 @@
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProcurementProcessResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "procurement-process-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{id}/trail" : {
+      "get" : {
+        "operationId" : "trail",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/ProcessTrailEntryResponse"
+                  },
+                  "type" : "array"
                 }
               }
             },

@@ -19,7 +19,6 @@ function processo(id: string, status: StatusProcesso, documentos: TipoDocumento[
     trStatus: "Não iniciado",
     documentos,
     fases: { verificacaoDFD: false, retificacao: false },
-    trilha: [],
   }
 }
 

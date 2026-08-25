@@ -24,7 +24,6 @@ function processo(documentos: TipoDocumento[]): Processo {
     trStatus: "Não iniciado",
     documentos,
     fases: { verificacaoDFD: false, retificacao: false },
-    trilha: [],
   }
 }
 

@@ -105,7 +105,6 @@ export interface Processo {
   dfdArquivo?: string | null
   urgente?: boolean
   /** Trilha de auditoria das transições de status (fonte única — a fila de aprovações projeta daqui). */
-  trilha: EventoDoProcesso[]
   /** Versão do recurso no servidor, para concorrência otimista (If-Match). */
   versao?: number
 }
@@ -204,18 +203,29 @@ export type EventoProcesso =
   | "troca_modalidade"
   | "geracao_documento"
   | "retificacao"
+  | "edicao"
   | "encerramento"
   | "reabertura"
 
+/**
+ * Um evento da trilha, como o servidor o registrou.
+ *
+ * O `de`/`para` saíram: o servidor grava a ação, não a transição de status, e
+ * derivá-la na leitura seria reconstruir o passado por dedução.
+ */
 export interface EventoDoProcesso {
   evento: EventoProcesso
-  de: StatusProcesso
-  para: StatusProcesso
-  autor: string
-  /** Perfil de quem praticou o evento — para a trilha dizer quem fez o quê. */
-  papel: PerfilAcesso
+  /**
+   * Quem agiu, com o nome que valia no ato.
+   *
+   * `null` nos eventos anteriores à gravação do nome (ADR-024): a tela diz que
+   * não foi registrado, em vez de atribuir a ação a alguém.
+   */
+  autor: string | null
+  /** ISO-8601, como o servidor devolveu. */
   data: string
-  comentario: string
+  /** A justificativa informada por quem agiu, quando houve. */
+  comentario: string | null
 }
 
 /**

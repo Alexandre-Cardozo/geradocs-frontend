@@ -545,3 +545,15 @@ Nenhum dos dois aparece em teste de componente — jsdom não faz layout. Foram 
 **"Será definido pelo servidor" saiu.** Ambíguo justamente aqui: nesta plataforma *servidor* é a pessoa que usa o sistema. E vinha em monoespaçada destacada — a formatação reservada a identificador de verdade (`PROC-2026-000007`), o que fazia parecer que já existia um número. Virou "Gerado na criação", em texto secundário.
 
 **Órgão sem secretaria era um beco.** O seletor trazia só "Selecione a secretaria...", "Continuar" ficava desabilitado e a tela não dizia por quê nem quem resolve. O servidor **exige** a secretaria — é dela que sai a lotação do processo —, então a saída não é liberar o passo, e sim dizer de quem é a próxima ação: o coordenador recebe o link para Configurações; quem não cadastra secretaria recebe o recado de pedir a ele. É a §24 aplicada a um caso em que orientar não é opcional.
+
+## 40. A trilha do processo passa a existir (12.1)
+
+O passo dizia que a trilha "vive em memória do navegador". Ao implementar, a premissa se mostrou pior: **nenhuma tela a mostrava**. `getTrilha`, `EVENTO_LABEL` e o campo `trilha` das fixtures eram código morto — dez processos de fixture carregavam uma trilha inventada que ninguém lia. A metade de front do 12.1 não foi trocar a fonte: foi a trilha passar a existir.
+
+**Ela mostra o que o servidor registrou, e só.** Criação, edição, encerramento e reabertura, do mais recente ao mais antigo, com quem agiu, quando e por quê. Uma ação que a tela ainda não conhece não vira linha em branco: é filtrada, e há teste para isso — o servidor pode ganhar ações novas antes desta tela.
+
+**Evento sem autor admite a lacuna.** Os eventos gravados antes de o nome passar a ser guardado aparecem como "Autor não registrado". Atribuí-los a alguém para não deixar o campo vazio seria inventar quem agiu — e verifiquei contra o servidor real que é exatamente isso que acontece com os processos que já existiam.
+
+**Sumiram os registros paralelos.** Encerrar e reabrir gravavam um evento local *além* de chamar o servidor; retificação e regeração gravavam só local. Os dois primeiros eram duplicata — o servidor já registra, com a justificativa. Os dois últimos continuam registrados onde o servidor os grava: **no histórico de versões do documento**, que é onde pertencem. Duplicar em dois lugares é como os dois passam a divergir.
+
+**A justificativa da troca de modalidade deixou de ser descartada.** A plataforma calcula qual documento deixou de ser cabível e por quê; esse texto ia para a trilha em memória e morria ali. Agora acompanha a edição como `changeNote` e é o servidor que o registra — a trilha dizia que o processo mudou sem dizer por quê, que é metade do registro.

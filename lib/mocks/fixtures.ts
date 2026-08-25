@@ -7,7 +7,6 @@ import type {
   ResumoDocumentos,
   Tenant,
   TipoDocumento,
-  EventoDoProcesso,
   Usuario,
 } from "@/lib/types";
 
@@ -123,18 +122,6 @@ export const resumoDocumentos: ResumoDocumentos = {
   armazenamentoMB: 51,
 };
 
-/** Atalho para um evento da trilha do processo. */
-function t(
-  evento: EventoDoProcesso["evento"],
-  de: EventoDoProcesso["de"],
-  para: EventoDoProcesso["para"],
-  autor: string,
-  papel: EventoDoProcesso["papel"],
-  data: string,
-  comentario: string,
-): EventoDoProcesso {
-  return { evento, de, para, autor, papel, data, comentario };
-}
 
 const processosSaoPaulo: Array<Omit<Processo, "prefeituraId">> = [
   {
@@ -154,10 +141,6 @@ const processosSaoPaulo: Array<Omit<Processo, "prefeituraId">> = [
     atualizadoEm: "2024-07-05",
     fases: { verificacaoDFD: true, retificacao: false },
     dfdArquivo: "DFD-PROC-2024-089.pdf",
-    trilha: [
-      t("geracao_documento", "rascunho", "em_elaboracao", "Maria Costa", "servidor", "2024-07-05",
-        "Documentos concluídos; enviado para análise jurídica e da comissão."),
-    ],
   },
   {
     id: "PROC-2024-088",
@@ -174,12 +157,6 @@ const processosSaoPaulo: Array<Omit<Processo, "prefeituraId">> = [
     atualizadoEm: "2024-07-04",
     fases: { verificacaoDFD: false, retificacao: false },
     urgente: true,
-    trilha: [
-      t("geracao_documento", "rascunho", "em_elaboracao", "João Silva", "servidor", "2024-07-03",
-        "ETP, TR e Edital concluídos; encaminho para análise da comissão."),
-      t("geracao_documento", "em_elaboracao", "em_elaboracao", "Comissão de Contratação", "coordenador", "2024-07-04",
-        "Documentação conferida e parecer jurídico favorável. Segue para decisão do gestor."),
-    ],
   },
   {
     id: "PROC-2024-087",
@@ -195,14 +172,6 @@ const processosSaoPaulo: Array<Omit<Processo, "prefeituraId">> = [
     criadoEm: "2024-07-03",
     atualizadoEm: "2024-07-04",
     fases: { verificacaoDFD: false, retificacao: false },
-    trilha: [
-      t("geracao_documento", "rascunho", "em_elaboracao", "Ana Oliveira", "servidor", "2024-07-03",
-        "Instrução completa com Cotação, ETP, TR, Edital e minuta de Contrato."),
-      t("geracao_documento", "em_elaboracao", "em_elaboracao", "Comissão de Contratação", "coordenador", "2024-07-04",
-        "Conformidade verificada. Encaminhado para aprovação."),
-      t("encerramento", "em_elaboracao", "concluido", "Carlos Lima", "coordenador", "2024-07-04",
-        "Processo aprovado. Autorizada a abertura da fase externa."),
-    ],
   },
   {
     id: "PROC-2024-086",
@@ -218,7 +187,6 @@ const processosSaoPaulo: Array<Omit<Processo, "prefeituraId">> = [
     criadoEm: "2024-07-02",
     atualizadoEm: "2024-07-02",
     fases: { verificacaoDFD: false, retificacao: false },
-    trilha: [],
   },
   {
     id: "PROC-2024-085",
@@ -234,16 +202,6 @@ const processosSaoPaulo: Array<Omit<Processo, "prefeituraId">> = [
     criadoEm: "2024-07-01",
     atualizadoEm: "2024-07-02",
     fases: { verificacaoDFD: false, retificacao: false },
-    trilha: [
-      t("geracao_documento", "rascunho", "em_elaboracao", "Maria Costa", "servidor", "2024-07-01",
-        "Documentos concluídos; enviado para análise."),
-      t("geracao_documento", "em_elaboracao", "em_elaboracao", "Comissão de Contratação", "coordenador", "2024-07-01",
-        "Documentação conferida. Segue para decisão do gestor."),
-      t("encerramento", "em_elaboracao", "concluido", "Carlos Lima", "coordenador", "2024-07-02",
-        "Processo aprovado."),
-      t("encerramento", "em_elaboracao", "concluido", "Carlos Lima", "coordenador", "2024-07-02",
-        "Contratação homologada e concluída."),
-    ],
   },
   {
     id: "PROC-2024-084",
@@ -261,14 +219,6 @@ const processosSaoPaulo: Array<Omit<Processo, "prefeituraId">> = [
     fundamentoLegal: "Art. 74, III, 'a', Lei 14.133/21",
     fases: { verificacaoDFD: false, retificacao: false },
     urgente: true,
-    trilha: [
-      t("geracao_documento", "rascunho", "em_elaboracao", "Pedro Ramos", "servidor", "2024-07-01",
-        "Processo instruído para análise jurídica."),
-      t("retificacao", "em_elaboracao", "em_elaboracao", "Carlos Lima", "coordenador", "2024-07-02",
-        "Solicito retificação: incluir comparativo de preços exigido pelo Art. 23, Lei 14.133/21."),
-      t("geracao_documento", "em_elaboracao", "em_elaboracao", "Pedro Ramos", "servidor", "2024-07-03",
-        "Retificação atendida; comparativo de preços anexado ao TR."),
-    ],
   },
   {
     id: "PROC-2024-083",
@@ -284,12 +234,6 @@ const processosSaoPaulo: Array<Omit<Processo, "prefeituraId">> = [
     criadoEm: "2024-06-28",
     atualizadoEm: "2024-07-01",
     fases: { verificacaoDFD: false, retificacao: false },
-    trilha: [
-      t("geracao_documento", "rascunho", "em_elaboracao", "Ana Oliveira", "servidor", "2024-06-30",
-        "ETP, TR e Edital da reforma concluídos conforme levantamento da engenharia."),
-      t("geracao_documento", "em_elaboracao", "em_elaboracao", "Comissão de Contratação", "coordenador", "2024-07-01",
-        "Checklist integral e parecer jurídico favorável. Encaminhado para aprovação."),
-    ],
   },
   {
     id: "PROC-2024-082",
@@ -305,14 +249,6 @@ const processosSaoPaulo: Array<Omit<Processo, "prefeituraId">> = [
     criadoEm: "2024-06-27",
     atualizadoEm: "2024-06-28",
     fases: { verificacaoDFD: false, retificacao: false },
-    trilha: [
-      t("geracao_documento", "rascunho", "em_elaboracao", "João Silva", "servidor", "2024-06-27",
-        "Documentos concluídos; enviado para análise."),
-      t("geracao_documento", "em_elaboracao", "em_elaboracao", "Comissão de Contratação", "coordenador", "2024-06-27",
-        "Encaminhado para decisão do gestor."),
-      t("reabertura", "concluido", "em_elaboracao", "Carlos Lima", "coordenador", "2024-06-28",
-        "Rejeitado: estimativa de valor sem pesquisa de preços que a fundamente (Art. 23)."),
-    ],
   },
 ];
 
@@ -335,10 +271,6 @@ const processosEcoporanga: Array<Omit<Processo, "prefeituraId">> = [
     atualizadoEm: "2024-07-10",
     fases: { verificacaoDFD: true, retificacao: false },
     dfdArquivo: "DFD-PROC-2024-071.pdf",
-    trilha: [
-      t("geracao_documento", "rascunho", "em_elaboracao", "Beatriz Amaral", "servidor", "2024-07-10",
-        "Documentos concluídos; enviado para análise."),
-    ],
   },
   {
     id: "PROC-2024-070",
@@ -355,7 +287,6 @@ const processosEcoporanga: Array<Omit<Processo, "prefeituraId">> = [
     atualizadoEm: "2024-07-12",
     fundamentoLegal: "Art. 6º, XXIII, Lei 14.133/21",
     fases: { verificacaoDFD: false, retificacao: false },
-    trilha: [],
   },
 ];
 

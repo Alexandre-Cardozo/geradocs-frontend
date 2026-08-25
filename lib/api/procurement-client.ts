@@ -8,6 +8,8 @@ import type {
   Processo,
   StatusProcesso,
   TipoDocumento,
+  EventoDoProcesso,
+  EventoProcesso,
 } from "@/lib/types";
 
 const modalidades: Record<Modalidade, string> = {
@@ -96,7 +98,6 @@ function mapear(item: ProcessoApi): Processo {
     ata: null,
     fases: { verificacaoDFD: false, retificacao: false },
     dfdArquivo: item.dfdFileName ?? null,
-    trilha: [],
     urgente: item.urgency,
     versao: item.version,
   };
@@ -170,6 +171,8 @@ export async function atualizarProcessoReal(
     modalidade?: Modalidade;
     documentos?: TipoDocumento[];
     dfdArquivo?: string | null;
+    /** Por que mudou; vai literal para a trilha do servidor (ADR-024). */
+    motivo?: string;
   },
 ): Promise<Processo> {
   const processo = await requisicaoProtegida<ProcessoApi>(
@@ -191,6 +194,7 @@ export async function atualizarProcessoReal(
         documents: (mudancas.documentos ?? atual.documentos).map((tipo) => tipos[tipo]),
         dfdFileName:
           mudancas.dfdArquivo !== undefined ? mudancas.dfdArquivo : atual.dfdArquivo,
+        changeNote: mudancas.motivo ?? null,
       }),
     },
   );
@@ -316,4 +320,45 @@ export async function consolidacaoDaDemanda(processoId: string): Promise<Demanda
       valores: i.values.map((v) => ({ secretaria: v.departmentName, valor: v.value })),
     })),
   };
+}
+
+/** A ação como a auditoria a nomeia → o evento que a trilha exibe. */
+const EVENTOS_DA_TRILHA: Record<string, EventoProcesso> = {
+  PROCUREMENT_PROCESS_CREATED: "criacao",
+  PROCUREMENT_PROCESS_UPDATED: "edicao",
+  PROCUREMENT_PROCESS_CLOSED: "encerramento",
+  PROCUREMENT_PROCESS_REOPENED: "reabertura",
+}
+
+interface TrilhaDaApi {
+  event: string
+  occurredAt: string
+  actorName?: string | null
+  reason?: string | null
+}
+
+/**
+ * A trilha do processo, como o servidor a registrou.
+ *
+ * <p>Eventos que a plataforma ainda não audita simplesmente não aparecem — a
+ * trilha mostra o que foi registrado, e não o que esta aba viu acontecer
+ * (ADR-024).
+ */
+export async function trilhaDoProcesso(processoId: string): Promise<EventoDoProcesso[]> {
+  const eventos = await requisicaoProtegida<TrilhaDaApi[]>(
+    `/procurement-processes/${processoId}/trail`,
+  )
+  return eventos.flatMap((evento) => {
+    const conhecido = EVENTOS_DA_TRILHA[evento.event]
+    return conhecido === undefined
+      ? []
+      : [
+          {
+            evento: conhecido,
+            autor: evento.actorName ?? null,
+            data: evento.occurredAt,
+            comentario: evento.reason ?? null,
+          },
+        ]
+  })
 }

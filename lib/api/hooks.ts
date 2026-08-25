@@ -32,6 +32,7 @@ export const chaves = {
   usuarios: (prefeituraId?: string, busca = "") => ["usuarios", prefeituraId ?? "todos", busca] as const,
   prefeituras: ["prefeituras"] as const,
   foto: (usuarioId: string | undefined) => ["foto-de-perfil", usuarioId] as const,
+  trilha: (processoId: string) => ["trilha", processoId] as const,
 }
 
 /* ── Sessão / autenticação ─────────────────────────────────────────────────── */
@@ -163,6 +164,20 @@ export function useRevelarCpf() {
   return useMutation({ mutationFn: (id: string) => revelarCpf(id) })
 }
 
+/**
+ * A trilha do processo, como o servidor a registrou.
+ *
+ * <p>Encerrar e reabrir mudam a trilha, e por isso invalidam esta chave — sem
+ * isso a tela mostraria o processo encerrado com uma trilha que não registra o
+ * encerramento.
+ */
+export function useTrilhaDoProcesso(processoId: string) {
+  return useQuery({
+    queryKey: chaves.trilha(processoId),
+    queryFn: () => api.getTrilha(processoId),
+  })
+}
+
 export function useEstatisticas() {
   return useQuery({ queryKey: chaves.estatisticas, queryFn: api.getEstatisticas })
 }
@@ -201,6 +216,8 @@ export function useAtualizarProcesso() {
     onSuccess: (processo) => {
       queryClient.setQueryData(chaves.processo(processo.id), processo)
       void queryClient.invalidateQueries({ queryKey: ["processos"] })
+      // A edição grava o porquê na trilha do servidor.
+      void queryClient.invalidateQueries({ queryKey: chaves.trilha(processo.id) })
     },
   })
 }
@@ -261,6 +278,9 @@ function invalidarProcesso(queryClient: ReturnType<typeof useQueryClient>, proce
   void queryClient.invalidateQueries({ queryKey: ["processos"] })
   void queryClient.invalidateQueries({ queryKey: chaves.processo(processoId) })
   void queryClient.invalidateQueries({ queryKey: chaves.estatisticas })
+  // Encerrar e reabrir viram evento no servidor: sem isto a tela mostraria o
+  // processo encerrado com uma trilha que não registra o encerramento.
+  void queryClient.invalidateQueries({ queryKey: chaves.trilha(processoId) })
 }
 
 export function useEncerrarProcesso() {

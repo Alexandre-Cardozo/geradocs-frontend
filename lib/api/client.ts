@@ -10,15 +10,12 @@ import {
   processos as processosFixture,
   resumoDocumentos as resumoDocumentosFixture,
 } from "@/lib/mocks/fixtures"
-import { CATALOGO } from "@/lib/documentos"
 import {
   calcularIndicadores,
   empilharVersao,
   entradaDeHistorico,
   impactoTrocaModalidade,
   motivoDaTrocaDeModalidade,
-  notaDaVersao,
-  motivoDoEncerramento,
   noEscopo,
   prefeiturasVisiveis,
   resumirDocumentos,
@@ -70,6 +67,7 @@ import {
   listarProcessos,
   obterProcesso,
   reabrirProcessoReal,
+  trilhaDoProcesso,
 } from "@/lib/api/procurement-client"
 import {
   citarNaSecao,
@@ -84,7 +82,6 @@ import type {
   DocumentoGerado,
   EstatisticasDashboard,
   EventoDoProcesso,
-  EventoProcesso,
   Modalidade,
   NovoProcessoInput,
   ParecerDFD,
@@ -122,8 +119,6 @@ const db = {
   /** Seções por documento — chave `${processoId}:${tipo}`. */
   pareceresDFD: new Map<string, ParecerDFD>(),
   documentos: clone(documentosFixture),
-  /** Trilha dos processos que vivem no servidor — chave é o id do processo. */
-  trilhas: new Map<string, EventoDoProcesso[]>(),
   /** Histórico de versões por documento — chave `${processoId}:${tipo}`. */
   versoes: new Map<string, VersaoDocumento[]>(),
   /**
@@ -138,11 +133,6 @@ const db = {
   resumoDocumentos: clone(resumoDocumentosFixture),
   // Acima do maior id gerado pelas fixtures (evita colisão com novos documentos).
   seqDocumento: 200,
-}
-
-/** Usuário logado, ou null. */
-function usuarioLogado(): Usuario | null {
-  return db.sessao?.usuario ?? null
 }
 
 // Semeia o histórico de versões (v1) dos documentos já existentes nas fixtures,
@@ -221,7 +211,9 @@ export interface Paginado<T> {
 
 /** Ids de prefeitura visíveis ao usuário logado (admin vê todas). */
 function escopoPrefeituras(): string[] | null {
-  return prefeiturasVisiveis(usuarioLogado())
+  // `db.sessao ? ... : null` e não `?.usuario ?? null`: a sessão sempre tem
+  // usuário, então o segundo ramo do `??` era código sem caminho.
+  return prefeiturasVisiveis(db.sessao ? db.sessao.usuario : null)
 }
 
 export async function getProcessos(params: ListaProcessosParams = {}): Promise<Paginado<Processo>> {
@@ -254,12 +246,13 @@ export interface AtualizarProcessoInput {
 /**
  * Edições feitas no hub do processo.
  *
- * A troca de modalidade continua produzindo o registro da trilha aqui porque a
- * trilha ainda vive em memória — ela migra junto com o histórico do processo. O
- * dado do processo, esse, já vai e volta do servidor.
+ * O motivo da troca de modalidade vai **com** a edição, e não para um registro
+ * paralelo: até o 12.1 ele era guardado na memória do navegador, e a trilha do
+ * servidor registrava que o processo mudou sem registrar por quê.
  */
 export async function atualizarProcesso(input: AtualizarProcessoInput): Promise<Processo> {
   const atual = await obterProcesso(input.id)
+  let motivo: string | undefined
   if (input.modalidade !== undefined && input.modalidade !== atual.modalidade) {
     // Contra a lista que o processo tinha, e não contra a que está sendo salva:
     // com a lista nova, o que a tela acabou de remover já não estaria lá, e a
@@ -270,15 +263,11 @@ export async function atualizarProcesso(input: AtualizarProcessoInput): Promise<
       atual.documentos,
       docsGeradosDo(atual.id),
     )
-    registrarEventoLocal(
-      atual.id,
-      "troca_modalidade",
-      motivoDaTrocaDeModalidade(
-        atual.modalidade,
-        input.modalidade,
-        impacto,
-        input.justificativaModalidade ?? "",
-      ),
+    motivo = motivoDaTrocaDeModalidade(
+      atual.modalidade,
+      input.modalidade,
+      impacto,
+      input.justificativaModalidade ?? "",
     )
   }
   return atualizarProcessoReal(atual, {
@@ -287,7 +276,13 @@ export async function atualizarProcesso(input: AtualizarProcessoInput): Promise<
     modalidade: input.modalidade,
     documentos: input.documentos,
     dfdArquivo: input.dfdArquivo,
+    motivo,
   })
+}
+
+/** A trilha do processo, como o servidor a registrou (ADR-024). */
+export async function getTrilha(processoId: string): Promise<EventoDoProcesso[]> {
+  return trilhaDoProcesso(processoId)
 }
 
 
@@ -365,39 +360,6 @@ function docsGeradosDo(processoId: string): TipoDocumento[] {
 }
 
 /**
- * Registra um evento na trilha de um processo que vive no servidor.
- *
- * A trilha ainda é local — ela migra junto com o histórico do processo. Até lá,
- * o evento é guardado à parte, indexado pelo id do processo, em vez de dentro do
- * objeto que agora vem da API.
- */
-/**
- * A trilha de um processo.
- *
- * Ainda local — ela migra para o servidor junto com o histórico do processo. A
- * tela já a consome por aqui para que essa migração não mexa nas páginas.
- */
-export async function getTrilha(processoId: string): Promise<EventoDoProcesso[]> {
-  await delay(120)
-  return clone(db.trilhas.get(processoId) ?? [])
-}
-
-function registrarEventoLocal(processoId: string, evento: EventoProcesso, comentario: string): void {
-  const usuario = usuarioLogado()
-  const trilha = db.trilhas.get(processoId) ?? []
-  trilha.unshift({
-    evento,
-    de: "rascunho",
-    para: "rascunho",
-    autor: usuario?.nome ?? "Sistema",
-    papel: usuario?.perfilAcesso ?? "servidor",
-    data: dataHoraBrasiliaISO(),
-    comentario,
-  })
-  db.trilhas.set(processoId, trilha)
-}
-
-/**
  * Encerra o processo. A plataforma termina aqui: protocolo, assinatura e
  * aprovação acontecem no sistema de processo administrativo da prefeitura.
  *
@@ -414,16 +376,14 @@ function registrarEventoLocal(processoId: string, evento: EventoProcesso, coment
  * "não encontrado", e o botão da tela de detalhe estourava.
  */
 export async function encerrarProcesso(processoId: string, justificativa = ""): Promise<Processo> {
-  const processo = await encerrarProcessoReal(processoId, justificativa)
-  registrarEventoLocal(processoId, "encerramento", motivoDoEncerramento(justificativa))
-  return processo
+  // Sem registro paralelo: o servidor grava o encerramento com a justificativa,
+  // e a trilha da tela lê de lá (ADR-024).
+  return encerrarProcessoReal(processoId, justificativa)
 }
 
 /** Reabre um processo encerrado para retificar documento. */
 export async function reabrirProcesso(processoId: string, motivo: string): Promise<Processo> {
-  const processo = await reabrirProcessoReal(processoId, motivo)
-  registrarEventoLocal(processoId, "reabertura", motivo)
-  return processo
+  return reabrirProcessoReal(processoId, motivo)
 }
 
 
@@ -635,18 +595,6 @@ export async function gerarDocumento(input: GerarDocumentoInput): Promise<Docume
   empilhar(chaveVersao, entradaDeHistorico(concluido.versao, geradoEm, input.retificacao))
   db.corpos.set(chaveVersao, concluido.corpo)
 
-  if (anterior >= 0 && input.retificacao) {
-    // Só a retificação declarada entra na trilha do processo. Regeração
-    // corriqueira fica no histórico do documento, que é onde ela pertence.
-    registrarEventoLocal(
-      input.processoId,
-      "retificacao",
-      `${CATALOGO[input.tipo].titulo} retificado (v${concluido.versao}) — ${notaDaVersao(
-        concluido.versao,
-        input.retificacao,
-      )}`,
-    )
-  }
   return clone(doc)
 }
 

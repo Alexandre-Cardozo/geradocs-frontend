@@ -26,6 +26,7 @@ import {
   useSecoes,
 } from "@/lib/api/hooks"
 import { ConsolidacaoDaDemanda } from "@/components/processos/consolidacao-da-demanda"
+import { TrilhaDoProcesso } from "@/components/processos/trilha-do-processo"
 import { PainelRetificacao } from "@/components/processos/painel-retificacao"
 import { AlertaOrientacao } from "@/components/shared/alerta-orientacao"
 import { CATALOGO, documentosDaModalidade, ordenar, pendencias } from "@/lib/documentos"
@@ -594,6 +595,19 @@ export default function HubProcesso() {
           administrativo da prefeitura.
         </InfoBanner>
       )}
+
+      {/* Trilha — o que o servidor registrou, e não o que esta aba viu (ADR-024) */}
+      <div className="mt-8">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="m-0 font-display text-lg font-bold text-text-1">Trilha do Processo</h2>
+          <span className="text-sm text-text-3">
+            Registro do que aconteceu, com quem agiu e por quê.
+          </span>
+        </div>
+        <div className="rounded-card border border-border bg-surface p-5">
+          <TrilhaDoProcesso processoId={processoId} />
+        </div>
+      </div>
     </div>
   )
 }

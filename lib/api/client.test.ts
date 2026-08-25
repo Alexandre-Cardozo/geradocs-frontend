@@ -192,6 +192,15 @@ describe("escopo: quem vê o quê", () => {
     expect((await api.getResumoDocumentos()).total).toBeGreaterThanOrEqual(0)
   })
 
+  it("sem sessão, o acervo não é recortado para a prefeitura de ninguém", async () => {
+    const api = await fachadaLimpa()
+
+    // Não é caso hipotético: a tela monta antes de a sessão responder. Sem este
+    // ramo, `escopoPrefeituras` procuraria a prefeitura de um usuário que ainda
+    // não existe.
+    expect((await api.getResumoDocumentos()).total).toBeGreaterThanOrEqual(0)
+  })
+
   it("resumo de quem tem prefeitura é recalculado no escopo dela", async () => {
     const api = await fachadaLogada()
 
@@ -200,21 +209,21 @@ describe("escopo: quem vê o quê", () => {
 })
 
 describe("processo", () => {
-  it("editar sem trocar a modalidade não registra nada na trilha", async () => {
+  it("editar sem trocar a modalidade não manda motivo nenhum", async () => {
     const api = await fachadaLimpa()
     vi.mocked(contratacao.obterProcesso).mockResolvedValue(processo() as never)
     vi.mocked(contratacao.atualizarProcessoReal).mockResolvedValue(processo() as never)
 
     await api.atualizarProcesso({ id: PROCESSO, objeto: "Aquisição revista" })
 
-    expect(await api.getTrilha(PROCESSO)).toEqual([])
+    // Motivo em toda edição transformaria a trilha em log de cliques.
     expect(contratacao.atualizarProcessoReal).toHaveBeenCalledWith(
       expect.objectContaining({ id: PROCESSO }),
-      expect.objectContaining({ objeto: "Aquisição revista" }),
+      expect.objectContaining({ objeto: "Aquisição revista", motivo: undefined }),
     )
   })
 
-  it("trocar a modalidade registra o motivo na trilha, com a justificativa", async () => {
+  it("trocar a modalidade manda o motivo junto, com a justificativa", async () => {
     const api = await fachadaLogada()
     vi.mocked(contratacao.obterProcesso).mockResolvedValue(
       processo({ documentos: ["ETP", "TR", "Edital"] }) as never,
@@ -240,25 +249,27 @@ describe("processo", () => {
       justificativaModalidade: "Valor abaixo do limite do inciso II.",
     })
 
-    const trilha = await api.getTrilha(PROCESSO)
-    expect(trilha).toHaveLength(1)
-    expect(trilha[0]?.evento).toBe("troca_modalidade")
-    expect(trilha[0]?.autor).toBe("Maria Costa Andrade")
-    expect(trilha[0]?.comentario).toContain("Valor abaixo do limite do inciso II.")
+    // O motivo acompanha a edição: quem registra é o servidor, e é ele que
+    // sabe quem agiu e quando (ADR-024).
+    const [, mudancas] = vi.mocked(contratacao.atualizarProcessoReal).mock.calls.at(-1) ?? []
+    expect(mudancas?.motivo).toContain("Valor abaixo do limite do inciso II.")
+    expect(mudancas?.motivo).toContain("Pregão Eletrônico")
+    expect(mudancas?.motivo).toContain("Dispensa Art. 75")
   })
 
-  it("troca de modalidade sem justificativa registra assim mesmo", async () => {
+  it("troca de modalidade sem justificativa manda o motivo assim mesmo", async () => {
     const api = await fachadaLimpa()
     vi.mocked(contratacao.obterProcesso).mockResolvedValue(processo() as never)
     vi.mocked(contratacao.atualizarProcessoReal).mockResolvedValue(processo() as never)
 
     await api.atualizarProcesso({ id: PROCESSO, modalidade: "Concorrência" })
 
-    // Sem ninguém logado o autor é "Sistema" — a trilha não fica sem autor.
-    expect((await api.getTrilha(PROCESSO))[0]?.autor).toBe("Sistema")
+    // A troca em si já é o que o controle pergunta depois.
+    const [, mudancas] = vi.mocked(contratacao.atualizarProcessoReal).mock.calls.at(-1) ?? []
+    expect(mudancas?.motivo).toContain("Concorrência")
   })
 
-  it("encerrar e reabrir falam com o servidor e registram a trilha da sessão", async () => {
+  it("encerrar e reabrir falam com o servidor", async () => {
     const api = await fachadaLogada()
     vi.mocked(contratacao.encerrarProcessoReal).mockResolvedValue(
       processo({ status: "concluido" }) as never,
@@ -274,21 +285,8 @@ describe("processo", () => {
 
     const reaberto = await api.reabrirProcesso(PROCESSO, "Retificar o ETP.")
     expect(reaberto.status).toBe("rascunho")
-
-    const trilha = await api.getTrilha(PROCESSO)
-    expect(trilha.map((e) => e.evento)).toEqual(["reabertura", "encerramento"])
-    expect(trilha[1]?.comentario).toBe("Encerrado com pendências. Contratação cancelada.")
-  })
-
-  it("encerrar sem justificativa registra a conclusão normal", async () => {
-    const api = await fachadaLimpa()
-    vi.mocked(contratacao.encerrarProcessoReal).mockResolvedValue(processo() as never)
-
-    await api.encerrarProcesso(PROCESSO)
-
-    expect((await api.getTrilha(PROCESSO))[0]?.comentario).toBe(
-      "Todos os documentos foram gerados.",
-    )
+    expect(contratacao.reabrirProcessoReal).toHaveBeenCalledWith(PROCESSO, "Retificar o ETP.")
+    // Sem registro paralelo: quem grava o evento é o servidor, e a tela lê de lá.
   })
 })
 
@@ -402,26 +400,6 @@ describe("geração de documento", () => {
     expect(regerado.versao).toBe(2)
     expect(regerado.titulo).toContain("v2")
     expect((await api.getDocumentos()).length).toBe(depoisDaPrimeira)
-    // Regeração corriqueira não entra na trilha do processo: ela pertence ao
-    // histórico do documento.
-    expect(await api.getTrilha(PROCESSO)).toEqual([])
-  })
-
-  it("a retificação declarada entra na trilha do processo", async () => {
-    const api = await fachadaLogada()
-    await api.gerarDocumento({ processoId: PROCESSO, tipo: "ETP" })
-
-    vi.mocked(elaboracao.concluirDocumento).mockResolvedValue({ ...concluido, versao: 2 } as never)
-    await api.gerarDocumento({
-      processoId: PROCESSO,
-      tipo: "ETP",
-      retificacao: { motivo: "erro_material", detalhe: "Data de entrega corrigida." },
-    })
-
-    const trilha = await api.getTrilha(PROCESSO)
-    expect(trilha).toHaveLength(1)
-    expect(trilha[0]?.evento).toBe("retificacao")
-    expect(trilha[0]?.comentario).toContain("v2")
   })
 
   it("documento que não é ETP não move o contador de ETPs concluídos", async () => {

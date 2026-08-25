@@ -43,6 +43,7 @@ export const EVENTO_LABEL: Record<EventoProcesso, string> = {
   criacao: "Criação do Processo",
   troca_modalidade: "Troca de Modalidade",
   geracao_documento: "Geração de Documento",
+  edicao: "Edição de Dados",
   retificacao: "Retificação",
   encerramento: "Encerramento",
   reabertura: "Reabertura",
