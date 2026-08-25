@@ -88,7 +88,7 @@ describe("cadastro de servidores", () => {
     expect(screen.getByText(/Credenciais de primeiro acesso/)).toBeInTheDocument()
   })
 
-  it("a chave de acesso vem junto da senha", async () => {
+  it("a chave de acesso vem junto da senha, e não mascarada", async () => {
     comCadastro([])
     servidor.use(
       http.post(`${urlDaApi}/users`, () =>
@@ -101,7 +101,9 @@ describe("cadastro de servidores", () => {
     await preencherCadastro()
     await userEvent.click(screen.getByRole("button", { name: "Cadastrar" }))
 
-    expect(await screen.findByText("***.***.***-35")).toBeInTheDocument()
+    // O servidor devolve o CPF mascarado de propósito; a chave entregue tem de
+    // ser o número que a pessoa vai digitar no login.
+    expect(await screen.findByText("111.444.777-35")).toBeInTheDocument()
   })
 
   it("cadastro sem a senha na resposta avisa em vez de dar tudo certo", async () => {
@@ -157,8 +159,36 @@ describe("ficha do servidor", () => {
 
     expect(await screen.findByText("111.444.777-35")).toBeInTheDocument()
     expect(pediu).toBe(1)
-    // Revelado, o botão sai: clicar de novo só geraria outra linha na trilha.
-    expect(screen.queryByRole("button", { name: /Ver o CPF completo/ })).not.toBeInTheDocument()
+  })
+
+  it("o botão do CPF tem os dois estados, e ocultar não repete o pedido", async () => {
+    comCadastro()
+    let pediu = 0
+    servidor.use(
+      http.get(`${urlDaApi}/users/:id/cpf`, () => {
+        pediu += 1
+        return HttpResponse.json({ cpf: "11144477735" })
+      }),
+    )
+    renderizar(<AdminServidores />)
+    await userEvent.click(await screen.findByRole("button", { name: /^Maria Costa Andrade/ }))
+
+    await userEvent.click(screen.getByRole("button", { name: /Ver o CPF completo de Maria/ }))
+    await screen.findByText("111.444.777-35")
+
+    const ocultar = screen.getByRole("button", { name: /Ocultar o CPF de Maria/ })
+    expect(ocultar).toHaveAttribute("aria-pressed", "true")
+    await userEvent.click(ocultar)
+
+    expect(screen.queryByText("111.444.777-35")).not.toBeInTheDocument()
+    const verDeNovo = screen.getByRole("button", { name: /Ver o CPF completo de Maria/ })
+    expect(verDeNovo).toHaveAttribute("aria-pressed", "false")
+
+    // Mostrar de novo reaproveita o que já foi revelado: uma revelação, uma
+    // linha na trilha.
+    await userEvent.click(verDeNovo)
+    expect(await screen.findByText("111.444.777-35")).toBeInTheDocument()
+    expect(pediu).toBe(1)
   })
 
   it("fechar a ficha volta a mascarar o CPF", async () => {
@@ -208,6 +238,7 @@ describe("ficha do servidor", () => {
         pediu = true
         return HttpResponse.json({ provisionalPassword: SORTEADA })
       }),
+      http.get(`${urlDaApi}/users/:id/cpf`, () => HttpResponse.json({ cpf: "11144477735" })),
     )
     renderizar(<AdminServidores />)
     await userEvent.click(await screen.findByRole("button", { name: /^Maria Costa Andrade/ }))
@@ -222,6 +253,27 @@ describe("ficha do servidor", () => {
 
     expect(await screen.findByText(SORTEADA)).toBeInTheDocument()
     expect(screen.getByText(/Senha redefinida/)).toBeInTheDocument()
+    // A chave que acompanha a senha precisa ser digitável no login.
+    expect(await screen.findByText("111.444.777-35")).toBeInTheDocument()
+  })
+
+  it("se o CPF não vier, a senha ainda aparece — perdê-la seria pior", async () => {
+    comCadastro()
+    servidor.use(
+      http.post(`${urlDaApi}/users/:id/password-reset`, () =>
+        HttpResponse.json({ provisionalPassword: SORTEADA }),
+      ),
+      http.get(`${urlDaApi}/users/:id/cpf`, () => HttpResponse.error()),
+    )
+    renderizar(<AdminServidores />)
+    await userEvent.click(await screen.findByRole("button", { name: /^Maria Costa Andrade/ }))
+    await userEvent.click(screen.getByRole("button", { name: /Redefinir senha/ }))
+    await userEvent.click(screen.getByRole("button", { name: "Redefinir senha" }))
+
+    // A senha só existe fora do hash neste instante: escondê-la porque o CPF
+    // falhou trocaria um problema pequeno por um irreversível.
+    expect(await screen.findByText(SORTEADA)).toBeInTheDocument()
+    expect(screen.getAllByText("***.***.***-35").length).toBeGreaterThan(0)
   })
 
   it("desistir da redefinição não mexe em senha nenhuma", async () => {

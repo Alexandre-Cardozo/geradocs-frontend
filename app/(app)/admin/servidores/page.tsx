@@ -70,7 +70,10 @@ export default function AdminServidores() {
           // dele, e o aviso nascia desmontado.
           setCredenciais({
             nome: criado.usuario.nome,
-            chave: criado.usuario.cpf,
+            // O CPF que acabou de ser digitado, e não o da resposta: o servidor
+            // devolve mascarado de propósito, e "***.***.***-74" não abre porta
+            // nenhuma para quem recebe a credencial.
+            chave: cpf,
             senha: criado.senhaProvisoria,
           })
           showToast("Servidor cadastrado.")

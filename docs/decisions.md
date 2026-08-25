@@ -529,3 +529,7 @@ O §36 foi escrito contra o contrato, não contra alguém usando o produto. O pr
 **O CPF ganha um botão de revelar, e revelar é um pedido ao servidor (ADR-023).** Não é `toggle` de aparência: a listagem mascara no servidor, o número inteiro não chega à tela antes de alguém pedir, e cada pedido vira linha de auditoria com quem revelou, de quem e quando. Revelado, o botão sai — clicar de novo só geraria outra linha na trilha. Fechar a ficha volta ao mascarado: o número não fica guardado na aplicação.
 
 A tela de servidores entrou na suíte de acessibilidade. É onde "abre no clique mas não no teclado" passaria despercebido.
+
+**Duas correções no dia seguinte, do primeiro uso.** A caixa de credenciais mostrava como "Acesso" o CPF **mascarado** — `***.***.***-74` copiado e entregue não abre porta nenhuma. No cadastro, a chave passa a ser o CPF que quem cadastra acabou de digitar; na redefinição, a ficha revela o número (a mesma revelação da ADR-023, reaproveitada — uma linha na trilha, não duas). Se a revelação falhar, a senha continua aparecendo com a chave mascarada: perdê-la seria irreversível, e a chave a pessoa consegue de outro jeito.
+
+E o botão do CPF virou de fato um botão de dois estados — antes ele sumia ao revelar, e não havia como voltar a esconder sem fechar a ficha. Ganhou `IconEyeOff`, `aria-pressed` e o par de rótulos. Ocultar não desfaz a revelação: mostrar de novo não repete o pedido ao servidor, porque a revelação já aconteceu e já está registrada.

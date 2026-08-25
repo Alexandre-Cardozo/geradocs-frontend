@@ -585,8 +585,11 @@ export default function Configuracoes() {
                       {
                         onSuccess: (criado) => {
                           setCredenciais({
+                            // O CPF digitado, e não o da resposta: o servidor
+                            // mascara de propósito, e credencial pela metade não
+                            // abre porta nenhuma.
                             nome: criado.usuario.nome,
-                            chave: criado.usuario.cpf,
+                            chave: nsCpf,
                             senha: criado.senhaProvisoria,
                           });
                           showToast("Servidor cadastrado.");

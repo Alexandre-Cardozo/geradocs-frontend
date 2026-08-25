@@ -3,7 +3,7 @@
 import { useState } from "react"
 
 import { Button, Tag } from "@/components/ui"
-import { IconEye, IconLock, IconX } from "@/components/ui/icons"
+import { IconEye, IconEyeOff, IconLock, IconX } from "@/components/ui/icons"
 import { FotoDePerfil } from "@/components/shared/foto-de-perfil"
 import { useToast } from "@/components/shared/providers"
 import { CredenciaisIniciais } from "@/components/admin/credenciais-iniciais"
@@ -37,6 +37,29 @@ export function FichaDoServidor({
   const showToast = useToast()
   const [novaSenha, setNovaSenha] = useState<string | null>(null)
   const [confirmando, setConfirmando] = useState(false)
+  // O CPF inteiro é da ficha, e não do campo: as credenciais de acesso precisam
+  // dele para serem entregáveis, e é o mesmo número — pedi-lo duas vezes geraria
+  // duas linhas de auditoria para uma revelação só.
+  const [cpfInteiro, setCpfInteiro] = useState<string | null>(null)
+  const [mostrandoCpf, setMostrandoCpf] = useState(false)
+
+  const cpfMascarado = servidor.cpf.includes("*") ? servidor.cpf : formatCPF(servidor.cpf)
+
+  /** Revela o CPF, ou reaproveita o que já foi revelado nesta ficha. */
+  const comCpfInteiro = (aoTer: (cpf: string) => void) => {
+    if (cpfInteiro) {
+      aoTer(cpfInteiro)
+      return
+    }
+    revelar.mutate(servidor.id, {
+      onSuccess: (cpf) => {
+        setCpfInteiro(cpf)
+        aoTer(cpf)
+      },
+      onError: (erro) =>
+        showToast(erro instanceof Error ? erro.message : "Não foi possível ver o CPF."),
+    })
+  }
 
   return (
     <div className="mb-5 rounded-card border border-border bg-surface p-5">
@@ -66,7 +89,30 @@ export function FichaDoServidor({
       </div>
 
       <dl className="m-0 mt-5 grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Cpf servidor={servidor} revelar={revelar} aoFalhar={showToast} />
+        <div className="min-w-0">
+          <dt className="m-0 text-xs font-semibold text-text-muted">CPF</dt>
+          <dd className="m-0 mt-1 flex items-center gap-2">
+            <span className="truncate font-mono text-md text-text-1">
+              {mostrandoCpf && cpfInteiro ? formatCPF(cpfInteiro) : cpfMascarado}
+            </span>
+            <button
+              type="button"
+              aria-pressed={mostrandoCpf}
+              aria-label={
+                mostrandoCpf
+                  ? `Ocultar o CPF de ${servidor.nome}`
+                  : `Ver o CPF completo de ${servidor.nome}`
+              }
+              disabled={revelar.isPending}
+              onClick={() =>
+                mostrandoCpf ? setMostrandoCpf(false) : comCpfInteiro(() => setMostrandoCpf(true))
+              }
+              className="flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-sm border border-border bg-ice text-text-3 transition-colors hover:bg-border-soft disabled:opacity-50"
+            >
+              {mostrandoCpf ? <IconEyeOff size={13} /> : <IconEye size={13} />}
+            </button>
+          </dd>
+        </div>
         <Campo rotulo="E-mail" valor={servidor.email} />
         <Campo rotulo="Matrícula" valor={servidor.matricula ?? "—"} />
         <Campo rotulo="Decreto de nomeação" valor={servidor.decretoNomeacao ?? "—"} />
@@ -97,7 +143,7 @@ export function FichaDoServidor({
         <div className="mt-5">
           <CredenciaisIniciais
             nome={servidor.nome}
-            chave={servidor.cpf}
+            chave={cpfInteiro ?? servidor.cpf}
             senha={novaSenha}
             titulo="Senha redefinida"
             onFechar={() => setNovaSenha(null)}
@@ -120,6 +166,9 @@ export function FichaDoServidor({
                   onSuccess: (senha) => {
                     setNovaSenha(senha)
                     setConfirmando(false)
+                    // Sem o CPF inteiro, o que se copia é "***.***.***-74" — e
+                    // credencial pela metade não abre porta nenhuma.
+                    comCpfInteiro(() => {})
                     showToast("Senha redefinida. Entregue as credenciais.")
                   },
                   onError: (erro) =>
@@ -146,56 +195,6 @@ export function FichaDoServidor({
           </Button>
         )}
       </div>
-    </div>
-  )
-}
-
-/**
- * O CPF, mascarado por padrão.
- *
- * <p>Revelar é um pedido ao servidor e uma linha na trilha (ADR-023) — por isso
- * o botão, e não um `toggle` que só troca o que a tela desenha: o número inteiro
- * nem chega aqui antes de alguém pedir. Fechar a ficha volta ao mascarado.
- */
-function Cpf({
-  servidor,
-  revelar,
-  aoFalhar,
-}: {
-  servidor: Usuario
-  revelar: ReturnType<typeof useRevelarCpf>
-  aoFalhar: (mensagem: string) => void
-}) {
-  const [inteiro, setInteiro] = useState<string | null>(null)
-  const mascarado = servidor.cpf.includes("*") ? servidor.cpf : formatCPF(servidor.cpf)
-
-  return (
-    <div className="min-w-0">
-      <dt className="m-0 text-xs font-semibold text-text-muted">CPF</dt>
-      <dd className="m-0 mt-1 flex items-center gap-2">
-        <span className="truncate font-mono text-md text-text-1">
-          {inteiro ? formatCPF(inteiro) : mascarado}
-        </span>
-        {inteiro === null && (
-          <button
-            type="button"
-            aria-label={`Ver o CPF completo de ${servidor.nome}`}
-            disabled={revelar.isPending}
-            onClick={() =>
-              revelar.mutate(servidor.id, {
-                onSuccess: setInteiro,
-                onError: (erro) =>
-                  aoFalhar(
-                    erro instanceof Error ? erro.message : "Não foi possível ver o CPF.",
-                  ),
-              })
-            }
-            className="flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-sm border border-border bg-ice text-text-3 transition-colors hover:bg-border-soft disabled:opacity-50"
-          >
-            <IconEye size={13} />
-          </button>
-        )}
-      </dd>
     </div>
   )
 }
