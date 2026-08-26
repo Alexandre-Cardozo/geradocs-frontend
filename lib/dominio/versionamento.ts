@@ -4,17 +4,14 @@
  * Regerar **nunca sobrescreve sem rastro**: incrementa a versão e empilha a
  * anterior no histórico. É exigência de controle — um documento que instrui
  * processo de contratação precisa poder mostrar o que mudou e quando.
+ *
+ * <p>Quem **monta** o histórico é o servidor desde o Bloco 10: a nota de cada
+ * versão vem pronta em `version.note`. O que restou aqui é o vocabulário da
+ * retificação, que a tela usa para perguntar, e a leitura da versão, que a tela
+ * usa para exibir. As funções que empilhavam versão em memória saíram em
+ * 26/08/2026 — ninguém as chamava, e um histórico local seria um segundo lugar
+ * onde a mesma verdade mora.
  */
-
-import type { VersaoDocumento } from "@/lib/types"
-
-/** Rótulo do motivo da versão, exibido no histórico. */
-export type MotivoDaVersao = "inicial" | "regeracao"
-
-export const NOTA_DA_VERSAO: Record<MotivoDaVersao, string> = {
-  inicial: "Geração inicial",
-  regeracao: "Regeração",
-}
 
 /**
  * Por que o documento foi retificado.
@@ -43,40 +40,6 @@ export interface Retificacao {
   motivo: MotivoRetificacao
   /** O que exatamente foi retificado. Vai literal para o histórico. */
   detalhe: string
-}
-
-/** Nota do histórico: geração, regeração ou retificação com o motivo declarado. */
-export function notaDaVersao(versao: number, retificacao?: Retificacao): string {
-  if (!retificacao) return NOTA_DA_VERSAO[versao === 1 ? "inicial" : "regeracao"]
-  const rotulo = MOTIVO_RETIFICACAO_LABEL[retificacao.motivo]
-  const detalhe = retificacao.detalhe.trim()
-  // Sem o detalhe, o histórico diria só "erro material" — e a pergunta seguinte
-  // seria sempre "qual?".
-  return detalhe ? `Retificação (${rotulo}): ${detalhe}` : `Retificação (${rotulo})`
-}
-
-/** Próxima versão de um documento. A primeira geração é a versão 1. */
-export function proximaVersao(versaoAtual?: number): number {
-  return (versaoAtual ?? 0) + 1
-}
-
-/** Entrada do histórico para uma versão recém-gerada. */
-export function entradaDeHistorico(
-  versao: number,
-  geradoEm: string,
-  retificacao?: Retificacao,
-): VersaoDocumento {
-  return { versao, geradoEm, nota: notaDaVersao(versao, retificacao) }
-}
-
-/**
- * Empilha a nova versão no topo do histórico.
- *
- * A ordem é do mais recente para o mais antigo porque é assim que a tela lê — e
- * porque a versão vigente é a que se procura primeiro.
- */
-export function empilharVersao(historico: VersaoDocumento[], entrada: VersaoDocumento): VersaoDocumento[] {
-  return [entrada, ...historico]
 }
 
 /** Rótulo da versão para exibição: a partir da segunda, o documento é retificado. */

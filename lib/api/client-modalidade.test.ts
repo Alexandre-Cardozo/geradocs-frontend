@@ -114,6 +114,40 @@ describe("troca de modalidade", () => {
     )
   })
 
+  it("o documento já gerado que perde cabimento vem do servidor, não da memória da aba", async () => {
+    const enviado = servidorComProcesso()
+    servidor.use(
+      http.get(`${urlDaApi}/generated-documents`, () =>
+        HttpResponse.json([
+          {
+            processId: PROCESSO,
+            processNumber: "PROC-2026-000007",
+            processObject: "Aquisição de material de expediente",
+            documentType: "EDITAL",
+            documentVersion: 1,
+            generatedAt: "2026-08-20T12:00:00Z",
+            files: [],
+          },
+        ]),
+      ),
+    )
+    const { atualizarProcesso } = await carregarClienteLimpo()
+
+    await atualizarProcesso({
+      id: PROCESSO,
+      modalidade: "Dispensa Art. 75",
+      documentos: ["ETP", "TR"],
+    })
+
+    // Até 26/08/2026 esta lista vinha do acervo em memória do protótipo:
+    // recarregada a página, ela era vazia para todo processo real, e o aviso
+    // dizia que nada gerado era afetado justamente quando havia um Edital
+    // impresso.
+    expect(String(enviado.corpo.changeNote)).toContain(
+      "Documento já gerado que deixa de ser cabível: Edital",
+    )
+  })
+
   it("salvar sem trocar a modalidade não inventa motivo", async () => {
     const enviado = servidorComProcesso()
     const { atualizarProcesso } = await carregarClienteLimpo()

@@ -17,7 +17,6 @@ export {
   MOTIVO_RETIFICACAO_EXPLICACAO,
   MOTIVO_RETIFICACAO_LABEL,
   foiRetificado,
-  notaDaVersao,
   tituloComRotuloDeVersao,
 } from "./versionamento"
 export type { MotivoRetificacao, Retificacao } from "./versionamento"

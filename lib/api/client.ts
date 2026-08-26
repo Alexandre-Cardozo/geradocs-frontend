@@ -3,22 +3,13 @@
 // o build falha em vez de vazar estado entre requests/usuários.
 import "client-only"
 
+import { parecerDFDBase } from "@/lib/mocks/fixtures"
 import {
-  documentos as documentosFixture,
-  estatisticas as estatisticasFixture,
-  parecerDFDBase,
-  processos as processosFixture,
-  resumoDocumentos as resumoDocumentosFixture,
-} from "@/lib/mocks/fixtures"
-import {
-  empilharVersao,
-  entradaDeHistorico,
   impactoTrocaModalidade,
   motivoDaTrocaDeModalidade,
   statusAposEditar,
   tituloComRotuloDeVersao,
   tituloDoDocumento,
-  totalDeBytes,
 } from "@/lib/dominio"
 import type { BlocoDoDocumento, Retificacao } from "@/lib/dominio"
 import {
@@ -112,63 +103,37 @@ function delay(ms = 350 + Math.random() * 350): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-/* ── Estado em memória (persiste durante a sessão) ─────────────────────────── */
-const db = {
-  /** Sessão real usada como identidade pelos módulos ainda mockados. */
-  sessao: null as Sessao | null,
-  processos: clone(processosFixture),
-  /** Seções por documento — chave `${processoId}:${tipo}`. */
-  pareceresDFD: new Map<string, ParecerDFD>(),
-  documentos: clone(documentosFixture),
-  /** Histórico de versões por documento — chave `${processoId}:${tipo}`. */
-  versoes: new Map<string, VersaoDocumento[]>(),
-  /**
-   * Corpo congelado na geração — chave `${processoId}:${tipo}`.
-   *
-   * Congelado, e não recalculado a cada leitura: o documento gerado é um
-   * retrato. Editar uma seção depois não pode mudar o que já saiu — é
-   * exatamente para isso que regerar incrementa a versão.
-   */
-  corpos: new Map<string, BlocoDoDocumento[]>(),
-  estatisticas: clone(estatisticasFixture),
-  resumoDocumentos: clone(resumoDocumentosFixture),
-  // Acima do maior id gerado pelas fixtures (evita colisão com novos documentos).
-  seqDocumento: 200,
-}
-
-// Semeia o histórico de versões (v1) dos documentos já existentes nas fixtures,
-// para que getHistoricoVersoes seja coerente desde o início.
-for (const doc of db.documentos) {
-  db.versoes.set(`${doc.processoId}:${doc.tipo}`, [
-    { versao: doc.versao, geradoEm: doc.geradoEm, nota: "Geração inicial" },
-  ])
-}
-
-
-/* ── Autenticação / sessão ─────────────────────────────────────────────────── */
+/* ── Estado em memória ─────────────────────────────────────────────────────── */
 
 /**
- * Login real pela chave configurada + senha. O access token fica somente em
- * memória e o refresh token permanece no cookie HttpOnly emitido pelo backend.
+ * O que sobrou do "banco" do protótipo: o parecer do DFD, e mais nada.
  *
- * A normalização é do descritor (ADR-015): quem sabe o que fazer com o valor
- * digitado é a chave ativa, não este módulo.
+ * Até 26/08/2026 este objeto ainda guardava processos, documentos, versões,
+ * corpos, estatísticas, resumo do acervo e a sessão. **Nada disso era lido**: as
+ * telas passaram a perguntar ao servidor entre os Blocos 9 e 12, e as escritas
+ * continuaram aqui, alimentando um estado que ninguém consultava. Estado morto
+ * não é inofensivo — o próximo a ler este arquivo acredita nele.
+ *
+ * O parecer fica porque é o único ainda declarado como sintético
+ * (`DADOS_SINTETICOS.parecerDfd`), e sai quando o modelo entrar (12.2). A tela
+ * diz isso a quem lê.
  */
+const db = {
+  pareceresDFD: new Map<string, ParecerDFD>(),
+}
+
 export async function login(identificador: string, senha: string): Promise<Sessao> {
   const sessao = await autenticar(identificador, senha)
-  db.sessao = clone(sessao)
   return clone(sessao)
 }
 
 export async function logout(): Promise<void> {
   await encerrarSessao()
-  db.sessao = null
 }
 
 /** Sessão atual, ou null se ninguém está logado. */
 export async function getSessao(): Promise<Sessao | null> {
   const sessao = await obterSessao()
-  db.sessao = sessao ? clone(sessao) : null
   return sessao ? clone(sessao) : null
 }
 
@@ -270,7 +235,7 @@ export async function atualizarProcesso(input: AtualizarProcessoInput): Promise<
       atual.modalidade,
       input.modalidade,
       atual.documentos,
-      docsGeradosDo(atual.id),
+      await docsGeradosDo(atual.id),
     )
     motivo = motivoDaTrocaDeModalidade(
       atual.modalidade,
@@ -364,8 +329,17 @@ export async function gerarSecao(processoId: string, tipo: TipoDocumento, secaoI
 
 /* ── Ciclo do processo ─────────────────────────────────────────────────────── */
 
-function docsGeradosDo(processoId: string): TipoDocumento[] {
-  return db.documentos.filter((d) => d.processoId === processoId).map((d) => d.tipo)
+/**
+ * Os documentos que este processo já gerou.
+ *
+ * <p>Do servidor, e não da memória da aba. Até 26/08/2026 esta função lia o
+ * acervo em memória do protótipo: recarregada a página, ela devolvia lista
+ * vazia para todo processo real — e a troca de modalidade avisava "nenhum
+ * documento gerado é afetado" justamente quando havia documento gerado.
+ */
+async function docsGeradosDo(processoId: string): Promise<TipoDocumento[]> {
+  const acervo = await acervoDoOrgao()
+  return acervo.filter((d) => d.processoId === processoId).map((d) => d.tipo)
 }
 
 /**
@@ -548,20 +522,10 @@ export interface GerarDocumentoInput {
  * identificador `DOC-`, formato e tamanho do arquivo, que só passam a existir de
  * verdade quando o Bloco 11 produzir o arquivo.
  */
-/**
- * Acrescenta a entrada ao histórico do documento.
- *
- * A primeira geração e a regeração passam pelo mesmo caminho: separá-las daria
- * duas formas de montar a mesma lista, e é assim que uma delas envelhece.
- */
-function empilhar(chaveVersao: string, entrada: VersaoDocumento): void {
-  db.versoes.set(chaveVersao, empilharVersao(db.versoes.get(chaveVersao) ?? [], entrada))
-}
 
 export async function gerarDocumento(input: GerarDocumentoInput): Promise<DocumentoGerado> {
   const concluido = await concluirDocumento(input.processoId, input.tipo, input.retificacao)
   const processo = await obterProcesso(input.processoId)
-  const chaveVersao = `${input.processoId}:${input.tipo}`
 
   // O arquivo é impresso pelo servidor, a partir da versão que acabou de ser
   // congelada. Até 23/08/2026 o formato e o tamanho eram constantes por tipo de
@@ -593,25 +557,10 @@ export async function gerarDocumento(input: GerarDocumentoInput): Promise<Docume
     arquivos,
   }
 
-  const anterior = db.documentos.findIndex(
-    (d) => d.processoId === input.processoId && d.tipo === input.tipo,
-  )
-  if (anterior >= 0) {
-    db.documentos.splice(anterior, 1, doc)
-  } else {
-    db.documentos.unshift(doc)
-    db.resumoDocumentos.total += 1
-    db.resumoDocumentos.esteMes += 1
-    db.estatisticas.documentosGerados += 1
-    db.estatisticas.documentosSemana += 1
-    if (input.tipo === "ETP") db.estatisticas.etpsConcluidos += 1
-  }
-  db.resumoDocumentos.armazenamentoMB =
-    Math.round((db.resumoDocumentos.armazenamentoMB + totalDeBytes(arquivos) / 1_048_576) * 10) / 10
-
-  empilhar(chaveVersao, entradaDeHistorico(concluido.versao, geradoEm, input.retificacao))
-  db.corpos.set(chaveVersao, concluido.corpo)
-
+  // Nada é gravado aqui. O acervo, o histórico de versões e o corpo congelado
+  // são do servidor desde os Blocos 9 e 11, e a tela os recarrega — manter uma
+  // cópia local seria um segundo lugar onde a mesma verdade mora, que envelhece
+  // na primeira aba que não passar por este caminho.
   return clone(doc)
 }
 

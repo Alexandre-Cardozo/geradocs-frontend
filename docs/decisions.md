@@ -623,3 +623,18 @@ Agora o editor de seção mostra os dois caminhos lado a lado. "Escrever à mão
 **A tela não sabe qual provedor está ativo, e não deve saber.** O servidor responde só `{ available }` (ADR-029): publicar o nome convidaria a tela a ramificar por provedor, que é o que o registro do back-end existe para impedir. Quando o adaptador real entrar, esta tela passa a oferecer a IA **sem mudança de código**.
 
 O handler padrão dos testes e a rota do e2e respondem `available: false`. É deliberado: o caminho feliz da suíte é a plataforma inteira funcionando **sem assistência nenhuma** — que é o estado em que ela está hoje e a garantia que o cliente pediu.
+
+## 44. O "banco" do protótipo era estado morto — e escondia uma omissão na trilha
+
+Auditoria de fechamento dos blocos. `lib/api/client.ts` ainda mantinha o banco em memória do protótipo: `processos`, `documentos`, `versoes`, `corpos`, `estatisticas`, `resumoDocumentos`, `sessao`. **Nenhum deles era lido.** As telas passaram a perguntar ao servidor entre os Blocos 9 e 12, e as escritas continuaram, alimentando um estado que ninguém consultava.
+
+Estado morto não é inofensivo: o próximo a ler o arquivo acredita nele. As sete estruturas saíram, e `lib/mocks/fixtures.ts` caiu de 467 para 71 linhas — sobra o `parecerDFDBase`, único ainda declarado como sintético, que sai quando o modelo de IA entrar.
+
+**Havia um leitor**, e ele revelou uma omissão real. `docsGeradosDo()` lia `db.documentos` para calcular o impacto da troca de modalidade. Recarregada a página, essa lista era vazia para todo processo real — mas o efeito não aparecia na tela, e sim na **ausência** dele: o campo `jaGeradosQueDeixamDeSerCabiveis` era calculado e **descartado** ao montar o texto da trilha.
+
+Ou seja: a tela avisava "o Edital já gerado deixa de ser cabível", e a trilha — que é quem responde ao controle meses depois — não dizia nada. Duas correções, e a segunda é a que importa:
+
+1. `docsGeradosDo()` passou a ler o acervo do servidor.
+2. **O documento já gerado que perde cabimento entra no texto da trilha**, com ou sem justificativa. É o fato mais grave da troca: o arquivo continua no acervo contradizendo o próprio processo.
+
+Junto saíram `proximaVersao`, `entradaDeHistorico`, `empilharVersao` e `notaDaVersao` de `lib/dominio/versionamento.ts`: quem monta o histórico é o servidor desde o Bloco 10, e a nota de cada versão vem pronta em `version.note`. Testar função que ninguém chama dá cobertura, não garantia — os testes delas saíram junto.

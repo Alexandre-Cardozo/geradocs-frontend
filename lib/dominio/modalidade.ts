@@ -79,13 +79,21 @@ export function motivoDaTrocaDeModalidade(
   justificativa: string,
 ): string {
   const cabecalho = `Modalidade alterada de ${de} para ${para}.`
+  // O fato mais grave da troca, e o que a trilha precisa carregar em qualquer
+  // caminho: documento gerado não some ao trocar a modalidade, e um Edital de um
+  // processo que virou dispensa fica no acervo contradizendo o próprio processo.
+  // Até 26/08/2026 este campo era calculado e descartado aqui — a tela avisava,
+  // e a trilha, que é quem responde ao controle meses depois, não dizia nada.
+  const jaGerados = impacto.jaGeradosQueDeixamDeSerCabiveis.length > 0
+    ? ` Documento já gerado que deixa de ser cabível: ${impacto.jaGeradosQueDeixamDeSerCabiveis.join(", ")}.`
+    : ""
   if (justificativa.trim()) {
     // A justificativa entra literal: é ela que responde ao controle por que a
     // lista de documentos ficou divergente da recomendação.
-    return `${cabecalho} Lista de documentos mantida mediante justificativa: ${justificativa.trim()}`
+    return `${cabecalho} Lista de documentos mantida mediante justificativa: ${justificativa.trim()}${jaGerados}`
   }
   if (impacto.deixamDeSerCabiveis.length === 0 && impacto.passamASerObrigatorios.length === 0) {
-    return cabecalho
+    return `${cabecalho}${jaGerados}`
   }
   const partes: string[] = []
   if (impacto.deixamDeSerCabiveis.length > 0) {
@@ -94,5 +102,5 @@ export function motivoDaTrocaDeModalidade(
   if (impacto.passamASerObrigatorios.length > 0) {
     partes.push(`incluídos por passarem a ser obrigatórios: ${impacto.passamASerObrigatorios.join(", ")}`)
   }
-  return `${cabecalho} Lista de documentos ajustada — ${partes.join("; ")}.`
+  return `${cabecalho} Lista de documentos ajustada — ${partes.join("; ")}.${jaGerados}`
 }

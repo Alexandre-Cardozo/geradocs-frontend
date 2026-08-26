@@ -130,6 +130,25 @@ describe("motivo registrado na trilha", () => {
     )
   })
 
+  it("documento já gerado que perde cabimento entra na trilha, com ou sem justificativa", () => {
+    const impacto = impactoTrocaModalidade(
+      "Pregão Eletrônico",
+      "Dispensa Art. 75",
+      ["ETP", "TR", "Edital"],
+      ["Edital"],
+    )
+
+    // É o fato mais grave da troca: o arquivo continua no acervo. A tela já
+    // avisava; a trilha, que é quem responde ao controle meses depois, não
+    // dizia nada.
+    expect(motivoDaTrocaDeModalidade("Pregão Eletrônico", "Dispensa Art. 75", impacto, "")).toContain(
+      "Documento já gerado que deixa de ser cabível: Edital",
+    )
+    expect(
+      motivoDaTrocaDeModalidade("Pregão Eletrônico", "Dispensa Art. 75", impacto, "Será anulado."),
+    ).toContain("Documento já gerado que deixa de ser cabível: Edital")
+  })
+
   it("sem consequência nenhuma, registra só a troca", () => {
     const neutra = impactoTrocaModalidade("Pregão Eletrônico", "Concorrência", ["ETP", "TR", "Edital"])
 

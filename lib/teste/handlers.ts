@@ -43,6 +43,11 @@ export const handlers = [
   http.post(`${API}/procurement-processes/:id/documents/:tipo/generations`, () =>
     HttpResponse.json(geracaoApi),
   ),
+  // Acervo vazio: o caminho feliz é o processo que ainda não gerou nada. Quem
+  // precisa de documento gerado — a troca de modalidade, por exemplo — declara
+  // o seu com `servidor.use`.
+  http.get(`${API}/generated-documents`, () => HttpResponse.json([])),
+
   http.get(`${API}/procurement-processes/:id/documents/:tipo/generations`, () =>
     HttpResponse.json([geracaoApi]),
   ),

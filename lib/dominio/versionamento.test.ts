@@ -1,56 +1,19 @@
 import { describe, expect, it } from "vitest"
 
 import {
-  empilharVersao,
-  entradaDeHistorico,
   foiRetificado,
-  notaDaVersao,
-  proximaVersao,
   rotuloDaVersao,
   tituloComRotuloDeVersao,
 } from "@/lib/dominio"
 
-describe("proximaVersao", () => {
-  it("a primeira geração é a versão 1", () => {
-    expect(proximaVersao()).toBe(1)
-    expect(proximaVersao(undefined)).toBe(1)
-  })
-
-  it("regerar incrementa", () => {
-    expect(proximaVersao(1)).toBe(2)
-    expect(proximaVersao(7)).toBe(8)
-  })
-})
-
-describe("entradaDeHistorico", () => {
-  it("distingue a geração inicial da regeração", () => {
-    expect(entradaDeHistorico(1, "2026-08-21T10:00:00").nota).toBe("Geração inicial")
-    expect(entradaDeHistorico(2, "2026-08-21T11:00:00").nota).toBe("Regeração")
-  })
-
-  it("guarda quando foi gerada, e não fabrica tamanho", () => {
-    const entrada = entradaDeHistorico(2, "2026-08-21T11:00:00")
-
-    expect(entrada.versao).toBe(2)
-    expect(entrada.geradoEm).toBe("2026-08-21T11:00:00")
-    // O tamanho é do arquivo, e o arquivo é do servidor. Escrever "348 KB" aqui
-    // seria a interface medindo algo que ela não tem.
-    expect(entrada.tamanho).toBeUndefined()
-  })
-})
-
-describe("empilharVersao", () => {
-  it("põe a mais recente no topo e preserva as anteriores", () => {
-    // Regerar nunca sobrescreve sem rastro: é exigência de controle sobre um
-    // documento que instrui processo de contratação.
-    const historico = [entradaDeHistorico(1, "2026-08-20T10:00:00")]
-
-    const atualizado = empilharVersao(historico, entradaDeHistorico(2, "2026-08-21T10:00:00"))
-
-    expect(atualizado.map((v) => v.versao)).toEqual([2, 1])
-    expect(historico).toHaveLength(1)
-  })
-})
+/**
+ * O que sobrou do versionamento na interface.
+ *
+ * <p>Quem monta o histórico é o servidor desde o Bloco 10: a nota de cada
+ * versão vem pronta. `proximaVersao`, `entradaDeHistorico`, `empilharVersao` e
+ * `notaDaVersao` saíram em 26/08/2026 junto com o histórico em memória que as
+ * chamava — testar função que ninguém usa dá cobertura, não garantia.
+ */
 
 describe("rotuloDaVersao", () => {
   it("a primeira versão não é retificação", () => {
@@ -64,44 +27,6 @@ describe("rotuloDaVersao", () => {
 })
 
 describe("retificação", () => {
-  it("a nota diz a natureza e o que foi corrigido", () => {
-    expect(
-      notaDaVersao(2, { motivo: "erro_material", detalhe: "  Valor da seção 5 trocado.  " }),
-    ).toBe("Retificação (Erro material): Valor da seção 5 trocado.")
-  })
-
-  it("distingue erro material de alteração substancial", () => {
-    // Não é burocracia: alteração substancial muda o conteúdo da decisão e
-    // costuma exigir republicação. No mesmo balaio, o histórico diria
-    // "retificado" sem dizer o que aconteceu.
-    expect(notaDaVersao(2, { motivo: "alteracao_substancial", detalhe: "Prazo alterado." })).toContain(
-      "Alteração substancial",
-    )
-  })
-
-  it("sem detalhe, registra ao menos a natureza", () => {
-    expect(notaDaVersao(3, { motivo: "erro_material", detalhe: "   " })).toBe(
-      "Retificação (Erro material)",
-    )
-  })
-
-  it("regeração sem retificação declarada continua sendo regeração", () => {
-    // Marcar toda regeração como retificação esvaziaria a palavra justamente
-    // onde ela tem peso.
-    expect(notaDaVersao(2)).toBe("Regeração")
-    expect(notaDaVersao(1)).toBe("Geração inicial")
-  })
-
-  it("a entrada do histórico carrega a nota da retificação", () => {
-    const entrada = entradaDeHistorico(2, "2026-08-22T10:00:00", {
-      motivo: "erro_material",
-      detalhe: "Nome do fornecedor.",
-    })
-
-    expect(entrada.nota).toBe("Retificação (Erro material): Nome do fornecedor.")
-    expect(entrada.versao).toBe(2)
-  })
-
   it("o título carrega o rótulo, porque o arquivo sai da plataforma", () => {
     // O badge da tela não viaja junto com o arquivo anexado ao processo no
     // sistema da prefeitura. O título, sim.
