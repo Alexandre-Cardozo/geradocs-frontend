@@ -47,6 +47,11 @@ export const EVENTO_LABEL: Record<EventoProcesso, string> = {
   retificacao: "Retificação",
   encerramento: "Encerramento",
   reabertura: "Reabertura",
+  secao_escrita: "Seção Redigida",
+  secao_dispensada: "Seção Dispensada",
+  documento_concluido: "Documento Concluído",
+  documento_baixado: "Documento Baixado",
+  dfd_anexado: "DFD Anexado",
 }
 
 /** A transição que sai de `de` sob `evento`, se existir. */

@@ -329,6 +329,12 @@ const EVENTOS_DA_TRILHA: Record<string, EventoProcesso> = {
   PROCUREMENT_PROCESS_UPDATED: "edicao",
   PROCUREMENT_PROCESS_CLOSED: "encerramento",
   PROCUREMENT_PROCESS_REOPENED: "reabertura",
+  SECTION_WRITTEN: "secao_escrita",
+  SECTION_DISPENSED: "secao_dispensada",
+  DOCUMENT_FINALIZED: "documento_concluido",
+  DOCUMENT_GENERATED: "geracao_documento",
+  DOCUMENT_DOWNLOADED: "documento_baixado",
+  DFD_ATTACHED: "dfd_anexado",
 }
 
 interface TrilhaDaApi {

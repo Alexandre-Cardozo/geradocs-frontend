@@ -206,6 +206,13 @@ export type EventoProcesso =
   | "edicao"
   | "encerramento"
   | "reabertura"
+  // A elaboração entrou na trilha no 13.3 (ADR-027): sem ela, o registro
+  // respondia quem abriu o processo e não quem redigiu o documento.
+  | "secao_escrita"
+  | "secao_dispensada"
+  | "documento_concluido"
+  | "documento_baixado"
+  | "dfd_anexado"
 
 /**
  * Um evento da trilha, como o servidor o registrou.

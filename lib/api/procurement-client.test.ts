@@ -404,3 +404,33 @@ describe("estatisticasDeProcesso", () => {
     expect(numeros.taxaConclusao).toBe(0.3)
   })
 })
+
+describe("trilha: a elaboração aparece junto do cadastro", () => {
+  it("traduz as ações novas do servidor, e não as descarta", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id/trail`, () =>
+        HttpResponse.json([
+          { event: "DOCUMENT_GENERATED", actorName: "Maria", occurredAt: "2026-08-26T12:00:00Z", reason: "ETP · versão 1 · DOCX, PDF" },
+          { event: "DOCUMENT_FINALIZED", actorName: "Maria", occurredAt: "2026-08-26T11:00:00Z", reason: "ETP · versão 1" },
+          { event: "SECTION_DISPENSED", actorName: "Maria", occurredAt: "2026-08-26T10:00:00Z", reason: "ETP · seção 3 dispensada: sem alternativa" },
+          { event: "SECTION_WRITTEN", actorName: "Maria", occurredAt: "2026-08-26T09:00:00Z", reason: "ETP · seção 1" },
+          { event: "DFD_ATTACHED", actorName: "Maria", occurredAt: "2026-08-26T08:00:00Z", reason: "DFD.pdf · 3 item(ns)" },
+        ]),
+      ),
+    )
+    const { trilhaDoProcesso } = await carregarClienteLimpo()
+
+    const trilha = await trilhaDoProcesso("3f2b1a00-1111-4222-8333-444455556666")
+
+    // Sem a tradução, a tela descartaria os eventos e a trilha voltaria a
+    // responder só quem abriu o processo (ADR-027).
+    expect(trilha.map((e) => e.evento)).toEqual([
+      "geracao_documento",
+      "documento_concluido",
+      "secao_dispensada",
+      "secao_escrita",
+      "dfd_anexado",
+    ])
+    expect(trilha[2]?.comentario).toContain("sem alternativa")
+  })
+})
