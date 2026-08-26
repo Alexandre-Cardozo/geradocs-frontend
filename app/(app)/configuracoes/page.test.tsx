@@ -14,8 +14,6 @@ import { servidor } from "@/lib/teste/servidor-msw"
  * em memória: a prefeitura configurava, recarregava e sumia — e nenhum documento
  * saía com aquilo. Agora vai ao servidor, e é o que sai impresso.
  */
-const ORGAO = sessaoServidor.organization.id
-
 beforeEach(() => {
   Object.assign(URL, {
     createObjectURL: vi.fn(() => "blob:brasao"),

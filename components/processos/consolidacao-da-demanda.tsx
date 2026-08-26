@@ -43,10 +43,18 @@ export function ConsolidacaoDaDemanda({
               anexado é desmentir a própria tela. São dois estados diferentes: o
               arquivo está registrado, e os itens dele é que não foram lidos.
             */}
-            O DFD <span className="font-mono">{dfdAnexado}</span> está registrado neste
-            processo, mas os <strong>itens</strong> dele ainda não foram informados — é deles
-            que sai a consolidação. A plataforma guarda o arquivo como comprovação; a leitura
-            automática de itens de PDF não existe.
+            {/*
+              A frase anterior dizia que a plataforma "guarda o arquivo como
+              comprovação", o que soa como se o DFD não servisse para mais nada.
+              Ele é a base de todo documento do processo — e será a base da
+              geração de texto quando houver modelo. O que falta é outra coisa:
+              a lista de itens, que é um dado estruturado.
+            */}
+            O DFD <span className="font-mono">{dfdAnexado}</span> é a base dos documentos
+            deste processo e acompanha tudo o que for gerado nele. O que ainda não foi
+            informado são os <strong>itens</strong> — quantidade por secretaria —, e é
+            deles que sai esta consolidação, o painel de quantidades do ETP e a Cotação.
+            Itens não são lidos de um PDF assinado: precisam ser informados abaixo.
           </>
         ) : (
           "Nenhum DFD foi anexado a este processo."

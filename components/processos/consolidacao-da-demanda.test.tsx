@@ -150,8 +150,11 @@ describe("consolidação da demanda", () => {
     // Dizer "nenhum DFD foi anexado" logo abaixo do nome do arquivo anexado é
     // contradizer o que a tela acabou de mostrar. São dois estados: o arquivo
     // está registrado, e os itens dele é que não foram informados.
-    expect(await screen.findByText(/está registrado neste/i)).toBeInTheDocument()
+    expect(await screen.findByText(/é a base dos documentos/i)).toBeInTheDocument()
     expect(screen.getByText("DFD-CE-003.2026.pdf")).toBeInTheDocument()
     expect(screen.queryByText(/Nenhum DFD foi anexado/i)).not.toBeInTheDocument()
+    // E não pode sugerir que o arquivo só serve de comprovante: ele é a base de
+    // todo documento do processo, e será a base da geração por modelo.
+    expect(screen.queryByText(/apenas como comprovação/i)).not.toBeInTheDocument()
   })
 })

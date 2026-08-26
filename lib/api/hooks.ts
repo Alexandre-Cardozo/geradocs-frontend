@@ -17,6 +17,7 @@ import {
   obterFotoDePerfil,
   removerFotoDePerfil,
 } from "@/lib/api/avatar-client"
+import { anexarDfdComItens, type ItemDoDfd } from "@/lib/api/procurement-client"
 import * as api from "@/lib/api/client"
 import type { ListaProcessosParams } from "@/lib/api/client"
 import type { TipoDocumento, Tenant } from "@/lib/types"
@@ -672,6 +673,24 @@ export function useRemoverBrasao(prefeituraId: string | undefined) {
     onSuccess: (timbre) => {
       queryClient.setQueryData(chaves.timbre(prefeituraId), timbre)
       void queryClient.invalidateQueries({ queryKey: chaves.brasao(prefeituraId) })
+    },
+  })
+}
+
+/**
+ * Informa os itens de um DFD.
+ *
+ * <p>Recarrega a consolidação: é dela que saem o painel de quantidades do ETP e
+ * a Cotação, e mantê-la velha faria a tela mostrar um total que já mudou.
+ */
+export function useAnexarDfdComItens(processoId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { secretariaId: string; nomeDoArquivo: string; itens: ItemDoDfd[] }) =>
+      anexarDfdComItens(processoId, input.secretariaId, input.nomeDoArquivo, input.itens),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["consolidacao-demanda", processoId] })
+      void queryClient.invalidateQueries({ queryKey: chaves.processo(processoId) })
     },
   })
 }

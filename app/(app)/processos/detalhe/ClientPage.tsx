@@ -26,6 +26,7 @@ import {
   useSecoes,
 } from "@/lib/api/hooks"
 import { ConsolidacaoDaDemanda } from "@/components/processos/consolidacao-da-demanda"
+import { ItensDoDfd } from "@/components/processos/itens-do-dfd"
 import { TrilhaDoProcesso } from "@/components/processos/trilha-do-processo"
 import { PainelRetificacao } from "@/components/processos/painel-retificacao"
 import { AlertaOrientacao } from "@/components/shared/alerta-orientacao"
@@ -399,7 +400,20 @@ export default function HubProcesso() {
             Alimenta o painel de quantidades do ETP e a Cotação.
           </span>
         </div>
-        <ConsolidacaoDaDemanda processoId={processoId} dfdAnexado={proc.dfdArquivo} />
+        <div className="flex flex-col gap-4">
+          <ConsolidacaoDaDemanda processoId={processoId} dfdAnexado={proc.dfdArquivo} />
+          {/*
+            Só quando há DFD registrado: informar item de um DFD que não existe
+            seria inventar a origem do pedido.
+          */}
+          {proc.dfdArquivo && (
+            <ItensDoDfd
+              processoId={processoId}
+              nomeDoArquivo={proc.dfdArquivo}
+              onPronto={() => showToast("Consolidação atualizada.")}
+            />
+          )}
+        </div>
       </div>
 
       {/* Documentos do processo — na ordem canônica do fluxo de contratação */}

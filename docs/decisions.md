@@ -583,3 +583,15 @@ Brasão, cabeçalho e rodapé eram fabricados por `tenantDa()` e "salvos" num ob
 **O botão "Salvar Configurações" da aba de identidade saiu junto.** Enviar o brasão já grava; um botão que não grava é a mesma promessa vazia que o §37 tirou da tela de perfil.
 
 Com isso `sintetico.ts` perde três dos quatro campos que ainda listava. Sobra `parecerDfd`, que espera um modelo de verdade — e nesse caso o aviso está certo: a tela mostra achados fixos e diz isso.
+
+## 41. Os itens do DFD passam a ter onde ser informados
+
+A tela dizia que o DFD estava anexado e a consolidação ficava vazia para sempre — não havia por onde informar item nenhum. E a frase que explicava isso dizia que a plataforma guardava o arquivo "como comprovação", o que soa como se o DFD não servisse para mais nada.
+
+**O DFD é a base dos documentos do processo**, e será a base da geração de texto quando houver modelo. O texto foi corrigido para dizer isso.
+
+**O que faltava é outra coisa: a lista de itens.** Quantidade por secretaria é dado estruturado, e é dela que saem a consolidação, o painel de quantidades do ETP e a Cotação. Ler item de PDF assinado é OCR — e adivinhar quantidade em documento que vira edital não é algo que a plataforma deva fazer. Então há onde informar.
+
+O formulário é **um DFD por secretaria**, e não um só: a consolidação existe justamente para somar o que três secretarias pediram separado, e é a secretaria de origem que se pergunta quando os pedidos divergem. A quantidade usa o `QuantityInput` do DS e chega ao servidor como número — mandar `"1.200"` faria o servidor ler 1,2, que é o defeito que o import do PCA já teve uma vez.
+
+O endpoint já existia desde o Bloco 7 (`POST /procurement-processes/{id}/dfds`, com itens). O que faltava era inteiramente a tela.

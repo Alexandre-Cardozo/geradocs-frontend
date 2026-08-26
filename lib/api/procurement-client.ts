@@ -2,6 +2,7 @@ import "client-only";
 
 import { requisicaoProtegida } from "@/lib/api/auth-client";
 import { ordenar } from "@/lib/documentos";
+import { parseValorBR } from "@/lib/format";
 import type {
   Modalidade,
   NovoProcessoInput,
@@ -394,4 +395,49 @@ export async function estatisticasDeProcesso(): Promise<EstatisticasDeProcesso> 
     documentosPendentes: numeros.pendingDocuments,
     taxaConclusao: numeros.completionRate,
   }
+}
+
+/**
+ * Um item pedido por uma secretaria, como a tela o informa.
+ *
+ * <p>Quantidade e preço vêm formatados em pt-BR do formulário (`1.200,00`), e a
+ * conversão para número acontece aqui: mandar a string ao servidor faria
+ * `1.200` virar 1,2 — o mesmo defeito que o import do PCA já teve.
+ */
+export interface ItemDoDfd {
+  descricao: string;
+  unidade: string;
+  quantidade: string;
+  especificacao?: string;
+}
+
+/**
+ * Anexa um DFD com os itens que a secretaria pediu.
+ *
+ * <p>Itens não saem de um PDF assinado — leitura automática de PDF é OCR, e a
+ * plataforma não faz. Eles são informados, e é deles que saem a consolidação, o
+ * painel de quantidades do ETP e a Cotação.
+ */
+export async function anexarDfdComItens(
+  processoId: string,
+  secretariaId: string,
+  nomeDoArquivo: string,
+  itens: ItemDoDfd[],
+): Promise<void> {
+  await requisicaoProtegida<unknown>(
+    `/procurement-processes/${encodeURIComponent(processoId)}/dfds`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        departmentId: secretariaId,
+        fileName: nomeDoArquivo,
+        items: itens.map((item) => ({
+          description: item.descricao.trim(),
+          unit: item.unidade.trim(),
+          quantity: parseValorBR(item.quantidade),
+          specification: item.especificacao?.trim() || null,
+        })),
+      }),
+    },
+  );
 }

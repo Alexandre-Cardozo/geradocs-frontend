@@ -1,0 +1,164 @@
+"use client"
+
+import { useState } from "react"
+
+import { Button, Dropdown, FormField, Input, QuantityInput } from "@/components/ui"
+import { IconPlus, IconTrash } from "@/components/ui/icons"
+import { useToast } from "@/components/shared/providers"
+import { useAnexarDfdComItens, useConfigTenant } from "@/lib/api/hooks"
+import type { ItemDoDfd } from "@/lib/api/procurement-client"
+
+/**
+ * Informar os itens que a secretaria pediu no DFD.
+ *
+ * <p>Itens não saem do PDF assinado: ler item de PDF é OCR, e a plataforma não
+ * faz — nem deveria adivinhar quantidade em documento que vira edital. Eles são
+ * informados aqui, e é deles que saem a consolidação, o painel de quantidades
+ * do ETP e a Cotação.
+ *
+ * <p>Um DFD por secretaria, e não um formulário só: a consolidação existe
+ * justamente para somar o que três secretarias pediram separado, e é a
+ * secretaria de origem que se pergunta quando os pedidos divergem.
+ */
+export function ItensDoDfd({
+  processoId,
+  nomeDoArquivo,
+  onPronto,
+}: {
+  processoId: string
+  /** O DFD já registrado no processo; o item herda o nome dele. */
+  nomeDoArquivo: string
+  onPronto: () => void
+}) {
+  const tenant = useConfigTenant()
+  const anexar = useAnexarDfdComItens(processoId)
+  const showToast = useToast()
+
+  const [secretaria, setSecretaria] = useState("")
+  const [itens, setItens] = useState<ItemDoDfd[]>([
+    { descricao: "", unidade: "", quantidade: "" },
+  ])
+
+  const secretarias = tenant.data?.secretarias ?? []
+  const preenchidos = itens.filter(
+    (item) => item.descricao.trim() !== "" && item.unidade.trim() !== "" && item.quantidade !== "",
+  )
+  const impedimento =
+    secretaria === ""
+      ? "Escolha a secretaria que pediu estes itens."
+      : preenchidos.length === 0
+        ? "Informe ao menos um item com descrição, unidade e quantidade."
+        : null
+
+  const alterar = (indice: number, campo: keyof ItemDoDfd, valor: string) =>
+    setItens((atuais) =>
+      atuais.map((item, i) => (i === indice ? { ...item, [campo]: valor } : item)),
+    )
+
+  return (
+    <div className="rounded-card border border-border bg-surface p-5">
+      <h3 className="m-0 font-display text-base font-bold text-text-1">
+        Informar itens do DFD
+      </h3>
+      <p className="m-0 mt-1 mb-4 text-sm text-text-3">
+        A quantidade que cada secretaria pediu. É daqui que saem a consolidação, o painel de
+        quantidades do ETP e a Cotação.
+      </p>
+
+      <div className="mb-4 max-w-md">
+        <FormField label="Secretaria que pediu" required>
+          <Dropdown
+            value={secretaria}
+            onChange={setSecretaria}
+            ariaLabel="Secretaria que pediu"
+            options={[
+              { value: "", label: "Selecione a secretaria..." },
+              ...secretarias.map((s) => ({ value: s.id, label: s.nome })),
+            ]}
+          />
+        </FormField>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        {itens.map((item, indice) => (
+          <div
+            key={indice}
+            className="grid grid-cols-1 gap-2.5 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_auto]"
+          >
+            <FormField label={indice === 0 ? "Descrição do item" : ""}>
+              <Input
+                value={item.descricao}
+                onChange={(e) => alterar(indice, "descricao", e.target.value)}
+                placeholder="Ex: Papel A4 75 g/m2"
+              />
+            </FormField>
+            <FormField label={indice === 0 ? "Unidade" : ""}>
+              <Input
+                value={item.unidade}
+                onChange={(e) => alterar(indice, "unidade", e.target.value)}
+                placeholder="Ex: RESMA"
+              />
+            </FormField>
+            <FormField label={indice === 0 ? "Quantidade" : ""}>
+              <QuantityInput
+                value={item.quantidade}
+                onChange={(valor) => alterar(indice, "quantidade", valor)}
+              />
+            </FormField>
+            <div className={indice === 0 ? "flex items-end pb-0.5" : "flex items-start"}>
+              <button
+                type="button"
+                aria-label={`Remover item ${indice + 1}`}
+                disabled={itens.length === 1}
+                onClick={() => setItens((atuais) => atuais.filter((_, i) => i !== indice))}
+                className="flex size-9 cursor-pointer items-center justify-center rounded-md border border-border bg-ice text-danger transition-colors hover:bg-tint-danger-bg disabled:opacity-40"
+              >
+                <IconTrash size={14} />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center gap-2.5">
+        <Button
+          size="sm"
+          variant="secondary"
+          icon={<IconPlus size={14} />}
+          onClick={() =>
+            setItens((atuais) => [...atuais, { descricao: "", unidade: "", quantidade: "" }])
+          }
+        >
+          Acrescentar item
+        </Button>
+        <p id={`motivo-itens-${processoId}`} className={impedimento ? "m-0 text-xs text-text-muted" : "sr-only"}>
+          {impedimento ?? "Tudo certo para salvar."}
+        </p>
+        <Button
+          size="sm"
+          disabled={impedimento !== null || anexar.isPending}
+          ariaDescribedBy={`motivo-itens-${processoId}`}
+          onClick={() =>
+            anexar.mutate(
+              { secretariaId: secretaria, nomeDoArquivo, itens: preenchidos },
+              {
+                onSuccess: () => {
+                  showToast(`${preenchidos.length} item(ns) informado(s).`)
+                  setItens([{ descricao: "", unidade: "", quantidade: "" }])
+                  setSecretaria("")
+                  onPronto()
+                },
+                onError: (erro) =>
+                  showToast(
+                    erro instanceof Error ? erro.message : "Não foi possível salvar os itens.",
+                  ),
+              },
+            )
+          }
+        >
+          {anexar.isPending ? "Salvando..." : "Salvar itens"}
+        </Button>
+      </div>
+    </div>
+  )
+}
