@@ -1,9 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useRef, useState } from "react"
 
 import { Button, Dropdown, FormField, Input, QuantityInput } from "@/components/ui"
-import { IconPlus, IconTrash } from "@/components/ui/icons"
+import { IconPlus, IconTrash, IconUpload } from "@/components/ui/icons"
 import { useToast } from "@/components/shared/providers"
 import { useAnexarDfdComItens, useConfigTenant } from "@/lib/api/hooks"
 import type { ItemDoDfd } from "@/lib/api/procurement-client"
@@ -19,6 +19,11 @@ import type { ItemDoDfd } from "@/lib/api/procurement-client"
  * <p>Um DFD por secretaria, e não um formulário só: a consolidação existe
  * justamente para somar o que três secretarias pediram separado, e é a
  * secretaria de origem que se pergunta quando os pedidos divergem.
+ *
+ * <p>O arquivo assinado entra aqui e passa a ser guardado (ADR-028) — antes só
+ * o nome dele era anotado. Continua opcional: há processo em que o servidor
+ * sabe o número do DFD e ainda não tem o PDF em mãos, e exigi-lo transformaria
+ * um facilitador em bloqueio.
  */
 export function ItensDoDfd({
   processoId,
@@ -35,6 +40,8 @@ export function ItensDoDfd({
   const showToast = useToast()
 
   const [secretaria, setSecretaria] = useState("")
+  const [arquivo, setArquivo] = useState<File | null>(null)
+  const campoDeArquivo = useRef<HTMLInputElement>(null)
   const [itens, setItens] = useState<ItemDoDfd[]>([
     { descricao: "", unidade: "", quantidade: "" },
   ])
@@ -65,7 +72,8 @@ export function ItensDoDfd({
         quantidades do ETP e a Cotação.
       </p>
 
-      <div className="mb-4 max-w-md">
+      <div className="mb-4 flex flex-wrap items-end gap-4">
+        <div className="min-w-0 flex-1 basis-64">
         <FormField label="Secretaria que pediu" required>
           <Dropdown
             value={secretaria}
@@ -77,6 +85,32 @@ export function ItensDoDfd({
             ]}
           />
         </FormField>
+        </div>
+        <div className="min-w-0 flex-1 basis-64">
+          <FormField label="Arquivo do DFD (PDF ou DOCX)">
+            <div className="flex items-center gap-2.5">
+              <input
+                ref={campoDeArquivo}
+                type="file"
+                accept="application/pdf,.pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                aria-label="Arquivo do DFD"
+                onChange={(e) => setArquivo(e.target.files?.[0] ?? null)}
+                className="sr-only"
+              />
+              <Button
+                size="sm"
+                variant="secondary"
+                icon={<IconUpload size={14} />}
+                onClick={() => campoDeArquivo.current?.click()}
+              >
+                Escolher arquivo
+              </Button>
+              <span className="min-w-0 flex-1 truncate text-xs text-text-3">
+                {arquivo ? arquivo.name : "Opcional — o DFD pode ser anexado depois."}
+              </span>
+            </div>
+          </FormField>
+        </div>
       </div>
 
       <div className="flex flex-col gap-3">
@@ -140,12 +174,18 @@ export function ItensDoDfd({
           ariaDescribedBy={`motivo-itens-${processoId}`}
           onClick={() =>
             anexar.mutate(
-              { secretariaId: secretaria, nomeDoArquivo, itens: preenchidos },
+              { secretariaId: secretaria, nomeDoArquivo: arquivo?.name ?? nomeDoArquivo, itens: preenchidos, arquivo },
               {
                 onSuccess: () => {
-                  showToast(`${preenchidos.length} item(ns) informado(s).`)
+                  showToast(
+                    arquivo
+                      ? `${preenchidos.length} item(ns) e o arquivo anexados.`
+                      : `${preenchidos.length} item(ns) informado(s).`,
+                  )
                   setItens([{ descricao: "", unidade: "", quantidade: "" }])
                   setSecretaria("")
+                  setArquivo(null)
+                  if (campoDeArquivo.current) campoDeArquivo.current.value = ""
                   onPronto()
                 },
                 onError: (erro) =>

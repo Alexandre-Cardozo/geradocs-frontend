@@ -1,6 +1,6 @@
 import "client-only";
 
-import { requisicaoProtegida } from "@/lib/api/auth-client";
+import { baixarProtegido, requisicaoProtegida } from "@/lib/api/auth-client";
 import { ordenar } from "@/lib/documentos";
 import { parseValorBR } from "@/lib/format";
 import type {
@@ -418,32 +418,94 @@ export interface ItemDoDfd {
 }
 
 /**
- * Anexa um DFD com os itens que a secretaria pediu.
+ * Anexa um DFD com os itens que a secretaria pediu — e, quando houver, o arquivo.
  *
- * <p>Itens não saem de um PDF assinado — leitura automática de PDF é OCR, e a
+ * <p>Itens não saem de um PDF assinado: leitura automática de PDF é OCR, e a
  * plataforma não faz. Eles são informados, e é deles que saem a consolidação, o
  * painel de quantidades do ETP e a Cotação.
+ *
+ * <p>O arquivo é opcional de propósito (ADR-028): há processo em que o servidor
+ * sabe o número do DFD e ainda não tem o PDF em mãos, e travar aqui seria
+ * transformar um facilitador em bloqueio.
  */
 export async function anexarDfdComItens(
   processoId: string,
   secretariaId: string,
   nomeDoArquivo: string,
   itens: ItemDoDfd[],
+  arquivo?: File | null,
 ): Promise<void> {
+  const corpo = new FormData();
+  // `Blob` com tipo, e não string: sem o `Content-Type` da parte, o servidor
+  // não sabe que `dados` é JSON e recusa a requisição inteira.
+  corpo.append(
+    "dados",
+    new Blob(
+      [
+        JSON.stringify({
+          departmentId: secretariaId,
+          fileName: nomeDoArquivo,
+          items: itens.map((item) => ({
+            description: item.descricao.trim(),
+            unit: item.unidade.trim(),
+            quantity: parseValorBR(item.quantidade),
+            specification: item.especificacao?.trim() || null,
+          })),
+        }),
+      ],
+      { type: "application/json" },
+    ),
+  );
+  if (arquivo) corpo.append("file", arquivo);
   await requisicaoProtegida<unknown>(
     `/procurement-processes/${encodeURIComponent(processoId)}/dfds`,
-    {
-      method: "POST",
-      body: JSON.stringify({
-        departmentId: secretariaId,
-        fileName: nomeDoArquivo,
-        items: itens.map((item) => ({
-          description: item.descricao.trim(),
-          unit: item.unidade.trim(),
-          quantity: parseValorBR(item.quantidade),
-          specification: item.especificacao?.trim() || null,
-        })),
-      }),
-    },
+    { method: "POST", body: corpo },
+  );
+}
+
+/** Um DFD anexado ao processo, como a tela o mostra. */
+export interface DfdAnexado {
+  id: string;
+  nomeDoArquivo: string;
+  secretaria: string;
+  anexadoEm: string;
+  /** Nulo quando o DFD foi registrado só pelo nome: não há download a oferecer. */
+  arquivo: { tipo: string; bytes: number; resumo: string } | null;
+}
+
+interface DfdDaApi {
+  id: string;
+  fileName: string;
+  departmentName: string;
+  submittedAt: string;
+  file?: { mediaType: string; byteSize: number; sha256: string } | null;
+}
+
+/**
+ * Os DFDs anexados, na ordem em que foram anexados.
+ *
+ * <p>Vários por processo é como nasce uma contratação compartilhada — e anexar
+ * de novo versiona, em vez de substituir: o processo precisa responder "qual
+ * DFD embasou o ETP daquela data" (ADR-028).
+ */
+export async function listarDfds(processoId: string): Promise<DfdAnexado[]> {
+  const dfds = await requisicaoProtegida<DfdDaApi[]>(
+    `/procurement-processes/${encodeURIComponent(processoId)}/dfds`,
+  );
+  return dfds.map((dfd) => ({
+    id: dfd.id,
+    nomeDoArquivo: dfd.fileName,
+    secretaria: dfd.departmentName,
+    anexadoEm: dfd.submittedAt,
+    arquivo: dfd.file
+      ? { tipo: dfd.file.mediaType, bytes: dfd.file.byteSize, resumo: dfd.file.sha256 }
+      : null,
+  }));
+}
+
+/** Os bytes de um DFD anexado, autenticados. */
+export function baixarDfd(processoId: string, dfdId: string) {
+  return baixarProtegido(
+    `/procurement-processes/${encodeURIComponent(processoId)}/dfds/${encodeURIComponent(dfdId)}/file`,
   );
 }

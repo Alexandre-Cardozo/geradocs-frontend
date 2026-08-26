@@ -26,6 +26,7 @@ import {
   useSecoes,
 } from "@/lib/api/hooks"
 import { ConsolidacaoDaDemanda } from "@/components/processos/consolidacao-da-demanda"
+import { DfdsAnexados } from "@/components/processos/dfds-anexados"
 import { ItensDoDfd } from "@/components/processos/itens-do-dfd"
 import { TrilhaDoProcesso } from "@/components/processos/trilha-do-processo"
 import { PainelRetificacao } from "@/components/processos/painel-retificacao"
@@ -402,6 +403,12 @@ export default function HubProcesso() {
         </div>
         <div className="flex flex-col gap-4">
           <ConsolidacaoDaDemanda processoId={processoId} dfdAnexado={proc.dfdArquivo} />
+          {/*
+            Os anexos em si, com data e download. Anexar de novo versiona em vez
+            de substituir (ADR-028): é esta lista que responde qual DFD embasou
+            os documentos gerados até aqui.
+          */}
+          <DfdsAnexados processoId={processoId} />
           {/*
             Só quando há DFD registrado: informar item de um DFD que não existe
             seria inventar a origem do pedido.

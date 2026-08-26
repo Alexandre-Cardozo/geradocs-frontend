@@ -526,6 +526,22 @@
         "required" : [ "active", "createdAt", "id", "name", "organizationId", "updatedAt", "version" ],
         "type" : "object"
       },
+      "DfdFileView" : {
+        "properties" : {
+          "byteSize" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "mediaType" : {
+            "type" : "string"
+          },
+          "sha256" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "byteSize", "mediaType", "sha256" ],
+        "type" : "object"
+      },
       "DivergentValueView" : {
         "properties" : {
           "departmentName" : {
@@ -1079,6 +1095,9 @@
           },
           "departmentName" : {
             "type" : "string"
+          },
+          "file" : {
+            "$ref" : "#/components/schemas/DfdFileView"
           },
           "fileName" : {
             "type" : "string"
@@ -2763,13 +2782,22 @@
         } ],
         "requestBody" : {
           "content" : {
-            "application/json" : {
+            "multipart/form-data" : {
               "schema" : {
-                "$ref" : "#/components/schemas/AttachDfdRequest"
+                "properties" : {
+                  "dados" : {
+                    "$ref" : "#/components/schemas/AttachDfdRequest"
+                  },
+                  "file" : {
+                    "format" : "binary",
+                    "type" : "string"
+                  }
+                },
+                "required" : [ "dados" ],
+                "type" : "object"
               }
             }
-          },
-          "required" : true
+          }
         },
         "responses" : {
           "200" : {
@@ -2777,6 +2805,42 @@
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProcessDfdResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "procurement-process-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{id}/dfds/{dfdId}/file" : {
+      "get" : {
+        "operationId" : "dfdFile",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "dfdId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "format" : "byte",
+                  "type" : "string"
                 }
               }
             },

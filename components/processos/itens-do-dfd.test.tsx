@@ -56,6 +56,37 @@ async function escolherSecretaria() {
   await userEvent.click(await screen.findByRole("option", { name: "Secretaria de Educação" }))
 }
 
+/**
+ * O anexo do DFD deixou de ser JSON (ADR-028): os itens vão na parte `dados` e
+ * o arquivo, quando existe, na `file`. Ler o corpo como JSON aqui esconderia
+ * uma regressão de contrato — a requisição continuaria "chegando".
+ */
+function capturarAnexo() {
+  const capturado: { dados: Record<string, unknown>; arquivo: File | null } = {
+    dados: {},
+    arquivo: null,
+  }
+  servidor.use(
+    http.post(`${urlDaApi}/procurement-processes/:id/dfds`, async ({ request }) => {
+      const corpo = await request.formData()
+      capturado.dados = JSON.parse(await (corpo.get("dados") as Blob).text()) as Record<
+        string,
+        unknown
+      >
+      const arquivo = corpo.get("file")
+      capturado.arquivo = arquivo instanceof File ? arquivo : null
+      return HttpResponse.json({}, { status: 201 })
+    }),
+  )
+  return capturado
+}
+
+async function preencherUmItem(descricao: string, unidade: string, quantidade: string) {
+  await userEvent.type(screen.getByLabelText(/Descrição do item/), descricao)
+  await userEvent.type(screen.getByLabelText(/Unidade/), unidade)
+  await userEvent.type(screen.getByLabelText(/Quantidade/), quantidade)
+}
+
 describe("itens do DFD", () => {
   it("sem secretaria e sem item, diz o que falta em vez de só desabilitar", async () => {
     comSecretarias()
@@ -80,24 +111,16 @@ describe("itens do DFD", () => {
 
   it("manda descrição, unidade e quantidade como número", async () => {
     comSecretarias()
-    let corpo: Record<string, unknown> = {}
-    servidor.use(
-      http.post(`${urlDaApi}/procurement-processes/:id/dfds`, async ({ request }) => {
-        corpo = (await request.json()) as Record<string, unknown>
-        return HttpResponse.json({}, { status: 201 })
-      }),
-    )
+    const anexo = capturarAnexo()
     renderizarFormulario()
     await escolherSecretaria()
 
-    await userEvent.type(screen.getByLabelText(/Descrição do item/), "Papel A4 75 g/m2")
-    await userEvent.type(screen.getByLabelText(/Unidade/), "RESMA")
-    await userEvent.type(screen.getByLabelText(/Quantidade/), "1200")
+    await preencherUmItem("Papel A4 75 g/m2", "RESMA", "1200")
 
     await userEvent.click(screen.getByRole("button", { name: /Salvar itens/ }))
 
-    await waitFor(() => expect(corpo.departmentId).toBe(EDUCACAO))
-    const itens = corpo.items as Array<Record<string, unknown>>
+    await waitFor(() => expect(anexo.dados.departmentId).toBe(EDUCACAO))
+    const itens = anexo.dados.items as Array<Record<string, unknown>>
     expect(itens).toHaveLength(1)
     const item = itens[0] as Record<string, unknown>
     expect(item.description).toBe("Papel A4 75 g/m2")
@@ -109,43 +132,54 @@ describe("itens do DFD", () => {
 
   it("o DFD informado é o que está registrado no processo", async () => {
     comSecretarias()
-    let corpo: Record<string, unknown> = {}
-    servidor.use(
-      http.post(`${urlDaApi}/procurement-processes/:id/dfds`, async ({ request }) => {
-        corpo = (await request.json()) as Record<string, unknown>
-        return HttpResponse.json({}, { status: 201 })
-      }),
-    )
+    const anexo = capturarAnexo()
     renderizarFormulario()
     await escolherSecretaria()
-    await userEvent.type(screen.getByLabelText(/Descrição do item/), "Caneta")
-    await userEvent.type(screen.getByLabelText(/Unidade/), "UN")
-    await userEvent.type(screen.getByLabelText(/Quantidade/), "50")
+    await preencherUmItem("Caneta", "UN", "50")
 
     await userEvent.click(screen.getByRole("button", { name: /Salvar itens/ }))
 
-    await waitFor(() => expect(corpo.fileName).toBe("DFD-CE-003.2026.pdf"))
+    await waitFor(() => expect(anexo.dados.fileName).toBe("DFD-CE-003.2026.pdf"))
+    // Sem arquivo escolhido, nada de parte `file`: registrar o DFD só pelo
+    // número é caso legítimo, e não pendência.
+    expect(anexo.arquivo).toBeNull()
   })
 
   it("linha em branco não vira item", async () => {
     comSecretarias()
-    let corpo: Record<string, unknown> = {}
-    servidor.use(
-      http.post(`${urlDaApi}/procurement-processes/:id/dfds`, async ({ request }) => {
-        corpo = (await request.json()) as Record<string, unknown>
-        return HttpResponse.json({}, { status: 201 })
-      }),
-    )
+    const anexo = capturarAnexo()
     renderizarFormulario()
     await escolherSecretaria()
-    await userEvent.type(screen.getByLabelText(/Descrição do item/), "Caneta")
-    await userEvent.type(screen.getByLabelText(/Unidade/), "UN")
-    await userEvent.type(screen.getByLabelText(/Quantidade/), "50")
+    await preencherUmItem("Caneta", "UN", "50")
 
     await userEvent.click(screen.getByRole("button", { name: /Acrescentar item/ }))
     await userEvent.click(screen.getByRole("button", { name: /Salvar itens/ }))
 
-    await waitFor(() => expect((corpo.items as unknown[]).length).toBe(1))
+    await waitFor(() => expect((anexo.dados.items as unknown[]).length).toBe(1))
+  })
+
+  it("o arquivo escolhido sobe junto, e dá nome ao anexo", async () => {
+    comSecretarias()
+    const anexo = capturarAnexo()
+    renderizarFormulario()
+    await escolherSecretaria()
+    await preencherUmItem("Caneta", "UN", "50")
+
+    const pdf = new File(["%PDF-1.7 assinado"], "DFD-Educacao-2026.pdf", {
+      type: "application/pdf",
+    })
+    await userEvent.upload(screen.getByLabelText("Arquivo do DFD"), pdf)
+
+    expect(screen.getByText("DFD-Educacao-2026.pdf")).toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: /Salvar itens/ }))
+
+    // Até o 13.2 só o nome era anotado e os bytes eram descartados: quem fosse
+    // conferir o processo depois não tinha como rebaixar o DFD.
+    await waitFor(() => expect(anexo.arquivo?.name).toBe("DFD-Educacao-2026.pdf"))
+    expect(anexo.arquivo?.type).toBe("application/pdf")
+    // O nome do anexo passa a ser o do arquivo enviado: mostrar o nome antigo
+    // ao lado do PDF novo seria a tela se desmentindo.
+    expect(anexo.dados.fileName).toBe("DFD-Educacao-2026.pdf")
   })
 
   it("acrescentar e remover linha", async () => {
@@ -175,9 +209,7 @@ describe("itens do DFD", () => {
     )
     renderizarFormulario()
     await escolherSecretaria()
-    await userEvent.type(screen.getByLabelText(/Descrição do item/), "Caneta")
-    await userEvent.type(screen.getByLabelText(/Unidade/), "UN")
-    await userEvent.type(screen.getByLabelText(/Quantidade/), "50")
+    await preencherUmItem("Caneta", "UN", "50")
 
     await userEvent.click(screen.getByRole("button", { name: /Salvar itens/ }))
 

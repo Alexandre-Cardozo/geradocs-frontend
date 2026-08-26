@@ -17,7 +17,7 @@ import {
   obterFotoDePerfil,
   removerFotoDePerfil,
 } from "@/lib/api/avatar-client"
-import { anexarDfdComItens, type ItemDoDfd } from "@/lib/api/procurement-client"
+import { anexarDfdComItens, listarDfds, type ItemDoDfd } from "@/lib/api/procurement-client"
 import * as api from "@/lib/api/client"
 import type { ListaProcessosParams } from "@/lib/api/client"
 import type { TipoDocumento, Tenant } from "@/lib/types"
@@ -33,6 +33,7 @@ export const chaves = {
   processos: (params: ListaProcessosParams) => ["processos", params] as const,
   processo: (id: string) => ["processo", id] as const,
   parecerDFD: (id: string) => ["parecer-dfd", id] as const,
+  dfds: (id: string) => ["dfds", id] as const,
   secoes: (id: string, tipo: TipoDocumento) => ["secoes", id, tipo] as const,
   documentos: ["documentos"] as const,
   resumoDocumentos: ["documentos", "resumo"] as const,
@@ -686,11 +687,37 @@ export function useRemoverBrasao(prefeituraId: string | undefined) {
 export function useAnexarDfdComItens(processoId: string) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (input: { secretariaId: string; nomeDoArquivo: string; itens: ItemDoDfd[] }) =>
-      anexarDfdComItens(processoId, input.secretariaId, input.nomeDoArquivo, input.itens),
+    mutationFn: (input: {
+      secretariaId: string
+      nomeDoArquivo: string
+      itens: ItemDoDfd[]
+      arquivo?: File | null
+    }) =>
+      anexarDfdComItens(
+        processoId,
+        input.secretariaId,
+        input.nomeDoArquivo,
+        input.itens,
+        input.arquivo,
+      ),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["consolidacao-demanda", processoId] })
+      void queryClient.invalidateQueries({ queryKey: chaves.dfds(processoId) })
       void queryClient.invalidateQueries({ queryKey: chaves.processo(processoId) })
     },
+  })
+}
+
+/**
+ * Os DFDs anexados ao processo.
+ *
+ * <p>Anexar de novo versiona em vez de substituir (ADR-028), então a tela mostra
+ * uma lista — com a data de cada anexo, que é o que responde "qual DFD embasou
+ * o ETP daquela data".
+ */
+export function useDfdsDoProcesso(processoId: string) {
+  return useQuery({
+    queryKey: chaves.dfds(processoId),
+    queryFn: () => listarDfds(processoId),
   })
 }

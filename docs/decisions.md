@@ -595,3 +595,17 @@ A tela dizia que o DFD estava anexado e a consolidação ficava vazia para sempr
 O formulário é **um DFD por secretaria**, e não um só: a consolidação existe justamente para somar o que três secretarias pediram separado, e é a secretaria de origem que se pergunta quando os pedidos divergem. A quantidade usa o `QuantityInput` do DS e chega ao servidor como número — mandar `"1.200"` faria o servidor ler 1,2, que é o defeito que o import do PCA já teve uma vez.
 
 O endpoint já existia desde o Bloco 7 (`POST /procurement-processes/{id}/dfds`, com itens). O que faltava era inteiramente a tela.
+
+## 42. O arquivo do DFD passa a existir (13.2)
+
+O §41 deu onde informar os **itens** do DFD. O arquivo continuava sendo só um nome: a plataforma anotava `DFD-CE-003.2026.pdf` e descartava os bytes. Quem fosse conferir o processo depois não tinha como rebaixá-lo, e o modelo de IA — que vai usar o DFD como base — não teria o que ler.
+
+Agora o formulário de itens tem também o campo de arquivo (PDF ou DOCX), e a tela do processo lista os DFDs anexados com secretaria, data, tamanho e download.
+
+**O arquivo é opcional, e isso é decisão, não omissão.** Há processo em que o servidor sabe o número do DFD e ainda não tem o PDF em mãos; exigi-lo transformaria um facilitador em bloqueio, que é o oposto do que o Bloco 13 existe para garantir. Quando não há arquivo, a linha diz "Sem arquivo anexado" em vez de oferecer um botão que não faz nada.
+
+**Anexar de novo versiona, não substitui** (ADR-028). Por isso a tela mostra uma lista com a data de cada anexo: é ela que responde "qual DFD embasou o ETP daquela data" — a pergunta que um órgão de controle faz.
+
+O download passa pela requisição autenticada e vira `blob:`, como o dos arquivos gerados: `href` direto na rota daria 401, e a pessoa veria um download quebrado sem explicação.
+
+**Um efeito colateral no ambiente de teste.** O anexo virou `multipart/form-data`, e o primeiro teste com arquivo ficou pendurado até estourar o tempo. A causa não era o código: o `fetch` do ambiente é o do Node, e ele reconhece corpo multipart pelas classes dele — com o `Blob` e o `File` do jsdom no lugar, o envio nunca chega a virar requisição. A `FormData` foi junto pelo mesmo motivo, e é buscada pelo `Response` porque o jsdom tomou o nome global: instalar a cópia do `undici` do npm traria *outra* classe, que o `fetch` embutido não reconheceria. Está em `lib/teste/setup.ts`, comentado — a suíte inteira de JSON continuava verde, e só multipart depende disso.
