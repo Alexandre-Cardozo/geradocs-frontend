@@ -609,3 +609,17 @@ Agora o formulário de itens tem também o campo de arquivo (PDF ou DOCX), e a t
 O download passa pela requisição autenticada e vira `blob:`, como o dos arquivos gerados: `href` direto na rota daria 401, e a pessoa veria um download quebrado sem explicação.
 
 **Um efeito colateral no ambiente de teste.** O anexo virou `multipart/form-data`, e o primeiro teste com arquivo ficou pendurado até estourar o tempo. A causa não era o código: o `fetch` do ambiente é o do Node, e ele reconhece corpo multipart pelas classes dele — com o `Blob` e o `File` do jsdom no lugar, o envio nunca chega a virar requisição. A `FormData` foi junto pelo mesmo motivo, e é buscada pelo `Response` porque o jsdom tomou o nome global: instalar a cópia do `undici` do npm traria *outra* classe, que o `fetch` embutido não reconheceria. Está em `lib/teste/setup.ts`, comentado — a suíte inteira de JSON continuava verde, e só multipart depende disso.
+
+## 43. A IA aparece como opcional, e não some quando não há modelo (13.5)
+
+A tela oferecia "Gerar com IA" a todo mundo. Com `geradocs.ai.provider=none` — o padrão, e o que roda hoje — o clique devolvia `503`: **o servidor descobria por erro que o facilitador não existe.**
+
+Agora o editor de seção mostra os dois caminhos lado a lado. "Escrever à mão" vem primeiro e diz o que é: o caminho normal, e completo. "Gerar com IA" vem ao lado, e quando não há modelo aparece desabilitado com o motivo escrito **antes** do clique, anunciado por `aria-describedby` — botão desabilitado sem motivo anunciado é motivo que só existe para quem enxerga a tela.
+
+**"Escrever agora" é um botão de verdade**, e não um rótulo: ele leva o cursor ao campo. Apontar sem levar deixaria a ação pela metade.
+
+**Enquanto a resposta de `/ai/status` não chega, o botão fica desabilitado**, com "Verificando...". Habilitar por otimismo devolveria exatamente o `503` que este passo existe para evitar.
+
+**A tela não sabe qual provedor está ativo, e não deve saber.** O servidor responde só `{ available }` (ADR-029): publicar o nome convidaria a tela a ramificar por provedor, que é o que o registro do back-end existe para impedir. Quando o adaptador real entrar, esta tela passa a oferecer a IA **sem mudança de código**.
+
+O handler padrão dos testes e a rota do e2e respondem `available: false`. É deliberado: o caminho feliz da suíte é a plataforma inteira funcionando **sem assistência nenhuma** — que é o estado em que ela está hoje e a garantia que o cliente pediu.

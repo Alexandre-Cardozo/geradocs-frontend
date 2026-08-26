@@ -5,7 +5,7 @@ import { notFound, useRouter, useSearchParams } from "next/navigation"
 import { useRef, useState } from "react"
 
 import { Button, InfoBanner, ProgressBar, SectionBlock, Tag, Textarea, ValidationMsg } from "@/components/ui"
-import { IconArrowRight, IconCheckCircle, IconCheck, IconDownload, IconEye, IconHelp, IconSave, IconSparkles } from "@/components/ui/icons"
+import { IconArrowRight, IconCheckCircle, IconCheck, IconDownload, IconEye, IconHelp, IconSave } from "@/components/ui/icons"
 import { PainelATA, PainelDaSecao } from "@/components/documentos/paineis"
 import { ErrorState, InlineSpinner, LoadingState } from "@/components/shared/estados"
 import { useToast } from "@/components/shared/providers"
@@ -18,6 +18,7 @@ import {
   useSecoes,
 } from "@/lib/api/hooks"
 import { CATALOGO, porSlug } from "@/lib/documentos"
+import { CaminhosDaSecao } from "@/components/documentos/caminhos-da-secao"
 import { DispensaDeSecao } from "@/components/documentos/dispensa-de-secao"
 import { EstruturaDoDocumento } from "@/components/documentos/estrutura-do-documento"
 import { PainelPca } from "@/components/documentos/painel-pca"
@@ -67,6 +68,8 @@ export default function EditorDocumento() {
   const [saved, setSaved] = useState(false)
   const [confirmarRegerar, setConfirmarRegerar] = useState(false)
   const secaoAtivaRef = useRef("1")
+  /** Para o caminho manual levar o cursor ao campo, em vez de só apontá-lo. */
+  const campoDoTexto = useRef<HTMLTextAreaElement>(null)
   const trocarSecao = (id: string) => {
     secaoAtivaRef.current = id
     setActiveSection(id)
@@ -269,6 +272,7 @@ export default function EditorDocumento() {
               ) : (
                 <div className="flex flex-col gap-3">
                   <Textarea
+                    ref={campoDoTexto}
                     value={rascunho}
                     onChange={(e) => setRascunho(e.target.value)}
                     rows={6}
@@ -276,12 +280,17 @@ export default function EditorDocumento() {
                   />
                   {rascunho.trim() === "" ? (
                     <>
-                      <div className="flex flex-wrap items-center gap-3">
-                        <Button variant="dark" size="sm" icon={<IconSparkles size={13} />} disabled={gerar.isPending} onClick={handleGerarIA}>
-                          {gerar.isPending ? "Gerando com IA..." : "Gerar com IA"}
-                        </Button>
-                        <span className="text-sm text-text-muted">A IA redige a seção com base no DFD, no PCA e nos dados do processo.</span>
-                      </div>
+                      {/*
+                        Os dois caminhos lado a lado. Antes havia só "Gerar com
+                        IA": sem modelo configurado, o clique devolvia 503 e o
+                        servidor descobria por erro que o facilitador não
+                        existe (ADR-029).
+                      */}
+                      <CaminhosDaSecao
+                        gerando={gerar.isPending}
+                        onEscreverAMao={() => campoDoTexto.current?.focus()}
+                        onGerarComIa={handleGerarIA}
+                      />
                       {!active.obrigatoria && (
                         <DispensaDeSecao
                           secao={active}

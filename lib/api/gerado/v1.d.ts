@@ -4,6 +4,22 @@
  */
 
 export interface paths {
+    "/api/v1/ai/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["status"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/activate": {
         parameters: {
             query?: never;
@@ -787,6 +803,9 @@ export interface components {
             nested: boolean;
             title: string;
         };
+        AiStatusResponse: {
+            available: boolean;
+        };
         ArchiveSummaryResponse: {
             /** Format: int64 */
             finishedEtps: number;
@@ -1377,6 +1396,26 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    status: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AiStatusResponse"];
+                };
+            };
+        };
+    };
     activate: {
         parameters: {
             query?: never;

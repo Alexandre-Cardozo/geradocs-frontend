@@ -11,6 +11,7 @@ import {
   type FocusEvent,
   type KeyboardEvent,
   type ReactNode,
+  type Ref,
   type SelectHTMLAttributes,
 } from "react"
 
@@ -207,6 +208,7 @@ export function Textarea({
   rows = 4,
   className = "",
   id,
+  ref,
 }: {
   value?: string
   onChange?: (e: ChangeEvent<HTMLTextAreaElement>) => void
@@ -214,10 +216,13 @@ export function Textarea({
   rows?: number
   className?: string
   id?: string
+  /** Para quem precisa levar o cursor até aqui — o editor de seção faz isso. */
+  ref?: Ref<HTMLTextAreaElement>
 }) {
   const rotulo = useRotuloDoCampo()
   return (
     <textarea
+      ref={ref}
       id={id}
       aria-labelledby={rotulo}
       value={value}

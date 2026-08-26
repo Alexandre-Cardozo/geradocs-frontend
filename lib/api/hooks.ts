@@ -17,6 +17,7 @@ import {
   obterFotoDePerfil,
   removerFotoDePerfil,
 } from "@/lib/api/avatar-client"
+import { iaDisponivel } from "@/lib/api/ai-client"
 import { anexarDfdComItens, listarDfds, type ItemDoDfd } from "@/lib/api/procurement-client"
 import * as api from "@/lib/api/client"
 import type { ListaProcessosParams } from "@/lib/api/client"
@@ -34,6 +35,7 @@ export const chaves = {
   processo: (id: string) => ["processo", id] as const,
   parecerDFD: (id: string) => ["parecer-dfd", id] as const,
   dfds: (id: string) => ["dfds", id] as const,
+  iaDisponivel: ["ia-disponivel"] as const,
   secoes: (id: string, tipo: TipoDocumento) => ["secoes", id, tipo] as const,
   documentos: ["documentos"] as const,
   resumoDocumentos: ["documentos", "resumo"] as const,
@@ -719,5 +721,20 @@ export function useDfdsDoProcesso(processoId: string) {
   return useQuery({
     queryKey: chaves.dfds(processoId),
     queryFn: () => listarDfds(processoId),
+  })
+}
+
+/**
+ * Se esta instalação tem assistência de IA (ADR-029).
+ *
+ * <p>Não expira: o provedor é configuração de quem hospeda, e não muda enquanto
+ * a pessoa preenche um ETP. Perguntar a cada seção seria uma requisição por
+ * clique para saber a mesma coisa.
+ */
+export function useIaDisponivel() {
+  return useQuery({
+    queryKey: chaves.iaDisponivel,
+    queryFn: iaDisponivel,
+    staleTime: Infinity,
   })
 }

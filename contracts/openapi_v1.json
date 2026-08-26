@@ -41,6 +41,15 @@
         "required" : [ "anchorSectionCode", "nested", "title" ],
         "type" : "object"
       },
+      "AiStatusResponse" : {
+        "properties" : {
+          "available" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "available" ],
+        "type" : "object"
+      },
       "ArchiveSummaryResponse" : {
         "properties" : {
           "finishedEtps" : {
@@ -1727,6 +1736,24 @@
   },
   "openapi" : "3.1.0",
   "paths" : {
+    "/api/v1/ai/status" : {
+      "get" : {
+        "operationId" : "status",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AiStatusResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "ai-status-controller" ]
+      }
+    },
     "/api/v1/auth/activate" : {
       "post" : {
         "operationId" : "activate",

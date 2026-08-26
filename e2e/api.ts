@@ -128,6 +128,8 @@ export async function comSessao(page: Page, sessao: Sessao = sessaoServidor) {
     }),
   )
   await page.route(`${API}/organizations**`, (rota) => rota.fulfill({ json: [] }))
+  // Sem modelo de IA: é o padrão da instalação e o que roda hoje (ADR-029).
+  await page.route(`${API}/ai/status`, (rota) => rota.fulfill({ json: { available: false } }))
   // Antes de `/users**`: a rota da foto é mais específica e devolve binário, não
   // JSON. Sem ela, `[]` chegaria como se fosse uma imagem.
   await page.route(`${API}/users/*/avatar`, (rota) => rota.fulfill({ status: 404, body: "" }))

@@ -13,6 +13,11 @@ export const handlers = [
   http.post(`${API}/auth/password-recovery`, () => new HttpResponse(null, { status: 202 })),
   http.post(`${API}/auth/password-reset`, () => new HttpResponse(null, { status: 204 })),
 
+  // Sem modelo de IA, que é o padrão da instalação e o que roda hoje. Um teste
+  // que queira o contrário troca este handler — mas o caminho feliz é a
+  // plataforma inteira funcionando sem assistência nenhuma (ADR-029).
+  http.get(`${API}/ai/status`, () => HttpResponse.json({ available: false })),
+
   // Processos e elaboração de documento — o caminho feliz. Cada teste
   // sobrescreve o que precisa com `servidor.use`.
   http.get(`${API}/procurement-processes/:id`, () => HttpResponse.json(processoApi)),

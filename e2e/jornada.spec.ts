@@ -146,6 +146,32 @@ test.describe("elaboração do ETP", () => {
     await expect(page.getByText("Necessidade descrita pela secretaria.")).toBeVisible()
   })
 
+  test("sem modelo de IA, a tela diz isso antes do clique e o caminho manual segue inteiro", async ({
+    page,
+  }) => {
+    await comSessao(page)
+    await comProcessoEDocumento(page)
+
+    await page.goto(
+      rota(`/processos/documento?id=${encodeURIComponent(processo.id)}&tipo=etp`),
+    )
+
+    // O 503 chegava depois da ação, quando a pessoa já tinha formado a
+    // expectativa. Agora o motivo está escrito antes.
+    const gerar = page.getByRole("button", { name: /Gerar com IA/ })
+    await expect(gerar).toBeDisabled()
+    await expect(page.getByText(/não tem modelo de IA configurado/)).toBeVisible()
+
+    // E o caminho manual continua inteiro: o botão leva o cursor ao campo.
+    await page.getByRole("button", { name: "Escrever agora" }).click()
+    const editor = page.getByPlaceholder("Preencha o conteúdo desta seção...")
+    await expect(editor).toBeFocused()
+    await editor.fill("Necessidade descrita pela secretaria.")
+    await page.getByRole("button", { name: /^Salvar$/ }).click()
+
+    await expect(page.getByText("Necessidade descrita pela secretaria.")).toBeVisible()
+  })
+
   test("o item previsto no PCA é citado na seção do inciso II, e o não previsto só alerta", async ({
     page,
   }) => {
