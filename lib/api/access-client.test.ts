@@ -793,3 +793,93 @@ describe("revelarCpf", () => {
     await expect(revelarCpf(usuarioApi.id)).rejects.toThrow(/não devolveu o CPF/)
   })
 })
+
+describe("timbre do órgão", () => {
+  const ORGAO = organizacao.id
+
+  it("traz o timbre vigente, com a versão que o arquivo gerado registra", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/organizations/:id/letterhead`, () =>
+        HttpResponse.json({
+          hasLogo: true,
+          headerText: "PREFEITURA DE ECOPORANGA",
+          footerText: "Rua Principal, 100",
+          version: 7,
+        }),
+      ),
+    )
+    const { obterTimbre } = await carregarClienteLimpo()
+
+    expect(await obterTimbre(ORGAO)).toEqual({
+      temBrasao: true,
+      cabecalho: "PREFEITURA DE ECOPORANGA",
+      rodape: "Rua Principal, 100",
+      versao: 7,
+    })
+  })
+
+  it("órgão sem timbre vem com os campos vazios, e não indefinidos", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/organizations/:id/letterhead`, () => HttpResponse.json({})),
+    )
+    const { obterTimbre } = await carregarClienteLimpo()
+
+    // A tela põe estes valores em `<textarea>`: `undefined` faria o React
+    // reclamar de campo não controlado.
+    expect(await obterTimbre(ORGAO)).toEqual({
+      temBrasao: false,
+      cabecalho: "",
+      rodape: "",
+      versao: 1,
+    })
+  })
+
+  it("salvar os textos manda cabeçalho e rodapé", async () => {
+    let corpo: Record<string, unknown> = {}
+    servidor.use(
+      http.put(`${urlDaApi}/organizations/:id/letterhead`, async ({ request }) => {
+        corpo = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json({ hasLogo: false, headerText: "A", footerText: "B", version: 2 })
+      }),
+    )
+    const { salvarTextosDoTimbre } = await carregarClienteLimpo()
+
+    const salvo = await salvarTextosDoTimbre(ORGAO, "A", "B")
+
+    expect(corpo).toEqual({ headerText: "A", footerText: "B" })
+    expect(salvo.versao).toBe(2)
+  })
+
+  it("o brasão sobe como arquivo, e remover preserva os textos", async () => {
+    servidor.use(
+      http.put(`${urlDaApi}/organizations/:id/letterhead/logo`, () =>
+        HttpResponse.json({ hasLogo: true, headerText: "A", footerText: "B", version: 3 }),
+      ),
+      http.delete(`${urlDaApi}/organizations/:id/letterhead/logo`, () =>
+        HttpResponse.json({ hasLogo: false, headerText: "A", footerText: "B", version: 4 }),
+      ),
+    )
+    const { enviarBrasao, removerBrasao } = await carregarClienteLimpo()
+
+    const comBrasao = await enviarBrasao(
+      ORGAO,
+      new File([new Uint8Array([137, 80])], "brasao.png", { type: "image/png" }),
+    )
+    expect(comBrasao.temBrasao).toBe(true)
+
+    const sem = await removerBrasao(ORGAO)
+    expect(sem.temBrasao).toBe(false)
+    expect(sem.cabecalho).toBe("A")
+  })
+
+  it("órgão sem brasão devolve nulo, e a prévia cai para o texto", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/organizations/:id/letterhead/logo`, () =>
+        new HttpResponse(null, { status: 404 }),
+      ),
+    )
+    const { obterBrasao } = await carregarClienteLimpo()
+
+    expect(await obterBrasao(ORGAO)).toBeNull()
+  })
+})

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import {
   Button,
@@ -11,7 +11,6 @@ import {
   SectionBlock,
   Tag,
   Textarea,
-  Toggle,
 } from "@/components/ui";
 import {
   IconFile,
@@ -24,7 +23,12 @@ import { EmptyState, ErrorState, LoadingState, SkeletonRows } from "@/components
 import { Th } from "@/components/shared/tabela";
 import { useToast } from "@/components/shared/providers";
 import {
+  useBrasao,
   useConfigTenant,
+  useEnviarBrasao,
+  useRemoverBrasao,
+  useSalvarTextosDoTimbre,
+  useTimbre,
   useCriarSecretaria,
   useCriarUsuario,
   useRemoverSecretaria,
@@ -32,10 +36,10 @@ import {
   useUsuarios,
 } from "@/lib/api/hooks";
 import { formatCPF, validaCPF } from "@/lib/auth/cpf";
+import { FORMATOS_DE_BRASAO, TAMANHO_MAXIMO_DO_BRASAO } from "@/lib/api/access-client";
 import { ImportarPca } from "@/components/configuracoes/importar-pca";
 import { CredenciaisIniciais } from "@/components/admin/credenciais-iniciais";
-import { MarcaSintetica } from "@/components/shared/marca-sintetica";
-import { anoBrasilia, dataBrasiliaISO, formatData, formatDataHora } from "@/lib/format";
+import { anoBrasilia, dataBrasiliaISO, formatData, formatDataHora, formatarBytes } from "@/lib/format";
 import { PERFIL_ACESSO_LABEL, type PerfilAcesso, type Secretaria } from "@/lib/types";
 
 /** Opções de ano do PCA: últimos 3 anos + o ano vigente (Brasília). */
@@ -63,13 +67,15 @@ function PreviewDocumento({
   logoDataUrl,
   cabecalho,
   rodape,
-  timbrado,
 }: {
   logoDataUrl: string | null;
   cabecalho: string;
   rodape: string;
-  timbrado: boolean;
 }) {
+  // Não há mais chave de "timbrado": órgão sem timbre configurado gera
+  // documento sem timbre, e um interruptor que não desliga nada era exatamente
+  // a configuração inventada que este passo remove.
+  const timbrado = logoDataUrl !== null || cabecalho.trim() !== "" || rodape.trim() !== "";
   const rodapeResolvido = rodape
     .replace("{data}", formatData(dataBrasiliaISO()))
     .replace("{numero}", "PROC-2024-090")
@@ -134,13 +140,6 @@ function PreviewDocumento({
             ? "Assim o timbre aparecerá nos documentos gerados."
             : "Timbre desativado — documentos sem brasão."}
         </p>
-        {/*
-          A prévia é onde o valor fabricado engana melhor: ele aparece formatado,
-          dentro da moldura do documento, com cara de decisão tomada.
-        */}
-        <div className="mt-1.5 flex justify-center text-center">
-          <MarcaSintetica campo="cabecalho" />
-        </div>
       </div>
     </div>
   );
@@ -151,6 +150,11 @@ export default function Configuracoes() {
   const { data: sessao } = useSessao();
   const prefeituraId = sessao?.prefeitura?.id;
   const tenant = useConfigTenant(prefeituraId);
+  const timbre = useTimbre(prefeituraId);
+  const brasaoUrl = useBrasao(prefeituraId, timbre.data?.temBrasao ?? false);
+  const salvarTimbre = useSalvarTextosDoTimbre(prefeituraId);
+  const enviarBrasaoDoOrgao = useEnviarBrasao(prefeituraId);
+  const removerBrasaoDoOrgao = useRemoverBrasao(prefeituraId);
   const servidores = useUsuarios(prefeituraId);
   const criarServidor = useCriarUsuario();
   const criarSecretaria = useCriarSecretaria(prefeituraId);
@@ -168,12 +172,11 @@ export default function Configuracoes() {
   const [nsPerfil, setNsPerfil] = useState<PerfilAcesso>("servidor");
 
   // Estado local dos formulários, semeado quando o tenant carrega.
-  const [logoFile, setLogoFile] = useState<string | null>(null);
-  const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
-  const [timbrado, setTimbrado] = useState(true);
   const [cabecalho, setCabecalho] = useState("");
   const [rodape, setRodape] = useState("");
+  const [timbreSincronizado, setTimbreSincronizado] = useState<number | null>(null);
   const [secretarias, setSecretarias] = useState<Secretaria[]>([]);
+  const seletorDeBrasao = useRef<HTMLInputElement>(null);
   const [novaSecretaria, setNovaSecretaria] = useState("");
   const [tenantSincronizado, setTenantSincronizado] = useState<string | null>(null);
 
@@ -185,12 +188,15 @@ export default function Configuracoes() {
 
   if (tenant.data && tenantSincronizado !== versaoLocalDoTenant) {
     setTenantSincronizado(versaoLocalDoTenant);
-    setLogoFile(tenant.data.logoArquivo);
-    setLogoDataUrl(tenant.data.logoDataUrl);
-    setTimbrado(tenant.data.timbrado);
-    setCabecalho(tenant.data.cabecalho);
-    setRodape(tenant.data.rodape);
     setSecretarias(tenant.data.secretarias);
+  }
+
+  // O timbre vem do servidor (ADR-026). Semeia uma vez, e de novo a cada versão
+  // nova: salvar sobe a versão, e o formulário precisa refletir o que foi gravado.
+  if (timbre.data && timbreSincronizado !== timbre.data.versao) {
+    setTimbreSincronizado(timbre.data.versao);
+    setCabecalho(timbre.data.cabecalho);
+    setRodape(timbre.data.rodape);
   }
 
   if (tenant.isPending) {
@@ -210,9 +216,6 @@ export default function Configuracoes() {
     );
   }
 
-  const salvarTenant = (_patch: unknown, msg: string) => {
-    showToast(`${msg} A persistência será habilitada com o módulo de configurações do backend.`);
-  };
 
   const addSecretaria = () => {
     const nome = novaSecretaria.trim();
@@ -236,18 +239,25 @@ export default function Configuracoes() {
     });
   };
 
-  // Lê o brasão selecionado como data URL para poder exibi-lo (preview, sidebar, timbre).
-  const selecionarLogo = (file: File) => {
-    setLogoFile(file.name);
-    const reader = new FileReader();
-    reader.onload = () =>
-      setLogoDataUrl(typeof reader.result === "string" ? reader.result : null);
-    reader.readAsDataURL(file);
-  };
-
-  const removerLogo = () => {
-    setLogoFile(null);
-    setLogoDataUrl(null);
+  /**
+   * O brasão vai para o servidor (ADR-026).
+   *
+   * <p>Antes ele virava data URL e morria no estado da tela: a prefeitura
+   * "configurava" o timbre, recarregava e ele sumia — e nenhum documento saía
+   * com ele.
+   */
+  const selecionarBrasao = (arquivo: File) => {
+    if (arquivo.size > TAMANHO_MAXIMO_DO_BRASAO) {
+      showToast(
+        `O brasão tem ${formatarBytes(arquivo.size)} e o limite é ${formatarBytes(TAMANHO_MAXIMO_DO_BRASAO)}.`,
+      );
+      return;
+    }
+    enviarBrasaoDoOrgao.mutate(arquivo, {
+      onSuccess: () => showToast("Brasão atualizado. Ele sairá nos próximos documentos."),
+      onError: (erro) =>
+        showToast(erro instanceof Error ? erro.message : "Não foi possível enviar o brasão."),
+    });
   };
 
   return (
@@ -277,15 +287,29 @@ export default function Configuracoes() {
           <div className="flex flex-col gap-5">
             <SectionBlock
               title="Logotipo / Brasão da Prefeitura"
-              hint="O logotipo será inserido no cabeçalho dos documentos timbrados. Formatos aceitos: PNG, SVG, JPG (fundo transparente recomendado)."
+              hint="Sai no cabeçalho de todo documento gerado — DOCX e PDF. PNG ou JPEG, até 512 KB."
             >
-              {logoFile ? (
+              <input
+                ref={seletorDeBrasao}
+                type="file"
+                accept={FORMATOS_DE_BRASAO}
+                className="hidden"
+                aria-label="Escolher o brasão da prefeitura"
+                onChange={(e) => {
+                  const arquivo = e.target.files?.[0];
+                  // Zera: escolher o mesmo arquivo duas vezes não dispara
+                  // `change`, e a segunda tentativa pareceria travada.
+                  e.target.value = "";
+                  if (arquivo) selecionarBrasao(arquivo);
+                }}
+              />
+              {timbre.data?.temBrasao ? (
                 <div className="flex items-center gap-4">
                   <div className="flex size-20 items-center justify-center overflow-hidden rounded-xl border border-border bg-border-soft text-text-muted">
-                    {logoDataUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element -- data URL local, sem otimização do next/image
+                    {brasaoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- object URL de rota autenticada
                       <img
-                        src={logoDataUrl}
+                        src={brasaoUrl}
                         alt="Brasão da prefeitura"
                         className="size-full object-contain"
                       />
@@ -295,32 +319,29 @@ export default function Configuracoes() {
                   </div>
                   <div>
                     <div className="text-base font-semibold text-text-1">
-                      {logoFile}
+                      Brasão cadastrado
                     </div>
                     <div className="mt-0.5 text-sm text-text-muted">
-                      {logoDataUrl
-                        ? "Será exibido na sidebar e no timbre dos documentos"
-                        : "PNG · 340 × 340 px · 48 KB"}
+                      Sai no cabeçalho de todo documento gerado por este órgão.
                     </div>
                     <div className="mt-2.5 flex gap-2">
-                      <label className="cursor-pointer">
-                        <input
-                          type="file"
-                          accept=".png,.svg,.jpg,.jpeg"
-                          className="hidden"
-                          onChange={(e) => {
-                            const f = e.target.files?.[0];
-                            if (f) selecionarLogo(f);
-                          }}
-                        />
-                        <span className="inline-block cursor-pointer rounded-sm border border-tint-royal-border bg-tint-royal-bg px-3 py-1.25 text-sm font-semibold text-royal">
-                          Substituir
-                        </span>
-                      </label>
                       <Button
-                        variant="secondary"
                         size="sm"
-                        onClick={removerLogo}
+                        variant="secondary"
+                        disabled={enviarBrasaoDoOrgao.isPending}
+                        onClick={() => seletorDeBrasao.current?.click()}
+                      >
+                        {enviarBrasaoDoOrgao.isPending ? "Enviando..." : "Substituir"}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={removerBrasaoDoOrgao.isPending}
+                        onClick={() =>
+                          removerBrasaoDoOrgao.mutate(undefined, {
+                            onSuccess: () => showToast("Brasão removido."),
+                          })
+                        }
                       >
                         Remover
                       </Button>
@@ -328,83 +349,30 @@ export default function Configuracoes() {
                   </div>
                 </div>
               ) : (
-                <label className="block cursor-pointer">
-                  <input
-                    type="file"
-                    accept=".png,.svg,.jpg,.jpeg"
-                    className="hidden"
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (f) selecionarLogo(f);
-                    }}
-                  />
+                <button
+                  type="button"
+                  onClick={() => seletorDeBrasao.current?.click()}
+                  className="block w-full cursor-pointer border-0 bg-transparent p-0 text-left"
+                >
                   <div className="rounded-md border-2 border-dashed border-text-faint bg-surface-upload px-5 py-4.5 text-center transition-colors">
                     <span className="mx-auto mb-2 block w-5 text-text-muted">
                       <IconUpload size={20} strokeWidth={1.5} />
                     </span>
                     <p className="m-0 text-base text-text-3">
-                      Clique para selecionar ou arraste o logotipo aqui
+                      Clique para selecionar o brasão
                     </p>
-                    <p className="mt-1 mb-0 text-xs text-text-muted">
-                      PNG, SVG, JPG, JPEG
-                    </p>
+                    <p className="mt-1 mb-0 text-xs text-text-muted">PNG ou JPEG</p>
                   </div>
-                </label>
+                </button>
               )}
             </SectionBlock>
 
-            <SectionBlock
-              title="Documentos Timbrados"
-              hint="Quando ativado, todos os documentos gerados incluirão o brasão, o cabeçalho e o rodapé configurados. Caso desativado, os documentos serão gerados sem timbre."
-            >
-              <div className="flex items-center gap-3.5">
-                <Toggle
-                  checked={timbrado}
-                  onChange={setTimbrado}
-                  label="Documentos timbrados"
-                />
-                <div>
-                  <div className="text-base font-semibold text-text-2">
-                    {timbrado
-                      ? "Documentos timbrados ativados"
-                      : "Documentos sem timbre"}
-                  </div>
-                  <div className="mt-0.5 text-sm text-text-muted">
-                    {timbrado
-                      ? "ETP, TR, Cotação e demais documentos incluirão o brasão e identificação do órgão."
-                      : "Documentos serão gerados com cabeçalho e rodapé em branco."}
-                  </div>
-                  <MarcaSintetica campo="timbrado" />
-                </div>
-              </div>
-
-              {timbrado && !logoFile && (
-                <InfoBanner tone="warning" className="mt-3.5">
-                  Nenhum logotipo configurado. O cabeçalho será gerado apenas
-                  com o texto institucional.
-                </InfoBanner>
-              )}
-            </SectionBlock>
-
-            <div className="flex gap-2.5">
-              <Button
-                onClick={() =>
-                  salvarTenant(
-                    { logoArquivo: logoFile, logoDataUrl, timbrado },
-                    "Configurações de identidade salvas com sucesso.",
-                  )
-                }
-              >
-                Salvar Configurações
-              </Button>
-            </div>
           </div>
 
           <PreviewDocumento
-            logoDataUrl={logoDataUrl}
+            logoDataUrl={brasaoUrl}
             cabecalho={cabecalho}
             rodape={rodape}
-            timbrado={timbrado}
           />
         </div>
       )}
@@ -417,7 +385,6 @@ export default function Configuracoes() {
               title="Cabeçalho dos Documentos"
               hint="Texto exibido no topo de cada página dos documentos gerados. Use quebras de linha para organizar as informações. Variáveis disponíveis: {processo}, {data}, {secretaria}."
             >
-              <MarcaSintetica campo="cabecalho" />
               <Textarea
                 value={cabecalho}
                 onChange={(e) => setCabecalho(e.target.value)}
@@ -429,7 +396,6 @@ export default function Configuracoes() {
               title="Rodapé dos Documentos"
               hint="Texto exibido na parte inferior de cada página. Variáveis disponíveis: {processo}, {data}, {numero}, {pagina}."
             >
-              <MarcaSintetica campo="rodape" />
               <Textarea
                 value={rodape}
                 onChange={(e) => setRodape(e.target.value)}
@@ -439,23 +405,30 @@ export default function Configuracoes() {
 
             <div className="flex gap-2.5">
               <Button
+                disabled={salvarTimbre.isPending}
                 onClick={() =>
-                  salvarTenant(
+                  salvarTimbre.mutate(
                     { cabecalho, rodape },
-                    "Cabeçalho e rodapé salvos com sucesso.",
+                    {
+                      onSuccess: () =>
+                        showToast("Cabeçalho e rodapé salvos. Saem nos próximos documentos."),
+                      onError: (erro) =>
+                        showToast(
+                          erro instanceof Error ? erro.message : "Não foi possível salvar.",
+                        ),
+                    },
                   )
                 }
               >
-                Salvar Cabeçalho e Rodapé
+                {salvarTimbre.isPending ? "Salvando..." : "Salvar Cabeçalho e Rodapé"}
               </Button>
             </div>
           </div>
 
           <PreviewDocumento
-            logoDataUrl={logoDataUrl}
+            logoDataUrl={brasaoUrl}
             cabecalho={cabecalho}
             rodape={rodape}
-            timbrado={timbrado}
           />
         </div>
       )}

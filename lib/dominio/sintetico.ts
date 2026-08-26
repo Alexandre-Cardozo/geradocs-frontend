@@ -11,10 +11,11 @@
  * e o que a tela mostra é o que o servidor mediu. Os indicadores saíram em
  * 25/08/2026, no 12.3: o painel conta o acervo, e não uma fixture.
  *
- * Timbre, cabeçalho e rodapé **não** saíram no Bloco 11, e eu tinha escrito que
- * sairiam. O 11.1 publicou template de **layout** — margem, fonte, tamanho —, e
- * não configuração por órgão: o brasão da prefeitura continua sem lugar onde
- * morar. Foram para o Bloco 12, com um passo que os entrega.
+ * Timbre, cabeçalho e rodapé saíram em 25/08/2026, no 12.2b: o brasão é do
+ * órgão, fica guardado no servidor e sai impresso no cabeçalho de todo DOCX e
+ * PDF (ADR-026). O interruptor de "documentos timbrados" saiu junto — órgão sem
+ * timbre configurado gera documento sem timbre, e um interruptor que não
+ * desligava nada era ele próprio configuração inventada.
  *
  * **Configuração inventada exibida como real é pior que campo vazio.** Campo
  * vazio a pessoa preenche; valor plausível ela confere uma vez, aceita, e o
@@ -26,11 +27,7 @@
  * teste de guarda-corpo cobra que cada entrada diga em que bloco ela sai.
  */
 
-export type CampoSintetico =
-  | "timbrado"
-  | "cabecalho"
-  | "rodape"
-  | "parecerDfd"
+export type CampoSintetico = "parecerDfd"
 
 export interface DadoSintetico {
   /** Como o campo aparece na tela. */
@@ -50,21 +47,6 @@ export interface DadoSintetico {
 }
 
 export const DADOS_SINTETICOS: Record<CampoSintetico, DadoSintetico> = {
-  timbrado: {
-    rotulo: "Timbre ativado",
-    origem: "Ligado por padrão — a prefeitura ainda não escolheu.",
-    saiEm: "Bloco 12",
-  },
-  cabecalho: {
-    rotulo: "Cabeçalho",
-    origem: "Montado do nome e da unidade do órgão, em maiúsculas.",
-    saiEm: "Bloco 12",
-  },
-  rodape: {
-    rotulo: "Rodapé",
-    origem: "Texto padrão da plataforma, igual para todo órgão.",
-    saiEm: "Bloco 12",
-  },
   parecerDfd: {
     rotulo: "Parecer do DFD",
     origem: "Achados e nota fixos, iguais para todo processo — nenhum modelo leu este arquivo.",

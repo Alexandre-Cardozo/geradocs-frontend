@@ -1,6 +1,6 @@
 import "client-only"
 
-import { requisicaoProtegida } from "@/lib/api/auth-client"
+import { imagemProtegida, requisicaoProtegida } from "@/lib/api/auth-client"
 import { iniciaisDe, primeiroNome } from "@/lib/dominio"
 import type { PerfilAcesso, Secretaria, Tenant, Usuario } from "@/lib/types"
 
@@ -335,4 +335,79 @@ export async function revelarCpf(id: string): Promise<string> {
     throw new Error("O servidor não devolveu o CPF.")
   }
   return resposta.cpf
+}
+
+/* ── Timbre do órgão (ADR-026) ─────────────────────────────────────────────── */
+
+export interface Timbre {
+  temBrasao: boolean
+  cabecalho: string
+  rodape: string
+  /** Sobe a cada alteração; é o que o arquivo gerado registra. */
+  versao: number
+}
+
+/** Os formatos que o DOCX e o PDF embutem sem conversão. */
+export const FORMATOS_DE_BRASAO = "image/png,image/jpeg"
+
+/** 512 KB, o mesmo teto da foto de perfil. */
+export const TAMANHO_MAXIMO_DO_BRASAO = 512 * 1024
+
+interface TimbreBackend {
+  hasLogo?: boolean
+  headerText?: string
+  footerText?: string
+  version?: number
+}
+
+function timbreDe(resposta: TimbreBackend): Timbre {
+  return {
+    temBrasao: resposta.hasLogo ?? false,
+    cabecalho: resposta.headerText ?? "",
+    rodape: resposta.footerText ?? "",
+    versao: resposta.version ?? 1,
+  }
+}
+
+export async function obterTimbre(organizationId: string): Promise<Timbre> {
+  return timbreDe(
+    await requisicaoProtegida<TimbreBackend>(`/organizations/${organizationId}/letterhead`),
+  )
+}
+
+export async function salvarTextosDoTimbre(
+  organizationId: string,
+  cabecalho: string,
+  rodape: string,
+): Promise<Timbre> {
+  return timbreDe(
+    await requisicaoProtegida<TimbreBackend>(`/organizations/${organizationId}/letterhead`, {
+      method: "PUT",
+      body: JSON.stringify({ headerText: cabecalho, footerText: rodape }),
+    }),
+  )
+}
+
+export async function enviarBrasao(organizationId: string, arquivo: File): Promise<Timbre> {
+  const corpo = new FormData()
+  corpo.append("file", arquivo)
+  return timbreDe(
+    await requisicaoProtegida<TimbreBackend>(`/organizations/${organizationId}/letterhead/logo`, {
+      method: "PUT",
+      body: corpo,
+    }),
+  )
+}
+
+export async function removerBrasao(organizationId: string): Promise<Timbre> {
+  return timbreDe(
+    await requisicaoProtegida<TimbreBackend>(`/organizations/${organizationId}/letterhead/logo`, {
+      method: "DELETE",
+    }),
+  )
+}
+
+/** @returns os bytes do brasão, ou `null` quando o órgão não cadastrou um */
+export async function obterBrasao(organizationId: string): Promise<Blob | null> {
+  return imagemProtegida(`/organizations/${organizationId}/letterhead/logo`)
 }

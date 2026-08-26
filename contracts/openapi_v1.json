@@ -824,6 +824,25 @@
         "required" : [ "itemDescription", "kind", "values" ],
         "type" : "object"
       },
+      "LetterheadResponse" : {
+        "properties" : {
+          "footerText" : {
+            "type" : "string"
+          },
+          "hasLogo" : {
+            "type" : "boolean"
+          },
+          "headerText" : {
+            "type" : "string"
+          },
+          "version" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "footerText", "hasLogo", "headerText", "version" ],
+        "type" : "object"
+      },
       "LoginRequest" : {
         "properties" : {
           "cpf" : {
@@ -1417,6 +1436,21 @@
           }
         },
         "required" : [ "name" ],
+        "type" : "object"
+      },
+      "UpdateLetterheadRequest" : {
+        "properties" : {
+          "footerText" : {
+            "maxLength" : 500,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "headerText" : {
+            "maxLength" : 500,
+            "minLength" : 0,
+            "type" : "string"
+          }
+        },
         "type" : "object"
       },
       "UpdateOrganizationRequest" : {
@@ -2249,6 +2283,169 @@
           }
         },
         "tags" : [ "organization-controller" ]
+      }
+    },
+    "/api/v1/organizations/{organizationId}/letterhead" : {
+      "get" : {
+        "operationId" : "read",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "organizationId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LetterheadResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "letterhead-controller" ]
+      },
+      "put" : {
+        "operationId" : "updateTexts",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "organizationId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UpdateLetterheadRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LetterheadResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "letterhead-controller" ]
+      }
+    },
+    "/api/v1/organizations/{organizationId}/letterhead/logo" : {
+      "delete" : {
+        "operationId" : "removeLogo",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "organizationId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LetterheadResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "letterhead-controller" ]
+      },
+      "get" : {
+        "operationId" : "logo",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "organizationId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "header",
+          "name" : "If-None-Match",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "format" : "byte",
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "letterhead-controller" ]
+      },
+      "put" : {
+        "operationId" : "uploadLogo",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "organizationId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "properties" : {
+                  "file" : {
+                    "format" : "binary",
+                    "type" : "string"
+                  }
+                },
+                "required" : [ "file" ],
+                "type" : "object"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LetterheadResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "letterhead-controller" ]
       }
     },
     "/api/v1/pca-plan" : {

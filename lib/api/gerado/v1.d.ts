@@ -276,6 +276,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/organizations/{organizationId}/letterhead": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["read"];
+        put: operations["updateTexts"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/organizations/{organizationId}/letterhead/logo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["logo"];
+        put: operations["uploadLogo"];
+        post?: never;
+        delete: operations["removeLogo"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/pca-plan": {
         parameters: {
             query?: never;
@@ -999,6 +1031,13 @@ export interface components {
             kind: "UNIT" | "SPECIFICATION" | "UNIT_PRICE" | "DELIVERY_DEADLINE";
             values: components["schemas"]["DivergentValueView"][];
         };
+        LetterheadResponse: {
+            footerText: string;
+            hasLogo: boolean;
+            headerText: string;
+            /** Format: int32 */
+            version: number;
+        };
         LoginRequest: {
             /**
              * @deprecated
@@ -1220,6 +1259,10 @@ export interface components {
         UpdateDepartmentRequest: {
             acronym?: string;
             name: string;
+        };
+        UpdateLetterheadRequest: {
+            footerText?: string;
+            headerText?: string;
         };
         UpdateOrganizationRequest: {
             /** @enum {string} */
@@ -1792,6 +1835,129 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["DepartmentResponse"];
+                };
+            };
+        };
+    };
+    read: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                organizationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["LetterheadResponse"];
+                };
+            };
+        };
+    };
+    updateTexts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                organizationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateLetterheadRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["LetterheadResponse"];
+                };
+            };
+        };
+    };
+    logo: {
+        parameters: {
+            query?: never;
+            header?: {
+                "If-None-Match"?: string;
+            };
+            path: {
+                organizationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string;
+                };
+            };
+        };
+    };
+    uploadLogo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                organizationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["LetterheadResponse"];
+                };
+            };
+        };
+    };
+    removeLogo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                organizationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["LetterheadResponse"];
                 };
             };
         };

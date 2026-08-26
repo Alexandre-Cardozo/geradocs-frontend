@@ -3,7 +3,15 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useEffect, useMemo, useState } from "react"
 
-import { redefinirSenhaDeUsuario, revelarCpf } from "@/lib/api/access-client"
+import {
+  enviarBrasao,
+  obterBrasao,
+  obterTimbre,
+  redefinirSenhaDeUsuario,
+  removerBrasao,
+  revelarCpf,
+  salvarTextosDoTimbre,
+} from "@/lib/api/access-client"
 import {
   enviarFotoDePerfil,
   obterFotoDePerfil,
@@ -32,6 +40,8 @@ export const chaves = {
   usuarios: (prefeituraId?: string, busca = "") => ["usuarios", prefeituraId ?? "todos", busca] as const,
   prefeituras: ["prefeituras"] as const,
   foto: (usuarioId: string | undefined) => ["foto-de-perfil", usuarioId] as const,
+  timbre: (prefeituraId: string | undefined) => ["timbre", prefeituraId] as const,
+  brasao: (prefeituraId: string | undefined) => ["brasao", prefeituraId] as const,
   trilha: (processoId: string) => ["trilha", processoId] as const,
 }
 
@@ -597,5 +607,71 @@ export function useRemoverSecretaria(prefeituraId: string | undefined) {
       return api.removerSecretaria(prefeituraId, secretariaId)
     },
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: chaves.tenant(prefeituraId) }),
+  })
+}
+
+/* ── Timbre do órgão ───────────────────────────────────────────────────────── */
+
+/**
+ * O timbre da prefeitura: brasão, cabeçalho e rodapé (ADR-026).
+ *
+ * <p>É o que sai impresso em todo documento do órgão, então a tela de
+ * configuração e a prévia leem daqui — e não de um objeto montado no cliente.
+ */
+export function useTimbre(prefeituraId: string | undefined) {
+  return useQuery({
+    queryKey: chaves.timbre(prefeituraId),
+    queryFn: () => obterTimbre(prefeituraId as string),
+    enabled: prefeituraId != null,
+  })
+}
+
+/** O brasão como URL utilizável em `<img>`; a rota é autenticada. */
+export function useBrasao(prefeituraId: string | undefined, temBrasao: boolean) {
+  const query = useQuery({
+    queryKey: chaves.brasao(prefeituraId),
+    queryFn: () => obterBrasao(prefeituraId as string),
+    enabled: prefeituraId != null && temBrasao,
+    staleTime: Infinity,
+  })
+  const blob = query.data ?? null
+  const url = useMemo(() => (blob ? URL.createObjectURL(blob) : null), [blob])
+
+  useEffect(() => {
+    if (!url) return
+    return () => URL.revokeObjectURL(url)
+  }, [url])
+
+  return url
+}
+
+export function useSalvarTextosDoTimbre(prefeituraId: string | undefined) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { cabecalho: string; rodape: string }) =>
+      salvarTextosDoTimbre(prefeituraId as string, input.cabecalho, input.rodape),
+    onSuccess: (timbre) => queryClient.setQueryData(chaves.timbre(prefeituraId), timbre),
+  })
+}
+
+export function useEnviarBrasao(prefeituraId: string | undefined) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (arquivo: File) => enviarBrasao(prefeituraId as string, arquivo),
+    onSuccess: (timbre) => {
+      queryClient.setQueryData(chaves.timbre(prefeituraId), timbre)
+      void queryClient.invalidateQueries({ queryKey: chaves.brasao(prefeituraId) })
+    },
+  })
+}
+
+export function useRemoverBrasao(prefeituraId: string | undefined) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => removerBrasao(prefeituraId as string),
+    onSuccess: (timbre) => {
+      queryClient.setQueryData(chaves.timbre(prefeituraId), timbre)
+      void queryClient.invalidateQueries({ queryKey: chaves.brasao(prefeituraId) })
+    },
   })
 }

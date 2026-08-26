@@ -571,3 +571,15 @@ As contagens do painel e o resumo de Documentos saíam de `lib/mocks`: a tela mo
 **Um tipo de documento que a interface não conhece é filtrado, não vira linha sem rótulo.** O servidor pode ganhar um tipo antes desta tela — e há teste para isso.
 
 O selo "ainda não vem do servidor" saiu do painel e da tela de Documentos, e `indicadores` saiu de `sintetico.ts`. O aviso não deve sobreviver ao dado real.
+
+## 40. O timbre da prefeitura sai do mock e vai para o papel
+
+Brasão, cabeçalho e rodapé eram fabricados por `tenantDa()` e "salvos" num objeto em memória: a prefeitura configurava, recarregava e sumia — e nenhum documento saía com aquilo. Agora vão ao servidor e saem impressos em todo DOCX e PDF (ADR-026).
+
+**O brasão é arquivo, não `data:` URL.** Sobe por rota autenticada e volta por object URL, como a foto de perfil. A versão anterior lia o arquivo com `FileReader` e guardava a string na tela — o que explica por que ele nunca chegou a documento nenhum.
+
+**O interruptor "Documentos Timbrados" saiu.** Ele não desligava nada, e era ele próprio configuração inventada: órgão sem timbre cadastrado gera documento sem timbre. A prévia deriva o estado do que existe — se há brasão ou texto, há timbre.
+
+**O botão "Salvar Configurações" da aba de identidade saiu junto.** Enviar o brasão já grava; um botão que não grava é a mesma promessa vazia que o §37 tirou da tela de perfil.
+
+Com isso `sintetico.ts` perde três dos quatro campos que ainda listava. Sobra `parecerDfd`, que espera um modelo de verdade — e nesse caso o aviso está certo: a tela mostra achados fixos e diz isso.

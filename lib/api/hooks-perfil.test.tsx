@@ -5,7 +5,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import * as avatares from "@/lib/api/avatar-client"
 import * as acesso from "@/lib/api/access-client"
-import { chaves, useEnviarFotoDePerfil, useFotoDePerfil, useRedefinirSenhaDeServidor, useRemoverFotoDePerfil } from "@/lib/api/hooks"
+import {
+  chaves,
+  useBrasao,
+  useEnviarBrasao,
+  useEnviarFotoDePerfil,
+  useFotoDePerfil,
+  useRedefinirSenhaDeServidor,
+  useRemoverBrasao,
+  useRemoverFotoDePerfil,
+  useSalvarTextosDoTimbre,
+  useTimbre,
+} from "@/lib/api/hooks"
 
 /**
  * A foto vem de rota autenticada e vira object URL. O que se verifica aqui é o
@@ -18,7 +29,15 @@ vi.mock("@/lib/api/avatar-client", () => ({
   enviarFotoDePerfil: vi.fn(),
   removerFotoDePerfil: vi.fn(),
 }))
-vi.mock("@/lib/api/access-client", () => ({ redefinirSenhaDeUsuario: vi.fn() }))
+vi.mock("@/lib/api/access-client", () => ({
+  redefinirSenhaDeUsuario: vi.fn(),
+  revelarCpf: vi.fn(),
+  obterTimbre: vi.fn(),
+  obterBrasao: vi.fn(),
+  salvarTextosDoTimbre: vi.fn(),
+  enviarBrasao: vi.fn(),
+  removerBrasao: vi.fn(),
+}))
 
 function ambiente() {
   const queryClient = new QueryClient({
@@ -127,5 +146,73 @@ describe("useRedefinirSenhaDeServidor", () => {
 
     await waitFor(() => expect(result.current.data).toBe("aBcD3fGh4JkLmN5p"))
     expect(invalidou).not.toHaveBeenCalled()
+  })
+})
+
+describe("timbre do órgão", () => {
+  const ORGAO = "1b7c8e10-2d3f-4a5b-8c9d-0e1f2a3b4c5d"
+  const TIMBRE = { temBrasao: true, cabecalho: "PREFEITURA", rodape: "Rua Principal", versao: 2 }
+
+  it("lê o timbre da prefeitura indicada", async () => {
+    vi.mocked(acesso.obterTimbre).mockResolvedValue(TIMBRE)
+    const { wrapper } = ambiente()
+
+    const { result } = renderHook(() => useTimbre(ORGAO), { wrapper })
+
+    await waitFor(() => expect(result.current.data).toEqual(TIMBRE))
+    expect(acesso.obterTimbre).toHaveBeenCalledWith(ORGAO)
+  })
+
+  it("sem prefeitura não pergunta nada — o admin geral não tem órgão", () => {
+    const { wrapper } = ambiente()
+
+    renderHook(() => useTimbre(undefined), { wrapper })
+
+    expect(acesso.obterTimbre).not.toHaveBeenCalled()
+  })
+
+  it("não busca o brasão de quem não tem", () => {
+    const { wrapper } = ambiente()
+
+    renderHook(() => useBrasao(ORGAO, false), { wrapper })
+
+    // Sem isto, toda abertura da tela pediria uma imagem que dá 404.
+    expect(acesso.obterBrasao).not.toHaveBeenCalled()
+  })
+
+  it("o brasão vira URL utilizável em <img>", async () => {
+    vi.mocked(acesso.obterBrasao).mockResolvedValue(new Blob(["x"]))
+    const { wrapper } = ambiente()
+
+    const { result } = renderHook(() => useBrasao(ORGAO, true), { wrapper })
+
+    await waitFor(() => expect(result.current).toBe("blob:foto-1"))
+  })
+
+  it("salvar os textos grava o timbre novo em cache, sem recarregar", async () => {
+    vi.mocked(acesso.salvarTextosDoTimbre).mockResolvedValue(TIMBRE)
+    const { wrapper } = ambiente()
+
+    const { result } = renderHook(() => useSalvarTextosDoTimbre(ORGAO), { wrapper })
+    result.current.mutate({ cabecalho: "A", rodape: "B" })
+
+    await waitFor(() => expect(result.current.data).toEqual(TIMBRE))
+    expect(acesso.salvarTextosDoTimbre).toHaveBeenCalledWith(ORGAO, "A", "B")
+  })
+
+  it("enviar e remover o brasão recarregam a imagem, não a listagem", async () => {
+    vi.mocked(acesso.enviarBrasao).mockResolvedValue(TIMBRE)
+    vi.mocked(acesso.removerBrasao).mockResolvedValue({ ...TIMBRE, temBrasao: false })
+    const { wrapper, invalidou } = ambiente()
+
+    const enviar = renderHook(() => useEnviarBrasao(ORGAO), { wrapper })
+    enviar.result.current.mutate(new File(["x"], "brasao.png", { type: "image/png" }))
+    await waitFor(() =>
+      expect(invalidou).toHaveBeenCalledWith({ queryKey: chaves.brasao(ORGAO) }),
+    )
+
+    const remover = renderHook(() => useRemoverBrasao(ORGAO), { wrapper })
+    remover.result.current.mutate()
+    await waitFor(() => expect(remover.result.current.data?.temBrasao).toBe(false))
   })
 })
