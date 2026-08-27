@@ -138,6 +138,8 @@ describe("verificacaoDoProcesso", () => {
       unidade: "RESMA",
       quantidade: 1200,
       valorEstimado: 28800,
+      // Sem declaração, o item não tem nota — e ausente é diferente de vazia.
+      notaDeclarada: undefined,
     })
   })
 
@@ -146,9 +148,14 @@ describe("verificacaoDoProcesso", () => {
       http.get(`${urlDaApi}/procurement-processes/${PROCESSO_ID}/pca`, () =>
         HttpResponse.json(
           verificacaoApi({
-            declaredNote: "Conferido no portal.",
             findings: [
-              { demand: "Cimento", foreseen: true, kind: "DECLARED", code: "2026-0731" },
+              {
+                demand: "Cimento",
+                foreseen: true,
+                kind: "DECLARED",
+                code: "2026-0731",
+                declaredNote: "Conferido no portal.",
+              },
             ],
           }),
         ),
@@ -163,7 +170,8 @@ describe("verificacaoDoProcesso", () => {
     expect(verificacao.achados[0]?.forma).toBe("DECLARADA")
     expect(FORMA_DA_PREVISAO.DECLARADA.rotulo).toBe("Informado por você")
     expect(FORMA_DA_PREVISAO.TERMOS.rotulo).toBe("Encontrado no PCA")
-    expect(verificacao.notaDeclarada).toBe("Conferido no portal.")
+    // A nota é do item, e não uma por processo colada em todos (ADR-038).
+    expect(verificacao.achados[0]?.notaDeclarada).toBe("Conferido no portal.")
   })
 
   it("item sem previsão chega sem forma e sem código", async () => {
@@ -203,9 +211,17 @@ describe("declararPrevisao", () => {
     )
     const { declararPrevisao } = await carregarClienteLimpo()
 
-    await declararPrevisao(PROCESSO_ID, { codigo: "2026-0731", nota: "  no portal  " })
+    await declararPrevisao(PROCESSO_ID, {
+      demanda: "Cimento CP-II 50 kg",
+      codigo: "2026-0731",
+      nota: "  no portal  ",
+    })
 
-    expect(corpo).toEqual({ itemCode: "2026-0731", note: "no portal" })
+    expect(corpo).toEqual({
+      demand: "Cimento CP-II 50 kg",
+      itemCode: "2026-0731",
+      note: "no portal",
+    })
   })
 
   it("nota em branco vira ausente, e não uma anotação com espaços", async () => {
@@ -218,11 +234,11 @@ describe("declararPrevisao", () => {
     )
     const { declararPrevisao } = await carregarClienteLimpo()
 
-    await declararPrevisao(PROCESSO_ID, { codigo: "2026-0731", nota: "   " })
-    expect(corpo).toEqual({ itemCode: "2026-0731", note: null })
+    await declararPrevisao(PROCESSO_ID, { demanda: "Cimento", codigo: "2026-0731", nota: "   " })
+    expect(corpo).toEqual({ demand: "Cimento", itemCode: "2026-0731", note: null })
 
-    await declararPrevisao(PROCESSO_ID, { codigo: "2026-0731" })
-    expect(corpo).toEqual({ itemCode: "2026-0731", note: null })
+    await declararPrevisao(PROCESSO_ID, { demanda: "Cimento", codigo: "2026-0731" })
+    expect(corpo).toEqual({ demand: "Cimento", itemCode: "2026-0731", note: null })
   })
 })
 

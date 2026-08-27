@@ -390,6 +390,11 @@
       },
       "DeclarePcaForesightRequest" : {
         "properties" : {
+          "demand" : {
+            "maxLength" : 500,
+            "minLength" : 0,
+            "type" : "string"
+          },
           "itemCode" : {
             "maxLength" : 40,
             "minLength" : 0,
@@ -401,7 +406,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "itemCode" ],
+        "required" : [ "demand", "itemCode" ],
         "type" : "object"
       },
       "DemandConsolidationResponse" : {
@@ -677,6 +682,9 @@
       "FindingResponse" : {
         "properties" : {
           "code" : {
+            "type" : "string"
+          },
+          "declaredNote" : {
             "type" : "string"
           },
           "demand" : {
@@ -1053,9 +1061,6 @@
             "type" : "boolean"
           },
           "citation" : {
-            "type" : "string"
-          },
-          "declaredNote" : {
             "type" : "string"
           },
           "exerciseYear" : {

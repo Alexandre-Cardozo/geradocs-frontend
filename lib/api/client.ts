@@ -462,10 +462,10 @@ export async function getVerificacaoPca(processoId: string) {
   return verificacaoDoProcesso(processoId)
 }
 
-/** O servidor informa o item do PCA que a busca não encontrou. */
+/** O servidor informa o item do PCA de uma demanda que a busca não encontrou. */
 export async function declararPrevisaoNoPca(
   processoId: string,
-  entrada: { codigo: string; nota?: string },
+  entrada: { demanda: string; codigo: string; nota?: string },
 ) {
   return declararPrevisao(processoId, entrada)
 }

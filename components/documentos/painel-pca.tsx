@@ -36,14 +36,13 @@ export function PainelPca({
 }) {
   const { verificacao, marcar, citar } = usePrevisaoNoPca(processoId, tipo)
   const showToast = useToast()
-  const [marcando, setMarcando] = useState(false)
+  // A demanda que está sendo informada; nula quando não há formulário aberto.
+  // Era um formulário só por processo, e a declaração valia para qualquer item
+  // não encontrado — com todos encontrados, ela não se ligava a nada (ADR-038).
+  const [informando, setInformando] = useState<string | null>(null)
   const [codigo, setCodigo] = useState("")
   const [nota, setNota] = useState("")
-  const codigoId = useId()
-  const notaId = useId()
   const motivoId = useId()
-
-  const codigoVazio = codigo.trim() === ""
 
   if (verificacao.isPending) {
     return (
@@ -104,6 +103,50 @@ export function PainelPca({
                 className="rounded-xl border border-border bg-surface px-4 py-3"
               >
                 <ItemDoPca achado={achado} />
+                {informando === achado.demanda ? (
+                  <FormularioDaPrevisao
+                    codigo={codigo}
+                    nota={nota}
+                    pendente={marcar.isPending}
+                    onCodigo={setCodigo}
+                    onNota={setNota}
+                    onCancelar={() => setInformando(null)}
+                    onRegistrar={() =>
+                      marcar.mutate(
+                        { demanda: achado.demanda, codigo: codigo.trim(), nota },
+                        {
+                          onSuccess: () => {
+                            setInformando(null)
+                            showToast(`Previsão de ${achado.demanda} informada e registrada como sua.`)
+                          },
+                        },
+                      )
+                    }
+                  />
+                ) : (
+                  <div className="mt-2">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => {
+                        setInformando(achado.demanda)
+                        setCodigo(achado.forma === "DECLARADA" ? (achado.codigo ?? "") : "")
+                        setNota(achado.notaDeclarada ?? "")
+                      }}
+                    >
+                      {/*
+                        Item já encontrado no plano não precisa de declaração: a
+                        ação existe para corrigir o que a plataforma achou
+                        errado, e para informar o que ela não achou.
+                      */}
+                      {achado.forma === "DECLARADA"
+                        ? "Corrigir o item informado"
+                        : achado.previsto
+                          ? "Informar outro item do plano"
+                          : "Informar o item do PCA"}
+                    </Button>
+                  </div>
+                )}
               </li>
             ))}
           </ul>
@@ -124,85 +167,25 @@ export function PainelPca({
           </InfoBanner>
         )}
 
-        {marcando ? (
-          <div className="flex flex-col gap-3">
-            <FormField label="Item do PCA" htmlFor={codigoId} required>
-              <Input
-                id={codigoId}
-                value={codigo}
-                onChange={(e) => setCodigo(e.target.value)}
-                placeholder="2026-0142"
-              />
-            </FormField>
-            <FormField label="Onde você conferiu (opcional)" htmlFor={notaId}>
-              <Textarea
-                id={notaId}
-                value={nota}
-                onChange={(e) => setNota(e.target.value)}
-                placeholder="Ex.: consultado no portal da transparência do município."
-                rows={2}
-              />
-            </FormField>
-            <p id={motivoId} className="m-0 text-xs text-text-muted">
-              {codigoVazio
-                ? "Informe o item do plano: “está no PCA” sem dizer onde não demonstra a previsão."
-                : "A plataforma registra que esta previsão foi informada por você, e não conferida por ela."}
+        <div className="flex flex-wrap gap-2.5">
+          <Button
+            disabled={!dados.citavel || citar.isPending}
+            ariaDescribedBy={dados.citavel ? undefined : motivoId}
+            onClick={() =>
+              citar.mutate(undefined, {
+                onSuccess: () => showToast("Previsão citada na seção."),
+              })
+            }
+          >
+            Citar na seção
+          </Button>
+          {!dados.citavel && (
+            <p id={motivoId} className="m-0 self-center text-xs text-text-muted">
+              Não há item a citar: informe o item do plano na linha do item, ou escreva a
+              justificativa da contratação não prevista.
             </p>
-            <div className="flex flex-wrap gap-2.5">
-              <Button
-                disabled={marcar.isPending || codigoVazio}
-                ariaDescribedBy={motivoId}
-                onClick={() =>
-                  marcar.mutate(
-                    { codigo: codigo.trim(), nota },
-                    {
-                      onSuccess: () => {
-                        setMarcando(false)
-                        showToast("Previsão informada e registrada como sua.")
-                      },
-                    },
-                  )
-                }
-              >
-                Registrar item informado
-              </Button>
-              <Button variant="ghost" disabled={marcar.isPending} onClick={() => setMarcando(false)}>
-                Cancelar
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="flex flex-wrap gap-2.5">
-            <Button
-              disabled={!dados.citavel || citar.isPending}
-              ariaDescribedBy={dados.citavel ? undefined : motivoId}
-              onClick={() =>
-                citar.mutate(undefined, {
-                  onSuccess: () => showToast("Previsão citada na seção."),
-                })
-              }
-            >
-              Citar na seção
-            </Button>
-            <Button variant="secondary" onClick={() => setMarcando(true)}>
-              {dados.notaDeclarada || dados.achados.some((a) => a.forma === "DECLARADA")
-                ? "Corrigir o item informado"
-                : "Informar o item do PCA"}
-            </Button>
-            {!dados.citavel && (
-              <p id={motivoId} className="m-0 self-center text-xs text-text-muted">
-                Não há item a citar: informe o item do plano ou escreva a justificativa da
-                contratação não prevista.
-              </p>
-            )}
-          </div>
-        )}
-
-        {dados.notaDeclarada && (
-          <p className="m-0 text-xs text-text-muted">
-            Sua anotação: <em>{dados.notaDeclarada}</em>
-          </p>
-        )}
+          )}
+        </div>
 
         {dados.citacao && (
           <div className="flex flex-col gap-1.5">
@@ -241,6 +224,71 @@ function ItemDoPca({ achado }: { achado: AchadoDoPca }) {
         {achado.valorEstimado != null && ` · ${formatBRL(achado.valorEstimado)}`}
       </p>
       <p className="m-0 mt-0.5 text-xs text-text-muted">{forma.explicacao}</p>
+      {achado.notaDeclarada && (
+        <p className="m-0 mt-0.5 text-xs text-text-muted">
+          Sua anotação: <em>{achado.notaDeclarada}</em>
+        </p>
+      )}
     </>
+  )
+}
+
+/** Informar o item do plano correspondente a uma demanda. */
+function FormularioDaPrevisao({
+  codigo,
+  nota,
+  pendente,
+  onCodigo,
+  onNota,
+  onRegistrar,
+  onCancelar,
+}: {
+  codigo: string
+  nota: string
+  pendente: boolean
+  onCodigo: (v: string) => void
+  onNota: (v: string) => void
+  onRegistrar: () => void
+  onCancelar: () => void
+}) {
+  const codigoId = useId()
+  const notaId = useId()
+  const motivoId = useId()
+  const vazio = codigo.trim() === ""
+
+  return (
+    <div className="mt-3 flex flex-col gap-3 border-t border-border-soft pt-3">
+      <FormField label="Item do PCA" htmlFor={codigoId} required>
+        <Input
+          id={codigoId}
+          value={codigo}
+          onChange={(e) => onCodigo(e.target.value)}
+          placeholder="2026-0142"
+          autoFocus
+        />
+      </FormField>
+      <FormField label="Onde você conferiu (opcional)" htmlFor={notaId}>
+        <Textarea
+          id={notaId}
+          value={nota}
+          onChange={(e) => onNota(e.target.value)}
+          placeholder="Ex.: consultado no portal da transparência do município."
+          rows={2}
+        />
+      </FormField>
+      <p id={motivoId} className="m-0 text-xs text-text-muted">
+        {vazio
+          ? "Informe o item do plano: “está no PCA” sem dizer onde não demonstra a previsão."
+          : "A plataforma registra que esta previsão foi informada por você, e não conferida por ela."}
+      </p>
+      <div className="flex flex-wrap gap-2.5">
+        <Button size="sm" disabled={pendente || vazio} ariaDescribedBy={motivoId} onClick={onRegistrar}>
+          {pendente ? "Registrando..." : "Registrar item informado"}
+        </Button>
+        <Button size="sm" variant="ghost" disabled={pendente} onClick={onCancelar}>
+          Cancelar
+        </Button>
+      </div>
+    </div>
   )
 }

@@ -391,7 +391,7 @@ export function usePrevisaoNoPca(processoId: string, tipo: TipoDocumento) {
     enabled: processoId !== "",
   })
   const marcar = useMutation({
-    mutationFn: (entrada: { codigo: string; nota?: string }) =>
+    mutationFn: (entrada: { demanda: string; codigo: string; nota?: string }) =>
       api.declararPrevisaoNoPca(processoId, entrada),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: chave })

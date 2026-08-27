@@ -123,9 +123,16 @@ describe("painel de previsão no PCA", () => {
   it("o que o servidor informou não se confunde com o que a plataforma encontrou", async () => {
     responder(
       verificacao({
-        declaredNote: "Conferido no portal do município.",
         findings: [
-          { demand: "Cimento CP-II 50 kg", foreseen: true, kind: "DECLARED", code: "2026-0731" },
+          {
+            demand: "Cimento CP-II 50 kg",
+            foreseen: true,
+            kind: "DECLARED",
+            code: "2026-0731",
+            // A nota é do item: era uma por processo, e a tela a mostrava
+            // colada em todos (ADR-038).
+            declaredNote: "Conferido no portal do município.",
+          },
         ],
       }),
     )
@@ -169,7 +176,14 @@ describe("painel de previsão no PCA", () => {
     await userEvent.type(screen.getByLabelText(/Item do PCA/), "2026-0731")
     await userEvent.click(screen.getByRole("button", { name: "Registrar item informado" }))
 
-    await waitFor(() => expect(enviado).toEqual({ itemCode: "2026-0731", note: null }))
+    // A demanda vai junto: a declaração é dela, e não do processo inteiro.
+    await waitFor(() =>
+      expect(enviado).toEqual({
+        demand: "Cimento CP-II 50 kg",
+        itemCode: "2026-0731",
+        note: null,
+      }),
+    )
   })
 
   it("a citação aparece para leitura antes de ir para o documento", async () => {
@@ -201,5 +215,59 @@ describe("painel de previsão no PCA", () => {
     renderizar(painel())
 
     expect(await screen.findByText(/escrever a seção mesmo assim/)).toBeInTheDocument()
+  })
+
+  it("cada item tem a sua declaração — informar um não marca o outro", async () => {
+    responder(
+      verificacao({
+        plan: null,
+        foreseen: false,
+        citable: false,
+        citation: undefined,
+        findings: [
+          { demand: "Cimento CP-II 50 kg", foreseen: false },
+          { demand: "Areia lavada", foreseen: false },
+        ],
+      }),
+    )
+    let enviado: Record<string, unknown> | undefined
+    servidor.use(
+      http.post(
+        `${urlDaApi}/procurement-processes/${PROCESSO}/pca/declaration`,
+        async ({ request }) => {
+          enviado = (await request.json()) as Record<string, unknown>
+          return HttpResponse.json(verificacao())
+        },
+      ),
+    )
+    renderizar(painel())
+
+    // Havia um formulário só para o processo inteiro: com dois itens fora do
+    // plano, informar um código marcava os dois com o mesmo item (ADR-038).
+    const acoes = await screen.findAllByRole("button", { name: "Informar o item do PCA" })
+    expect(acoes).toHaveLength(2)
+
+    await userEvent.click(acoes[1]!)
+    await userEvent.type(screen.getByLabelText(/Item do PCA/), "2026-0999")
+    await userEvent.click(screen.getByRole("button", { name: "Registrar item informado" }))
+
+    await waitFor(() => expect(enviado?.demand).toBe("Areia lavada"))
+  })
+
+  it("item já encontrado oferece corrigir, e não informar do zero", async () => {
+    responder(
+      verificacao({
+        findings: [
+          { demand: "Papel A4", foreseen: true, kind: "TERMS", code: "2026-0142" },
+        ],
+      }),
+    )
+    renderizar(painel())
+
+    // A ação continua existindo: a busca pode ter apontado o item errado, e
+    // corrigir é diferente de informar o que ela não achou.
+    expect(
+      await screen.findByRole("button", { name: "Informar outro item do plano" }),
+    ).toBeInTheDocument()
   })
 })

@@ -64,6 +64,13 @@ export interface AchadoDoPca {
   unidade?: string;
   quantidade?: number;
   valorEstimado?: number;
+  /**
+   * O que o servidor escreveu ao informar a previsão **desta** demanda.
+   *
+   * <p>Era uma nota por processo, e a tela a mostrava colada em todos os itens.
+   * Agora cada item responde pela sua (ADR-038).
+   */
+  notaDeclarada?: string;
 }
 
 export interface VerificacaoPca {
@@ -83,7 +90,6 @@ export interface VerificacaoPca {
   citavel: boolean;
   /** O parágrafo que entra na seção, para a pessoa ler antes de gravar. */
   citacao?: string;
-  notaDeclarada?: string;
   achados: AchadoDoPca[];
 }
 
@@ -102,7 +108,6 @@ interface VerificacaoApi {
   foreseen: boolean;
   citable: boolean;
   citation?: string;
-  declaredNote?: string;
   findings: {
     demand: string;
     foreseen: boolean;
@@ -112,6 +117,7 @@ interface VerificacaoApi {
     unit?: string;
     quantity?: number;
     estimatedValue?: number;
+    declaredNote?: string;
   }[];
 }
 
@@ -133,7 +139,6 @@ function mapear(resposta: VerificacaoApi): VerificacaoPca {
     previsto: resposta.foreseen,
     citavel: resposta.citable,
     citacao: resposta.citation,
-    notaDeclarada: resposta.declaredNote,
     achados: resposta.findings.map((achado) => ({
       demanda: achado.demand,
       previsto: achado.foreseen,
@@ -143,6 +148,7 @@ function mapear(resposta: VerificacaoApi): VerificacaoPca {
       unidade: achado.unit,
       quantidade: achado.quantity,
       valorEstimado: achado.estimatedValue,
+      notaDeclarada: achado.declaredNote,
     })),
   };
 }
@@ -200,10 +206,16 @@ export async function verificacaoDoProcesso(processoId: string): Promise<Verific
   );
 }
 
-/** O servidor informa o item do PCA que a busca não encontrou. */
+/**
+ * O servidor informa o item do PCA de **uma** demanda que a busca não encontrou.
+ *
+ * <p>A demanda vai junto porque a declaração é dela: era uma por processo,
+ * aplicada a qualquer item não encontrado — com dois itens fora do plano, os
+ * dois ficavam marcados com o mesmo item (ADR-038).
+ */
 export async function declararPrevisao(
   processoId: string,
-  entrada: { codigo: string; nota?: string },
+  entrada: { demanda: string; codigo: string; nota?: string },
 ): Promise<VerificacaoPca> {
   return mapear(
     await requisicaoProtegida<VerificacaoApi>(
@@ -211,6 +223,7 @@ export async function declararPrevisao(
       {
         method: "POST",
         body: JSON.stringify({
+          demand: entrada.demanda,
           itemCode: entrada.codigo,
           note: entrada.nota?.trim() ? entrada.nota.trim() : null,
         }),

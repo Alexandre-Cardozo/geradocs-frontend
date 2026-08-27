@@ -981,6 +981,7 @@ export interface components {
             reason: string;
         };
         DeclarePcaForesightRequest: {
+            demand: string;
             itemCode: string;
             note?: string;
         };
@@ -1077,6 +1078,7 @@ export interface components {
         };
         FindingResponse: {
             code?: string;
+            declaredNote?: string;
             demand: string;
             description?: string;
             estimatedValue?: number;
@@ -1223,7 +1225,6 @@ export interface components {
         PcaVerificationResponse: {
             citable: boolean;
             citation?: string;
-            declaredNote?: string;
             /** Format: int32 */
             exerciseYear: number;
             findings: components["schemas"]["FindingResponse"][];

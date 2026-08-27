@@ -421,7 +421,7 @@ describe("previsão no PCA", () => {
     vi.mocked(api.declararPrevisaoNoPca).mockResolvedValue({} as never)
 
     const { result } = renderHook(() => hooks.usePrevisaoNoPca(PROCESSO, "ETP"), { wrapper })
-    result.current.marcar.mutate({ codigo: "2026-0142" })
+    result.current.marcar.mutate({ demanda: "Papel A4", codigo: "2026-0142" })
 
     await waitFor(() =>
       expect(invalidadas(invalidou)).toContain(chave(["previsao-pca", PROCESSO])),
