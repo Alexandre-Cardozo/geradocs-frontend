@@ -67,6 +67,7 @@ import {
   declararPrevisao,
   importarPlano,
   planoVigente,
+  planosDoOrgao,
   verificacaoDoProcesso,
 } from "@/lib/api/pca-client"
 import { baixarArquivo, gerarArquivos } from "@/lib/api/generation-client"
@@ -475,9 +476,14 @@ export async function citarPcaNaSecao(processoId: string) {
   return citarNaSecao(processoId)
 }
 
-/** O plano vigente do órgão; `null` enquanto nenhum tiver sido anexado. */
+/** O plano do exercício corrente; `null` enquanto não houver um. */
 export async function getPlanoPca() {
   return planoVigente()
+}
+
+/** Todos os planos do órgão, do exercício mais recente para o mais antigo. */
+export async function getPlanosPca() {
+  return planosDoOrgao()
 }
 
 export async function importarPlanoPca(entrada: {

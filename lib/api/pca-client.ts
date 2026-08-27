@@ -58,7 +58,16 @@ export interface AchadoDoPca {
 }
 
 export interface VerificacaoPca {
+  /** O plano do exercício do processo; `null` quando não há um importado. */
   plano: PlanoPca | null;
+  /**
+   * O exercício do processo — o ano em que ele foi aberto.
+   *
+   * É o PCA **deste** ano que a plataforma consulta, e é ele que precisa
+   * existir. Um plano de outro exercício não demonstra a previsão desta
+   * contratação, e a tela diz isso em vez de usar o que tiver à mão.
+   */
+  exercicio: number;
   /** Toda a demanda tem item no plano. */
   previsto: boolean;
   /** Há ao menos um item a citar — é o que habilita o botão. */
@@ -78,6 +87,7 @@ interface PlanoApi {
 
 interface VerificacaoApi {
   plan?: PlanoApi | null;
+  exerciseYear: number;
   foreseen: boolean;
   citable: boolean;
   citation?: string;
@@ -106,6 +116,7 @@ function mapearPlano(plano: PlanoApi): PlanoPca {
 function mapear(resposta: VerificacaoApi): VerificacaoPca {
   return {
     plano: resposta.plan ? mapearPlano(resposta.plan) : null,
+    exercicio: resposta.exerciseYear,
     previsto: resposta.foreseen,
     citavel: resposta.citable,
     citacao: resposta.citation,
@@ -124,7 +135,7 @@ function mapear(resposta: VerificacaoApi): VerificacaoPca {
 }
 
 /**
- * O plano vigente do órgão; `null` quando ainda não anexaram nenhum.
+ * O plano do **exercício corrente**; `null` quando não há um importado.
  *
  * O servidor responde 204 nesse caso, e a requisição devolve `undefined` — que
  * é diferente de um plano com zero itens, e a tela precisa dessa diferença.
@@ -132,6 +143,12 @@ function mapear(resposta: VerificacaoApi): VerificacaoPca {
 export async function planoVigente(): Promise<PlanoPca | null> {
   const plano = await requisicaoProtegida<PlanoApi | undefined>("/pca-plan");
   return plano ? mapearPlano(plano) : null;
+}
+
+/** Todos os planos do órgão, do exercício mais recente para o mais antigo. */
+export async function planosDoOrgao(): Promise<PlanoPca[]> {
+  const planos = await requisicaoProtegida<PlanoApi[]>("/pca-plans");
+  return planos.map(mapearPlano);
 }
 
 export async function importarPlano(entrada: {

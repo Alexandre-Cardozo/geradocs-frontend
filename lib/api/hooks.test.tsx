@@ -443,16 +443,16 @@ describe("previsão no PCA", () => {
     expect(invalidadas(invalidou)).toContain(chave(["previsao-pca", PROCESSO]))
   })
 
-  it("importar o plano recarrega o plano e as verificações que dependem dele", async () => {
+  it("importar o plano recarrega os planos e as verificações que dependem deles", async () => {
     const { wrapper, invalidou } = ambiente()
-    vi.mocked(api.getPlanoPca).mockResolvedValue(null as never)
+    vi.mocked(api.getPlanosPca).mockResolvedValue([] as never)
     vi.mocked(api.importarPlanoPca).mockResolvedValue({ ano: 2026 } as never)
 
-    const { result } = renderHook(() => hooks.usePlanoPca(), { wrapper })
-    await waitFor(() => expect(api.getPlanoPca).toHaveBeenCalled())
+    const { result } = renderHook(() => hooks.usePlanosPca(), { wrapper })
+    await waitFor(() => expect(api.getPlanosPca).toHaveBeenCalled())
     result.current.importar.mutate({ ano: 2026, arquivo: "pca.csv", conteudo: "1;Papel" })
 
-    await waitFor(() => expect(invalidadas(invalidou)).toContain(chave(["plano-pca"])))
+    await waitFor(() => expect(invalidadas(invalidou)).toContain(chave(["planos-pca"])))
     // Sem isto, a seção do inciso II continuaria dizendo "nenhum PCA anexado"
     // depois de a pessoa anexar um.
     expect(invalidadas(invalidou)).toContain(chave(["previsao-pca"]))

@@ -37,6 +37,7 @@ const PLANO = {
 function verificacao(sobrescrever: Record<string, unknown> = {}) {
   return {
     plan: PLANO,
+    exerciseYear: 2026,
     foreseen: true,
     citable: true,
     citation: "A presente contratação está prevista no Plano de Contratações Anual de 2026.",
@@ -114,7 +115,9 @@ describe("painel de previsão no PCA", () => {
     // pelo teclado ouviria "desabilitado" e não descobriria a saída.
     expect(citar).toHaveAttribute("aria-describedby")
     expect(screen.getByText(/informe o item do plano/i)).toBeInTheDocument()
-    expect(screen.getByText(/Nenhum PCA anexado a este órgão/)).toBeInTheDocument()
+    // O ano é dito: o plano que falta é o de 2026, e pode existir um de outro
+    // exercício — que não demonstra a previsão desta contratação.
+    expect(screen.getByText(/Nenhum PCA de 2026 anexado a este órgão/)).toBeInTheDocument()
   })
 
   it("o que o servidor informou não se confunde com o que a plataforma encontrou", async () => {

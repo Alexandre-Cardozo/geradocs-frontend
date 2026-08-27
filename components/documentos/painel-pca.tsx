@@ -74,12 +74,22 @@ export function PainelPca({
             {dados.plano.itensIndexados} itens indexados.
           </p>
         ) : (
+          /*
+            O ano é dito porque é ele que resolve: o PCA de um exercício
+            descreve o que o órgão pretende contratar naquele ano, e é contra o
+            plano do exercício **deste processo** que a previsão se demonstra.
+            "Nenhum PCA anexado" mandava procurar um plano que podia até existir,
+            só que de outro ano.
+          */
           <InfoBanner tone="info">
-            <div className="font-semibold">Nenhum PCA anexado a este órgão.</div>
+            <div className="font-semibold">
+              Nenhum PCA de {dados.exercicio} anexado a este órgão.
+            </div>
             <p className="m-0 mt-1">
-              Sem o plano, a plataforma não tem onde procurar.{" "}
+              Este processo é do exercício de {dados.exercicio}, e é no plano desse ano que a
+              previsão se demonstra.{" "}
               <Link href="/configuracoes/pca" className="underline">
-                Anexe o PCA em Configurações
+                Anexe o PCA de {dados.exercicio} em Configurações
               </Link>{" "}
               ou informe abaixo o item em que a contratação está prevista.
             </p>

@@ -1080,6 +1080,10 @@
           "declaredNote" : {
             "type" : "string"
           },
+          "exerciseYear" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
           "findings" : {
             "items" : {
               "$ref" : "#/components/schemas/FindingResponse"
@@ -1093,7 +1097,7 @@
             "$ref" : "#/components/schemas/PcaPlanResponse"
           }
         },
-        "required" : [ "citable", "findings", "foreseen" ],
+        "required" : [ "citable", "exerciseYear", "findings", "foreseen" ],
         "type" : "object"
       },
       "ProcessDfdResponse" : {
@@ -2529,6 +2533,27 @@
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/PcaPlanResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "pca-controller" ]
+      }
+    },
+    "/api/v1/pca-plans" : {
+      "get" : {
+        "operationId" : "plans",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/PcaPlanResponse"
+                  },
+                  "type" : "array"
                 }
               }
             },

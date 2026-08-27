@@ -685,3 +685,17 @@ A tela pedia mouse para cada secretaria: digitar, largar o teclado, clicar. E o 
 
 **`Input` do DS ganhou `ariaLabel` e `autoFocus`.** O campo da edição não vive dentro de um `FormField` — o rótulo dele é a linha que está sendo editada —, e sem nome acessível chegaria ao leitor de tela como "caixa de edição" e nada mais; `placeholder` não é nome. A precedência já existia no `useRotuloDoCampo`: `aria-label` escrito à mão vence o rótulo visível, porque `aria-labelledby` sobrepõe `aria-label` e deixar os dois faria o texto à mão ser ignorado em silêncio. O campo de cadastro, que também não tinha nome nenhum, ganhou o seu no caminho.
 
+## 49. O PCA consultado é o do exercício do processo, e a tela mostra os exercícios
+
+A tela de PCA mostrava **um** plano e dizia "PCA do exercício"; o servidor, por baixo, consultava `latestPlan` — o plano de **maior ano** já importado, qualquer que fosse o processo. As duas coisas juntas produziam dois erros silenciosos: um processo de 2026 verificado contra o PCA de 2027 recém-importado, e um processo de 2027 verificado contra o PCA de 2026 porque o do ano ainda não existia.
+
+**A pergunta foi pesquisada antes de programar.** O PCA de um exercício é elaborado no ano anterior (Decreto 10.947/2022) e descreve o que o órgão pretende contratar **naquele** ano; o ETP demonstra a previsão "no plano de contratações anual, **sempre que elaborado**" (Art. 18, § 1º, II). Item não previsto entra no plano **do próprio ano**, por revisão justificada — não se recorre ao plano do ano anterior. Logo, citar o PCA de 2026 numa contratação de 2027 não é um arredondamento: é afirmar uma previsão que aquele plano não faz.
+
+**Decisão: a verificação usa o plano do exercício do processo**, e o exercício é o ano em que o processo foi aberto — não o ano de hoje. Isso resolve o caso legítimo que existe (o processo aberto em dezembro de 2026 e concluído em janeiro de 2027 demonstra previsão no PCA de 2026) e **mantém a citação estável**: gerar de novo, em 2028, o documento de um processo de 2026 devolve a mesma citação. Amarrar ao calendário faria a citação de uma peça já assinada mudar de significado sozinha.
+
+**Sem plano do exercício, não há queda para outro ano.** O painel do inciso II passou a dizer qual ano falta — "Nenhum PCA de 2027 anexado" —, porque "nenhum PCA anexado" mandava procurar um plano que podia até existir, só que de outro exercício. O caminho continua sendo o mesmo: informar o item à mão, com a justificativa visível.
+
+**A tela virou a lista dos exercícios.** Todos os planos importados aparecem, o do ano corrente vem marcado, e a ausência dele é um aviso — não algo que se descobre processo a processo, no painel do inciso II. Importar sobre um exercício que já tem plano avisa antes do clique que a substituição é integral. Os exercícios anteriores continuam ali porque é neles que os processos daqueles anos demonstram a previsão.
+
+`GET /pca-plans` nasceu para essa lista; `GET /pca-plan` passou a significar "o plano do exercício corrente", que é o que o nome sempre prometeu. `PcaVerificationResponse` ganhou `exerciseYear` — sem ele a tela não teria como dizer qual ano falta.
+

@@ -396,18 +396,26 @@ export function usePrevisaoNoPca(processoId: string, tipo: TipoDocumento) {
 }
 
 /** O PCA do órgão, na tela de configurações. */
-export function usePlanoPca() {
+/**
+ * Os planos do órgão e a importação de um deles.
+ *
+ * <p>Planos no plural: o órgão tem um por exercício, e a tela precisa mostrar
+ * todos para que se veja **qual exercício está coberto** — é isso que separa
+ * "temos PCA" de "temos o PCA do ano em que este processo corre".
+ */
+export function usePlanosPca() {
   const queryClient = useQueryClient()
-  const plano = useQuery({ queryKey: ["plano-pca"], queryFn: () => api.getPlanoPca() })
+  const planos = useQuery({ queryKey: ["planos-pca"], queryFn: () => api.getPlanosPca() })
   const importar = useMutation({
     mutationFn: (entrada: { ano: number; arquivo: string; conteudo: string }) =>
       api.importarPlanoPca(entrada),
     onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["planos-pca"] })
       void queryClient.invalidateQueries({ queryKey: ["plano-pca"] })
       void queryClient.invalidateQueries({ queryKey: ["previsao-pca"] })
     },
   })
-  return { plano, importar }
+  return { planos, importar }
 }
 
 /**

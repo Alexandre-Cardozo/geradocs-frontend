@@ -5,6 +5,7 @@ import { ImportarPca } from "@/components/configuracoes/importar-pca"
 import { urlDaApi } from "@/lib/teste/handlers"
 import { renderizar, screen, userEvent, waitFor } from "@/lib/teste/renderizar"
 import { servidor } from "@/lib/teste/servidor-msw"
+import { anoBrasilia } from "@/lib/format"
 
 /**
  * Anexar o PCA do órgão.
@@ -12,14 +13,31 @@ import { servidor } from "@/lib/teste/servidor-msw"
  * O que a tela promete é o que a plataforma faz: itens **indexados**, e não
  * "arquivo carregado com sucesso". Enquanto só CSV é lido, é isso que a tela
  * aceita — dizer que leu um PDF seria afirmar ter lido o que ninguém leu.
+ *
+ * Os anos saem de `anoBrasilia()`, e não de constantes: o exercício corrente é o
+ * de hoje, e uma suíte que fixa "2026" começa a mentir em 1º de janeiro.
  */
+const EXERCICIO = anoBrasilia()
 const ANOS = [
-  { value: "2026", label: "2026" },
-  { value: "2025", label: "2025" },
+  { value: String(EXERCICIO), label: String(EXERCICIO) },
+  { value: String(EXERCICIO - 1), label: String(EXERCICIO - 1) },
 ]
 
+function comPlanos(planos: unknown[]) {
+  servidor.use(http.get(`${urlDaApi}/pca-plans`, () => HttpResponse.json(planos)))
+}
+
 function semPlano() {
-  servidor.use(http.get(`${urlDaApi}/pca-plan`, () => new HttpResponse(null, { status: 204 })))
+  comPlanos([])
+}
+
+function plano(ano: number, itens = 247) {
+  return {
+    year: ano,
+    sourceFileName: `pca-${ano}.csv`,
+    importedAt: "2026-08-22T12:00:00-03:00",
+    indexedItems: itens,
+  }
 }
 
 function arquivoCsv(nome = "pca-2026.csv") {
@@ -37,21 +55,50 @@ describe("importar o PCA do órgão", () => {
     expect(screen.getByText(/informar o item à mão/)).toBeInTheDocument()
   })
 
-  it("mostra o plano vigente pelo número que importa: itens indexados", async () => {
-    servidor.use(
-      http.get(`${urlDaApi}/pca-plan`, () =>
-        HttpResponse.json({
-          year: 2026,
-          sourceFileName: "pca-2026.csv",
-          importedAt: "2026-08-22T12:00:00-03:00",
-          indexedItems: 247,
-        }),
-      ),
-    )
+  it("mostra o plano pelo número que importa: itens indexados", async () => {
+    comPlanos([plano(EXERCICIO)])
     renderizar(<ImportarPca anos={ANOS} />)
 
-    expect(await screen.findByText("247 itens indexados.")).toBeInTheDocument()
-    expect(screen.getByText("pca-2026.csv")).toBeInTheDocument()
+    expect(await screen.findByText("247 itens indexados")).toBeInTheDocument()
+    // O nome do arquivo aparece na linha do plano e no aviso de substituição;
+    // "importado em" só existe na linha.
+    expect(
+      screen.getByText(new RegExp(`pca-${EXERCICIO}\\.csv · importado em`)),
+    ).toBeInTheDocument()
+    expect(screen.getByText("Exercício corrente")).toBeInTheDocument()
+  })
+
+  it("lista um plano por exercício, do mais recente ao mais antigo", async () => {
+    comPlanos([plano(EXERCICIO), plano(EXERCICIO - 1, 180)])
+    renderizar(<ImportarPca anos={ANOS} />)
+
+    expect(await screen.findByText(`PCA ${EXERCICIO}`)).toBeInTheDocument()
+    expect(screen.getByText(`PCA ${EXERCICIO - 1}`)).toBeInTheDocument()
+    // Só o do ano corrente leva a marca: os anteriores continuam valendo para os
+    // processos daqueles anos, e não para os de hoje.
+    expect(screen.getAllByText("Exercício corrente")).toHaveLength(1)
+  })
+
+  it("com plano só de exercício anterior, avisa que o ano corrente está descoberto", async () => {
+    comPlanos([plano(EXERCICIO - 1)])
+    renderizar(<ImportarPca anos={ANOS} />)
+
+    // O PCA de um exercício descreve o que o órgão pretende contratar naquele
+    // ano: ter o do ano passado não cobre um processo aberto hoje, e descobrir
+    // isso processo a processo, no painel do inciso II, é tarde demais.
+    expect(
+      await screen.findByText(new RegExp(`Não há PCA de ${EXERCICIO}`)),
+    ).toBeInTheDocument()
+  })
+
+  it("importar sobre um exercício que já tem plano avisa antes do clique", async () => {
+    comPlanos([plano(EXERCICIO)])
+    renderizar(<ImportarPca anos={ANOS} />)
+
+    expect(
+      await screen.findByText(new RegExp(`Já existe um PCA de ${EXERCICIO}`)),
+    ).toBeInTheDocument()
+    expect(screen.getByText(/substitui o plano desse exercício por inteiro/)).toBeInTheDocument()
   })
 
   it("o botão só libera com arquivo, e diz o que falta enquanto não há", async () => {
@@ -69,12 +116,7 @@ describe("importar o PCA do órgão", () => {
     servidor.use(
       http.post(`${urlDaApi}/pca-plan`, async ({ request }) => {
         corpo = (await request.json()) as Record<string, unknown>
-        return HttpResponse.json({
-          year: 2026,
-          sourceFileName: "pca-2026.csv",
-          importedAt: "2026-08-22T12:00:00-03:00",
-          indexedItems: 1,
-        })
+        return HttpResponse.json(plano(EXERCICIO, 1))
       }),
     )
     renderizar(<ImportarPca anos={ANOS} />)
@@ -89,7 +131,7 @@ describe("importar o PCA do órgão", () => {
     // arquivo que ela nunca leu.
     await waitFor(() =>
       expect(corpo).toEqual({
-        year: 2026,
+        year: EXERCICIO,
         fileName: "pca-2026.csv",
         content: "2026-0142;Papel A4 75 g/m2;RESMA;1.200;28.800,00",
       }),
