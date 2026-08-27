@@ -8,7 +8,7 @@
  * Vocabulário fixo de status de processo.
  *
  * Três, e não seis: o fluxo de aprovação entre setores acontece no sistema de
- * processo administrativo da prefeitura, não aqui (ADR §24). A plataforma
+ * processo administrativo da entidade, não aqui (ADR §24). A plataforma
  * termina quando os documentos estão prontos — `em_revisao`, `aguardando`,
  * `aprovado` e `rejeitado` descreviam etapas que ela não executa mais.
  */
@@ -73,8 +73,8 @@ export interface ConfigATA {
 export interface Processo {
   /** Formato PROC-AAAA-NNN. */
   id: string
-  /** Prefeitura dona do processo (escopo multi-tenant). */
-  prefeituraId: string
+  /** Entidade dona do processo (escopo multi-tenant). */
+  entidadeId: string
   /** Descrição/nomenclatura do processo — identifica-o no painel, listas e documentos. */
   objeto: string
   /** Objeto da demanda (contratação em si) — trabalha junto com o DFD e alimenta o ETP. */
@@ -196,7 +196,7 @@ export interface ParecerDFD {
  *
  * A trilha sobrevive à remoção do fluxo de aprovação (ADR §24) porque é o único
  * registro do que aconteceu **dentro** da plataforma — o sistema de protocolo da
- * prefeitura só registra o que vem depois.
+ * entidade só registra o que vem depois.
  */
 export type EventoProcesso =
   | "criacao"
@@ -255,7 +255,7 @@ export interface ArquivoDoDocumento {
 export interface DocumentoGerado {
   /** Identificador da geração no servidor. */
   id: string
-  prefeituraId: string
+  entidadeId: string
   processoId: string
   titulo: string
   tipo: TipoDocumento
@@ -300,12 +300,35 @@ export const PERFIL_ACESSO_LABEL: Record<PerfilAcesso, string> = {
   servidor: "Servidor",
 }
 
-/** Dados institucionais de uma prefeitura (tenant). Um tenant = uma prefeitura. */
+/**
+ * O que a entidade é. O servidor guarda o campo e **assume `prefeitura` quando
+ * ele não é informado** — por isso a tela pergunta: cadastrar uma câmara sem
+ * dizer o tipo a gravaria como prefeitura, que é justamente a confusão que o
+ * vocabulário "entidade" veio desfazer.
+ */
+export type TipoEntidade =
+  | "prefeitura"
+  | "camara"
+  | "autarquia"
+  | "fundacao"
+  | "consorcio"
+  | "outro"
+
+export const TIPO_ENTIDADE_LABEL: Record<TipoEntidade, string> = {
+  prefeitura: "Prefeitura",
+  camara: "Câmara",
+  autarquia: "Autarquia",
+  fundacao: "Fundação",
+  consorcio: "Consórcio",
+  outro: "Outro",
+}
+
+/** Dados institucionais de uma entidade (tenant). Um tenant = uma entidade. */
 export interface Tenant {
-  /** Formato PREF-NNN. */
+  /** UUID da organização no servidor. */
   id: string
-  orgao: string
-  unidade: string
+  nome: string
+  tipo: TipoEntidade
   secretarias: Secretaria[]
   /** Nome do arquivo do logotipo/brasão configurado (metadado exibido). */
   logoArquivo: string | null
@@ -316,12 +339,12 @@ export interface Tenant {
   rodape: string
 }
 
-/** Alias documental — o Tenant é a Prefeitura no domínio multi-tenant. */
-export type Prefeitura = Tenant
+/** Alias documental — o Tenant é a Entidade no domínio multi-tenant. */
+export type Entidade = Tenant
 
 /**
  * Usuário do sistema. A senha nunca trafega aqui — fica só no mapa de
- * credenciais do mock. `prefeituraId` é null apenas para o admin geral (LAHHM).
+ * credenciais do mock. `entidadeId` é null apenas para o admin geral (LAHHM).
  */
 export interface Usuario {
   /** Formato USR-NNN. */
@@ -338,8 +361,8 @@ export interface Usuario {
   /** Número do decreto de nomeação — o comissionado costuma lembrar dele, não da matrícula. */
   decretoNomeacao?: string
   perfilAcesso: PerfilAcesso
-  /** Prefeitura a que pertence. null = admin geral (LAHHM, sem prefeitura). */
-  prefeituraId: string | null
+  /** Entidade a que pertence. null = admin geral (LAHHM, sem entidade). */
+  entidadeId: string | null
   /** Secretaria em que atua (nome). */
   secretaria?: string
   /** Último acesso em ISO; atualizado no login. */
@@ -357,8 +380,8 @@ export interface Usuario {
 /** Sessão do usuário logado — o que a interface consome. */
 export interface Sessao {
   usuario: Usuario
-  /** Config da prefeitura do usuário; null para o admin geral. */
-  prefeitura: Tenant | null
+  /** Config da entidade do usuário; null para o admin geral. */
+  entidade: Tenant | null
 }
 
 export interface EstatisticasDashboard {

@@ -29,7 +29,7 @@ describe("rotuloDaVersao", () => {
 describe("retificação", () => {
   it("o título carrega o rótulo, porque o arquivo sai da plataforma", () => {
     // O badge da tela não viaja junto com o arquivo anexado ao processo no
-    // sistema da prefeitura. O título, sim.
+    // sistema da entidade. O título, sim.
     expect(tituloComRotuloDeVersao("ETP — Aquisição de notebooks", 1)).toBe(
       "ETP — Aquisição de notebooks",
     )

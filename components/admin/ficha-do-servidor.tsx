@@ -25,11 +25,11 @@ import { PERFIL_ACESSO_LABEL, type Usuario } from "@/lib/types"
  */
 export function FichaDoServidor({
   servidor,
-  prefeitura,
+  entidade,
   onFechar,
 }: {
   servidor: Usuario
-  prefeitura: string
+  entidade: string
   onFechar: () => void
 }) {
   const redefinir = useRedefinirSenhaDeServidor()
@@ -116,7 +116,7 @@ export function FichaDoServidor({
         <Campo rotulo="E-mail" valor={servidor.email} />
         <Campo rotulo="Matrícula" valor={servidor.matricula ?? "—"} />
         <Campo rotulo="Decreto de nomeação" valor={servidor.decretoNomeacao ?? "—"} />
-        <Campo rotulo="Prefeitura" valor={prefeitura} />
+        <Campo rotulo="Entidade" valor={entidade} />
         <Campo
           rotulo="Último acesso"
           valor={servidor.ultimoAcesso ? formatDataHora(servidor.ultimoAcesso) : "Nunca acessou"}

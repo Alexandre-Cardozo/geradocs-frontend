@@ -2,7 +2,7 @@ import "client-only"
 
 import type { components } from "@/lib/api/gerado/v1"
 import { IDENTIFICADOR, mensagemCredencialRecusada } from "@/lib/auth/identificador"
-import { iniciaisDe, primeiroNome } from "@/lib/dominio"
+import { iniciaisDe, primeiroNome, tipoDaEntidade } from "@/lib/dominio"
 import type { PerfilAcesso, Sessao, Tenant, Usuario } from "@/lib/types"
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1").replace(/\/$/, "")
@@ -218,13 +218,13 @@ function tenantDa(organization: BackendOrganization | null | undefined): Tenant 
   if (!organization?.id) return null
   return {
     id: organization.id,
-    orgao: organization.name ?? "",
-    unidade: organization.unit ?? "",
+    nome: organization.name ?? "",
+    tipo: tipoDaEntidade(organization.entityType),
     secretarias: [],
     logoArquivo: null,
     logoDataUrl: null,
     timbrado: true,
-    cabecalho: `${(organization.name ?? "").toUpperCase()}\n${organization.unit ?? ""}`,
+    cabecalho: (organization.name ?? "").toUpperCase(),
     rodape: "Documento gerado eletronicamente pela plataforma GeraDocs · {data} · Processo nº {numero}",
   }
 }
@@ -262,12 +262,12 @@ function mapearSessao(session: BackendSession | undefined): Sessao {
     matricula: user.registrationNumber ?? undefined,
     decretoNomeacao: user.appointmentDecree ?? undefined,
     perfilAcesso: perfis[user.profileAccess],
-    prefeituraId: session?.organization?.id ?? null,
+    entidadeId: session?.organization?.id ?? null,
     ultimoAcesso: user.lastAccessAt ?? "",
     precisaTrocarSenha: user.passwordChangeRequired ?? false,
     ativo: user.status === "ACTIVE",
   }
-  return { usuario, prefeitura: tenantDa(session?.organization ?? null) }
+  return { usuario, entidade: tenantDa(session?.organization ?? null) }
 }
 
 /**

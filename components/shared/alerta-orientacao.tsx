@@ -8,7 +8,7 @@ import { Button, InfoBanner, Textarea } from "@/components/ui"
 /**
  * O padrão de alerta do GeraDocs: **orienta e deixa seguir**.
  *
- * A plataforma não decide pela prefeitura. Quando a regra aponta um problema,
+ * A plataforma não decide pela entidade. Quando a regra aponta um problema,
  * ela diz qual é, propõe o que fazer e oferece as duas saídas: seguir a
  * recomendação, ou manter a decisão e justificar — e aí a justificativa vai para
  * a trilha, que é o que responde ao controle depois.

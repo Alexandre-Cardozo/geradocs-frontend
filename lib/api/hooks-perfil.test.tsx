@@ -151,9 +151,9 @@ describe("useRedefinirSenhaDeServidor", () => {
 
 describe("timbre do órgão", () => {
   const ORGAO = "1b7c8e10-2d3f-4a5b-8c9d-0e1f2a3b4c5d"
-  const TIMBRE = { temBrasao: true, cabecalho: "PREFEITURA", rodape: "Rua Principal", versao: 2 }
+  const TIMBRE = { temBrasao: true, cabecalho: "ENTIDADE", rodape: "Rua Principal", versao: 2 }
 
-  it("lê o timbre da prefeitura indicada", async () => {
+  it("lê o timbre da entidade indicada", async () => {
     vi.mocked(acesso.obterTimbre).mockResolvedValue(TIMBRE)
     const { wrapper } = ambiente()
 
@@ -163,7 +163,7 @@ describe("timbre do órgão", () => {
     expect(acesso.obterTimbre).toHaveBeenCalledWith(ORGAO)
   })
 
-  it("sem prefeitura não pergunta nada — o admin geral não tem órgão", () => {
+  it("sem entidade não pergunta nada — o admin geral não tem órgão", () => {
     const { wrapper } = ambiente()
 
     renderHook(() => useTimbre(undefined), { wrapper })

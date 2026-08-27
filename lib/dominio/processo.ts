@@ -2,7 +2,7 @@
  * Regras do ciclo de vida do processo de contratação.
  *
  * A plataforma entrega os documentos; o protocolo e a aprovação acontecem no
- * sistema de processo administrativo da prefeitura. Encerrar é, portanto, uma
+ * sistema de processo administrativo da entidade. Encerrar é, portanto, uma
  * decisão do servidor — e a regra de produto que vale acima das outras se aplica
  * aqui: **documento pendente não impede o encerramento; exige justificativa**.
  */

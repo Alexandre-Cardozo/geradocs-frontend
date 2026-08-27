@@ -72,7 +72,7 @@ describe("novo processo: a secretaria requisitante", () => {
     await irParaIdentificacao()
 
     const link = await screen.findByRole("link", { name: "Configurações" })
-    expect(link).toHaveAttribute("href", "/configuracoes")
+    expect(link).toHaveAttribute("href", "/configuracoes/secretarias")
     expect(screen.queryByText(/Peça ao coordenador/)).not.toBeInTheDocument()
   })
 

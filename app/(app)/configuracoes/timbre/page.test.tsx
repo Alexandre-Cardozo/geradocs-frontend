@@ -1,18 +1,21 @@
 import { HttpResponse, http } from "msw"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
-import Configuracoes from "@/app/(app)/configuracoes/page"
+import Timbre from "@/app/(app)/configuracoes/timbre/page"
 import { sessaoServidor } from "@/lib/teste/fixtures-api"
 import { urlDaApi } from "@/lib/teste/handlers"
 import { renderizar, screen, userEvent, waitFor } from "@/lib/teste/renderizar"
 import { servidor } from "@/lib/teste/servidor-msw"
 
 /**
- * Configurações do órgão — o timbre (ADR-026).
+ * Timbragem do órgão — brasão, cabeçalho e rodapé (ADR-026).
  *
- * Antes de 25/08/2026 esta tela "salvava" brasão, cabeçalho e rodapé num objeto
- * em memória: a prefeitura configurava, recarregava e sumia — e nenhum documento
- * saía com aquilo. Agora vai ao servidor, e é o que sai impresso.
+ * Antes de 25/08/2026 esta tela "salvava" tudo isso num objeto em memória: a
+ * entidade configurava, recarregava e sumia — e nenhum documento saía com
+ * aquilo. Agora vai ao servidor, e é o que sai impresso.
+ *
+ * Desde 26/08/2026 é uma rota só, e não duas abas de `/configuracoes`: brasão,
+ * cabeçalho e rodapé saem na mesma folha, e a prévia mostra a folha inteira.
  */
 beforeEach(() => {
   Object.assign(URL, {
@@ -34,10 +37,6 @@ function comTimbre(timbre: {
         user: { ...sessaoServidor.user, profileAccess: "COORDENADOR" },
       }),
     ),
-    http.get(`${urlDaApi}/organizations/:id`, () =>
-      HttpResponse.json({ ...sessaoServidor.organization, version: 1 }),
-    ),
-    http.get(`${urlDaApi}/organizations/:id/departments`, () => HttpResponse.json([])),
     http.get(`${urlDaApi}/organizations/:id/letterhead`, () => HttpResponse.json(timbre)),
     http.get(`${urlDaApi}/organizations/:id/letterhead/logo`, () =>
       timbre.hasLogo
@@ -49,15 +48,10 @@ function comTimbre(timbre: {
   )
 }
 
-/** A tela carrega o tenant antes de desenhar as abas. */
-const abaCabecalho = () => screen.findByRole("button", { name: /Cabeçalho e Rodapé/ })
-
 describe("timbre do órgão", () => {
   it("o cabeçalho e o rodapé vêm do servidor, não de um padrão inventado", async () => {
     comTimbre({ headerText: "PREFEITURA DE ECOPORANGA", footerText: "Rua Principal, 100" })
-    renderizar(<Configuracoes />)
-
-    await userEvent.click(await abaCabecalho())
+    renderizar(<Timbre />)
 
     expect(await screen.findByDisplayValue("PREFEITURA DE ECOPORANGA")).toBeInTheDocument()
     expect(screen.getByDisplayValue("Rua Principal, 100")).toBeInTheDocument()
@@ -72,8 +66,7 @@ describe("timbre do órgão", () => {
         return HttpResponse.json({ hasLogo: false, headerText: "Novo", footerText: "", version: 2 })
       }),
     )
-    renderizar(<Configuracoes />)
-    await userEvent.click(await abaCabecalho())
+    renderizar(<Timbre />)
     const campo = await screen.findByDisplayValue("Antigo")
 
     await userEvent.clear(campo)
@@ -92,7 +85,7 @@ describe("timbre do órgão", () => {
         return HttpResponse.json({ hasLogo: true, headerText: "", footerText: "", version: 2 })
       }),
     )
-    renderizar(<Configuracoes />)
+    renderizar(<Timbre />)
 
     await userEvent.upload(
       await screen.findByLabelText(/Escolher o brasão/),
@@ -111,7 +104,7 @@ describe("timbre do órgão", () => {
         return HttpResponse.json({ hasLogo: true, headerText: "", footerText: "", version: 2 })
       }),
     )
-    renderizar(<Configuracoes />)
+    renderizar(<Timbre />)
 
     await userEvent.upload(
       await screen.findByLabelText(/Escolher o brasão/),
@@ -123,7 +116,7 @@ describe("timbre do órgão", () => {
 
   it("quem já tem brasão pode substituí-lo ou removê-lo", async () => {
     comTimbre({ hasLogo: true })
-    renderizar(<Configuracoes />)
+    renderizar(<Timbre />)
 
     expect(await screen.findByText("Brasão cadastrado")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Substituir" })).toBeInTheDocument()
@@ -131,13 +124,24 @@ describe("timbre do órgão", () => {
   })
 
   it("não há mais interruptor de 'documentos timbrados'", async () => {
-    comTimbre({ hasLogo: true, headerText: "PREFEITURA" })
-    renderizar(<Configuracoes />)
+    comTimbre({ hasLogo: true, headerText: "ENTIDADE" })
+    renderizar(<Timbre />)
 
     await screen.findByText("Brasão cadastrado")
 
     // Órgão sem timbre gera documento sem timbre: um interruptor que não
     // desligava nada era ele próprio configuração inventada.
     expect(screen.queryByText(/Documentos timbrados ativados/)).not.toBeInTheDocument()
+  })
+
+  it("a tela não pede mais para trocar de aba para ver o efeito do que se digita", async () => {
+    comTimbre({ hasLogo: true, headerText: "PREFEITURA DE ECOPORANGA", footerText: "Rua Principal" })
+    renderizar(<Timbre />)
+
+    // Brasão, cabeçalho, rodapé e prévia convivem na mesma rota.
+    expect(await screen.findByText("Brasão cadastrado")).toBeInTheDocument()
+    expect(screen.getByDisplayValue("PREFEITURA DE ECOPORANGA")).toBeInTheDocument()
+    expect(screen.getByText("Pré-visualização do Documento")).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Cabeçalho e Rodapé" })).not.toBeInTheDocument()
   })
 })

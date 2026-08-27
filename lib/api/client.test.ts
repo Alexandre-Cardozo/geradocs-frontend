@@ -28,7 +28,7 @@ vi.mock("@/lib/api/pca-client")
 vi.mock("@/lib/api/generation-client")
 
 const PROCESSO = "3f2b1a00-1111-4222-8333-444455556666"
-const PREFEITURA = "1b7c8e10-2d3f-4a5b-8c9d-0e1f2a3b4c5d"
+const ENTIDADE = "1b7c8e10-2d3f-4a5b-8c9d-0e1f2a3b4c5d"
 
 function usuario(sobrescrever: Record<string, unknown> = {}) {
   return {
@@ -40,7 +40,7 @@ function usuario(sobrescrever: Record<string, unknown> = {}) {
     email: "maria@ecoporanga.es.gov.br",
     cargo: "Servidora de Compras",
     perfilAcesso: "servidor",
-    prefeituraId: PREFEITURA,
+    entidadeId: ENTIDADE,
     avatarDataUrl: null,
     ultimoAcesso: "2026-08-20T14:30:00-03:00",
     ativo: true,
@@ -51,14 +51,14 @@ function usuario(sobrescrever: Record<string, unknown> = {}) {
 function sessao(sobrescrever: Record<string, unknown> = {}) {
   return {
     usuario: usuario(sobrescrever),
-    prefeitura: { id: PREFEITURA, orgao: "Prefeitura de Ecoporanga" },
+    entidade: { id: ENTIDADE, nome: "Prefeitura de Ecoporanga" },
   }
 }
 
 function processo(sobrescrever: Record<string, unknown> = {}) {
   return {
     id: PROCESSO,
-    prefeituraId: PREFEITURA,
+    entidadeId: ENTIDADE,
     objeto: "Aquisição de material de expediente",
     modalidade: "Pregão Eletrônico",
     documentos: ["ETP", "TR"],
@@ -73,7 +73,7 @@ async function fachadaLimpa() {
   return import("@/lib/api/client")
 }
 
-/** Entra na fachada, que é o que dá contexto de prefeitura ao que sobrou local. */
+/** Entra na fachada, que é o que dá contexto de entidade ao que sobrou local. */
 async function fachadaLogada(comoUsuario = usuario()) {
   const api = await fachadaLimpa()
   vi.mocked(autenticacao.autenticar).mockResolvedValue({
@@ -106,14 +106,14 @@ describe("a fachada liga cada chamada no lugar certo", () => {
     ["citarPcaNaSecao", (a) => a.citarPcaNaSecao(PROCESSO), pca.citarNaSecao, [PROCESSO]],
     ["getPlanoPca", (a) => a.getPlanoPca(), pca.planoVigente, []],
     ["importarPlanoPca", (a) => a.importarPlanoPca({ ano: 2026, arquivo: "p.csv", conteudo: "1;P" }), pca.importarPlano, [{ ano: 2026, arquivo: "p.csv", conteudo: "1;P" }]],
-    ["getPrefeituras", (a) => a.getPrefeituras(), acesso.listarPrefeituras, []],
-    ["criarPrefeitura", (a) => a.criarPrefeitura({ orgao: "P", unidade: "U" }), acesso.criarPrefeitura, [{ orgao: "P", unidade: "U" }]],
-    ["removerPrefeitura", (a) => a.removerPrefeitura(PREFEITURA), acesso.desativarPrefeitura, [PREFEITURA]],
-    ["getUsuarios", (a) => a.getUsuarios(PREFEITURA, "maria"), acesso.listarUsuarios, [PREFEITURA, "maria"]],
+    ["getEntidades", (a) => a.getEntidades(), acesso.listarEntidades, []],
+    ["criarEntidade", (a) => a.criarEntidade({ nome: "P", tipo: "prefeitura" }), acesso.criarEntidade, [{ nome: "P", tipo: "prefeitura" }]],
+    ["removerEntidade", (a) => a.removerEntidade(ENTIDADE), acesso.desativarEntidade, [ENTIDADE]],
+    ["getUsuarios", (a) => a.getUsuarios(ENTIDADE, "maria"), acesso.listarUsuarios, [ENTIDADE, "maria"]],
     ["atualizarUsuario", (a) => a.atualizarUsuario({ id: "u1", nome: "Maria" }), acesso.atualizarUsuario, [{ id: "u1", nome: "Maria" }]],
     ["removerUsuario", (a) => a.removerUsuario("u1"), acesso.desativarUsuario, ["u1"]],
-    ["criarSecretaria", (a) => a.criarSecretaria(PREFEITURA, "Compras"), acesso.criarDepartamento, [PREFEITURA, "Compras"]],
-    ["removerSecretaria", (a) => a.removerSecretaria(PREFEITURA, "s1"), acesso.desativarDepartamento, [PREFEITURA, "s1"]],
+    ["criarSecretaria", (a) => a.criarSecretaria(ENTIDADE, "Compras"), acesso.criarDepartamento, [ENTIDADE, "Compras"]],
+    ["removerSecretaria", (a) => a.removerSecretaria(ENTIDADE, "s1"), acesso.desativarDepartamento, [ENTIDADE, "s1"]],
     ["recuperarSenha", (a) => a.recuperarSenha("  a@b.gov.br  "), autenticacao.solicitarRedefinicao, ["a@b.gov.br"]],
     ["resetarSenha", (a) => a.resetarSenha("t", "s"), autenticacao.redefinirSenha, ["t", "s"]],
     ["logout", (a) => a.logout(), autenticacao.encerrarSessao, []],
@@ -156,7 +156,7 @@ describe("sessão", () => {
     expect(entrou.usuario.nome).toBe("Maria Costa Andrade")
 
     await api.logout()
-    // Sem sessão guardada, o que ainda é local perde o contexto de prefeitura.
+    // Sem sessão guardada, o que ainda é local perde o contexto de entidade.
     expect(await api.getSessao()).toBeNull()
   })
 
@@ -171,7 +171,7 @@ describe("sessão", () => {
 
 /*
  * O bloco "escopo: quem vê o quê" saiu no 12.3. Ele verificava o recorte por
- * prefeitura feito **aqui**; agora quem recorta é o servidor, e há teste de
+ * entidade feito **aqui**; agora quem recorta é o servidor, e há teste de
  * integração cobrando que o acervo da vizinha não apareça. Mantê-lo exigiria
  * remontar na fachada o filtro que acabou de ser removido, para ter o que testar.
  */
@@ -222,10 +222,10 @@ describe("o painel soma dois assuntos", () => {
 
   it("a lista de documentos é o acervo do servidor", async () => {
     const api = await fachadaLimpa()
-    vi.mocked(impressao.acervoDoOrgao).mockResolvedValue([])
+    vi.mocked(impressao.acervoDoNome).mockResolvedValue([])
 
     expect(await api.getDocumentos()).toEqual([])
-    expect(impressao.acervoDoOrgao).toHaveBeenCalled()
+    expect(impressao.acervoDoNome).toHaveBeenCalled()
   })
 })
 
@@ -432,18 +432,18 @@ describe("geração de documento", () => {
 })
 
 describe("configuração do órgão", () => {
-  it("consulta a prefeitura indicada, e só ela", async () => {
+  it("consulta a entidade indicada, e só ela", async () => {
     const api = await fachadaLimpa()
-    vi.mocked(acesso.obterTenant).mockResolvedValue({ id: PREFEITURA } as never)
+    vi.mocked(acesso.obterTenant).mockResolvedValue({ id: ENTIDADE } as never)
 
-    await api.getConfigTenant(PREFEITURA)
+    await api.getConfigTenant(ENTIDADE)
 
     // Quem resolve "a da sessão" é o hook, e não esta função: enquanto isso
     // morava aqui, a resposta dependia de um objeto em memória do mock.
-    expect(acesso.obterTenant).toHaveBeenCalledWith(PREFEITURA)
+    expect(acesso.obterTenant).toHaveBeenCalledWith(ENTIDADE)
   })
 
-  it("com prefeitura indicada, é ela que manda", async () => {
+  it("com entidade indicada, é ela que manda", async () => {
     const api = await fachadaLimpa()
     vi.mocked(acesso.obterTenant).mockResolvedValue({ id: "outra" } as never)
 
@@ -454,29 +454,23 @@ describe("configuração do órgão", () => {
 
   it("salvar manda ao servidor o que ele guarda e devolve o resto como veio", async () => {
     const api = await fachadaLogada()
-    vi.mocked(acesso.atualizarPrefeitura).mockResolvedValue({
-      id: PREFEITURA,
-      orgao: "Prefeitura de Ecoporanga",
-      unidade: "Administração",
+    vi.mocked(acesso.atualizarEntidade).mockResolvedValue({
+      id: ENTIDADE,
+      nome: "Prefeitura de Ecoporanga",
       timbrado: true,
     } as never)
 
     const salvo = await api.atualizarConfigTenant(
-      {
-        orgao: "Prefeitura de Ecoporanga",
-        unidade: "Administração",
-        timbrado: false,
-      },
-      PREFEITURA,
+      { nome: "Prefeitura de Ecoporanga", timbrado: false },
+      ENTIDADE,
     )
 
-    expect(acesso.atualizarPrefeitura).toHaveBeenCalledWith(PREFEITURA, {
-      orgao: "Prefeitura de Ecoporanga",
-      unidade: "Administração",
+    expect(acesso.atualizarEntidade).toHaveBeenCalledWith(ENTIDADE, {
+      nome: "Prefeitura de Ecoporanga",
     })
     // Timbre não é guardado pelo servidor: segue o que a pessoa escolheu nesta
     // sessão, e está marcado como sintético na tela.
     expect(salvo.timbrado).toBe(false)
-    expect(salvo.id).toBe(PREFEITURA)
+    expect(salvo.id).toBe(ENTIDADE)
   })
 })

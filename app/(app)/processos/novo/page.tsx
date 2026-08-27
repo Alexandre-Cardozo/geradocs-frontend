@@ -444,7 +444,7 @@ export default function NovoProcesso() {
                         {perfil === "coordenador" ? (
                           <>
                             Cadastre a primeira em{" "}
-                            <Link href="/configuracoes" className="font-semibold underline">
+                            <Link href="/configuracoes/secretarias" className="font-semibold underline">
                               Configurações
                             </Link>
                             .

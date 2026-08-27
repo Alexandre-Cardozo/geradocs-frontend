@@ -72,7 +72,7 @@ test.describe("navegação por perfil", () => {
 
     await expect(menuLateral(page).getByRole("link", { name: "Processos" })).toBeVisible()
     await expect(menuLateral(page).getByRole("link", { name: "Documentos" })).toBeVisible()
-    await expect(menuLateral(page).getByRole("link", { name: "Prefeituras" })).toHaveCount(0)
+    await expect(menuLateral(page).getByRole("link", { name: "Entidades" })).toHaveCount(0)
   })
 
   test("o administrador geral vê a área do sistema, não a de processos", async ({ page }) => {
@@ -80,7 +80,7 @@ test.describe("navegação por perfil", () => {
 
     await page.goto(rota("/"))
 
-    await expect(menuLateral(page).getByRole("link", { name: "Prefeituras" })).toBeVisible()
+    await expect(menuLateral(page).getByRole("link", { name: "Entidades" })).toBeVisible()
     await expect(menuLateral(page).getByRole("link", { name: "Servidores" })).toBeVisible()
     await expect(menuLateral(page).getByRole("link", { name: "Processos" })).toHaveCount(0)
   })
@@ -88,7 +88,7 @@ test.describe("navegação por perfil", () => {
   test("rota fora do perfil devolve para a raiz", async ({ page }) => {
     await comSessao(page)
 
-    await page.goto(rota("/admin/prefeituras"))
+    await page.goto(rota("/admin/entidades"))
 
     // O RBAC de rota é conveniência de interface — quem barra de verdade é o
     // backend —, mas mostrar a tela e depois falhar seria pior que não mostrar.

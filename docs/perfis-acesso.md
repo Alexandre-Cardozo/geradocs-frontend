@@ -1,6 +1,6 @@
-# Autenticação, multi-prefeitura e perfis de acesso
+# Autenticação, multi-entidade e perfis de acesso
 
-Referência do controle de acesso do GeraDocs: quem entra, o que cada um vê e como os dados são isolados por prefeitura. Quem for mexer em login, navegação ou nas telas de administração lê isto antes.
+Referência do controle de acesso do GeraDocs: quem entra, o que cada um vê e como os dados são isolados por entidade. Quem for mexer em login, navegação ou nas telas de administração lê isto antes.
 
 Autenticação, sessão e administração de acesso são **reais**: o frontend usa a API Spring Boot, com JWT em memória e refresh token em cookie `HttpOnly`. A camada de telas ainda usa `lib/api/client.ts` como fachada, mas organizações, departamentos e usuários são encaminhados para `lib/api/access-client.ts`; somente processos, documentos e demais módulos sem backend continuam mockados.
 
@@ -10,9 +10,9 @@ Autenticação, sessão e administração de acesso são **reais**: o frontend u
 
 | Perfil | Escopo | Pode |
 |---|---|---|
-| **Administrador Geral** (`admin_geral`) | Sistema todo (LAHHM) | CRUD de prefeituras; criar servidores e vinculá-los a qualquer prefeitura; visão agregada. Não opera o fluxo de processos. |
-| **Coordenador** (`coordenador`) | Uma prefeitura | Tudo de servidor **+** gerir a sua prefeitura: secretarias, PCA, identidade visual, cabeçalho/rodapé, e cadastrar/ver servidores (com último acesso). |
-| **Servidor** (`servidor`) | Uma prefeitura | Editar o próprio perfil; criar processos e gerar documentos; consultar o fluxo de contratação. |
+| **Administrador Geral** (`admin_geral`) | Sistema todo (LAHHM) | Cadastrar entidades; criar servidores e vinculá-los a qualquer entidade; visão agregada. Não opera o fluxo de processos. **Não se cadastra pela interface**: a conta nasce com a inicialização do banco, e o perfil não é oferecido no formulário de servidores. |
+| **Coordenador** (`coordenador`) | Uma entidade | Tudo de servidor **+** gerir a sua entidade: secretarias, PCA, identidade visual, cabeçalho/rodapé, e cadastrar/ver servidores (com último acesso). |
+| **Servidor** (`servidor`) | Uma entidade | Editar o próprio perfil; criar processos e gerar documentos; consultar o fluxo de contratação. |
 
 ## Matriz de rotas × perfil (RBAC)
 
@@ -22,19 +22,21 @@ Fonte única: `lib/auth/acesso.ts` (`rotaPermitida`, `navPrincipal`, `navSistema
 |---|:---:|:---:|:---:|
 | `/` (dashboard / painel do sistema) | ✅ (painel admin) | ✅ | ✅ |
 | `/processos`, `/documentos` | ❌ | ✅ | ✅ |
-| `/configuracoes` (prefeitura) | ❌ | ✅ | ❌ |
-| `/admin/prefeituras`, `/admin/servidores` | ✅ | ❌ | ❌ |
+| `/configuracoes/*` (timbre, secretarias, PCA, usuários) | ❌ | ✅ | ❌ |
+| `/admin/entidades`, `/admin/servidores` | ✅ | ❌ | ❌ |
 | `/perfil` (Meu Perfil) | ❌¹ | ✅ | ✅ |
 
-¹ O admin geral não tem prefeitura nem perfil editável de servidor; gerencia-se pela área de Administração.
+¹ O admin geral não tem entidade nem perfil editável de servidor; gerencia-se pela área de Administração.
 
 Rota não permitida → redireciona para `/`. Sem sessão → redireciona para `/login`.
 
-## Modelo multi-prefeitura
+## Modelo multi-entidade
 
-- Cada **prefeitura é um `Tenant`** (com `id`), com identidade/PCA/secretarias próprias. Fixtures: São Paulo (`PREF-001`) e Ecoporanga (`PREF-002`).
-- `Processo` e `DocumentoGerado` carregam `prefeituraId`. As consultas (`getProcessos`, `getDocumentos`, `getEstatisticas`, `getFilaAprovacoes`) filtram pela prefeitura da sessão; o **admin geral vê tudo**.
-- `criarProcesso` carimba o `prefeituraId` e o `responsavel` do usuário logado.
+- Cada **entidade é um `Tenant`** (com `id`), com identidade/PCA/secretarias próprias. Entidade é o termo do domínio porque quem contrata o GeraDocs pode ser prefeitura, câmara, autarquia ou consórcio.
+- **Cadastrar uma entidade pede o nome e o tipo.** Nada mais: o resto é configuração do coordenador da entidade. A unidade administrativa saiu do modelo do front — não era pedida, não era exibida e não servia a nenhuma tela.
+- **Desativar tem guarda dos dois lados.** Entidade com usuário vinculado e servidor com processo em andamento não são desativados; a regra vive no backend (`DeactivateOrganizationUseCase`, `DeactivateUserUseCase`) e a interface a antecipa onde tem como: o botão da entidade nasce desabilitado, e a recusa do servidor aparece na tela com o motivo que veio da API.
+- `Processo` e `DocumentoGerado` carregam `entidadeId`. As consultas (`getProcessos`, `getDocumentos`, `getEstatisticas`, `getFilaAprovacoes`) filtram pela entidade da sessão; o **admin geral vê tudo**.
+- `criarProcesso` carimba o `entidadeId` e o `responsavel` do usuário logado.
 
 ## Login e sessão
 

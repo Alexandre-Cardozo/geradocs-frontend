@@ -100,7 +100,7 @@ describe("meu perfil", () => {
     const gigante = new File([new Uint8Array(512 * 1024 + 1)], "grande.png", { type: "image/png" })
     await userEvent.upload(screen.getByLabelText(/Escolher foto de perfil/), gigante)
 
-    // Num escritório de prefeitura a subida não é rápida: mandar para o servidor
+    // Num escritório público a subida não é rápida: mandar para o servidor
     // recusar custaria a viagem inteira.
     await waitFor(() => expect(enviou).toBe(false))
   })

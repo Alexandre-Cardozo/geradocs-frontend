@@ -22,19 +22,19 @@ import {
 } from "@/lib/api/auth-client"
 import {
   criarDepartamento as criarDepartamentoNaApi,
-  atualizarPrefeitura as atualizarPrefeituraNaApi,
-  criarPrefeitura as criarPrefeituraNaApi,
+  atualizarEntidade as atualizarEntidadeNaApi,
+  criarEntidade as criarEntidadeNaApi,
   atualizarUsuario as atualizarUsuarioNaApi,
   criarUsuario as criarUsuarioNaApi,
   desativarDepartamento as desativarDepartamentoNaApi,
-  desativarPrefeitura as desativarPrefeituraNaApi,
+  desativarEntidade as desativarEntidadeNaApi,
   desativarUsuario as desativarUsuarioNaApi,
-  listarPrefeituras as listarPrefeiturasNaApi,
+  listarEntidades as listarEntidadesNaApi,
   listarUsuarios as listarUsuariosNaApi,
   obterTenant as obterTenantNaApi,
 } from "@/lib/api/access-client"
 import {
-  acervoDoOrgao,
+  acervoDoNome,
   resumoDoAcervo,
 } from "@/lib/api/generation-client"
 import {
@@ -86,6 +86,7 @@ import type {
   StatusProcesso,
   Tenant,
   TipoDocumento,
+  TipoEntidade,
   Usuario,
   VersaoDocumento,
 } from "@/lib/types"
@@ -338,20 +339,20 @@ export async function gerarSecao(processoId: string, tipo: TipoDocumento, secaoI
  * documento gerado é afetado" justamente quando havia documento gerado.
  */
 async function docsGeradosDo(processoId: string): Promise<TipoDocumento[]> {
-  const acervo = await acervoDoOrgao()
+  const acervo = await acervoDoNome()
   return acervo.filter((d) => d.processoId === processoId).map((d) => d.tipo)
 }
 
 /**
  * Encerra o processo. A plataforma termina aqui: protocolo, assinatura e
- * aprovação acontecem no sistema de processo administrativo da prefeitura.
+ * aprovação acontecem no sistema de processo administrativo da entidade.
  *
  * Documento pendente **não impede** o encerramento — apenas exige justificativa.
  * A plataforma orienta; quem decide é o servidor.
  */
 /**
  * Encerra o processo. A plataforma termina aqui: protocolo, assinatura e
- * aprovação acontecem no sistema de processo administrativo da prefeitura.
+ * aprovação acontecem no sistema de processo administrativo da entidade.
  *
  * Documento pendente **não impede** o encerramento — apenas exige justificativa,
  * e quem cobra isso é o servidor, que sabe o que já foi concluído. Até 22/08/2026
@@ -374,7 +375,7 @@ export async function reabrirProcesso(processoId: string, motivo: string): Promi
 
 /** O acervo do órgão, como o servidor o guarda. */
 export async function getDocumentos(): Promise<DocumentoGerado[]> {
-  return acervoDoOrgao()
+  return acervoDoNome()
 }
 
 /**
@@ -544,7 +545,7 @@ export async function gerarDocumento(input: GerarDocumentoInput): Promise<Docume
     // O identificador é o da geração no servidor, e não um contador local: é por
     // ele que se pede o arquivo de volta.
     id: geracao.id,
-    prefeituraId: processo.prefeituraId,
+    entidadeId: processo.entidadeId,
     processoId: input.processoId,
     titulo: tituloComRotuloDeVersao(
       tituloDoDocumento(input.tipo, processo.objeto),
@@ -573,53 +574,54 @@ export async function baixarArquivoGerado(
   return baixarArquivo(processoId, tipo, arquivoId)
 }
 
-/* ── Configurações da prefeitura ───────────────────────────────────────────── */
+/* ── Configurações da entidade ───────────────────────────────────────────── */
 
-export async function getConfigTenant(prefeituraId: string): Promise<Tenant> {
-  return obterTenantNaApi(prefeituraId)
+export async function getConfigTenant(entidadeId: string): Promise<Tenant> {
+  return obterTenantNaApi(entidadeId)
 }
 
 /**
- * Salva a configuração do órgão.
+ * Salva a configuração da entidade.
  *
- * Nome e unidade vão para o servidor; o resto — timbre, cabeçalho, rodapé —
- * ainda é fabricado por `tenantDa()` e está marcado como sintético na tela
+ * O nome vai para o servidor; o resto — timbre, cabeçalho, rodapé — ainda é
+ * fabricado por `tenantDa()` e está marcado como sintético na tela
  * (`lib/dominio/sintetico.ts`). Até 22/08/2026 **tudo** ia para uma fixture: a
  * tela dizia "salvo" e o recarregamento desfazia.
  */
-export async function atualizarConfigTenant(patch: Partial<Tenant>, prefeituraId: string): Promise<Tenant> {
-  const salvo = await atualizarPrefeituraNaApi(prefeituraId, { orgao: patch.orgao, unidade: patch.unidade })
+export async function atualizarConfigTenant(patch: Partial<Tenant>, entidadeId: string): Promise<Tenant> {
+  const salvo = await atualizarEntidadeNaApi(entidadeId, { nome: patch.nome })
   // Os campos que o servidor não guarda seguem no que a tela mandou, para que a
   // prévia continue mostrando o que a pessoa acabou de escolher nesta sessão.
   return { ...salvo, ...clone(patch), id: salvo.id }
 }
 
-/* ── Cadastro de prefeituras (admin geral) ─────────────────────────────────── */
+/* ── Cadastro de entidades (admin geral) ─────────────────────────────────── */
 
-export async function getPrefeituras(): Promise<Tenant[]> {
-  return listarPrefeiturasNaApi()
+export async function getEntidades(): Promise<Tenant[]> {
+  return listarEntidadesNaApi()
 }
 
-export interface NovaPrefeituraInput {
-  orgao: string
-  unidade: string
+export interface NovaEntidadeInput {
+  nome: string
+  /** O servidor assume `prefeitura` sem este campo — ver `lib/types.ts`. */
+  tipo: TipoEntidade
 }
 
-export async function criarPrefeitura(input: NovaPrefeituraInput): Promise<Tenant> {
-  return criarPrefeituraNaApi(input)
+export async function criarEntidade(input: NovaEntidadeInput): Promise<Tenant> {
+  return criarEntidadeNaApi(input)
 }
 
-export async function removerPrefeitura(id: string): Promise<void> {
-  await desativarPrefeituraNaApi(id)
+export async function removerEntidade(id: string): Promise<void> {
+  await desativarEntidadeNaApi(id)
 }
 
-/* ── Cadastro de usuários (admin geral e coordenador da própria prefeitura) ── */
+/* ── Cadastro de usuários (admin geral e coordenador da própria entidade) ── */
 
 /**
  * @param busca trecho de nome ou matrícula; quem filtra é o servidor
  */
-export async function getUsuarios(prefeituraId?: string, busca?: string): Promise<Usuario[]> {
-  return listarUsuariosNaApi(prefeituraId, busca)
+export async function getUsuarios(entidadeId?: string, busca?: string): Promise<Usuario[]> {
+  return listarUsuariosNaApi(entidadeId, busca)
 }
 
 export interface NovoUsuarioInput {
@@ -630,7 +632,7 @@ export interface NovoUsuarioInput {
   matricula?: string
   decretoNomeacao?: string
   perfilAcesso: PerfilAcesso
-  prefeituraId: string | null
+  entidadeId: string | null
   secretaria?: string
 }
 
@@ -661,7 +663,7 @@ export interface AtualizarUsuarioInput {
   matricula?: string
   decretoNomeacao?: string
   perfilAcesso?: PerfilAcesso
-  prefeituraId?: string | null
+  entidadeId?: string | null
   secretaria?: string
   ativo?: boolean
 }
@@ -682,10 +684,10 @@ export async function removerUsuario(id: string): Promise<void> {
   await desativarUsuarioNaApi(id)
 }
 
-export async function criarSecretaria(prefeituraId: string, nome: string): Promise<Secretaria> {
-  return criarDepartamentoNaApi(prefeituraId, nome)
+export async function criarSecretaria(entidadeId: string, nome: string): Promise<Secretaria> {
+  return criarDepartamentoNaApi(entidadeId, nome)
 }
 
-export async function removerSecretaria(prefeituraId: string, secretariaId: string): Promise<void> {
-  await desativarDepartamentoNaApi(prefeituraId, secretariaId)
+export async function removerSecretaria(entidadeId: string, secretariaId: string): Promise<void> {
+  await desativarDepartamentoNaApi(entidadeId, secretariaId)
 }

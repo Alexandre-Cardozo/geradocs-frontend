@@ -2,7 +2,7 @@
  * Máquina de estados do processo de contratação.
  *
  * Três estados, e não seis: o fluxo de aprovação entre setores acontece no
- * sistema de processo administrativo da prefeitura (ADR §24 do front-end). Aqui
+ * sistema de processo administrativo da entidade (ADR §24 do front-end). Aqui
  * o processo nasce em rascunho, entra em elaboração quando ganha documentos e se
  * encerra quando todos os que ele contém foram gerados.
  *

@@ -99,9 +99,16 @@ test("o cadastro de processo não tem violação grave", async ({ page }) => {
   expect(await violacoesGraves(page)).toEqual([])
 })
 
-test("as configurações não têm violação grave", async ({ page }) => {
+test("o timbre do órgão não tem violação grave", async ({ page }) => {
   await comSessao(page)
-  await page.goto(rota("/configuracoes"))
+  await page.goto(rota("/configuracoes/timbre"))
+
+  expect(await violacoesGraves(page)).toEqual([])
+})
+
+test("o cadastro de secretarias não tem violação grave", async ({ page }) => {
+  await comSessao(page)
+  await page.goto(rota("/configuracoes/secretarias"))
 
   expect(await violacoesGraves(page)).toEqual([])
 })

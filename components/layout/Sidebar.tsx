@@ -9,26 +9,30 @@ import geradocsLogo from "@/public/geradocs-mark-white.png";
 
 import {
   IconBuilding,
+  IconClipboardList,
   IconDashboard,
   IconDownload,
   IconFileText,
+  IconImage,
   IconLogout,
   IconMoreVertical,
-  IconSettings,
   IconUser,
 } from "@/components/ui/icons";
 import { FotoDePerfil } from "@/components/shared/foto-de-perfil";
 import { useLogout, useSessao } from "@/lib/api/hooks";
 import { navPrincipal, navSistema, type IconeNav } from "@/lib/auth/acesso";
-import { PERFIL_ACESSO_LABEL } from "@/lib/types";
+import { PERFIL_ACESSO_LABEL, TIPO_ENTIDADE_LABEL } from "@/lib/types";
 
 /** Mapa de chave de ícone (RBAC) → componente. */
 const ICONES: Record<IconeNav, ReactNode> = {
   dashboard: <IconDashboard size={18} />,
   processos: <IconFileText size={18} />,
   documentos: <IconDownload size={18} />,
-  configuracoes: <IconSettings size={18} />,
-  prefeituras: <IconBuilding size={18} />,
+  timbre: <IconImage size={18} />,
+  secretarias: <IconBuilding size={18} />,
+  pca: <IconClipboardList size={18} />,
+  usuarios: <IconUser size={18} />,
+  entidades: <IconBuilding size={18} />,
   servidores: <IconUser size={18} />,
 };
 
@@ -108,7 +112,7 @@ export default function Sidebar({
   const [menuAberto, setMenuAberto] = useState(false);
 
   const usuario = sessao?.usuario;
-  const prefeitura = sessao?.prefeitura;
+  const entidade = sessao?.entidade;
   const perfil = usuario?.perfilAcesso ?? "servidor";
 
   const paraItem = (i: { href: string; label: string; icone: IconeNav }): NavItem => ({
@@ -154,15 +158,15 @@ export default function Sidebar({
         </div>
       </div>
 
-      {/* Órgão atual — a prefeitura da sessão; para o admin geral, o contexto LAHHM */}
+      {/* Entidade atual — a da sessão; para o admin geral, o contexto LAHHM */}
       <div className="border-b border-on-dark-border px-5 py-3.5">
         <div className="mb-1.5 text-2xs font-semibold tracking-caps-wide text-on-dark-35 uppercase">
-          {perfil === "admin_geral" ? "Contexto" : "Órgão Atual"}
+          {perfil === "admin_geral" ? "Contexto" : "Entidade Atual"}
         </div>
         <div className="flex items-center gap-2 rounded-md">
-          {prefeitura?.logoDataUrl ? (
+          {entidade?.logoDataUrl ? (
             <Image
-              src={prefeitura.logoDataUrl}
+              src={entidade.logoDataUrl}
               alt=""
               width={22}
               height={22}
@@ -176,12 +180,17 @@ export default function Sidebar({
           )}
           <span className="block min-w-0 flex-1">
             <span className="block truncate text-sm font-semibold text-on-dark">
-              {prefeitura?.orgao ??
+              {entidade?.nome ??
                 (perfil === "admin_geral" ? "Administração LAHHM" : "—")}
             </span>
             <span className="block text-2xs text-on-dark-40">
-              {prefeitura?.unidade ??
-                (perfil === "admin_geral" ? "Todas as prefeituras" : "")}
+              {/* O tipo, e não a unidade administrativa: aquele campo não
+                  aparecia em lugar nenhum do produto e saiu do modelo. */}
+              {entidade
+                ? TIPO_ENTIDADE_LABEL[entidade.tipo]
+                : perfil === "admin_geral"
+                  ? "Todas as entidades"
+                  : ""}
             </span>
           </span>
         </div>
@@ -201,7 +210,7 @@ export default function Sidebar({
 
         {bottomItems.length > 0 && (
           <>
-            <SectionLabel>Sistema</SectionLabel>
+            <SectionLabel>Configurações</SectionLabel>
             {bottomItems.map((item) => (
               <NavLink
                 key={item.href}

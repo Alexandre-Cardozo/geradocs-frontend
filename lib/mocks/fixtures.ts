@@ -3,7 +3,7 @@ import type { ParecerDFD } from "@/lib/types";
 /**
  * O que sobrou do mock: o parecer do DFD, e mais nada.
  *
- * Até 26/08/2026 este arquivo tinha 467 linhas — usuários, prefeituras,
+ * Até 26/08/2026 este arquivo tinha 467 linhas — usuários, entidades,
  * processos, documentos, estatísticas e resumo do acervo do protótipo. **Nada
  * disso era lido**: as telas passaram a perguntar ao servidor entre os Blocos 9
  * e 12, e as fixtures ficaram, alimentando um "banco" em memória que ninguém

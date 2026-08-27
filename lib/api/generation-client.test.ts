@@ -239,9 +239,9 @@ describe("acervo do órgão", () => {
     servidor.use(
       http.get(`${urlDaApi}/generated-documents`, () => HttpResponse.json([documentoDoAcervo])),
     )
-    const { acervoDoOrgao } = await carregarClienteLimpo()
+    const { acervoDoNome } = await carregarClienteLimpo()
 
-    const [documento] = await acervoDoOrgao()
+    const [documento] = await acervoDoNome()
 
     expect(documento?.tipo).toBe("ETP")
     expect(documento?.versao).toBe(2)
@@ -258,10 +258,10 @@ describe("acervo do órgão", () => {
         ]),
       ),
     )
-    const { acervoDoOrgao } = await carregarClienteLimpo()
+    const { acervoDoNome } = await carregarClienteLimpo()
 
     // O servidor pode ganhar um tipo de documento antes desta tela.
-    expect(await acervoDoOrgao()).toHaveLength(1)
+    expect(await acervoDoNome()).toHaveLength(1)
   })
 
   it("o resumo vem contado do servidor, e não deduzido da lista", async () => {

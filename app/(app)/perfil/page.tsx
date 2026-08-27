@@ -30,7 +30,7 @@ export default function MeuPerfil() {
   const showToast = useToast()
   const sessao = useSessao()
   const usuario = sessao.data?.usuario
-  const prefeitura = sessao.data?.prefeitura
+  const entidade = sessao.data?.entidade
 
   const foto = useFotoDePerfil(usuario?.id)
   const enviar = useEnviarFotoDePerfil(usuario?.id)
@@ -42,7 +42,7 @@ export default function MeuPerfil() {
   const escolher = (arquivo: File) => {
     if (arquivo.size > TAMANHO_MAXIMO_DA_FOTO) {
       // Recusar aqui poupa o envio inteiro de um arquivo que o servidor vai
-      // rejeitar — e num escritório de prefeitura a subida não é rápida.
+      // rejeitar — e num escritório público a subida não é rápida.
       showToast(
         `A foto tem ${formatarBytes(arquivo.size)} e o limite é ${formatarBytes(TAMANHO_MAXIMO_DA_FOTO)}.`,
       )
@@ -115,7 +115,7 @@ export default function MeuPerfil() {
           <p className="m-0 mt-2.5 text-sm text-text-3">
             {usuario.cargo || "Sem cargo definido"}
           </p>
-          {prefeitura && <p className="m-0 mt-2.5 text-sm text-text-3">{prefeitura.orgao}</p>}
+          {entidade && <p className="m-0 mt-2.5 text-sm text-text-3">{entidade.nome}</p>}
         </div>
 
         {/* Coluna 2 — cadastro e senha */}
@@ -136,7 +136,7 @@ export default function MeuPerfil() {
               <Dado rotulo="Cargo" valor={usuario.cargo || "—"} />
               <Dado rotulo="Matrícula" valor={usuario.matricula ?? "—"} />
               <Dado rotulo="Decreto de nomeação" valor={usuario.decretoNomeacao ?? "—"} />
-              {prefeitura && <Dado rotulo="Órgão" valor={prefeitura.orgao} />}
+              {entidade && <Dado rotulo="Entidade" valor={entidade.nome} />}
               {usuario.secretaria && <Dado rotulo="Secretaria" valor={usuario.secretaria} />}
             </dl>
           </div>

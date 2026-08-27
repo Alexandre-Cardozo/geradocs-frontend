@@ -27,7 +27,7 @@ vi.mock("@/lib/api/client", async (importOriginal) => {
 })
 
 const PROCESSO = "3f2b1a00-1111-4222-8333-444455556666"
-const PREFEITURA = "1b7c8e10-2d3f-4a5b-8c9d-0e1f2a3b4c5d"
+const ENTIDADE = "1b7c8e10-2d3f-4a5b-8c9d-0e1f2a3b4c5d"
 
 function ambiente() {
   const queryClient = new QueryClient({
@@ -112,14 +112,14 @@ describe("consultas: cada uma pede ao servidor o que a sua chave promete", () =>
       ["comparacao-versoes", PROCESSO, "ETP", 1, 2],
       "compararVersoes",
     ],
-    ["usePrefeituras", () => hooks.usePrefeituras(), chaves.prefeituras, "getPrefeituras"],
+    ["useEntidades", () => hooks.useEntidades(), chaves.entidades, "getEntidades"],
     [
       "useConfigTenant",
-      () => hooks.useConfigTenant(PREFEITURA),
-      chaves.tenant(PREFEITURA),
+      () => hooks.useConfigTenant(ENTIDADE),
+      chaves.tenant(ENTIDADE),
       "getConfigTenant",
     ],
-    ["useUsuarios", () => hooks.useUsuarios(PREFEITURA), chaves.usuarios(PREFEITURA, ""), "getUsuarios"],
+    ["useUsuarios", () => hooks.useUsuarios(ENTIDADE), chaves.usuarios(ENTIDADE, ""), "getUsuarios"],
   ]
 
   it.each(consultas)("%s", async (_nome, usar, chaveEsperada, fn) => {
@@ -460,26 +460,26 @@ describe("previsão no PCA", () => {
 })
 
 describe("cadastros", () => {
-  it("mexer em prefeitura recarrega a lista, e remover recarrega também os usuários", async () => {
+  it("mexer em entidade recarrega a lista, e remover recarrega também os usuários", async () => {
     const criar = ambiente()
-    vi.mocked(api.criarPrefeitura).mockResolvedValue({} as never)
-    const nova = renderHook(() => hooks.useCriarPrefeitura(), { wrapper: criar.wrapper })
-    nova.result.current.mutate({ orgao: "Prefeitura" } as never)
+    vi.mocked(api.criarEntidade).mockResolvedValue({} as never)
+    const nova = renderHook(() => hooks.useCriarEntidade(), { wrapper: criar.wrapper })
+    nova.result.current.mutate({ nome: "Entidade" } as never)
     await waitFor(() =>
-      expect(invalidadas(criar.invalidou)).toContain(chave(chaves.prefeituras)),
+      expect(invalidadas(criar.invalidou)).toContain(chave(chaves.entidades)),
     )
 
     const remover = ambiente()
-    vi.mocked(api.removerPrefeitura).mockResolvedValue(undefined as never)
-    const saiu = renderHook(() => hooks.useRemoverPrefeitura(), { wrapper: remover.wrapper })
-    saiu.result.current.mutate(PREFEITURA)
-    // Os usuários da prefeitura removida saem junto; deixá-los em cache mostraria
+    vi.mocked(api.removerEntidade).mockResolvedValue(undefined as never)
+    const saiu = renderHook(() => hooks.useRemoverEntidade(), { wrapper: remover.wrapper })
+    saiu.result.current.mutate(ENTIDADE)
+    // Os usuários da entidade removida saem junto; deixá-los em cache mostraria
     // gente de um órgão que não existe mais.
     await waitFor(() => expect(invalidadas(remover.invalidou)).toContain(chave(["usuarios"])))
-    expect(invalidadas(remover.invalidou)).toContain(chave(chaves.prefeituras))
+    expect(invalidadas(remover.invalidou)).toContain(chave(chaves.entidades))
   })
 
-  it("mexer em usuário recarrega usuários e prefeituras", async () => {
+  it("mexer em usuário recarrega usuários e entidades", async () => {
     for (const [usar, entrada, fn] of [
       [() => hooks.useCriarUsuario(), { nome: "Maria" }, "criarUsuario"],
       [() => hooks.useAtualizarUsuario(), { id: "u1", nome: "Maria" }, "atualizarUsuario"],
@@ -492,27 +492,27 @@ describe("cadastros", () => {
       result.current.mutate(entrada as never)
 
       await waitFor(() => expect(invalidadas(invalidou)).toContain(chave(["usuarios"])))
-      // A contagem de servidores aparece no cartão da prefeitura.
-      expect(invalidadas(invalidou)).toContain(chave(chaves.prefeituras))
+      // A contagem de servidores aparece no cartão da entidade.
+      expect(invalidadas(invalidou)).toContain(chave(chaves.entidades))
     }
   })
 
   it("salvar a configuração grava o tenant e recarrega a sessão", async () => {
     const { wrapper, invalidou, gravou } = ambiente()
-    const tenant = { id: PREFEITURA }
+    const tenant = { id: ENTIDADE }
     vi.mocked(api.atualizarConfigTenant).mockResolvedValue(tenant as never)
 
-    const { result } = renderHook(() => hooks.useAtualizarConfigTenant(PREFEITURA), { wrapper })
+    const { result } = renderHook(() => hooks.useAtualizarConfigTenant(ENTIDADE), { wrapper })
     result.current.mutate({ timbrado: false })
 
-    await waitFor(() => expect(gravou).toHaveBeenCalledWith(chaves.tenant(PREFEITURA), tenant))
-    // A sessão carrega a prefeitura; sem recarregá-la, a sidebar seguiria com o
+    await waitFor(() => expect(gravou).toHaveBeenCalledWith(chaves.tenant(ENTIDADE), tenant))
+    // A sessão carrega a entidade; sem recarregá-la, a sidebar seguiria com o
     // nome antigo.
     expect(invalidadas(invalidou)).toContain(chave(chaves.sessao))
-    expect(invalidadas(invalidou)).toContain(chave(chaves.prefeituras))
+    expect(invalidadas(invalidou)).toContain(chave(chaves.entidades))
   })
 
-  it("secretaria sem prefeitura identificada recusa antes de chamar o servidor", async () => {
+  it("secretaria sem entidade identificada recusa antes de chamar o servidor", async () => {
     for (const usar of [
       () => hooks.useCriarSecretaria(undefined),
       () => hooks.useRemoverSecretaria(undefined),
@@ -521,7 +521,7 @@ describe("cadastros", () => {
       const { result } = renderHook(comoMutacao(usar), { wrapper })
       result.current.mutate("Secretaria de Compras" as never)
 
-      // Mandar sem prefeitura criaria a secretaria no órgão errado, ou em
+      // Mandar sem entidade criaria a secretaria no órgão errado, ou em
       // nenhum — e o erro só apareceria depois, na lista.
       await waitFor(() => expect(result.current.isError).toBe(true))
       expect(api.criarSecretaria).not.toHaveBeenCalled()
@@ -529,10 +529,10 @@ describe("cadastros", () => {
     }
   })
 
-  it("secretaria com prefeitura recarrega a configuração daquele órgão", async () => {
+  it("secretaria com entidade recarrega a configuração daquele órgão", async () => {
     for (const [usar, entrada, fn] of [
-      [() => hooks.useCriarSecretaria(PREFEITURA), "Secretaria de Compras", "criarSecretaria"],
-      [() => hooks.useRemoverSecretaria(PREFEITURA), "s1", "removerSecretaria"],
+      [() => hooks.useCriarSecretaria(ENTIDADE), "Secretaria de Compras", "criarSecretaria"],
+      [() => hooks.useRemoverSecretaria(ENTIDADE), "s1", "removerSecretaria"],
     ] as const) {
       const { wrapper, invalidou } = ambiente()
       vi.mocked(api[fn] as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({})
@@ -541,7 +541,7 @@ describe("cadastros", () => {
       result.current.mutate(entrada as never)
 
       await waitFor(() =>
-        expect(invalidadas(invalidou)).toContain(chave(chaves.tenant(PREFEITURA))),
+        expect(invalidadas(invalidou)).toContain(chave(chaves.tenant(ENTIDADE))),
       )
     }
   })
@@ -551,7 +551,7 @@ describe("cadastros", () => {
     const { wrapper } = ambiente()
     vi.mocked(api.getUsuarios).mockResolvedValue([] as never)
 
-    const { rerender } = renderHook(({ busca }) => hooks.useUsuarios(PREFEITURA, busca), {
+    const { rerender } = renderHook(({ busca }) => hooks.useUsuarios(ENTIDADE, busca), {
       wrapper,
       initialProps: { busca: "M" },
     })
@@ -560,48 +560,48 @@ describe("cadastros", () => {
 
     // Sem o adiamento, "MAT-4471" dispararia oito requisições e a última
     // resposta a chegar poderia não ser a do último termo.
-    expect(api.getUsuarios).not.toHaveBeenCalledWith(PREFEITURA, "MAT-4471")
+    expect(api.getUsuarios).not.toHaveBeenCalledWith(ENTIDADE, "MAT-4471")
     await act(async () => {
       await vi.advanceTimersByTimeAsync(400)
     })
-    expect(api.getUsuarios).toHaveBeenCalledWith(PREFEITURA, "MAT-4471")
+    expect(api.getUsuarios).toHaveBeenCalledWith(ENTIDADE, "MAT-4471")
   })
 })
 
 describe("chaves", () => {
-  it("prefeitura ausente vira “sessao” e “todos”, e não undefined na chave", () => {
+  it("entidade ausente vira “sessao” e “todos”, e não undefined na chave", () => {
     // `["tenant", undefined]` e `["tenant", "sessao"]` seriam caches diferentes
     // para a mesma coisa, e um deles nunca seria invalidado.
     expect(chaves.tenant()).toEqual(["tenant", "sessao"])
     expect(chaves.usuarios()).toEqual(["usuarios", "todos", ""])
-    expect(chaves.usuarios(PREFEITURA, "maria")).toEqual(["usuarios", PREFEITURA, "maria"])
+    expect(chaves.usuarios(ENTIDADE, "maria")).toEqual(["usuarios", ENTIDADE, "maria"])
   })
 })
 
-describe("configuração do órgão: de quem é a prefeitura", () => {
+describe("configuração do órgão: de quem é a entidade", () => {
   const DA_SESSAO = "1b7c8e10-2d3f-4a5b-8c9d-0e1f2a3b4c5d"
 
-  it("sem id, consulta a prefeitura da sessão", async () => {
+  it("sem id, consulta a entidade da sessão", async () => {
     const { wrapper } = ambiente()
     vi.mocked(api.getSessao).mockResolvedValue({
       usuario: { id: "u1" },
-      prefeitura: { id: DA_SESSAO },
+      entidade: { id: DA_SESSAO },
     } as never)
     vi.mocked(api.getConfigTenant).mockResolvedValue({ id: DA_SESSAO } as never)
 
     renderHook(() => hooks.useConfigTenant(), { wrapper })
 
     // O `enabled` exigia um id vindo da tela. As telas que dependem da
-    // prefeitura da própria pessoa chamam sem id — e o seletor de secretaria
+    // entidade da própria pessoa chamam sem id — e o seletor de secretaria
     // ficava vazio para sempre, sem erro nenhum aparecer.
     await waitFor(() => expect(api.getConfigTenant).toHaveBeenCalledWith(DA_SESSAO))
   })
 
-  it("quem não tem prefeitura não pergunta nada", async () => {
+  it("quem não tem entidade não pergunta nada", async () => {
     const { wrapper } = ambiente()
     vi.mocked(api.getSessao).mockResolvedValue({
       usuario: { id: "u1" },
-      prefeitura: null,
+      entidade: null,
     } as never)
 
     const { result } = renderHook(
@@ -619,7 +619,7 @@ describe("configuração do órgão: de quem é a prefeitura", () => {
     const { wrapper } = ambiente()
     vi.mocked(api.getSessao).mockResolvedValue({
       usuario: { id: "u1" },
-      prefeitura: { id: DA_SESSAO },
+      entidade: { id: DA_SESSAO },
     } as never)
     vi.mocked(api.getConfigTenant).mockResolvedValue({ id: "outra" } as never)
 
@@ -628,11 +628,11 @@ describe("configuração do órgão: de quem é a prefeitura", () => {
     await waitFor(() => expect(api.getConfigTenant).toHaveBeenCalledWith("outra"))
   })
 
-  it("salvar sem prefeitura identificada é recusado antes de sair da tela", async () => {
+  it("salvar sem entidade identificada é recusado antes de sair da tela", async () => {
     const { wrapper } = ambiente()
 
     const { result } = renderHook(() => hooks.useAtualizarConfigTenant(undefined), { wrapper })
-    result.current.mutate({ orgao: "Prefeitura" })
+    result.current.mutate({ nome: "Entidade" })
 
     await waitFor(() => expect(result.current.isError).toBe(true))
     expect(api.atualizarConfigTenant).not.toHaveBeenCalled()

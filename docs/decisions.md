@@ -638,3 +638,36 @@ Ou seja: a tela avisava "o Edital já gerado deixa de ser cabível", e a trilha 
 2. **O documento já gerado que perde cabimento entra no texto da trilha**, com ou sem justificativa. É o fato mais grave da troca: o arquivo continua no acervo contradizendo o próprio processo.
 
 Junto saíram `proximaVersao`, `entradaDeHistorico`, `empilharVersao` e `notaDaVersao` de `lib/dominio/versionamento.ts`: quem monta o histórico é o servidor desde o Bloco 10, e a nota de cada versão vem pronta em `version.note`. Testar função que ninguém chama dá cobertura, não garantia — os testes delas saíram junto.
+
+## 46. "Prefeitura" vira "Entidade", e o cadastro passa a pedir só o nome
+
+Quem contrata o GeraDocs nem sempre é uma prefeitura: pode ser uma câmara, uma autarquia ou um consórcio intermunicipal. A interface — e o domínio inteiro do front — chamava todos de *prefeitura*, o que obrigava metade dos clientes a se reconhecer no nome errado, e o administrador da plataforma a cadastrar uma câmara num formulário intitulado "Cadastrar Prefeitura".
+
+**Decisão: o conceito passa a se chamar `Entidade`,** do rótulo ao identificador. A troca é mecânica e vale para as duas pontas: `Tenant.orgao` → `Tenant.nome`, `Usuario.prefeituraId` → `entidadeId`, `usePrefeituras` → `useEntidades`, `/admin/prefeituras` → `/admin/entidades`. Nomes próprios ficaram intactos: a "Prefeitura Municipal de Ecoporanga" continua se chamando assim — o que mudou foi o substantivo genérico, não o nome de quem já está cadastrado.
+
+A API nunca falou "prefeitura": o backend expõe `/organizations` desde sempre. Era o front que traduzia o contrato para um vocabulário mais estreito que ele.
+
+**O cadastro de entidade pede só o nome.** Pedia também a unidade administrativa, e quem cadastra — o administrador da plataforma — não a conhece: quem sabe qual é a unidade, quais são as secretarias, qual o timbre e qual o PCA é o coordenador da entidade, e todos esses já são configuração dele. O campo continua no modelo, porque o servidor o guarda e a sidebar o mostra onde ele existe; o que saiu foi a pergunta feita a quem não tem a resposta.
+
+**O cadastro pede o tipo, e é a única coisa além do nome.** O contrato já tinha `entityType` (`PREFEITURA`, `CAMARA`, `AUTARQUIA`, `FUNDACAO`, `CONSORCIO`, `OUTRO`) e o front o ignorava — e `Organization` no backend faz `entityType == null ? PREFEITURA`. Cadastrar uma câmara sem informar o tipo a gravaria como prefeitura: o erro de nomenclatura de volta, agora invisível, no banco. O tipo entrou no domínio (`Tenant.tipo`), sai na listagem e no resumo do painel, e é a razão pela qual o formulário tem dois campos e não um.
+
+**O perfil "Administrador Geral" saiu do formulário de servidores.** A conta nasce com a inicialização do banco e é única; oferecê-la no seletor prometia um segundo administrador que não deve existir. Pela mesma razão o admin geral **não aparece na listagem de servidores**: ele não é servidor de entidade alguma, e listá-lo colocava um botão de desativar ao lado da única conta capaz de administrar a plataforma. Com isso a entidade virou obrigatória em todo cadastro desta tela — todo servidor tem lotação.
+
+**O painel do sistema deixou de contar sem mostrar.** A lista de entidades dizia o nome e "2 servidor(es)"; para saber quem eram os dois era preciso ir a outra tela e filtrar. Agora a linha abre no clique e lista os usuários daquela entidade — nome, cargo, perfil e último acesso —, sem requisição nova: a lista de usuários já está em memória. Entidade sem ninguém cadastrado diz isso e oferece o caminho, em vez de abrir uma lista vazia.
+
+**O resumo da entidade não conta secretarias.** Seria o número mais natural para exibir ali, e é exatamente o que a listagem de entidades não traz — `GET /organizations` não devolve os departamentos. "0 secretaria(s)" seria um número inventado para toda entidade do sistema.
+
+## 47. Desativar deixou de poder quebrar o que estava inteiro
+
+Três defeitos da mesma família, achados ao usar a área de administração.
+
+**A unidade administrativa saiu.** Era o segundo campo do cadastro de entidade e não servia a nada: nenhuma tela a usava para decidir coisa alguma, a sidebar a exibia como legenda do nome e o cadastro a pedia a quem não a conhece. Saiu de `Tenant`, do cadastro e da listagem. No lugar dela, a sidebar mostra **o tipo da entidade** — que é o que responde "o que é este órgão". O campo continua existindo no servidor, e `atualizarEntidade` o reenvia como está: nenhuma tela o mostra, e apagá-lo de passagem seria decidir por quem não foi perguntado.
+
+**Entidade com servidor vinculado era desativável — e foi.** A entidade sumia da listagem e os servidores dela continuavam lá, agora exibindo um UUID cru na coluna "Entidade", porque o nome vinha de uma busca que não achava mais nada. Os processos daquele órgão ficavam órfãos. Agora `DeactivateOrganizationUseCase` recusa enquanto houver usuário ativo vinculado, e a tela nem deixa clicar: o botão nasce desabilitado dizendo quantos servidores seguram a entidade.
+
+**Servidor com processo em andamento também não é desativado.** Desativar revoga a sessão e tira a pessoa do sistema; o processo que ela conduzia ficaria aberto e sem responsável, com documentos pela metade e ninguém a quem cobrá-los. A regra é do backend, porque é lá que estão os processos: `access` declara a porta `ProcessWorkloadPort` e `procurement` — que já dependia de `access` — a implementa. A seta de dependência continua apontando para um lado só, e o `ArchitectureTest` cobra isso. Processo **encerrado** não segura ninguém: ele já saiu da plataforma.
+
+**A recusa saiu do toast.** Quando o motivo é regra de negócio, três segundos não bastam: a tela de servidores passou a exibir a mensagem do servidor num aviso fixo acima da lista. "Não foi possível desativar" deixaria a pessoa sem saber o que fazer a seguir; "responde por 2 processo(s) em andamento" diz onde mexer.
+
+**O identificador da entidade saiu das telas.** Aparecia sob o nome na listagem de entidades e como valor da coluna "Entidade" na de servidores. Ninguém digita um UUID em lugar nenhum do produto — e onde ele aparecia era justamente onde faltava um nome.
+

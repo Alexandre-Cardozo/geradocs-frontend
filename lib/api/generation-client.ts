@@ -164,7 +164,7 @@ export interface ResumoDoAcervo {
  * <p>Antes do 12.3 esta lista vinha de fixture, e o resumo acima dela também —
  * duas invenções que por acaso combinavam.
  */
-export async function acervoDoOrgao(): Promise<DocumentoGerado[]> {
+export async function acervoDoNome(): Promise<DocumentoGerado[]> {
   const acervo = await requisicaoProtegida<AcervoDaApi[]>("/generated-documents")
   // `flatMap` e não `map`: um tipo que a interface não conhece — porque o
   // servidor ganhou um antes desta tela — não pode virar linha sem rótulo.
@@ -175,7 +175,7 @@ export async function acervoDoOrgao(): Promise<DocumentoGerado[]> {
       // Um documento por processo e tipo: é a chave que a tela já usa para
       // saber se um documento existe.
       id: `${documento.processId}:${tipo}`,
-      prefeituraId: "",
+      entidadeId: "",
       processoId: documento.processId,
       titulo: `${documento.processNumber} — ${documento.processObject}`,
       tipo,

@@ -42,16 +42,15 @@ const usuarioApi = {
   version: 5,
 }
 
-describe("listarPrefeituras", () => {
+describe("listarEntidades", () => {
   it("mapeia a organização do backend para o tenant da interface", async () => {
     servidor.use(http.get(`${urlDaApi}/organizations`, () => HttpResponse.json([organizacao])))
-    const { listarPrefeituras } = await carregarClienteLimpo()
+    const { listarEntidades } = await carregarClienteLimpo()
 
-    const [prefeitura] = await listarPrefeituras()
+    const [entidade] = await listarEntidades()
 
-    expect(prefeitura?.orgao).toBe("Prefeitura Municipal de Ecoporanga")
-    expect(prefeitura?.unidade).toBe("Administração Central")
-    expect(prefeitura?.id).toBe(organizacao.id)
+    expect(entidade?.nome).toBe("Prefeitura Municipal de Ecoporanga")
+    expect(entidade?.id).toBe(organizacao.id)
   })
 })
 
@@ -64,7 +63,7 @@ const departamento = {
   version: 2,
 }
 
-describe("criarPrefeitura", () => {
+describe("criarEntidade", () => {
   it("apara os nomes antes de enviar", async () => {
     let corpo: Record<string, unknown> = {}
     servidor.use(
@@ -73,13 +72,12 @@ describe("criarPrefeitura", () => {
         return HttpResponse.json(organizacao)
       }),
     )
-    const { criarPrefeitura } = await carregarClienteLimpo()
+    const { criarEntidade } = await carregarClienteLimpo()
 
-    const prefeitura = await criarPrefeitura({ orgao: "  Prefeitura de Ecoporanga  ", unidade: "  Sede  " })
+    const entidade = await criarEntidade({ nome: "  Prefeitura de Ecoporanga  ", tipo: "prefeitura" })
 
     expect(corpo.name).toBe("Prefeitura de Ecoporanga")
-    expect(corpo.unit).toBe("Sede")
-    expect(prefeitura.orgao).toBe(organizacao.name)
+    expect(entidade.nome).toBe(organizacao.name)
   })
 
   it("envia unidade nula quando ela não é informada", async () => {
@@ -90,30 +88,31 @@ describe("criarPrefeitura", () => {
         return HttpResponse.json(organizacao)
       }),
     )
-    const { criarPrefeitura } = await carregarClienteLimpo()
+    const { criarEntidade } = await carregarClienteLimpo()
 
-    await criarPrefeitura({ orgao: "Prefeitura", unidade: "   " })
+    await criarEntidade({ nome: "Entidade", tipo: "camara" })
 
-    // String vazia e ausência são coisas diferentes para o backend: "" passaria
-    // na validação de obrigatoriedade e gravaria unidade em branco.
-    expect(corpo.unit).toBeNull()
+    // A unidade administrativa saiu do produto em 26/08/2026: o campo não é
+    // pedido, não é exibido, e o cadastro não manda nada no lugar dele.
+    expect(corpo).not.toHaveProperty("unit")
+    expect(corpo.entityType).toBe("CAMARA")
   })
 })
 
-describe("listarPrefeituras", () => {
+describe("listarEntidades", () => {
   it("esconde organização desativada", async () => {
     servidor.use(
       http.get(`${urlDaApi}/organizations`, () =>
         HttpResponse.json([organizacao, { ...organizacao, id: "outra", status: "INACTIVE" }]),
       ),
     )
-    const { listarPrefeituras } = await carregarClienteLimpo()
+    const { listarEntidades } = await carregarClienteLimpo()
 
-    expect(await listarPrefeituras()).toHaveLength(1)
+    expect(await listarEntidades()).toHaveLength(1)
   })
 })
 
-describe("desativarPrefeitura", () => {
+describe("desativarEntidade", () => {
   it("lê a versão atual e a envia em If-Match", async () => {
     let ifMatch: string | null = null
     servidor.use(
@@ -123,9 +122,9 @@ describe("desativarPrefeitura", () => {
         return new HttpResponse(null, { status: 204 })
       }),
     )
-    const { desativarPrefeitura } = await carregarClienteLimpo()
+    const { desativarEntidade } = await carregarClienteLimpo()
 
-    await desativarPrefeitura(organizacao.id)
+    await desativarEntidade(organizacao.id)
 
     expect(ifMatch).toContain("3")
   })
@@ -200,7 +199,7 @@ describe("desativarDepartamento", () => {
     servidor.use(http.get(`${urlDaApi}/organizations/:id/departments`, () => HttpResponse.json([departamento])))
     const { desativarDepartamento } = await carregarClienteLimpo()
 
-    await expect(desativarDepartamento(organizacao.id, "de-outra-prefeitura")).rejects.toThrow(
+    await expect(desativarDepartamento(organizacao.id, "de-outra-entidade")).rejects.toThrow(
       /Secretaria não encontrada/i,
     )
   })
@@ -219,7 +218,7 @@ describe("listarUsuarios", () => {
 
     await listarUsuarios(organizacao.id)
 
-    // Sem o filtro, um coordenador veria servidores de outra prefeitura na tela
+    // Sem o filtro, um coordenador veria servidores de outra entidade na tela
     // — o backend barra, mas a tela pediria o que não pode ver.
     expect(recebida?.searchParams.get("organizationId")).toBe(organizacao.id)
   })
@@ -304,7 +303,7 @@ describe("listarUsuarios", () => {
     const [usuario] = await listarUsuarios()
 
     expect(usuario?.perfilAcesso).toBe("servidor")
-    expect(usuario?.prefeituraId).toBe(organizacao.id)
+    expect(usuario?.entidadeId).toBe(organizacao.id)
     expect(usuario?.ativo).toBe(true)
   })
 })
@@ -326,10 +325,10 @@ describe("criarUsuario", () => {
       email: "ana@geradocs.local",
       cargo: "Administradora",
       perfilAcesso: "admin_geral",
-      prefeituraId: organizacao.id,
+      entidadeId: organizacao.id,
     })
 
-    // O admin geral é global. Amarrá-lo a uma prefeitura o transformaria em
+    // O admin geral é global. Amarrá-lo a uma entidade o transformaria em
     // coordenador com nome de administrador.
     expect(corpo.organizationId).toBeNull()
     expect(corpo.departmentId).toBeNull()
@@ -351,7 +350,7 @@ describe("criarUsuario", () => {
       email: "ana@ecoporanga.es.gov.br",
       cargo: "Servidora",
       perfilAcesso: "servidor" as const,
-      prefeituraId: organizacao.id,
+      entidadeId: organizacao.id,
     }
 
     await criarUsuario({ ...base, matricula: "  mat-4471  ", decretoNomeacao: "Decreto 1/2026" })
@@ -384,7 +383,7 @@ describe("criarUsuario", () => {
       email: "maria@ecoporanga.es.gov.br",
       cargo: "   ",
       perfilAcesso: "servidor",
-      prefeituraId: organizacao.id,
+      entidadeId: organizacao.id,
     })
 
     expect(corpo.jobTitle).toBeNull()
@@ -406,7 +405,7 @@ describe("criarUsuario", () => {
       email: "carlos@ecoporanga.es.gov.br",
       cargo: "Procurador",
       perfilAcesso: "coordenador",
-      prefeituraId: organizacao.id,
+      entidadeId: organizacao.id,
       departamentoId: departamento.id,
     })
 
@@ -473,10 +472,10 @@ describe("criarUsuario", () => {
     // Papel de workflow virou opcional (ADR §26): vínculo sem papel é o caso
     // comum, e quem define o que a pessoa pode fazer é o perfil de acesso.
     expect(usuario?.perfilAcesso).toBe("servidor")
-    expect(usuario?.prefeituraId).toBe(organizacao.id)
+    expect(usuario?.entidadeId).toBe(organizacao.id)
   })
 
-  it("ignora vínculo revogado ao descobrir a prefeitura", async () => {
+  it("ignora vínculo revogado ao descobrir a entidade", async () => {
     servidor.use(
       http.get(`${urlDaApi}/users`, () =>
         HttpResponse.json([
@@ -488,7 +487,7 @@ describe("criarUsuario", () => {
 
     const [usuario] = await listarUsuarios()
 
-    expect(usuario?.prefeituraId).toBeNull()
+    expect(usuario?.entidadeId).toBeNull()
   })
 
   it("trata cargo e último acesso ausentes", async () => {
@@ -505,14 +504,14 @@ describe("criarUsuario", () => {
     expect(usuario?.ultimoAcesso).toBe("")
   })
 
-  it("preenche a unidade vazia quando a organização não a informa", async () => {
-    servidor.use(http.get(`${urlDaApi}/organizations`, () => HttpResponse.json([{ ...organizacao, unit: null }])))
-    const { listarPrefeituras } = await carregarClienteLimpo()
+  it("o cabeçalho sintético é só o nome da entidade", async () => {
+    servidor.use(http.get(`${urlDaApi}/organizations`, () => HttpResponse.json([organizacao])))
+    const { listarEntidades } = await carregarClienteLimpo()
 
-    const [prefeitura] = await listarPrefeituras()
+    const [entidade] = await listarEntidades()
 
-    expect(prefeitura?.unidade).toBe("")
-    expect(prefeitura?.cabecalho).toBe("PREFEITURA MUNICIPAL DE ECOPORANGA")
+    // A segunda linha era a unidade administrativa, que saiu do produto.
+    expect(entidade?.cabecalho).toBe("PREFEITURA MUNICIPAL DE ECOPORANGA")
   })
 })
 
@@ -622,7 +621,7 @@ describe("atualizarUsuario", () => {
   })
 })
 
-describe("atualizarPrefeitura", () => {
+describe("atualizarEntidade", () => {
   it("renomeia o órgão com a versão relida", async () => {
     let cabecalho: string | null = null
     let corpo: Record<string, unknown> | undefined
@@ -639,16 +638,16 @@ describe("atualizarPrefeitura", () => {
         return HttpResponse.json({ ...organizacao, name: "Prefeitura de Ecoporanga" })
       }),
     )
-    const { atualizarPrefeitura } = await carregarClienteLimpo()
+    const { atualizarEntidade } = await carregarClienteLimpo()
 
-    const tenant = await atualizarPrefeitura(organizacao.id, {
-      orgao: "  Prefeitura de Ecoporanga  ",
+    const tenant = await atualizarEntidade(organizacao.id, {
+      nome: "  Prefeitura de Ecoporanga  ",
     })
 
     expect(cabecalho).toBe('"3"')
     // Unidade não veio no patch: é reenviada como está, e não apagada.
     expect(corpo).toEqual({ name: "Prefeitura de Ecoporanga", unit: organizacao.unit })
-    expect(tenant.orgao).toBe("Prefeitura de Ecoporanga")
+    expect(tenant.nome).toBe("Prefeitura de Ecoporanga")
   })
 
   it("nome em branco não apaga o nome do órgão", async () => {
@@ -662,11 +661,13 @@ describe("atualizarPrefeitura", () => {
         return HttpResponse.json(organizacao)
       }),
     )
-    const { atualizarPrefeitura } = await carregarClienteLimpo()
+    const { atualizarEntidade } = await carregarClienteLimpo()
 
-    await atualizarPrefeitura(organizacao.id, { orgao: "   ", unidade: "" })
+    await atualizarEntidade(organizacao.id, { nome: "   " })
 
-    expect(corpo).toEqual({ name: organizacao.name, unit: "" })
+    // A unidade que o servidor guarda é reenviada como está: nenhuma tela a
+    // mostra, e apagá-la de passagem seria decidir por quem não foi perguntado.
+    expect(corpo).toEqual({ name: organizacao.name, unit: organizacao.unit })
   })
 })
 
@@ -714,9 +715,9 @@ describe("edição de cadastro incompleto", () => {
         return HttpResponse.json(semUnidade)
       }),
     )
-    const { atualizarPrefeitura } = await carregarClienteLimpo()
+    const { atualizarEntidade } = await carregarClienteLimpo()
 
-    await atualizarPrefeitura(organizacao.id, { orgao: "Prefeitura de Ecoporanga" })
+    await atualizarEntidade(organizacao.id, { nome: "Prefeitura de Ecoporanga" })
 
     expect(corpo).toEqual({ name: "Prefeitura de Ecoporanga", unit: null })
   })
@@ -738,7 +739,7 @@ describe("senha provisória", () => {
         email: "maria@x.gov.br",
         cargo: "Servidora",
         perfilAcesso: "servidor",
-        prefeituraId: organizacao.id,
+        entidadeId: organizacao.id,
       }),
     ).rejects.toThrow(/recuperação de senha/)
   })

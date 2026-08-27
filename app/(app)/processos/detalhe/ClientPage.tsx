@@ -153,7 +153,7 @@ export default function HubProcesso() {
   }
 
   // Encerramento: a plataforma termina quando os documentos estão prontos. O
-  // protocolo e a aprovação acontecem no sistema administrativo da prefeitura.
+  // protocolo e a aprovação acontecem no sistema administrativo da entidade.
   // A regra é do domínio, e não uma filtragem repetida aqui: o servidor cobra a
   // mesma coisa ao encerrar, e duas cópias da regra é como elas divergem.
   const pendentes = documentosPendentes(proc, tiposGeradosAgora)
@@ -173,7 +173,7 @@ export default function HubProcesso() {
     encerrar.mutate(
       { processoId, justificativa },
       {
-        onSuccess: () => showToast("Processo encerrado. Protocole os documentos no sistema da prefeitura."),
+        onSuccess: () => showToast("Processo encerrado. Protocole os documentos no sistema da entidade."),
         onError: (e) => showToast(e instanceof Error ? e.message : "Não foi possível encerrar o processo."),
       },
     )
@@ -594,7 +594,7 @@ export default function HubProcesso() {
             <div className="font-display text-md font-bold text-text-1">Encerrar Processo</div>
             <p id="ajuda-encerrar" className="m-0 mt-1 text-sm text-text-3">
               {pendentes.length === 0
-                ? "Todos os documentos foram gerados. Encerre o processo e protocole os arquivos no sistema administrativo da prefeitura."
+                ? "Todos os documentos foram gerados. Encerre o processo e protocole os arquivos no sistema administrativo da entidade."
                 : `Ainda faltam: ${pendentes
                     .map((t) => CATALOGO[t].titulo)
                     .join(", ")}. É possível encerrar assim mesmo, mediante justificativa.`}
@@ -613,7 +613,7 @@ export default function HubProcesso() {
       {proc.status === "concluido" && (
         <InfoBanner tone="success" className="mt-6">
           Processo encerrado. Os documentos estão no repositório, prontos para protocolo no sistema
-          administrativo da prefeitura.
+          administrativo da entidade.
         </InfoBanner>
       )}
 

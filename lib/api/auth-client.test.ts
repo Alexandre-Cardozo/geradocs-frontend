@@ -101,7 +101,7 @@ describe("autenticar", () => {
     expect(sessao.usuario.iniciais).toBe("MA")
     expect(sessao.usuario.perfilAcesso).toBe("servidor")
     expect(sessao.usuario.ativo).toBe(true)
-    expect(sessao.prefeitura?.orgao).toBe("Prefeitura Municipal de Ecoporanga")
+    expect(sessao.entidade?.nome).toBe("Prefeitura Municipal de Ecoporanga")
   })
 
   it("envia o cookie de sessão em toda requisição", async () => {
@@ -273,7 +273,7 @@ describe("obterSessao", () => {
     const sessao = await obterSessao()
 
     expect(sessao?.usuario.perfilAcesso).toBe("admin_geral")
-    expect(sessao?.prefeitura).toBeNull()
+    expect(sessao?.entidade).toBeNull()
   })
 })
 
@@ -386,7 +386,7 @@ describe("campos que o contrato declara como opcionais", () => {
     expect(sessao.usuario.cargo).toBe("")
     expect(sessao.usuario.ultimoAcesso).toBe("")
     expect(sessao.usuario.ativo).toBe(false)
-    expect(sessao.prefeitura?.orgao).toBe("")
+    expect(sessao.entidade?.nome).toBe("")
   })
 
   it("recusa sessão sem perfil de acesso em vez de assumir um", async () => {
@@ -451,16 +451,16 @@ describe("tenant sintetizado (ponte temporária)", () => {
   it("documenta os campos que o backend ainda não expõe", async () => {
     const { autenticar } = await carregarClienteLimpo()
 
-    const { prefeitura } = await autenticar("33333333333", "senha-correta")
+    const { entidade } = await autenticar("33333333333", "senha-correta")
 
     // Estes valores são fabricados por `tenantDa()` porque o endpoint de
     // organização ainda não devolve configuração. Quando passar a devolver, este
     // teste falha — que é o objetivo: a ponte não pode sumir sem alguém notar.
-    expect(prefeitura?.secretarias).toEqual([])
-    expect(prefeitura?.logoDataUrl).toBeNull()
+    expect(entidade?.secretarias).toEqual([])
+    expect(entidade?.logoDataUrl).toBeNull()
     // O PCA saiu daqui no 10.5: ele é do módulo `pca` e vem indexado do
     // servidor, e não um `itensIndexados: 0` fabricado na ponte.
-    expect(prefeitura).not.toHaveProperty("pca")
+    expect(entidade).not.toHaveProperty("pca")
   })
 })
 

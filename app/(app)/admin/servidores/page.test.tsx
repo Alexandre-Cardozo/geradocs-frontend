@@ -5,6 +5,7 @@ import AdminServidores from "@/app/(app)/admin/servidores/page"
 import { urlDaApi } from "@/lib/teste/handlers"
 import { renderizar, screen, userEvent, waitFor } from "@/lib/teste/renderizar"
 import { servidor } from "@/lib/teste/servidor-msw"
+import { PERFIL_ACESSO_LABEL } from "@/lib/types"
 
 /**
  * Cadastro de servidores pelo administrador da plataforma.
@@ -14,7 +15,7 @@ import { servidor } from "@/lib/teste/servidor-msw"
  * mesmo `onSuccess` que o preenchia fechava o painel — ele nascia desmontado. O
  * cadastro ficava no banco sem que ninguém pudesse acessá-lo.
  */
-const PREFEITURA = "1b7c8e10-2d3f-4a5b-8c9d-0e1f2a3b4c5d"
+const ENTIDADE = "1b7c8e10-2d3f-4a5b-8c9d-0e1f2a3b4c5d"
 const SORTEADA = "aBcD3fGh4JkLmN5p"
 
 const servidora = {
@@ -27,17 +28,17 @@ const servidora = {
   appointmentDecree: "Decreto 1.234/2026",
   profileAccess: "SERVIDOR" as const,
   status: "ACTIVE" as const,
-  memberships: [{ organizationId: PREFEITURA, departmentId: null, active: true }],
+  memberships: [{ organizationId: ENTIDADE, departmentId: null, active: true }],
   lastAccessAt: "2026-08-20T14:30:00-03:00",
   version: 5,
 }
 
-function comCadastro(usuarios = [servidora]) {
+function comCadastro(usuarios: unknown[] = [servidora]) {
   servidor.use(
     http.get(`${urlDaApi}/organizations`, () =>
       HttpResponse.json([
         {
-          id: PREFEITURA,
+          id: ENTIDADE,
           name: "Prefeitura Municipal de Ecoporanga",
           unit: "Administração Central",
           status: "ACTIVE",
@@ -58,9 +59,9 @@ async function preencherCadastro() {
   await userEvent.type(screen.getByLabelText(/^CPF/), "11144477735")
   await userEvent.type(screen.getByLabelText(/E-mail/), "maria.costa@ecoporanga.es.gov.br")
   // O Dropdown do DS não é `<select>`: abre uma listbox de botões. E a lista de
-  // prefeituras chega do servidor — escolher antes dela seria escolher de um
-  // seletor que só tem "Selecione a prefeitura...".
-  await userEvent.click(screen.getByRole("button", { name: /^Prefeitura/ }))
+  // entidades chega do servidor — escolher antes dela seria escolher de um
+  // seletor que só tem "Selecione a entidade...".
+  await userEvent.click(screen.getByRole("button", { name: /^Entidade/ }))
   await userEvent.click(
     await screen.findByRole("option", { name: "Prefeitura Municipal de Ecoporanga" }),
   )
@@ -344,5 +345,108 @@ describe("ficha do servidor", () => {
     await userEvent.click(screen.getByRole("button", { name: "Fechar ficha do servidor" }))
 
     expect(screen.queryByText("Decreto 1.234/2026")).not.toBeInTheDocument()
+  })
+})
+
+describe("o administrador geral não se cadastra nem se lista aqui", () => {
+  /**
+   * O administrador geral nasce com o banco: o sistema cria a conta ao
+   * inicializar. Oferecer o perfil no formulário prometia um segundo
+   * administrador que não deve existir, e listá-lo entre os servidores das
+   * entidades punha um botão de desativar na única conta que administra a
+   * plataforma.
+   */
+  const administrador = {
+    ...servidora,
+    id: "0a0b0c0d-0e0f-4a1b-8c2d-3e4f5a6b7c8d",
+    name: "Ana Paula Ribeiro",
+    profileAccess: "ADMIN_GERAL" as const,
+    memberships: [],
+  }
+
+  it("o perfil de administrador geral não é oferecido no cadastro", async () => {
+    comCadastro([])
+    renderizar(<AdminServidores />)
+    await screen.findByText(/Nenhum servidor cadastrado/)
+
+    await userEvent.click(screen.getByRole("button", { name: /Novo Servidor/ }))
+    await userEvent.click(screen.getByRole("button", { name: /Perfil de acesso/ }))
+
+    expect(screen.getByRole("option", { name: PERFIL_ACESSO_LABEL.servidor })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: PERFIL_ACESSO_LABEL.coordenador })).toBeInTheDocument()
+    expect(
+      screen.queryByRole("option", { name: PERFIL_ACESSO_LABEL.admin_geral }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("a entidade é obrigatória: sem ela o cadastro não sai", async () => {
+    comCadastro([])
+    renderizar(<AdminServidores />)
+    await screen.findByText(/Nenhum servidor cadastrado/)
+
+    await userEvent.click(screen.getByRole("button", { name: /Novo Servidor/ }))
+    await userEvent.type(screen.getByLabelText(/Nome Completo/), "Maria Costa Andrade")
+    await userEvent.type(screen.getByLabelText(/^CPF/), "11144477735")
+    await userEvent.type(screen.getByLabelText(/E-mail/), "maria.costa@ecoporanga.es.gov.br")
+
+    // Todo servidor pertence a uma entidade — é dela que sai a lotação.
+    expect(screen.getByRole("button", { name: "Cadastrar" })).toBeDisabled()
+  })
+
+  it("o administrador geral não aparece na lista de servidores", async () => {
+    comCadastro([servidora, administrador])
+    renderizar(<AdminServidores />)
+
+    expect(await screen.findByText("Maria Costa Andrade")).toBeInTheDocument()
+    expect(screen.queryByText("Ana Paula Ribeiro")).not.toBeInTheDocument()
+  })
+
+  it("só o administrador geral cadastrado deixa a lista vazia, e não em branco", async () => {
+    comCadastro([administrador])
+    renderizar(<AdminServidores />)
+
+    expect(await screen.findByText(/Nenhum servidor cadastrado/)).toBeInTheDocument()
+  })
+})
+
+describe("desativar servidor", () => {
+  /**
+   * Servidor com processo em andamento não é desativado — a regra vive no
+   * servidor (`DeactivateUserUseCase`), porque é lá que estão os processos. A
+   * tela não adivinha quantos são: ela repete o motivo que veio de lá, em vez
+   * de dizer "não foi possível" e deixar a pessoa sem saber o que fazer.
+   */
+  it("a recusa do servidor aparece na tela com o motivo", async () => {
+    comCadastro()
+    servidor.use(
+      http.get(`${urlDaApi}/users/:id`, () => HttpResponse.json(servidora)),
+      http.post(`${urlDaApi}/users/:id/deactivate`, () =>
+        HttpResponse.json(
+          {
+            detail:
+              "O usuário responde por 2 processo(s) em andamento e não pode ser desativado. Encerre-os ou transfira a responsabilidade antes.",
+            code: "BUSINESS_RULE_VIOLATION",
+          },
+          { status: 400 },
+        ),
+      ),
+    )
+    renderizar(<AdminServidores />)
+
+    await userEvent.click(await screen.findByRole("button", { name: /Desativar Maria/ }))
+
+    expect(await screen.findByText(/2 processo\(s\) em andamento/)).toBeInTheDocument()
+    // E quem foi recusado continua na lista: nada sumiu da tela por otimismo.
+    expect(screen.getByText("Maria Costa Andrade")).toBeInTheDocument()
+  })
+
+  it("servidor de entidade que não está na listagem mostra um traço, e não o identificador", async () => {
+    comCadastro([{ ...servidora, memberships: [{ organizationId: "0f0e0d0c-0b0a-4998-8877-665544332211", departmentId: null, active: true }] }])
+    renderizar(<AdminServidores />)
+
+    await screen.findByText("Maria Costa Andrade")
+
+    // Era o UUID cru que aparecia aqui quando a entidade saía da listagem.
+    expect(screen.queryByText("0f0e0d0c-0b0a-4998-8877-665544332211")).not.toBeInTheDocument()
   })
 })

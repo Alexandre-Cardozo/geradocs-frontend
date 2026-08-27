@@ -11,7 +11,7 @@ import type { DocumentoGerado, Processo, TipoDocumento } from "@/lib/types"
 function processo(documentos: TipoDocumento[]): Processo {
   return {
     id: "PROC-2026-001",
-    prefeituraId: "PREF-001",
+    entidadeId: "PREF-001",
     objeto: "Aquisição de material de expediente",
     modalidade: "Pregão Eletrônico",
     secretaria: "Secretaria de Administração",
@@ -30,7 +30,7 @@ function processo(documentos: TipoDocumento[]): Processo {
 function documento(processoId: string, tipo: TipoDocumento): DocumentoGerado {
   return {
     id: `DOC-2026-000${tipo.length}`,
-    prefeituraId: "PREF-001",
+    entidadeId: "PREF-001",
     processoId,
     titulo: `${tipo} — Aquisição`,
     tipo,

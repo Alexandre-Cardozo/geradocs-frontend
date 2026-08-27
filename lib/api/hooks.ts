@@ -40,12 +40,12 @@ export const chaves = {
   documentos: ["documentos"] as const,
   resumoDocumentos: ["documentos", "resumo"] as const,
   historicoVersoes: (id: string, tipo: TipoDocumento) => ["versoes", id, tipo] as const,
-  tenant: (prefeituraId?: string) => ["tenant", prefeituraId ?? "sessao"] as const,
-  usuarios: (prefeituraId?: string, busca = "") => ["usuarios", prefeituraId ?? "todos", busca] as const,
-  prefeituras: ["prefeituras"] as const,
+  tenant: (entidadeId?: string) => ["tenant", entidadeId ?? "sessao"] as const,
+  usuarios: (entidadeId?: string, busca = "") => ["usuarios", entidadeId ?? "todos", busca] as const,
+  entidades: ["entidades"] as const,
   foto: (usuarioId: string | undefined) => ["foto-de-perfil", usuarioId] as const,
-  timbre: (prefeituraId: string | undefined) => ["timbre", prefeituraId] as const,
-  brasao: (prefeituraId: string | undefined) => ["brasao", prefeituraId] as const,
+  timbre: (entidadeId: string | undefined) => ["timbre", entidadeId] as const,
+  brasao: (entidadeId: string | undefined) => ["brasao", entidadeId] as const,
   trilha: (processoId: string) => ["trilha", processoId] as const,
 }
 
@@ -473,21 +473,21 @@ export function useGerarDocumento() {
 }
 
 /**
- * Config da prefeitura em foco — sem id, a da sessão.
+ * Config da entidade em foco — sem id, a da sessão.
  *
  * <p>Quem resolve "a da sessão" é este hook, e não a fachada. Antes o `enabled`
- * exigia um id vindo da tela, e as telas que dependem da prefeitura da própria
+ * exigia um id vindo da tela, e as telas que dependem da entidade da própria
  * pessoa — o cadastro de processo, o detalhe — chamavam sem id: a consulta
  * nunca saía, e o seletor de secretaria ficava permanentemente vazio sem
  * nenhum erro na tela.
  *
  * <p>O `enabled` continua existindo, agora pelo motivo certo: esperar a sessão
- * chegar. Um administrador geral não tem prefeitura, e para ele não há o que
+ * chegar. Um administrador geral não tem entidade, e para ele não há o que
  * consultar até que uma seja escolhida.
  */
-export function useConfigTenant(prefeituraId?: string) {
+export function useConfigTenant(entidadeId?: string) {
   const { data: sessao } = useSessao()
-  const id = prefeituraId ?? sessao?.prefeitura?.id
+  const id = entidadeId ?? sessao?.entidade?.id
   return useQuery({
     queryKey: chaves.tenant(id),
     queryFn: () => api.getConfigTenant(id as string),
@@ -495,41 +495,41 @@ export function useConfigTenant(prefeituraId?: string) {
   })
 }
 
-export function useAtualizarConfigTenant(prefeituraId: string | undefined) {
+export function useAtualizarConfigTenant(entidadeId: string | undefined) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (patch: Partial<Tenant>) => {
-      if (!prefeituraId) throw new Error("Prefeitura não identificada.")
-      return api.atualizarConfigTenant(patch, prefeituraId)
+      if (!entidadeId) throw new Error("Entidade não identificada.")
+      return api.atualizarConfigTenant(patch, entidadeId)
     },
     onSuccess: (tenant) => {
-      queryClient.setQueryData(chaves.tenant(prefeituraId), tenant)
-      void queryClient.invalidateQueries({ queryKey: chaves.prefeituras })
+      queryClient.setQueryData(chaves.tenant(entidadeId), tenant)
+      void queryClient.invalidateQueries({ queryKey: chaves.entidades })
       void queryClient.invalidateQueries({ queryKey: chaves.sessao })
     },
   })
 }
 
-/* ── Cadastros: prefeituras e usuários ─────────────────────────────────────── */
+/* ── Cadastros: entidades e usuários ─────────────────────────────────────── */
 
-export function usePrefeituras() {
-  return useQuery({ queryKey: chaves.prefeituras, queryFn: api.getPrefeituras })
+export function useEntidades() {
+  return useQuery({ queryKey: chaves.entidades, queryFn: api.getEntidades })
 }
 
-export function useCriarPrefeitura() {
+export function useCriarEntidade() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (input: api.NovaPrefeituraInput) => api.criarPrefeitura(input),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: chaves.prefeituras }),
+    mutationFn: (input: api.NovaEntidadeInput) => api.criarEntidade(input),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: chaves.entidades }),
   })
 }
 
-export function useRemoverPrefeitura() {
+export function useRemoverEntidade() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => api.removerPrefeitura(id),
+    mutationFn: (id: string) => api.removerEntidade(id),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: chaves.prefeituras })
+      void queryClient.invalidateQueries({ queryKey: chaves.entidades })
       void queryClient.invalidateQueries({ queryKey: ["usuarios"] })
     },
   })
@@ -553,11 +553,11 @@ function useBuscaAdiada(busca: string, milissegundos = 300): string {
 /**
  * @param busca trecho de nome ou matrícula, como a pessoa digita
  */
-export function useUsuarios(prefeituraId?: string, busca = "") {
+export function useUsuarios(entidadeId?: string, busca = "") {
   const buscaAdiada = useBuscaAdiada(busca)
   return useQuery({
-    queryKey: chaves.usuarios(prefeituraId, buscaAdiada),
-    queryFn: () => api.getUsuarios(prefeituraId, buscaAdiada),
+    queryKey: chaves.usuarios(entidadeId, buscaAdiada),
+    queryFn: () => api.getUsuarios(entidadeId, buscaAdiada),
     // Sem isto a lista some e volta a cada termo novo, em vez de atualizar.
     placeholderData: keepPreviousData,
   })
@@ -565,7 +565,7 @@ export function useUsuarios(prefeituraId?: string, busca = "") {
 
 function invalidarUsuarios(queryClient: ReturnType<typeof useQueryClient>) {
   void queryClient.invalidateQueries({ queryKey: ["usuarios"] })
-  void queryClient.invalidateQueries({ queryKey: chaves.prefeituras })
+  void queryClient.invalidateQueries({ queryKey: chaves.entidades })
 }
 
 export function useCriarUsuario() {
@@ -592,50 +592,50 @@ export function useRemoverUsuario() {
   })
 }
 
-export function useCriarSecretaria(prefeituraId: string | undefined) {
+export function useCriarSecretaria(entidadeId: string | undefined) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (nome: string) => {
-      if (!prefeituraId) throw new Error("Prefeitura não identificada.")
-      return api.criarSecretaria(prefeituraId, nome)
+      if (!entidadeId) throw new Error("Entidade não identificada.")
+      return api.criarSecretaria(entidadeId, nome)
     },
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: chaves.tenant(prefeituraId) }),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: chaves.tenant(entidadeId) }),
   })
 }
 
-export function useRemoverSecretaria(prefeituraId: string | undefined) {
+export function useRemoverSecretaria(entidadeId: string | undefined) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (secretariaId: string) => {
-      if (!prefeituraId) throw new Error("Prefeitura não identificada.")
-      return api.removerSecretaria(prefeituraId, secretariaId)
+      if (!entidadeId) throw new Error("Entidade não identificada.")
+      return api.removerSecretaria(entidadeId, secretariaId)
     },
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: chaves.tenant(prefeituraId) }),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: chaves.tenant(entidadeId) }),
   })
 }
 
 /* ── Timbre do órgão ───────────────────────────────────────────────────────── */
 
 /**
- * O timbre da prefeitura: brasão, cabeçalho e rodapé (ADR-026).
+ * O timbre da entidade: brasão, cabeçalho e rodapé (ADR-026).
  *
  * <p>É o que sai impresso em todo documento do órgão, então a tela de
  * configuração e a prévia leem daqui — e não de um objeto montado no cliente.
  */
-export function useTimbre(prefeituraId: string | undefined) {
+export function useTimbre(entidadeId: string | undefined) {
   return useQuery({
-    queryKey: chaves.timbre(prefeituraId),
-    queryFn: () => obterTimbre(prefeituraId as string),
-    enabled: prefeituraId != null,
+    queryKey: chaves.timbre(entidadeId),
+    queryFn: () => obterTimbre(entidadeId as string),
+    enabled: entidadeId != null,
   })
 }
 
 /** O brasão como URL utilizável em `<img>`; a rota é autenticada. */
-export function useBrasao(prefeituraId: string | undefined, temBrasao: boolean) {
+export function useBrasao(entidadeId: string | undefined, temBrasao: boolean) {
   const query = useQuery({
-    queryKey: chaves.brasao(prefeituraId),
-    queryFn: () => obterBrasao(prefeituraId as string),
-    enabled: prefeituraId != null && temBrasao,
+    queryKey: chaves.brasao(entidadeId),
+    queryFn: () => obterBrasao(entidadeId as string),
+    enabled: entidadeId != null && temBrasao,
     staleTime: Infinity,
   })
   const blob = query.data ?? null
@@ -649,33 +649,33 @@ export function useBrasao(prefeituraId: string | undefined, temBrasao: boolean) 
   return url
 }
 
-export function useSalvarTextosDoTimbre(prefeituraId: string | undefined) {
+export function useSalvarTextosDoTimbre(entidadeId: string | undefined) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (input: { cabecalho: string; rodape: string }) =>
-      salvarTextosDoTimbre(prefeituraId as string, input.cabecalho, input.rodape),
-    onSuccess: (timbre) => queryClient.setQueryData(chaves.timbre(prefeituraId), timbre),
+      salvarTextosDoTimbre(entidadeId as string, input.cabecalho, input.rodape),
+    onSuccess: (timbre) => queryClient.setQueryData(chaves.timbre(entidadeId), timbre),
   })
 }
 
-export function useEnviarBrasao(prefeituraId: string | undefined) {
+export function useEnviarBrasao(entidadeId: string | undefined) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (arquivo: File) => enviarBrasao(prefeituraId as string, arquivo),
+    mutationFn: (arquivo: File) => enviarBrasao(entidadeId as string, arquivo),
     onSuccess: (timbre) => {
-      queryClient.setQueryData(chaves.timbre(prefeituraId), timbre)
-      void queryClient.invalidateQueries({ queryKey: chaves.brasao(prefeituraId) })
+      queryClient.setQueryData(chaves.timbre(entidadeId), timbre)
+      void queryClient.invalidateQueries({ queryKey: chaves.brasao(entidadeId) })
     },
   })
 }
 
-export function useRemoverBrasao(prefeituraId: string | undefined) {
+export function useRemoverBrasao(entidadeId: string | undefined) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: () => removerBrasao(prefeituraId as string),
+    mutationFn: () => removerBrasao(entidadeId as string),
     onSuccess: (timbre) => {
-      queryClient.setQueryData(chaves.timbre(prefeituraId), timbre)
-      void queryClient.invalidateQueries({ queryKey: chaves.brasao(prefeituraId) })
+      queryClient.setQueryData(chaves.timbre(entidadeId), timbre)
+      void queryClient.invalidateQueries({ queryKey: chaves.brasao(entidadeId) })
     },
   })
 }

@@ -1,8 +1,8 @@
 import "client-only"
 
 import { imagemProtegida, requisicaoProtegida } from "@/lib/api/auth-client"
-import { iniciaisDe, primeiroNome } from "@/lib/dominio"
-import type { PerfilAcesso, Secretaria, Tenant, Usuario } from "@/lib/types"
+import { iniciaisDe, primeiroNome, tipoDaEntidade } from "@/lib/dominio"
+import type { PerfilAcesso, Secretaria, Tenant, TipoEntidade, Usuario } from "@/lib/types"
 
 type BackendProfile = "ADMIN_GERAL" | "COORDENADOR" | "SERVIDOR"
 
@@ -10,8 +10,20 @@ interface BackendOrganization {
   id: string
   name: string
   unit: string | null
+  entityType: BackendTipoEntidade
   status: "ACTIVE" | "INACTIVE"
   version: number
+}
+
+type BackendTipoEntidade = "PREFEITURA" | "CAMARA" | "AUTARQUIA" | "FUNDACAO" | "CONSORCIO" | "OUTRO"
+
+const TIPO_PARA_BACKEND: Record<TipoEntidade, BackendTipoEntidade> = {
+  prefeitura: "PREFEITURA",
+  camara: "CAMARA",
+  autarquia: "AUTARQUIA",
+  fundacao: "FUNDACAO",
+  consorcio: "CONSORCIO",
+  outro: "OUTRO",
 }
 
 interface BackendDepartment {
@@ -62,13 +74,13 @@ function ifMatch(version: number): string {
 function tenantDa(organization: BackendOrganization, secretarias: Secretaria[] = []): Tenant {
   return {
     id: organization.id,
-    orgao: organization.name,
-    unidade: organization.unit ?? "",
+    nome: organization.name,
+    tipo: tipoDaEntidade(organization.entityType),
     secretarias,
     logoArquivo: null,
     logoDataUrl: null,
     timbrado: true,
-    cabecalho: `${organization.name.toUpperCase()}\n${organization.unit ?? ""}`.trim(),
+    cabecalho: organization.name.toUpperCase(),
     rodape: "Documento gerado eletronicamente pela plataforma GeraDocs · {data} · Processo nº {numero}",
   }
 }
@@ -86,7 +98,7 @@ function usuarioDa(user: BackendUser): Usuario {
     matricula: user.registrationNumber ?? undefined,
     decretoNomeacao: user.appointmentDecree ?? undefined,
     perfilAcesso: perfis[user.profileAccess],
-    prefeituraId: membership?.organizationId ?? null,
+    entidadeId: membership?.organizationId ?? null,
     secretaria: membership?.departmentId ?? undefined,
     ultimoAcesso: user.lastAccessAt ?? "",
     ativo: user.status === "ACTIVE",
@@ -107,9 +119,16 @@ function secretariaDa(department: BackendDepartment): Secretaria {
   return { id: department.id, nome: department.name, sigla: department.acronym ?? undefined }
 }
 
-export interface NovaPrefeituraInput {
-  orgao: string
-  unidade: string
+export interface NovaEntidadeInput {
+  nome: string
+  /**
+   * O que a entidade é.
+   *
+   * <p>Vai junto do nome porque o servidor assume `PREFEITURA` quando o campo
+   * não chega — e uma câmara gravada como prefeitura é o erro de nomenclatura
+   * de volta, só que invisível.
+   */
+  tipo: TipoEntidade
 }
 
 export interface NovoUsuarioInput {
@@ -120,24 +139,27 @@ export interface NovoUsuarioInput {
   matricula?: string
   decretoNomeacao?: string
   perfilAcesso: PerfilAcesso
-  prefeituraId: string | null
+  entidadeId: string | null
   departamentoId?: string | null
 }
 
-export async function listarPrefeituras(): Promise<Tenant[]> {
+export async function listarEntidades(): Promise<Tenant[]> {
   const organizations = await requisicaoProtegida<BackendOrganization[]>("/organizations")
   return organizations.filter((item) => item.status === "ACTIVE").map((item) => tenantDa(item))
 }
 
-export async function criarPrefeitura(input: NovaPrefeituraInput): Promise<Tenant> {
+export async function criarEntidade(input: NovaEntidadeInput): Promise<Tenant> {
   const organization = await requisicaoProtegida<BackendOrganization>("/organizations", {
     method: "POST",
-    body: JSON.stringify({ name: input.orgao.trim(), unit: input.unidade.trim() || null }),
+    body: JSON.stringify({
+      name: input.nome.trim(),
+      entityType: TIPO_PARA_BACKEND[input.tipo],
+    }),
   })
   return tenantDa(organization)
 }
 
-export async function desativarPrefeitura(id: string): Promise<void> {
+export async function desativarEntidade(id: string): Promise<void> {
   const organization = await requisicaoProtegida<BackendOrganization>(`/organizations/${id}`)
   await requisicaoProtegida<void>(`/organizations/${id}/deactivate`, {
     method: "POST",
@@ -147,25 +169,21 @@ export async function desativarPrefeitura(id: string): Promise<void> {
 }
 
 /**
- * Renomeia o órgão.
+ * Renomeia a entidade.
  *
- * <p>Só nome e unidade: são os dois campos que o servidor guarda. Timbre,
- * cabeçalho e rodapé continuam fabricados por `tenantDa()` e marcados como
- * sintéticos na tela — gravá-los aqui daria a impressão de terem sido salvos.
+ * <p>Só o nome: é o que a plataforma deixa editar. Timbre, cabeçalho e rodapé
+ * continuam fabricados por `tenantDa()` e marcados como sintéticos na tela —
+ * gravá-los aqui daria a impressão de terem sido salvos. A unidade
+ * administrativa que o servidor guarda é reenviada como está: nenhuma tela a
+ * mostra, e apagá-la de passagem seria decidir por quem não foi perguntado.
  */
-export async function atualizarPrefeitura(
-  id: string,
-  patch: { orgao?: string; unidade?: string },
-): Promise<Tenant> {
+export async function atualizarEntidade(id: string, patch: { nome?: string }): Promise<Tenant> {
   const atual = await requisicaoProtegida<BackendOrganization>(`/organizations/${id}`)
   const organization = await requisicaoProtegida<BackendOrganization>(`/organizations/${id}`, {
     method: "PATCH",
     // A API troca o recurso inteiro: o que não muda é reenviado como está.
     headers: { "If-Match": ifMatch(atual.version) },
-    body: JSON.stringify({
-      name: patch.orgao?.trim() || atual.name,
-      unit: patch.unidade?.trim() ?? atual.unit ?? null,
-    }),
+    body: JSON.stringify({ name: patch.nome?.trim() || atual.name, unit: atual.unit ?? null }),
   })
   return tenantDa(organization)
 }
@@ -229,7 +247,7 @@ export async function criarUsuario(
       registrationNumber: input.matricula?.trim() || null,
       appointmentDecree: input.decretoNomeacao?.trim() || null,
       profileAccess,
-      organizationId: input.perfilAcesso === "admin_geral" ? null : input.prefeituraId,
+      organizationId: input.perfilAcesso === "admin_geral" ? null : input.entidadeId,
       departmentId: input.perfilAcesso === "admin_geral" ? null : input.departamentoId ?? null,
     }),
   })
@@ -263,7 +281,7 @@ export async function atualizarUsuario(input: {
   matricula?: string
   decretoNomeacao?: string
   perfilAcesso?: PerfilAcesso
-  prefeituraId?: string | null
+  entidadeId?: string | null
   secretaria?: string
 }): Promise<Usuario> {
   const atual = await requisicaoProtegida<BackendUser>(`/users/${input.id}`)
@@ -281,7 +299,7 @@ export async function atualizarUsuario(input: {
       appointmentDecree: input.decretoNomeacao ?? atual.appointmentDecree ?? null,
       profileAccess: perfilBackend(perfil),
       organizationId:
-        perfil === "admin_geral" ? null : input.prefeituraId ?? lotacao?.organizationId ?? null,
+        perfil === "admin_geral" ? null : input.entidadeId ?? lotacao?.organizationId ?? null,
       departmentId:
         perfil === "admin_geral" ? null : input.secretaria ?? lotacao?.departmentId ?? null,
     }),

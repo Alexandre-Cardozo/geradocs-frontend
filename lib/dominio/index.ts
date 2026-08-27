@@ -7,6 +7,7 @@
  * progresso — e nunca como fonte de verdade. Ver ADR §27.
  */
 
+export * from "@/lib/dominio/entidade"
 export * from "@/lib/dominio/identidade"
 export * from "@/lib/dominio/indicadores"
 export * from "@/lib/dominio/numeracao"

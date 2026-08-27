@@ -29,7 +29,7 @@ export default function Dashboard() {
 
   const recentes = processos.data?.itens ?? [];
 
-  // O admin geral vê um painel de sistema (prefeituras e servidores), não o fluxo de processos.
+  // O admin geral vê um painel de sistema (entidades e servidores), não o fluxo de processos.
   if (usuario?.perfilAcesso === "admin_geral") return <PainelAdmin />;
 
   return (
@@ -43,7 +43,7 @@ export default function Dashboard() {
           <h2 className="m-0 font-display text-3xl font-extrabold tracking-tight text-text-1" suppressHydrationWarning>
             {saudacao()}, {usuario?.primeiroNome ?? "..."}
           </h2>
-          {sessao?.prefeitura && <p className="m-0 mt-0.5 text-sm text-text-muted">{sessao.prefeitura.orgao}</p>}
+          {sessao?.entidade && <p className="m-0 mt-0.5 text-sm text-text-muted">{sessao.entidade.nome}</p>}
         </div>
         <Link
           href="/processos/novo"

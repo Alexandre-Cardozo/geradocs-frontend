@@ -71,7 +71,7 @@ describe("retificação de documento", () => {
     // Contar a versão aqui faria duas abas divergirem sobre qual é a vigente.
     expect(documento.versao).toBe(2)
     // O rótulo vai no título porque o arquivo sai da plataforma: anexado ao
-    // processo no sistema da prefeitura, o badge da tela não viaja junto.
+    // processo no sistema da entidade, o badge da tela não viaja junto.
     expect(documento.titulo).toContain("RETIFICADO")
   })
 

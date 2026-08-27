@@ -78,7 +78,7 @@ export function PainelPca({
             <div className="font-semibold">Nenhum PCA anexado a este órgão.</div>
             <p className="m-0 mt-1">
               Sem o plano, a plataforma não tem onde procurar.{" "}
-              <Link href="/configuracoes" className="underline">
+              <Link href="/configuracoes/pca" className="underline">
                 Anexe o PCA em Configurações
               </Link>{" "}
               ou informe abaixo o item em que a contratação está prevista.

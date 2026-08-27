@@ -35,11 +35,16 @@ GeraDocs/
 │       │   ├── documento/page.tsx# Editor de seções — serve os 6 tipos de documento ..... rota  /processos/documento?id=PROC-2024-089&tipo=etp
 │       │   └── etp/page.tsx      # Redirect legado → documento?tipo=etp (compat. — ver §14)
 │       ├── documentos/page.tsx   # Repositório de documentos gerados ......... rota  /documentos
-│       ├── configuracoes/page.tsx# Config da prefeitura (coordenador) ........ rota  /configuracoes
+│       ├── configuracoes/       # Config da entidade (coordenador) — um menu por assunto
+│       │   ├── page.tsx          # Redirect legado → /configuracoes/timbre
+│       │   ├── timbre/page.tsx   # Brasão, cabeçalho e rodapé ................ rota  /configuracoes/timbre
+│       │   ├── secretarias/page.tsx  # Secretarias do órgão .................. rota  /configuracoes/secretarias
+│       │   ├── pca/page.tsx      # Plano de Contratações Anual ............... rota  /configuracoes/pca
+│       │   └── usuarios/page.tsx # Usuários e permissões ..................... rota  /configuracoes/usuarios
 │       ├── perfil/page.tsx       # Meu Perfil (servidor/coordenador) ......... rota  /perfil
 │       └── admin/               # Área do administrador geral
 │           ├── PainelAdmin.tsx   # Painel do sistema (renderizado por page.tsx quando admin)
-│           ├── prefeituras/page.tsx  # CRUD de prefeituras .................... rota  /admin/prefeituras
+│           ├── entidades/page.tsx  # CRUD de entidades .................... rota  /admin/entidades
 │           └── servidores/page.tsx   # CRUD de servidores .................... rota  /admin/servidores
 │
 ├── components/                   # INTERFACE REUTILIZÁVEL (sem lógica de negócio, sem fetch)
@@ -73,7 +78,7 @@ GeraDocs/
 │   │   ├── secoes.ts             # Estrutura seccional de cada documento, com fundamento legal e hint
 │   │   └── index.ts              # Barrel — importe daqui: import { CATALOGO } from "@/lib/documentos"
 │   ├── dominio/                  # REGRAS DE NEGÓCIO — funções puras, sem React e sem fetch
-│   │   ├── escopo.ts             # quem enxerga qual prefeitura
+│   │   ├── escopo.ts             # quem enxerga qual entidade
 │   │   ├── indicadores.ts        # indicadores do painel e resumo do repositório
 │   │   ├── processo.ts           # pendências e regra de encerramento
 │   │   ├── secoes.ts             # progresso, indispensáveis e quando pode gerar

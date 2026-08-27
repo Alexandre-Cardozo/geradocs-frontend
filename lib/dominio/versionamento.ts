@@ -56,7 +56,7 @@ export function foiRetificado(versao: number): boolean {
  * Título do arquivo, marcado quando há retificação.
  *
  * O rótulo entra no **título**, e não só no badge da tela, porque o arquivo sai
- * da plataforma: ele é anexado ao processo no sistema da prefeitura, impresso e
+ * da plataforma: ele é anexado ao processo no sistema da entidade, impresso e
  * encaminhado. Fora daqui, o badge não viaja junto — o título, sim.
  */
 export function tituloComRotuloDeVersao(titulo: string, versao: number): string {

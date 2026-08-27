@@ -3,7 +3,7 @@
  *
  * `tenantDa()` fabrica parte da configuração do órgão porque a API de acesso
  * ainda não a persiste: o timbre, o cabeçalho e o rodapé nascem de um valor
- * padrão, não de uma escolha da prefeitura.
+ * padrão, não de uma escolha da entidade.
  *
  * O exercício do PCA saiu desta lista em 22/08/2026, no passo 10.5: o ano agora
  * é o do plano importado, e não o do calendário. O identificador, o formato e o
