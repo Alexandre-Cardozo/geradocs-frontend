@@ -148,14 +148,14 @@ export default function Secretarias() {
 
   if (tenant.isPending) {
     return (
-      <div className="max-w-content p-4 sm:p-5 lg:p-7">
+      <div className="w-full p-4 sm:p-5 lg:p-7">
         <LoadingState label="Carregando as secretarias..." />
       </div>
     )
   }
   if (tenant.isError) {
     return (
-      <div className="max-w-content p-4 sm:p-5 lg:p-7">
+      <div className="w-full p-4 sm:p-5 lg:p-7">
         <div className="rounded-card border border-border bg-surface">
           <ErrorState onRetry={() => void tenant.refetch()} />
         </div>
@@ -219,7 +219,7 @@ export default function Secretarias() {
   }
 
   return (
-    <div className="max-w-content p-4 sm:p-5 lg:p-7">
+    <div className="w-full p-4 sm:p-5 lg:p-7">
       <SectionBlock
         title="Secretarias do Órgão"
         hint="As secretarias cadastradas aqui aparecem como opções de Secretaria Requisitante na criação de novos processos."

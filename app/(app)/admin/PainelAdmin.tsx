@@ -75,7 +75,7 @@ export default function PainelAdmin() {
   )
 
   return (
-    <div className="max-w-content p-4 sm:p-5 lg:p-7">
+    <div className="w-full p-4 sm:p-5 lg:p-7">
       <div className="mb-6">
         <p className="m-0 mb-1 text-base text-text-3">Administração do Sistema · LAHHM</p>
         <h2 className="m-0 font-display text-3xl font-extrabold tracking-tight text-text-1">

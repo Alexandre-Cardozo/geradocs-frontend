@@ -60,7 +60,7 @@ export default function Documentos() {
   const r = resumoDados.data
 
   return (
-    <div className="max-w-content p-4 sm:p-5 lg:p-7">
+    <div className="w-full p-4 sm:p-5 lg:p-7">
       {/* Cards de resumo — StatCard padrão do DS (mesmo dos demais dashboards) */}
       <div className="mb-6 grid grid-cols-1 gap-3 xs:grid-cols-3">
         <StatCard label="Total de Documentos" value={r ? String(r.total) : "—"} icon={IconFileText} tone="royal" />

@@ -823,3 +823,13 @@ Do lado do cliente, `registrarDfd` deixou de aceitar itens: a função de regist
 **A consolidação vazia deixou de dizer o que falta.** Com o cadastro de DFDs e a tabela de itens logo abaixo — cada um já anunciando o que falta e onde informá-lo —, o aviso no lugar da tabela era uma terceira voz sobre o mesmo assunto. Sem item, a consolidação simplesmente não desenha nada.
 
 **A trilha abre pelo cartão inteiro.** Mirar a linha "Ver N evento(s) anterior(es)" era pedir precisão para uma ação que vale em qualquer ponto do cartão. O botão continua lá — é por ele que o teclado e o leitor de tela chegam, com `aria-expanded` anunciando o estado —, e o clique no cartão é a mesma ação com alvo maior. O botão para a propagação: sem isso, o mesmo gesto abriria e fecharia a trilha.
+
+## 61. As telas ocupam a largura da janela
+
+Toda página do aplicativo era `max-w-content` — 1200px — **sem centragem**. Em tela larga, ou com o zoom do navegador reduzido (que para a página é a mesma coisa), o conteúdo travava nos 1200px e ficava colado à esquerda: o resto da janela virava faixa branca. Não era escolha de leitura, era um teto sem o `mx-auto` que o acompanharia.
+
+As telas passaram a `w-full`. O que limita linha de leitura continua limitando onde faz sentido — a verificação do DFD tem `max-w-review` (820px), porque ali se lê um parecer corrido —, e os tokens que ninguém usava saíram do `@theme`.
+
+**Vai coberto por e2e**, e não por teste de componente: só com uma janela de verdade dá para medir que o conteúdo tem a mesma largura do `main`. Três telas — painel, listagem e documentos — verificam isso a 1900px.
+
+**O painel perdeu duas caixas.** "Documentos Pendentes" repetia em prosa o número que o cartão de estatística já dá, e "Ações Rápidas" levava as três opções ao mesmo lugar que o botão do topo. Ocupavam um terço da largura para não dizer nada novo; sem elas, os processos recentes ficam com a linha inteira. A listagem do painel também passou a mostrar o **número do processo** no lugar do UUID, como a de processos já fazia (§54).

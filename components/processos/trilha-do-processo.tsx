@@ -1,11 +1,11 @@
-"use client"
+"use client";
 
-import { type ReactNode, useState } from "react"
+import { type ReactNode, useState } from "react";
 
-import { IconChevronDown, IconChevronRight, IconClock } from "@/components/ui/icons"
-import { useTrilhaDoProcesso } from "@/lib/api/hooks"
-import { formatDataHora } from "@/lib/format"
-import { EVENTO_LABEL } from "@/lib/processos/fluxo"
+import { IconChevronDown, IconChevronRight, IconClock } from "@/components/ui/icons";
+import { useTrilhaDoProcesso } from "@/lib/api/hooks";
+import { formatDataHora } from "@/lib/format";
+import { EVENTO_LABEL } from "@/lib/processos/fluxo";
 
 /**
  * O que aconteceu com o processo, na ordem em que aconteceu.
@@ -31,32 +31,28 @@ import { EVENTO_LABEL } from "@/lib/processos/fluxo"
  */
 /** A moldura da seção — a mesma com ou sem evento para mostrar. */
 function Cartao({ className = "", children }: { className?: string; children: ReactNode }) {
-  return <div className={`rounded-card border border-border bg-surface p-5 ${className}`}>{children}</div>
+  return <div className={`rounded-card border border-border bg-surface p-5 ${className}`}>{children}</div>;
 }
 
 export function TrilhaDoProcesso({ processoId }: { processoId: string }) {
-  const trilha = useTrilhaDoProcesso(processoId)
-  const [aberta, setAberta] = useState(false)
+  const trilha = useTrilhaDoProcesso(processoId);
+  const [aberta, setAberta] = useState(false);
 
   // Carregando, em falha ou vazia, a trilha continua sendo o mesmo cartão: sem
   // a moldura, a seção pareceria não existir enquanto a resposta não chega.
   if (trilha.isPending) {
-    return <Cartao className="text-sm text-text-muted">Carregando a trilha...</Cartao>
+    return <Cartao className="text-sm text-text-muted">Carregando a trilha...</Cartao>;
   }
   if (trilha.isError) {
-    return <Cartao className="text-sm text-danger">Não foi possível carregar a trilha.</Cartao>
+    return <Cartao className="text-sm text-danger">Não foi possível carregar a trilha.</Cartao>;
   }
   if (trilha.data.length === 0) {
-    return (
-      <Cartao className="text-sm text-text-muted">
-        Nenhum evento registrado para este processo.
-      </Cartao>
-    )
+    return <Cartao className="text-sm text-text-muted">Nenhum evento registrado para este processo.</Cartao>;
   }
 
-  const anteriores = trilha.data.length - 1
-  const visiveis = aberta ? trilha.data : trilha.data.slice(0, 1)
-  const alternar = () => setAberta((estava) => !estava)
+  const anteriores = trilha.data.length - 1;
+  const visiveis = aberta ? trilha.data : trilha.data.slice(0, 1);
+  const alternar = () => setAberta((estava) => !estava);
 
   return (
     <div
@@ -83,12 +79,8 @@ export function TrilhaDoProcesso({ processoId }: { processoId: string }) {
             </div>
             <div className={`min-w-0 flex-1 ${i < visiveis.length - 1 ? "pb-4" : ""}`}>
               <div className="flex flex-wrap items-baseline gap-x-2">
-                <span className="text-base font-semibold text-text-1">
-                  {EVENTO_LABEL[evento.evento]}
-                </span>
-                <span className="font-mono text-xs text-text-muted">
-                  {formatDataHora(evento.data)}
-                </span>
+                <span className="text-base font-semibold text-text-1">{EVENTO_LABEL[evento.evento]}</span>
+                <span className="font-mono text-xs text-text-muted">{formatDataHora(evento.data)}</span>
               </div>
               <div className="mt-0.5 text-sm text-text-3">
                 {evento.autor ?? (
@@ -114,18 +106,16 @@ export function TrilhaDoProcesso({ processoId }: { processoId: string }) {
           onClick={(e) => {
             // Sem isto o clique conta duas vezes — no botão e no cartão —, e a
             // trilha voltaria a fechar no mesmo gesto que a abriu.
-            e.stopPropagation()
-            alternar()
+            e.stopPropagation();
+            alternar();
           }}
           aria-expanded={aberta}
-          className="mt-1 flex cursor-pointer items-center gap-1.5 border-0 bg-transparent p-0 text-sm font-semibold text-royal"
+          className="mt-1 flex cursor-pointer items-center gap-1.5 border-0 bg-transparent pt-3 text-sm font-semibold text-royal"
         >
           {aberta ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}
-          {aberta
-            ? "Ocultar o histórico"
-            : `Ver ${anteriores} evento(s) anterior(es)`}
+          {aberta ? "Ocultar o histórico" : `Ver ${anteriores} evento(s) anterior(es)`}
         </button>
       )}
     </div>
-  )
+  );
 }

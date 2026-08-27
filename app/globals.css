@@ -175,11 +175,15 @@
   /* ── Sombra (sistema flat — só o knob do toggle) ────────────────────────── */
   --shadow-knob: 0 1px 3px rgba(0, 0, 0, 0.2);
 
-  /* ── Larguras máximas de conteúdo (max-w-content, max-w-wizard...) ──────── */
-  --container-content: 1200px;
-  --container-wizard: 880px;
+  /* ── Larguras máximas de conteúdo (max-w-review) ────────────────────────── */
+  /*
+    O antigo `--container-content: 1200px` saiu: as telas do aplicativo ocupam a
+    largura da janela. Com o teto e sem centralização, o conteúdo travava em
+    1200px e ficava colado à esquerda — em tela larga (ou com o zoom reduzido),
+    a metade direita era faixa branca. O que limita a linha de leitura são as
+    telas que pedem coluna estreita, e essas dizem isso no próprio contêiner.
+  */
   --container-review: 820px;
-  --container-settings: 900px;
 }
 
 /* Gradientes — só nos usos canônicos do DS (chip da logo, avatar, progresso,

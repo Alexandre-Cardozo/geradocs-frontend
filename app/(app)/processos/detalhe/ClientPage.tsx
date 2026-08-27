@@ -185,7 +185,7 @@ export default function HubProcesso() {
   const dfdVerificado = parecer.data != null
 
   return (
-    <div className="max-w-content p-4 sm:p-5 lg:p-7">
+    <div className="w-full p-4 sm:p-5 lg:p-7">
       <Link href="/processos" className="mb-3 inline-flex items-center gap-1.5 text-sm font-semibold text-text-3 no-underline">
         <span className="rotate-180">
           <IconArrowRight size={13} strokeWidth={2.5} />

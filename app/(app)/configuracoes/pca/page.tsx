@@ -21,7 +21,7 @@ export default function Pca() {
       espremida. Ela virou rodapé: continua acessível, e sem tomar a largura de
       quem trabalha aqui todo dia.
     */
-    <div className="max-w-content p-4 sm:p-5 lg:p-7">
+    <div className="w-full p-4 sm:p-5 lg:p-7">
       <div className="flex flex-col gap-5">
         <ImportarPca anos={anosPCA} />
 

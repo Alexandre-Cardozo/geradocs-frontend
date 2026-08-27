@@ -96,3 +96,43 @@ test.describe("rolagem do shell", () => {
     expect((await medir(page)).estouroHorizontalDaPagina).toBeLessThanOrEqual(1)
   })
 })
+
+/**
+ * A largura acompanha a janela.
+ *
+ * <p>Cada página do aplicativo era `max-w-content` (1200px) **sem** centragem:
+ * em tela larga — ou com o zoom do navegador reduzido, que é a mesma coisa para
+ * a página — o conteúdo travava em 1200px e ficava colado à esquerda, deixando
+ * o resto da janela em branco. Não aparece em teste de componente: precisa de
+ * uma janela de verdade.
+ */
+test.describe("largura do conteúdo", () => {
+  const larguraDoConteudo = (page: import("@playwright/test").Page) =>
+    page.evaluate(() => {
+      const main = document.querySelector("main")
+      const pagina = main?.firstElementChild
+      return {
+        main: main?.clientWidth ?? 0,
+        pagina: pagina ? pagina.getBoundingClientRect().width : 0,
+      }
+    })
+
+  for (const [nome, caminho] of [
+    ["o painel", "/"],
+    ["a listagem de processos", "/processos"],
+    ["os documentos", "/documentos"],
+  ] as const) {
+    test(`${nome} ocupa a largura da janela`, async ({ page }) => {
+      await page.setViewportSize({ width: 1900, height: 900 })
+      await comSessao(page)
+      await page.goto(rota(caminho))
+      await page.waitForLoadState("networkidle")
+
+      const { main, pagina } = await larguraDoConteudo(page)
+
+      // Sobrar mais que um arredondamento é a faixa branca de volta.
+      expect(main).toBeGreaterThan(1200)
+      expect(main - pagina).toBeLessThanOrEqual(1)
+    })
+  }
+})

@@ -118,7 +118,7 @@ export default function AdminServidores() {
     (id ? entidades.data?.find((e) => e.id === id)?.nome : null) ?? "—"
 
   return (
-    <div className="max-w-content p-4 sm:p-5 lg:p-7">
+    <div className="w-full p-4 sm:p-5 lg:p-7">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="m-0 font-display text-2xl font-extrabold tracking-tight text-text-1">Servidores</h1>

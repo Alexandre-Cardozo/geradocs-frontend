@@ -139,7 +139,7 @@ export default function VerificacaoDFD() {
   ]
 
   return (
-    <div className="max-w-content p-4 sm:p-5 lg:p-7">
+    <div className="w-full p-4 sm:p-5 lg:p-7">
       {/* Breadcrumb */}
       <div className="mb-6 flex items-center gap-2">
         <Link href="/processos" className="text-base text-text-3 no-underline">

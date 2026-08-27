@@ -40,7 +40,7 @@ export default function Usuarios() {
   } | null>(null)
 
   return (
-    <div className="max-w-content p-4 sm:p-5 lg:p-7">
+    <div className="w-full p-4 sm:p-5 lg:p-7">
       {/* Fora do painel de cadastro: ele fecha no sucesso, e o aviso nascia
           desmontado — o servidor era gravado e a senha nunca aparecia. */}
       {credenciais && (

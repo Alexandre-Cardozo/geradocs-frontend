@@ -56,7 +56,7 @@ export default function MeuPerfil() {
   }
 
   return (
-    <div className="max-w-content p-4 sm:p-5 lg:p-7">
+    <div className="w-full p-4 sm:p-5 lg:p-7">
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[300px_minmax(0,1fr)]">
         {/* Coluna 1 — identidade e foto */}
         <div className="flex flex-col items-center rounded-card border border-border bg-surface p-6 text-center">

@@ -295,7 +295,7 @@ export default function NovoProcesso() {
   const destinoAposCriar = "à lista de processos como rascunho";
 
   return (
-    <div className="max-w-content p-4 sm:p-5 lg:p-7">
+    <div className="w-full p-4 sm:p-5 lg:p-7">
       <div className="mb-8">
         <StepIndicator
           steps={["Modalidade", "Identificação", "Documentos"]}

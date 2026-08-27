@@ -50,14 +50,14 @@ export default function Timbre() {
 
   if (timbre.isPending) {
     return (
-      <div className="max-w-content p-4 sm:p-5 lg:p-7">
+      <div className="w-full p-4 sm:p-5 lg:p-7">
         <LoadingState label="Carregando o timbre..." />
       </div>
     )
   }
   if (timbre.isError) {
     return (
-      <div className="max-w-content p-4 sm:p-5 lg:p-7">
+      <div className="w-full p-4 sm:p-5 lg:p-7">
         <div className="rounded-card border border-border bg-surface">
           <ErrorState onRetry={() => void timbre.refetch()} />
         </div>
@@ -87,7 +87,7 @@ export default function Timbre() {
   }
 
   return (
-    <div className="max-w-content p-4 sm:p-5 lg:p-7">
+    <div className="w-full p-4 sm:p-5 lg:p-7">
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="flex flex-col gap-5">
           <SectionBlock
