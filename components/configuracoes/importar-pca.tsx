@@ -46,49 +46,6 @@ export function ImportarPca({ anos }: { anos: { value: string; label: string }[]
   return (
     <div className="flex flex-col gap-5">
       <SectionBlock
-        title="Planos anexados"
-        hint="Um plano por exercício. Cada processo demonstra a previsão no PCA do ano em que foi aberto — por isso os exercícios anteriores continuam aqui."
-      >
-        {planos.isPending ? (
-          <InlineSpinner label="Consultando os planos do órgão..." />
-        ) : lista.length === 0 ? (
-          <InfoBanner tone="info">
-            Nenhum PCA importado ainda. Enquanto não houver plano, a seção do inciso II depende de o
-            servidor informar o item à mão, processo a processo.
-          </InfoBanner>
-        ) : (
-          <div className="flex flex-col gap-2.5">
-            {lista.map((plano) => (
-              <LinhaDoPlano
-                key={plano.ano}
-                plano={plano}
-                doExercicioCorrente={plano.ano === exercicioCorrente}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* O aviso que a tela não dava: ter PCA de 2026 não cobre um processo
-            aberto em 2027, e descobrir isso no painel do inciso II, processo a
-            processo, é tarde demais. */}
-        {!planos.isPending && lista.length > 0 && !doExercicio && (
-          <div className="mt-4">
-            <InfoBanner tone="warning">
-              <div className="font-semibold">
-                Não há PCA de {exercicioCorrente} — o exercício corrente.
-              </div>
-              <p className="m-0 mt-1">
-                Os processos abertos este ano demonstram a previsão no plano de{" "}
-                {exercicioCorrente}, e não no de {lista[0]?.ano}: o PCA de um exercício descreve o
-                que o órgão pretende contratar <strong>naquele</strong> ano. Enquanto ele não for
-                importado, cada processo deste ano depende de o servidor informar o item à mão.
-              </p>
-            </InfoBanner>
-          </div>
-        )}
-      </SectionBlock>
-
-      <SectionBlock
         title="Importar plano"
         hint="Anexe o Plano de Contratações Anual em XLSX ou CSV para que a plataforma possa procurar nele. A busca é o que permite demonstrar a previsão no inciso II do ETP."
       >
@@ -188,6 +145,49 @@ export function ImportarPca({ anos }: { anos: { value: string; label: string }[]
           </div>
         </div>
       </SectionBlock>
+      <SectionBlock
+        title="Planos anexados"
+        hint="Um plano por exercício. Cada processo demonstra a previsão no PCA do ano em que foi aberto — por isso os exercícios anteriores continuam aqui."
+      >
+        {planos.isPending ? (
+          <InlineSpinner label="Consultando os planos do órgão..." />
+        ) : lista.length === 0 ? (
+          <InfoBanner tone="info">
+            Nenhum PCA importado ainda. Enquanto não houver plano, a seção do inciso II depende de o
+            servidor informar o item à mão, processo a processo.
+          </InfoBanner>
+        ) : (
+          <div className="flex flex-col gap-2.5">
+            {lista.map((plano) => (
+              <LinhaDoPlano
+                key={plano.ano}
+                plano={plano}
+                doExercicioCorrente={plano.ano === exercicioCorrente}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* O aviso que a tela não dava: ter PCA de 2026 não cobre um processo
+            aberto em 2027, e descobrir isso no painel do inciso II, processo a
+            processo, é tarde demais. */}
+        {!planos.isPending && lista.length > 0 && !doExercicio && (
+          <div className="mt-4">
+            <InfoBanner tone="warning">
+              <div className="font-semibold">
+                Não há PCA de {exercicioCorrente} — o exercício corrente.
+              </div>
+              <p className="m-0 mt-1">
+                Os processos abertos este ano demonstram a previsão no plano de{" "}
+                {exercicioCorrente}, e não no de {lista[0]?.ano}: o PCA de um exercício descreve o
+                que o órgão pretende contratar <strong>naquele</strong> ano. Enquanto ele não for
+                importado, cada processo deste ano depende de o servidor informar o item à mão.
+              </p>
+            </InfoBanner>
+          </div>
+        )}
+      </SectionBlock>
+
     </div>
   )
 }

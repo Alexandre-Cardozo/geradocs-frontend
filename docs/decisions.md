@@ -721,3 +721,11 @@ A leitura passou a ser **pelo cabeçalho da primeira aba**, e o texto da tela di
 
 Instrução de formato que não corresponde ao que o programa faz é pior que instrução nenhuma: manda a pessoa editar a planilha para atender a uma regra que já não existe.
 
+## 52. A tela de PCA passa a ser uma coluna, com a importação em cima
+
+Duas correções de layout, pelo mesmo motivo: a página gastava largura com o que se lê uma vez e apertava o que se usa sempre.
+
+**A explicação do inciso II saiu da faixa lateral.** Ela ocupava 360px em toda a altura da página para dizer quatro linhas — e era a lista de planos, que cresce a cada exercício, que ficava espremida a ponto de truncar o nome do arquivo e de quem importou. Virou rodapé: continua acessível, em duas linhas, sem tomar a largura de quem trabalha ali todo dia.
+
+**A importação subiu.** Importar é a ação da tela; a lista é o resultado dela. Com a lista em cima, quem vinha anexar o plano do exercício descia a página para achar o formulário — e a lista tende a crescer, o que pioraria a rolagem a cada ano.
+
