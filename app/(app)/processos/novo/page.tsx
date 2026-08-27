@@ -196,6 +196,8 @@ export default function NovoProcesso() {
   const [objeto, setObjeto] = useState("");
   const [objetoDemanda, setObjetoDemanda] = useState("");
   const [dfdFile, setDFDFile] = useState<string | null>(null);
+  // O arquivo, e não só o nome: é ele que sobe e vira o primeiro DFD anexado.
+  const [dfdConteudo, setDfdConteudo] = useState<File | null>(null);
   const [valorRef, setValorRef] = useState("");
   const [fundamento, setFundamento] = useState("");
 
@@ -267,6 +269,7 @@ export default function NovoProcesso() {
         valorEstimado: valorNumerico,
         fundamentoLegal: fundamento.trim() || undefined,
         dfdArquivo: dfdFile,
+        dfdConteudo,
         ata:
           isAdesaoATA && ataMode !== ""
             ? { modo: ataMode, motivo: ataMotivo.trim(), arquivo: ataFile }
@@ -502,6 +505,7 @@ export default function NovoProcesso() {
                   <FileUpload
                     file={dfdFile}
                     onChange={setDFDFile}
+                    onArquivo={setDfdConteudo}
                     placeholder="Clique para selecionar o DFD ou arraste o arquivo aqui"
                     accept=".pdf,.docx,.doc"
                   />

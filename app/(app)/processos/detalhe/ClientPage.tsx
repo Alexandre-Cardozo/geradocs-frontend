@@ -20,6 +20,7 @@ import {
   useAtualizarProcesso,
   useConfigTenant,
   useConsolidacaoDaDemanda,
+  useDfdsDoProcesso,
   useDocumentos,
   useEncerrarProcesso,
   useGerarDocumento,
@@ -27,6 +28,7 @@ import {
   useProcesso,
   useSecoes,
 } from "@/lib/api/hooks"
+import { BaixarDfd } from "@/components/processos/baixar-dfd"
 import { ConsolidacaoDaDemanda } from "@/components/processos/consolidacao-da-demanda"
 import { DfdsAnexados } from "@/components/processos/dfds-anexados"
 import { ItensDoDfd } from "@/components/processos/itens-do-dfd"
@@ -79,6 +81,9 @@ export default function HubProcesso() {
   const [informandoItens, setInformandoItens] = useState(false)
   // Mesma consulta do bloco de consolidação — vem do cache, sem requisição nova.
   const consolidacao = useConsolidacaoDaDemanda(processoId)
+  // Mesma consulta da lista de anexos — vem do cache, sem requisição nova.
+  const dfds = useDfdsDoProcesso(processoId)
+  const dfdParaBaixar = (dfds.data ?? []).find((dfd) => dfd.arquivo !== null) ?? null
   const semItensConsolidados = consolidacao.isSuccess && consolidacao.data.itens.length === 0
   const formularioAberto = informandoItens || semItensConsolidados
   // Documento cuja retificação está sendo declarada. Um por vez: retificar dois
@@ -372,8 +377,24 @@ export default function HubProcesso() {
               Documento de Formalização de Demanda (DFD)
             </dt>
             {!editando ? (
-              <dd className="m-0 mt-0.5 text-base text-text-1">
-                {proc.dfdArquivo ? <span className="font-mono text-sm">{proc.dfdArquivo}</span> : <span className="text-text-faint">Não anexado</span>}
+              <dd className="m-0 mt-0.5 flex flex-wrap items-center gap-2.5 text-base text-text-1">
+                {proc.dfdArquivo ? (
+                  <span className="font-mono text-sm">{proc.dfdArquivo}</span>
+                ) : (
+                  <span className="text-text-faint">Não anexado</span>
+                )}
+                {/*
+                  O download fica aqui porque é aqui que o DFD é nomeado. Com um
+                  anexo só, a lista de baixo não aparece — e sem este botão o
+                  arquivo ficaria guardado sem porta de saída.
+                */}
+                {dfdParaBaixar && (
+                  <BaixarDfd
+                    processoId={processoId}
+                    dfdId={dfdParaBaixar.id}
+                    nomeDoArquivo={dfdParaBaixar.nomeDoArquivo}
+                  />
+                )}
               </dd>
             ) : (
               <dd className="m-0 mt-1.5 max-w-xl">

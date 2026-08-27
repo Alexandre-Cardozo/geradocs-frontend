@@ -134,24 +134,41 @@ export async function listarProcessos(params: {
   };
 }
 
+/**
+ * Abre o processo, com o DFD que o formaliza.
+ *
+ * <p>Multipart porque o DFD é arquivo (ADR-035). Até 27/08/2026 subia só o
+ * **nome**: o assistente pedia o PDF assinado, o navegador o entregava, e o
+ * processo nascia dizendo ter um DFD que ninguém conseguia baixar.
+ */
 export async function criarProcessoReal(input: NovoProcessoInput): Promise<Processo> {
-  const processo = await requisicaoProtegida<ProcessoApi>(
-    "/procurement-processes",
-    {
-      method: "POST",
-      body: JSON.stringify({
-        objectDescription: input.objeto,
-        demandObject: input.objetoDemanda,
-        modality: modalidades[input.modalidade],
-        departmentId: input.secretaria,
-        estimatedValue: input.valorEstimado ?? 0,
-        legalBasis: input.fundamentoLegal,
-        urgency: false,
-        documents: input.documentos.map((tipo) => tipos[tipo]),
-        dfdFileName: input.dfdArquivo,
-      }),
-    },
+  const corpo = new FormData();
+  corpo.append(
+    "dados",
+    new Blob(
+      [
+        JSON.stringify({
+          objectDescription: input.objeto,
+          demandObject: input.objetoDemanda,
+          modality: modalidades[input.modalidade],
+          departmentId: input.secretaria,
+          estimatedValue: input.valorEstimado ?? 0,
+          legalBasis: input.fundamentoLegal,
+          urgency: false,
+          documents: input.documentos.map((tipo) => tipos[tipo]),
+          dfdFileName: input.dfdArquivo,
+        }),
+      ],
+      { type: "application/json" },
+    ),
   );
+  if (input.dfdConteudo) {
+    corpo.append("file", input.dfdConteudo);
+  }
+  const processo = await requisicaoProtegida<ProcessoApi>("/procurement-processes", {
+    method: "POST",
+    body: corpo,
+  });
   return mapear(processo);
 }
 

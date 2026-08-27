@@ -2645,13 +2645,22 @@
         "operationId" : "create_1",
         "requestBody" : {
           "content" : {
-            "application/json" : {
+            "multipart/form-data" : {
               "schema" : {
-                "$ref" : "#/components/schemas/CreateProcurementProcessRequest"
+                "properties" : {
+                  "dados" : {
+                    "$ref" : "#/components/schemas/CreateProcurementProcessRequest"
+                  },
+                  "file" : {
+                    "format" : "binary",
+                    "type" : "string"
+                  }
+                },
+                "required" : [ "dados" ],
+                "type" : "object"
               }
             }
-          },
-          "required" : true
+          }
         },
         "responses" : {
           "200" : {

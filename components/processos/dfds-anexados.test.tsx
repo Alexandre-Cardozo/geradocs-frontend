@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { DfdsAnexados } from "@/components/processos/dfds-anexados"
 import { urlDaApi } from "@/lib/teste/handlers"
-import { renderizar, screen, userEvent, waitFor } from "@/lib/teste/renderizar"
+import { renderizar, screen, waitFor } from "@/lib/teste/renderizar"
 import { servidor } from "@/lib/teste/servidor-msw"
 
 /**
@@ -68,41 +68,37 @@ describe("DFDs anexados", () => {
     expect(screen.getByText(/2,0 KB/)).toBeInTheDocument()
   })
 
-  it("baixa os bytes pela rota autenticada, e não por uma âncora crua", async () => {
+  it("DFD registrado sem arquivo diz isso, em vez de um botão que não faz nada", async () => {
     comDfds([
-      dfd("d-1", "DFD-v1.pdf", "2026-03-10T12:00:00Z", {
+      dfd("d-1", "DFD-sem-arquivo.pdf", "2026-03-10T12:00:00Z", null),
+      dfd("d-2", "DFD-v2.pdf", "2026-05-02T12:00:00Z", {
         mediaType: PDF,
-        byteSize: 17,
-        sha256: "a".repeat(64),
+        byteSize: 4096,
+        sha256: "b".repeat(64),
       }),
     ])
-    let pediu = false
-    servidor.use(
-      http.get(`${urlDaApi}/procurement-processes/:id/dfds/:dfdId/file`, () => {
-        pediu = true
-        return HttpResponse.text("%PDF-1.7 assinado", { headers: { "Content-Type": PDF } })
-      }),
-    )
-    renderizar(<DfdsAnexados processoId={PROCESSO} />)
-
-    await userEvent.click(await screen.findByRole("button", { name: /Baixar DFD-v1.pdf/ }))
-
-    // `href` direto na rota daria 401: a pessoa veria um download quebrado sem
-    // nenhuma explicação.
-    await waitFor(() => expect(pediu).toBe(true))
-    expect(criou).toHaveBeenCalled()
-    // Sem revogar, cada download deixa o arquivo inteiro preso em memória.
-    expect(revogou).toHaveBeenCalledWith("blob:dfd")
-  })
-
-  it("DFD registrado sem arquivo diz isso, em vez de um botão que não faz nada", async () => {
-    comDfds([dfd("d-1", "DFD-sem-arquivo.pdf", "2026-03-10T12:00:00Z", null)])
     renderizar(<DfdsAnexados processoId={PROCESSO} />)
 
     // Caso legítimo: o servidor sabia o número do DFD e ainda não tinha o PDF
     // em mãos. Exigi-lo transformaria um facilitador em bloqueio.
     expect(await screen.findByText("Sem arquivo anexado")).toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: /Baixar/ })).not.toBeInTheDocument()
+    expect(screen.getAllByRole("button", { name: /Baixar/ })).toHaveLength(1)
+  })
+
+  it("com um anexo só, a lista não aparece: o cabeçalho já o mostra", async () => {
+    comDfds([
+      dfd("d-1", "DFD-v1.pdf", "2026-03-10T12:00:00Z", {
+        mediaType: PDF,
+        byteSize: 2048,
+        sha256: "a".repeat(64),
+      }),
+    ])
+    const { container } = renderizar(<DfdsAnexados processoId={PROCESSO} />)
+
+    // Repetir a mesma linha logo abaixo do cabeçalho era dizer duas vezes a
+    // mesma coisa; é do segundo anexo em diante que a lista responde algo novo.
+    await waitFor(() => expect(screen.queryByText(/Carregando/)).not.toBeInTheDocument())
+    expect(container).toBeEmptyDOMElement()
   })
 
   it("sem DFD anexado, não desenha um bloco vazio", async () => {
@@ -122,34 +118,5 @@ describe("DFDs anexados", () => {
     renderizar(<DfdsAnexados processoId={PROCESSO} />)
 
     expect(await screen.findByText(/Não foi possível listar/)).toBeInTheDocument()
-  })
-
-  it("a recusa do download aparece, e o botão volta ao normal", async () => {
-    comDfds([
-      dfd("d-1", "DFD-v1.pdf", "2026-03-10T12:00:00Z", {
-        mediaType: PDF,
-        byteSize: 17,
-        sha256: "a".repeat(64),
-      }),
-    ])
-    servidor.use(
-      http.get(`${urlDaApi}/procurement-processes/:id/dfds/:dfdId/file`, () =>
-        HttpResponse.json(
-          { detail: "Arquivo do DFD não encontrado.", status: 404 },
-          { status: 404, headers: { "Content-Type": "application/problem+json" } },
-        ),
-      ),
-    )
-    renderizar(<DfdsAnexados processoId={PROCESSO} />)
-
-    await userEvent.click(await screen.findByRole("button", { name: /Baixar DFD-v1.pdf/ }))
-
-    // O aviso vai para o toast (fora deste componente); o que se verifica aqui
-    // é que o botão não fica preso em "Baixando..." depois da recusa.
-    await waitFor(() =>
-      expect(screen.getByRole("button", { name: /Baixar DFD-v1.pdf/ })).toBeEnabled(),
-    )
-    expect(screen.getByRole("button", { name: /Baixar DFD-v1.pdf/ })).toHaveTextContent("Baixar")
-    expect(criou).not.toHaveBeenCalled()
   })
 })

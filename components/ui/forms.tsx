@@ -405,11 +405,20 @@ export function FormField({
 export function FileUpload({
   file,
   onChange,
+  onArquivo,
   placeholder = "Clique para selecionar ou arraste o arquivo",
   accept = ".pdf,.docx",
 }: {
   file: string | null
   onChange: (v: string | null) => void
+  /**
+   * O arquivo escolhido, e não só o nome dele.
+   *
+   * <p>Quem guarda o arquivo precisa dos bytes: sem isto, a tela pedia o PDF
+   * assinado, o navegador o entregava e o nome era a única coisa que subia —
+   * o processo nascia dizendo ter um DFD que ninguém baixava (ADR-035).
+   */
+  onArquivo?: (arquivo: File | null) => void
   placeholder?: string
   accept?: string
 }) {
@@ -423,7 +432,10 @@ export function FileUpload({
         <button
           type="button"
           aria-label="Remover arquivo"
-          onClick={() => onChange(null)}
+          onClick={() => {
+            onChange(null)
+            onArquivo?.(null)
+          }}
           className="flex cursor-pointer border-0 bg-transparent p-0.5 text-text-muted"
         >
           <IconX size={14} strokeWidth={2.5} />
@@ -439,7 +451,10 @@ export function FileUpload({
         className="hidden"
         onChange={(e) => {
           const f = e.target.files?.[0]
-          if (f) onChange(f.name)
+          if (f) {
+            onChange(f.name)
+            onArquivo?.(f)
+          }
         }}
       />
       <div className="rounded-md border-2 border-dashed border-text-faint bg-surface-upload px-5 py-4.5 text-center transition-colors">

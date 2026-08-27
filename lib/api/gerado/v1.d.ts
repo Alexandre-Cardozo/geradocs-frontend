@@ -2177,9 +2177,13 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody: {
+        requestBody?: {
             content: {
-                "application/json": components["schemas"]["CreateProcurementProcessRequest"];
+                "multipart/form-data": {
+                    dados: components["schemas"]["CreateProcurementProcessRequest"];
+                    /** Format: binary */
+                    file?: string;
+                };
             };
         };
         responses: {

@@ -20,10 +20,11 @@ import type { ItemDoDfd } from "@/lib/api/procurement-client"
  * justamente para somar o que três secretarias pediram separado, e é a
  * secretaria de origem que se pergunta quando os pedidos divergem.
  *
- * <p><b>O arquivo assinado entra aqui, e só aqui.</b> O cadastro do processo
- * guarda o **nome** do DFD, não o arquivo — é neste formulário que os bytes são
- * gravados (ADR-028), por secretaria. Parecia campo repetido porque as duas
- * telas diziam "DFD" para coisas diferentes; agora o rótulo diz qual é qual.
+ * <p><b>O arquivo aqui é o DFD *desta* secretaria.</b> O DFD escolhido na
+ * abertura já sobe com o processo (ADR-035) e não precisa ser reenviado; este
+ * campo existe para a demanda que vem de mais de uma secretaria, em que cada
+ * uma tem o seu documento assinado (ADR-028). Parecia campo repetido porque as
+ * duas telas diziam "DFD" para coisas diferentes; agora o rótulo diz qual é qual.
  *
  * <p>Continua opcional: há processo em que o servidor sabe o número do DFD e
  * ainda não tem o PDF em mãos, e exigi-lo transformaria um facilitador em
@@ -110,7 +111,7 @@ export function ItensDoDfd({
         <div className="min-w-0 flex-1 basis-64">
           <FormField
             label="Arquivo assinado desta secretaria"
-            hint="Opcional, PDF ou DOCX. É o único lugar onde o arquivo fica guardado: o cadastro do processo registra só o nome do DFD."
+            hint="Opcional, PDF ou DOCX. O DFD enviado na abertura do processo já fica guardado; este é o DFD desta secretaria, quando a demanda vem de mais de uma."
           >
             <div className="flex items-center gap-2.5">
               <input

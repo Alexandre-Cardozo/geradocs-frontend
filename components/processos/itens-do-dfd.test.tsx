@@ -242,13 +242,14 @@ describe("itens do DFD", () => {
     expect(fechar).toHaveBeenCalled()
   })
 
-  it("o campo de arquivo diz que é o único lugar onde o DFD fica guardado", () => {
+  it("o campo de arquivo diz que é o DFD desta secretaria, e não o da abertura", () => {
     renderizar(
       <ItensDoDfd processoId={PROCESSO} nomeDoArquivo="dfd.pdf" onPronto={() => {}} />,
     )
 
-    // Parecia campo repetido porque o cadastro do processo também fala em "DFD"
-    // — e lá entra só o nome, não o arquivo.
-    expect(screen.getByText(/único lugar onde o arquivo fica guardado/)).toBeInTheDocument()
+    // Parece campo repetido porque a abertura do processo também fala em "DFD"
+    // — e o de lá já sobe com o processo. Este é o da secretaria, na demanda
+    // que vem de mais de uma.
+    expect(screen.getByText(/DFD desta secretaria/)).toBeInTheDocument()
   })
 })

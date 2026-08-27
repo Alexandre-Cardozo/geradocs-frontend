@@ -173,12 +173,21 @@ describe("listarProcessos", () => {
   })
 })
 
+/**
+ * A criação viaja como multipart (ADR-035): o JSON vai na parte `dados`, e o
+ * arquivo do DFD, quando existe, na parte `file`.
+ */
+async function dadosDo(request: Request): Promise<Record<string, unknown>> {
+  const formulario = await request.formData()
+  return JSON.parse(await (formulario.get("dados") as Blob).text()) as Record<string, unknown>
+}
+
 describe("criarProcessoReal", () => {
   it("traduz a modalidade da interface para o enum da API", async () => {
     let corpo: Record<string, unknown> = {}
     servidor.use(
       http.post(`${urlDaApi}/procurement-processes`, async ({ request }) => {
-        corpo = (await request.json()) as Record<string, unknown>
+        corpo = await dadosDo(request)
         return HttpResponse.json(processoApi)
       }),
     )
@@ -224,7 +233,7 @@ describe("criarProcessoReal", () => {
     let corpo: Record<string, unknown> = {}
     servidor.use(
       http.post(`${urlDaApi}/procurement-processes`, async ({ request }) => {
-        corpo = (await request.json()) as Record<string, unknown>
+        corpo = await dadosDo(request)
         return HttpResponse.json(processoApi)
       }),
     )
@@ -239,6 +248,36 @@ describe("criarProcessoReal", () => {
     })
 
     expect(corpo.estimatedValue).toBe(0)
+  })
+
+  it("leva os bytes do DFD junto, para o processo já nascer com o arquivo", async () => {
+    let arquivo: FormDataEntryValue | null = null
+    let corpo: Record<string, unknown> = {}
+    servidor.use(
+      http.post(`${urlDaApi}/procurement-processes`, async ({ request }) => {
+        const formulario = await request.clone().formData()
+        arquivo = formulario.get("file")
+        corpo = await dadosDo(request)
+        return HttpResponse.json(processoApi)
+      }),
+    )
+    const { criarProcessoReal } = await carregarClienteLimpo()
+
+    await criarProcessoReal({
+      objeto: "Aquisição de material de expediente",
+      modalidade: "Pregão Eletrônico",
+      secretaria: DEPARTAMENTO_ID,
+      documentos: ["ETP"],
+      fases: { verificacaoDFD: false, retificacao: false },
+      dfdArquivo: "DFD-2026-014.pdf",
+      dfdConteudo: new File(["%PDF-1.7"], "DFD-2026-014.pdf", { type: "application/pdf" }),
+    })
+
+    // Antes só o nome do arquivo era enviado: a tela mostrava um DFD que não
+    // existia em lugar nenhum, e não havia o que baixar depois.
+    expect(corpo.dfdFileName).toBe("DFD-2026-014.pdf")
+    expect(arquivo).toBeInstanceOf(File)
+    expect((arquivo as unknown as File).name).toBe("DFD-2026-014.pdf")
   })
 })
 

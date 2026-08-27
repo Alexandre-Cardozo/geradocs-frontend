@@ -767,3 +767,15 @@ Agora é **um cartão com três seções**, e o formulário fica **recolhido atr
 
 **Fica registrado o que falta:** o passo 2 do assistente de novo processo usa `FileUpload`, que devolve só o nome — o arquivo escolhido ali é descartado. A tela promete um anexo que não acontece, e é por isso que os DFDs deste processo aparecem como "Sem arquivo anexado" com um nome de PDF assinado ao lado. Corrigir exige mudar a criação para multipart, como já foi feito no PCA.
 
+
+## 57. O DFD escolhido na abertura sobe com o processo
+
+O passo 2 do assistente pedia o arquivo do DFD e ficava **só com o nome**: `FileUpload` devolvia `arquivo.name` e os bytes eram descartados na hora. O processo nascia dizendo "DFD-2026-014.pdf anexado", a lista de DFDs mostrava esse nome com "Sem arquivo anexado" ao lado, e não havia o que baixar — a tela prometia um anexo que nunca existiu (§56).
+
+A criação virou **multipart** (ADR-035), como já era o import do PCA: o JSON vai na parte `dados`, o arquivo na parte `file`, e o servidor grava o DFD como primeiro anexo do processo assim que ele é criado. `FileUpload` ganhou `onArquivo`, que entrega o `File` de verdade — o `onChange` de nome continua onde estava, porque as outras telas que o usam (a ATA, por exemplo) ainda só anotam o nome.
+
+**O cabeçalho do processo passou a baixar o DFD.** O nome do documento estava ali desde sempre, sem ação nenhuma; agora tem um "Baixar" ao lado, pela mesma rota autenticada dos demais anexos (`BaixarDfd`, compartilhado com a lista).
+
+**"DFDs anexados" continua existindo, mas só a partir do segundo anexo.** Com um anexo só, a lista repetia, uma linha abaixo, exatamente o que o cabeçalho já dizia — e era esse o incômodo. Do segundo em diante ela responde algo que o cabeçalho não responde: *de qual secretaria veio cada um* e *qual versão embasou o ETP daquela data*. Apagá-la de vez custaria a consolidação de demanda vinda de várias secretarias (ADR-028), que é a razão de o formulário de itens existir.
+
+O campo de arquivo do formulário de itens deixou de ser "o único lugar onde o arquivo fica guardado" — agora é o DFD **daquela** secretaria, para a demanda que vem de mais de uma. A dica e o teste foram corrigidos junto: a afirmação de §56 valia até esta mudança.

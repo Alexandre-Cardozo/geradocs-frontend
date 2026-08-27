@@ -124,7 +124,15 @@ export interface NovoProcessoInput {
   secretaria: string
   valorEstimado?: number
   fundamentoLegal?: string
+  /** Nome do DFD declarado no cadastro — é o que aparece na tela do processo. */
   dfdArquivo?: string | null
+  /**
+   * O arquivo do DFD, quando a pessoa o escolheu.
+   *
+   * <p>Vai junto na criação e vira o primeiro DFD anexado (ADR-035). Antes só o
+   * nome subia: o processo nascia dizendo ter um DFD que ninguém baixava.
+   */
+  dfdConteudo?: File | null
   ata?: ConfigATA | null
   documentos: Array<TipoDocumento>
   fases: {
