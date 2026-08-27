@@ -241,21 +241,3 @@ describe("declararPrevisao", () => {
     expect(corpo).toEqual({ demand: "Cimento", itemCode: "2026-0731", note: null })
   })
 })
-
-describe("citarNaSecao", () => {
-  it("grava a citação e devolve o painel atualizado", async () => {
-    let metodo: string | undefined
-    servidor.use(
-      http.post(`${urlDaApi}/procurement-processes/${PROCESSO_ID}/pca/citation`, ({ request }) => {
-        metodo = request.method
-        return HttpResponse.json(verificacaoApi())
-      }),
-    )
-    const { citarNaSecao } = await carregarClienteLimpo()
-
-    const verificacao = await citarNaSecao(PROCESSO_ID)
-
-    expect(metodo).toBe("POST")
-    expect(verificacao.citacao).toContain("está prevista")
-  })
-})

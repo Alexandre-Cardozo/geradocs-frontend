@@ -3693,33 +3693,6 @@
         "tags" : [ "pca-controller" ]
       }
     },
-    "/api/v1/procurement-processes/{processId}/pca/citation" : {
-      "post" : {
-        "operationId" : "cite",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "processId",
-          "required" : true,
-          "schema" : {
-            "format" : "uuid",
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/PcaVerificationResponse"
-                }
-              }
-            },
-            "description" : "OK"
-          }
-        },
-        "tags" : [ "pca-controller" ]
-      }
-    },
     "/api/v1/procurement-processes/{processId}/pca/declaration" : {
       "post" : {
         "operationId" : "declare",

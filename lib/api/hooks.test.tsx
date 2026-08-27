@@ -153,7 +153,7 @@ describe("consultas que só disparam quando têm o que perguntar", () => {
     ],
     [
       "usePrevisaoNoPca sem id",
-      () => hooks.usePrevisaoNoPca("", "ETP"),
+      () => hooks.usePrevisaoNoPca(""),
       "getVerificacaoPca",
     ],
   ]
@@ -420,27 +420,13 @@ describe("previsão no PCA", () => {
     const { wrapper, invalidou } = ambiente()
     vi.mocked(api.declararPrevisaoNoPca).mockResolvedValue({} as never)
 
-    const { result } = renderHook(() => hooks.usePrevisaoNoPca(PROCESSO, "ETP"), { wrapper })
+    const { result } = renderHook(() => hooks.usePrevisaoNoPca(PROCESSO), { wrapper })
     result.current.marcar.mutate({ demanda: "Papel A4", codigo: "2026-0142" })
 
     await waitFor(() =>
       expect(invalidadas(invalidou)).toContain(chave(["previsao-pca", PROCESSO])),
     )
     expect(invalidadas(invalidou)).not.toContain(chave(chaves.secoes(PROCESSO, "ETP")))
-  })
-
-  it("citar recarrega também as seções e o corpo, porque grava texto no documento", async () => {
-    const { wrapper, invalidou } = ambiente()
-    vi.mocked(api.citarPcaNaSecao).mockResolvedValue({} as never)
-
-    const { result } = renderHook(() => hooks.usePrevisaoNoPca(PROCESSO, "ETP"), { wrapper })
-    result.current.citar.mutate()
-
-    await waitFor(() =>
-      expect(invalidadas(invalidou)).toContain(chave(chaves.secoes(PROCESSO, "ETP"))),
-    )
-    expect(invalidadas(invalidou)).toContain(chave(["corpo-documento"]))
-    expect(invalidadas(invalidou)).toContain(chave(["previsao-pca", PROCESSO]))
   })
 
   it("importar o plano recarrega os planos e as verificações que dependem deles", async () => {

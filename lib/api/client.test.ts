@@ -104,7 +104,6 @@ describe("a fachada liga cada chamada no lugar certo", () => {
     ["compararVersoes", (a) => a.compararVersoes(PROCESSO, "ETP", 1, 2), elaboracao.compararVersoes, [PROCESSO, "ETP", 1, 2]],
     ["getVerificacaoPca", (a) => a.getVerificacaoPca(PROCESSO), pca.verificacaoDoProcesso, [PROCESSO]],
     ["declararPrevisaoNoPca", (a) => a.declararPrevisaoNoPca(PROCESSO, { demanda: "Papel", codigo: "2026-1" }), pca.declararPrevisao, [PROCESSO, { demanda: "Papel", codigo: "2026-1" }]],
-    ["citarPcaNaSecao", (a) => a.citarPcaNaSecao(PROCESSO), pca.citarNaSecao, [PROCESSO]],
     ["getPlanoPca", (a) => a.getPlanoPca(), pca.planoVigente, []],
     ["importarPlanoPca", (a) => a.importarPlanoPca({ ano: 2026, arquivo: ARQUIVO_PCA }), pca.importarPlano, [{ ano: 2026, arquivo: ARQUIVO_PCA }]],
     ["baixarPlanoPca", (a) => a.baixarPlanoPca(2026), pca.baixarPlano, [2026]],

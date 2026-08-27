@@ -893,3 +893,15 @@ Três correções que vêm da mesma observação do cliente: *"um botão de rasc
 **Nenhum dos dois some depois que a seção tem texto.** O card da IA aparecia só com a seção vazia — o que tirava justamente o caminho de "redija a partir do que eu rascunhei". Agora fica sempre; com modelo ausente, desabilitado com o motivo escrito (ADR-029).
 
 **O que já está escrito vai no pedido de redação.** `POST .../sections/{code}/generate` passou a aceitar `draft`, e a tela manda o conteúdo da seção — rascunho da plataforma ou texto do servidor. É a regra que o cliente pediu para valer em todas as seções: o modelo parte do que existe em vez de descartá-lo. O provedor de template, que não redige, devolve o rascunho junto do aviso — perder o texto de quem pediu ajuda seria o pior resultado possível.
+
+## 67. A seção do PCA passa a ser editável, e o que você informa vale
+
+Dois relatos sobre a mesma tela, e os dois procedem.
+
+**"Informar outro item do plano" não fazia nada.** Era verdade: a busca vinha antes da declaração, então informar o item de uma demanda **já encontrada** gravava a anotação e descartava o resto no mesmo instante. A tela oferecia a ação e dizia "registrada como sua" enquanto nada mudava. Agora o que o servidor informa **vence a busca** — ela casa por termos e erra, e quem responde pelo documento é ele. O rótulo continua distinguindo "Encontrado no PCA" de "Informado por você": fundir os dois faria a plataforma parecer ter conferido o que ninguém conferiu.
+
+**Sobre a lei, você está certo.** Não constar do PCA não impede a contratação. O Art. 18, § 1º, II pede que o ETP **demonstre** a previsão *ou* justifique a ausência dela, e o plano é revisável no exercício. Por isso informar um item que não existe no plano importado sempre valeu — e agora tem efeito de verdade —, e por isso a plataforma nunca travou aqui.
+
+**"O que vai para a seção" virou campo editável.** Era um bloco de leitura, e "Citar na seção" escrevia o parágrafo **direto no documento** — texto de processo administrativo entrando sem ninguém ler, sem como ajustar. Agora o botão preenche o campo, você revisa, edita e grava com o Salvar de sempre. É o mesmo comportamento da IA (§66), e a rota que gravava sozinha saiu do servidor (ADR-039).
+
+Com o campo aberto, a seção também aceita o que a plataforma não sabe propor: a justificativa da contratação não prevista, escrita à mão. E o par de botões da §66 está lá — citar não substitui a IA, e a IA parte do que estiver escrito.

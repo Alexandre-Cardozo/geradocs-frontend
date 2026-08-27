@@ -335,7 +335,14 @@ export default function EditorDocumento() {
           {/* Previsão no PCA — acompanha o inciso II. Precisa do processo, e
               por isso não passa pelo despachante genérico de painéis. */}
           {active?.painel === "pca" && (
-            <PainelPca secao={active} processoId={processoId} tipo={tipo} />
+            <PainelPca
+              secao={active}
+              processoId={processoId}
+              rascunho={rascunho}
+              setRascunho={setRascunho}
+              gerando={gerar.isPending}
+              onGerarComIa={handleGerarIA}
+            />
           )}
 
           {(() => {

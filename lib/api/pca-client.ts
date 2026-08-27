@@ -232,12 +232,3 @@ export async function declararPrevisao(
   );
 }
 
-/** Escreve a citação na seção do inciso II do ETP. */
-export async function citarNaSecao(processoId: string): Promise<VerificacaoPca> {
-  return mapear(
-    await requisicaoProtegida<VerificacaoApi>(
-      `/procurement-processes/${encodeURIComponent(processoId)}/pca/citation`,
-      { method: "POST" },
-    ),
-  );
-}

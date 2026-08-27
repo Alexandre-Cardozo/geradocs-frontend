@@ -195,19 +195,21 @@ test.describe("elaboração do ETP", () => {
     await expect(citar).toBeEnabled()
 
     await citar.click()
+
+    // A citação entra no campo da seção — editável —, e não no documento pelas
+    // costas: quem assina revisa, ajusta e grava (ADR-039). A justificativa do
+    // que ficou de fora vem entre colchetes, em vez de sumir.
+    const secao = page.getByLabel("O que vai para a seção")
+    await expect(secao).toHaveValue(/Item 2026-0142/)
+    await expect(secao).toHaveValue(
+      /\[justificar a contratação não prevista no Plano de Contratações Anual\]/,
+    )
+
+    await page.getByRole("button", { name: /^Salvar$/ }).click()
     await page.reload()
     await page.getByRole("button", { name: /Seção 2 do ETP/ }).first().click()
 
-    // A citação está no documento, e a justificativa do que ficou de fora está
-    // visível entre colchetes, em vez de sumir.
-    await expect(page.getByText(/Item 2026-0142/).first()).toBeVisible()
-    // No corpo da seção, e não em qualquer lugar: o mesmo texto aparece também
-    // no resumo ao lado, e sem escopo o localizador casava com os dois — passava
-    // ou falhava conforme qual dos dois tivesse renderizado primeiro.
-    await expect(
-      page
-        .locator("pre")
-        .getByText(/\[justificar a contratação não prevista no Plano de Contratações Anual\]/),
-    ).toBeVisible()
+    // E depois de salvo, está no documento.
+    await expect(page.getByLabel("O que vai para a seção")).toHaveValue(/Item 2026-0142/)
   })
 })

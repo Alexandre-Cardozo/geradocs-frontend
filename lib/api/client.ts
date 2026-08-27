@@ -63,7 +63,6 @@ import {
   trilhaDoProcesso,
 } from "@/lib/api/procurement-client"
 import {
-  citarNaSecao,
   declararPrevisao,
   importarPlano,
   baixarPlano,
@@ -473,11 +472,6 @@ export async function declararPrevisaoNoPca(
   entrada: { demanda: string; codigo: string; nota?: string },
 ) {
   return declararPrevisao(processoId, entrada)
-}
-
-/** Escreve a citação do PCA na seção do inciso II do ETP. */
-export async function citarPcaNaSecao(processoId: string) {
-  return citarNaSecao(processoId)
 }
 
 /** O plano do exercício corrente; `null` enquanto não houver um. */

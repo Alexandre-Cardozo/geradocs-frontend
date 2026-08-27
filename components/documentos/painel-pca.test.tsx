@@ -1,5 +1,5 @@
 import { HttpResponse, http } from "msw"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 
 import { PainelPca } from "@/components/documentos/painel-pca"
 import { documentoApi } from "@/lib/teste/fixtures-api"
@@ -63,8 +63,21 @@ function responder(corpo: Record<string, unknown>) {
   )
 }
 
-function painel() {
-  return <PainelPca secao={SECAO} processoId={PROCESSO} tipo="ETP" />
+const setRascunho = vi.fn()
+const gerar = vi.fn()
+
+function painel(rascunho = "") {
+  setRascunho.mockClear()
+  return (
+    <PainelPca
+      secao={SECAO}
+      processoId={PROCESSO}
+      rascunho={rascunho}
+      setRascunho={setRascunho}
+      gerando={false}
+      onGerarComIa={gerar}
+    />
+  )
 }
 
 describe("painel de previsão no PCA", () => {
@@ -95,6 +108,8 @@ describe("painel de previsão no PCA", () => {
     // Continua citável: o texto sai com a justificativa entre colchetes, e é
     // travar que transformaria orientação em obstáculo.
     expect(screen.getByRole("button", { name: "Citar na seção" })).toBeEnabled()
+    // E o campo da seção está aberto: escrever à mão é sempre possível.
+    expect(screen.getByLabelText(/O que vai para a seção/)).toBeInTheDocument()
   })
 
   it("sem nada encontrado, o botão de citar diz o que falta", async () => {
@@ -109,12 +124,11 @@ describe("painel de previsão no PCA", () => {
     )
     renderizar(painel())
 
-    const citar = await screen.findByRole("button", { name: "Citar na seção" })
-    expect(citar).toBeDisabled()
-    // Botão travado sem dizer o que falta é o guarda-corpo nº 7: quem chega
-    // pelo teclado ouviria "desabilitado" e não descobriria a saída.
-    expect(citar).toHaveAttribute("aria-describedby")
-    expect(screen.getByText(/informe o item do plano/i)).toBeInTheDocument()
+    // Sem parágrafo a oferecer não há botão de citar — e a tela diz o caminho:
+    // informar o item, ou escrever a justificativa no campo, que está aberto.
+    await screen.findByLabelText(/O que vai para a seção/)
+    expect(screen.queryByRole("button", { name: /Citar na seção/ })).not.toBeInTheDocument()
+    expect(screen.getByText(/informe o item na linha da demanda/i)).toBeInTheDocument()
     // O ano é dito: o plano que falta é o de 2026, e pode existir um de outro
     // exercício — que não demonstra a previsão desta contratação.
     expect(screen.getByText(/Nenhum PCA de 2026 anexado a este órgão/)).toBeInTheDocument()
@@ -186,24 +200,26 @@ describe("painel de previsão no PCA", () => {
     )
   })
 
-  it("a citação aparece para leitura antes de ir para o documento", async () => {
+  it("citar preenche o rascunho da seção, e não grava por conta própria", async () => {
     responder(verificacao())
-    let citou = false
-    servidor.use(
-      http.post(`${urlDaApi}/procurement-processes/${PROCESSO}/pca/citation`, () => {
-        citou = true
-        return HttpResponse.json(verificacao())
-      }),
-    )
     renderizar(painel())
 
-    // É texto que entra em processo administrativo: quem assina lê antes.
-    expect(
-      await screen.findByText(/A presente contratação está prevista no Plano/),
-    ).toBeInTheDocument()
+    await userEvent.click(await screen.findByRole("button", { name: "Citar na seção" }))
 
-    await userEvent.click(screen.getByRole("button", { name: "Citar na seção" }))
-    await waitFor(() => expect(citou).toBe(true))
+    // A citação é facilitador de rascunho: quem assina revisa, ajusta e grava.
+    // Escrevê-la direto no documento era texto de processo administrativo
+    // entrando sem ninguém ler (ADR-039).
+    expect(setRascunho).toHaveBeenCalledWith(
+      expect.stringContaining("A presente contratação está prevista no Plano"),
+    )
+  })
+
+  it("com a seção já escrita, o botão oferece refazer — e a IA continua ali", async () => {
+    responder(verificacao())
+    renderizar(painel("Texto que o servidor escreveu."))
+
+    expect(await screen.findByRole("button", { name: "Refazer a citação" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /Gerar com IA/ })).toBeInTheDocument()
   })
 
   it("consulta indisponível não impede escrever a seção à mão", async () => {

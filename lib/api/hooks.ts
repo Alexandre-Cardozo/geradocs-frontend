@@ -380,10 +380,11 @@ export function useConsolidacaoDaDemanda(processoId: string) {
 /**
  * A verificação de previsão no PCA e as duas ações do painel.
  *
- * Marcar e citar invalidam a mesma consulta porque mexem na mesma resposta —
- * e citar invalida também as seções, porque grava texto no documento.
+ * Marcar recarrega a verificação: informar o item muda o que a tela afirma.
+ * A citação **não** é uma ação de servidor — o parágrafo vem pronto na própria
+ * verificação, e quem grava é quem assina, depois de ler e ajustar (ADR-039).
  */
-export function usePrevisaoNoPca(processoId: string, tipo: TipoDocumento) {
+export function usePrevisaoNoPca(processoId: string) {
   const queryClient = useQueryClient()
   const chave = ["previsao-pca", processoId]
   const verificacao = useQuery({
@@ -398,15 +399,7 @@ export function usePrevisaoNoPca(processoId: string, tipo: TipoDocumento) {
       void queryClient.invalidateQueries({ queryKey: chave })
     },
   })
-  const citar = useMutation({
-    mutationFn: () => api.citarPcaNaSecao(processoId),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: chave })
-      void queryClient.invalidateQueries({ queryKey: chaves.secoes(processoId, tipo) })
-      void queryClient.invalidateQueries({ queryKey: ["corpo-documento"] })
-    },
-  })
-  return { verificacao, marcar, citar }
+  return { verificacao, marcar }
 }
 
 /** O PCA do órgão, na tela de configurações. */

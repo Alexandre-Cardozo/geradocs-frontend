@@ -4,12 +4,13 @@ import Link from "next/link"
 import { useId, useState } from "react"
 
 import { Button, FormField, InfoBanner, Input, SectionBlock, Textarea } from "@/components/ui"
+import { CaminhosDaSecao } from "@/components/documentos/caminhos-da-secao"
 import { InlineSpinner } from "@/components/shared/estados"
 import { useToast } from "@/components/shared/providers"
 import { FORMA_DA_PREVISAO, type AchadoDoPca } from "@/lib/api/pca-client"
 import { usePrevisaoNoPca } from "@/lib/api/hooks"
 import { formatBRL } from "@/lib/format"
-import type { SecaoDocumento, TipoDocumento } from "@/lib/types"
+import type { SecaoDocumento } from "@/lib/types"
 
 /**
  * Demonstração da Previsão no PCA — Art. 18, § 1º, II, Lei 14.133/21.
@@ -28,13 +29,20 @@ import type { SecaoDocumento, TipoDocumento } from "@/lib/types"
 export function PainelPca({
   secao,
   processoId,
-  tipo,
+  rascunho,
+  setRascunho,
+  gerando,
+  onGerarComIa,
 }: {
   secao: SecaoDocumento
   processoId: string
-  tipo: TipoDocumento
+  /** O texto da seção em edição — é ele que "Citar na seção" preenche. */
+  rascunho: string
+  setRascunho: (v: string) => void
+  gerando: boolean
+  onGerarComIa: () => void
 }) {
-  const { verificacao, marcar, citar } = usePrevisaoNoPca(processoId, tipo)
+  const { verificacao, marcar } = usePrevisaoNoPca(processoId)
   const showToast = useToast()
   // A demanda que está sendo informada; nula quando não há formulário aberto.
   // Era um formulário só por processo, e a declaração valia para qualquer item
@@ -42,7 +50,6 @@ export function PainelPca({
   const [informando, setInformando] = useState<string | null>(null)
   const [codigo, setCodigo] = useState("")
   const [nota, setNota] = useState("")
-  const motivoId = useId()
 
   if (verificacao.isPending) {
     return (
@@ -167,36 +174,46 @@ export function PainelPca({
           </InfoBanner>
         )}
 
-        <div className="flex flex-wrap gap-2.5">
-          <Button
-            disabled={!dados.citavel || citar.isPending}
-            ariaDescribedBy={dados.citavel ? undefined : motivoId}
-            onClick={() =>
-              citar.mutate(undefined, {
-                onSuccess: () => showToast("Previsão citada na seção."),
-              })
-            }
-          >
-            Citar na seção
-          </Button>
-          {!dados.citavel && (
-            <p id={motivoId} className="m-0 self-center text-xs text-text-muted">
-              Não há item a citar: informe o item do plano na linha do item, ou escreva a
-              justificativa da contratação não prevista.
-            </p>
-          )}
-        </div>
+        {/*
+          O texto da seção, editável. A citação é rascunho: o parágrafo do
+          inciso II sai pronto do que a plataforma conferiu, e quem assina
+          revisa, ajusta e grava. Antes ela era escrita direto no documento —
+          texto de processo administrativo entrando sem ninguém ler (ADR-039).
+        */}
+        <FormField
+          label="O que vai para a seção"
+          required
+          hint="Revise antes de salvar: é este texto que entra no ETP, e quem assina responde por ele."
+        >
+          <Textarea
+            value={rascunho}
+            onChange={(e) => setRascunho(e.target.value)}
+            rows={10}
+            placeholder="Demonstre a previsão no PCA, ou justifique a contratação não prevista..."
+          />
+        </FormField>
 
-        {dados.citacao && (
-          <div className="flex flex-col gap-1.5">
-            <span className="text-sm font-semibold text-text-2">
-              O que vai para a seção
-            </span>
-            {/* Ler antes de gravar: é texto que entra em processo administrativo. */}
-            <pre className="m-0 whitespace-pre-wrap rounded-xl border border-dashed border-border bg-surface px-4 py-3 font-sans text-sm text-text-2">
-              {dados.citacao}
-            </pre>
-          </div>
+        <CaminhosDaSecao
+          gerando={gerando}
+          onGerarComIa={onGerarComIa}
+          rascunhoAutomatico={
+            dados.citacao
+              ? {
+                  rotulo: rascunho.trim() === "" ? "Citar na seção" : "Refazer a citação",
+                  onEscrever: () => {
+                    setRascunho(dados.citacao!)
+                    showToast("Citação preenchida. Revise antes de salvar.")
+                  },
+                }
+              : undefined
+          }
+        />
+        {!dados.citavel && (
+          <p className="m-0 text-xs text-text-muted">
+            Não há item do plano a citar: informe o item na linha da demanda, ou escreva aqui a
+            justificativa da contratação não prevista — que é o que o inciso II pede quando ela
+            não consta do PCA.
+          </p>
         )}
       </div>
     </SectionBlock>
