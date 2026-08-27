@@ -749,3 +749,11 @@ Do lado do servidor, a numeração virou sequencial **por entidade e por exercí
 
 **"Autor não registrado" não é defeito de hoje.** O nome de quem age é gravado com o evento desde 25/08/2026 (V025 e ADR-024), e há teste de integração cobrando isso na criação e no encerramento. Os eventos que aparecem sem autor no banco de desenvolvimento são anteriores àquela data: a coluna não existia quando foram gravados, e preenchê-los agora com o nome atual do cadastro seria reescrever a trilha.
 
+## 55. A troca de modalidade encosta na modalidade
+
+"Trocar modalidade" era um texto azul solto na linha do número e do status, ao lado da tag da modalidade. Competia com o "Editar Dados" — dois azuis no mesmo cabeçalho, e o secundário com mais palavras que o principal — e parecia link perdido, não ação de um campo.
+
+Virou um botão de ícone **colado na tag da modalidade**, com rótulo acessível e dica no ponteiro. Quem procura trocar a modalidade olha para a modalidade; e o cabeçalho volta a ter uma ação principal só, que é o que o container pede. É o mesmo padrão do lápis que renomeia a secretaria (§48) — dois lugares onde se edita um campo, com a mesma cara.
+
+Enquanto o painel de troca está aberto, o lápis some: a ação já está em curso, e oferecê-la de novo abriria a pergunta de o que o segundo clique faz.
+

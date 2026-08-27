@@ -11,6 +11,7 @@ import {
   IconEye,
   IconFile,
   IconFileText,
+  IconPencil,
   IconPlus,
 } from "@/components/ui/icons"
 import { ErrorState, LoadingState } from "@/components/shared/estados"
@@ -202,16 +203,27 @@ export default function HubProcesso() {
             <div className="flex flex-wrap items-center gap-2.5">
               <span className="font-mono text-xs text-text-muted">{proc.numero}</span>
               <StatusBadge status={proc.status} size="sm" />
-              <Tag tone="info">{MODALIDADE_LABEL[proc.modalidade]}</Tag>
-              {proc.status !== "concluido" && novaModalidade === null && (
-                <button
-                  type="button"
-                  onClick={() => setNovaModalidade(proc.modalidade)}
-                  className="cursor-pointer border-0 bg-transparent p-0 text-sm font-semibold text-royal"
-                >
-                  Trocar modalidade
-                </button>
-              )}
+              {/*
+                A troca fica **colada na modalidade**, que é o que ela muda, e
+                em ícone: como texto azul solto na linha ela competia com o
+                "Editar Dados" — dois azuis lado a lado, e o secundário com mais
+                palavras que o principal. Aqui ela some de vista sem sair do
+                alcance: quem procura trocar a modalidade olha para a modalidade.
+              */}
+              <span className="inline-flex items-center gap-1">
+                <Tag tone="info">{MODALIDADE_LABEL[proc.modalidade]}</Tag>
+                {proc.status !== "concluido" && novaModalidade === null && (
+                  <button
+                    type="button"
+                    aria-label="Trocar modalidade"
+                    title="Trocar modalidade"
+                    onClick={() => setNovaModalidade(proc.modalidade)}
+                    className="flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-sm border border-border bg-ice text-text-3 transition-colors hover:bg-border-soft hover:text-royal"
+                  >
+                    <IconPencil size={12} />
+                  </button>
+                )}
+              </span>
             </div>
             {!editando ? (
               <h1 className="mt-2 mb-0 font-display text-2xl font-extrabold tracking-tight break-words text-text-1">{proc.objeto}</h1>
