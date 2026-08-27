@@ -454,3 +454,61 @@ describe("trilha: a elaboração aparece junto do cadastro", () => {
     expect(trilha[2]?.comentario).toContain("sem alternativa")
   })
 })
+
+describe("registrarDfd", () => {
+  /**
+   * Registrar o DFD é operação à parte de informar o que ele pede (ADR-036): a
+   * requisição sai sem item nenhum, e o vínculo entre item e DFD é declarado
+   * depois, item a item.
+   */
+  const PROCESSO = "3f2b1a00-1111-4222-8333-444455556666"
+
+  function capturar() {
+    const capturado: { dados: Record<string, unknown>; arquivo: File | null } = {
+      dados: {},
+      arquivo: null,
+    }
+    servidor.use(
+      http.post(`${urlDaApi}/procurement-processes/:id/dfds`, async ({ request }) => {
+        const corpo = await request.formData()
+        capturado.dados = JSON.parse(await (corpo.get("dados") as Blob).text()) as Record<
+          string,
+          unknown
+        >
+        const arquivo = corpo.get("file")
+        capturado.arquivo = arquivo instanceof File ? arquivo : null
+        return HttpResponse.json({}, { status: 201 })
+      }),
+    )
+    return capturado
+  }
+
+  it("registra com a secretaria e a identificação, e sem item nenhum", async () => {
+    const capturado = capturar()
+    const { registrarDfd } = await carregarClienteLimpo()
+
+    await registrarDfd(PROCESSO, DEPARTAMENTO_ID, "DFD 003/2026")
+
+    expect(capturado.dados.departmentId).toBe(DEPARTAMENTO_ID)
+    expect(capturado.dados.fileName).toBe("DFD 003/2026")
+    expect(capturado.dados.items).toEqual([])
+    // Sem arquivo escolhido, nada de parte `file`: o documento assinado chega no
+    // tempo dele, às vezes só no fim do processo (ADR-028).
+    expect(capturado.arquivo).toBeNull()
+  })
+
+  it("leva o arquivo assinado quando ele já está em mãos", async () => {
+    const capturado = capturar()
+    const { registrarDfd } = await carregarClienteLimpo()
+
+    await registrarDfd(
+      PROCESSO,
+      DEPARTAMENTO_ID,
+      "DFD 003/2026",
+      new File(["%PDF-1.7 assinado"], "dfd-003.pdf", { type: "application/pdf" }),
+    )
+
+    expect(capturado.arquivo?.name).toBe("dfd-003.pdf")
+    expect(capturado.arquivo?.type).toBe("application/pdf")
+  })
+})

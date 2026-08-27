@@ -805,3 +805,17 @@ O cartão de dados do processo tinha um campo "Documento de Formalização de De
 **A consolidação vazia parou de falar em "o DFD do processo".** O que falta ali é sempre a mesma coisa, com DFD registrado ou sem nenhum: os **itens**, que não saem de um PDF assinado. A mensagem agora aponta para onde eles são informados — o cadastro logo abaixo, com o vínculo item ↔ DFD explícito.
 
 No servidor, isso é ADR-037: `dfdFileName` saiu do processo, e a migração converte o nome que estava declarado em um registro do cadastro, para nenhum processo perder o que afirmava.
+
+## 60. Registrar DFD e cadastrar item viram duas operações, e o vínculo fica explícito na tabela
+
+O formulário anterior fazia as duas coisas de uma vez: escolher o DFD *e* digitar itens no mesmo lugar. Parecia econômico e era confuso — o DFD de uma secretaria entra no meio do processo, o de outra depois, e os itens de cada um chegam num terceiro momento. Um formulário só obrigava a pensar nos dois ao mesmo tempo.
+
+**Agora são dois blocos, na ordem dos atos.**
+
+**DFDs do processo** é o cadastro do documento: quem formalizou, como o processo se refere a ele e o arquivo assinado — que é opcional e pode ser anexado depois, na própria linha. Nenhum campo de item. Podem ser registrados quantos forem, a qualquer momento do andamento. A linha mostra quantos itens estão vinculados àquele DFD, e remover avisa quantos vão junto.
+
+**Itens da demanda** é a tabela de todos os itens do processo, com uma coluna **DFD de origem** — a identificação e a secretaria. É o vínculo pedido: cada item diz em qual DFD foi pedido. "Adicionar item" pede descrição, unidade, quantidade e o DFD, escolhido entre os já registrados; com um DFD só, ele já vem escolhido. Editar permite **mudar o vínculo**, e aí o item sai de um DFD e entra no outro numa operação só — deixar as duas metades pela metade contaria a quantidade duas vezes na consolidação.
+
+**Sem DFD registrado não há "Adicionar item".** Um item solto não teria como dizer qual secretaria o pediu, que é exatamente a pergunta que a consolidação responde.
+
+Do lado do cliente, `registrarDfd` deixou de aceitar itens: a função de registro e a de troca de itens (`atualizarItensDoDfd`) são as duas operações, e nada mais mistura as duas. A gravação de item passa pela lista inteira do DFD alvo, montada na tela a partir da que está lá — o que mantém a troca atômica por DFD.

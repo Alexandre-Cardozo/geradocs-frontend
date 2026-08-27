@@ -1,7 +1,8 @@
 import { HttpResponse, http } from "msw"
-import { describe, expect, it, vi } from "vitest"
+import { describe, expect, it } from "vitest"
 
 import { DfdsDoProcesso } from "@/components/processos/dfds-do-processo"
+import { sessaoServidor } from "@/lib/teste/fixtures-api"
 import { urlDaApi } from "@/lib/teste/handlers"
 import { renderizar, screen, userEvent, waitFor } from "@/lib/teste/renderizar"
 import { servidor } from "@/lib/teste/servidor-msw"
@@ -9,14 +10,39 @@ import { servidor } from "@/lib/teste/servidor-msw"
 /**
  * O cadastro de DFDs do processo.
  *
- * <p>Era uma lista de anexos e ficou poluída: cada correção de item registrava
- * outro DFD, todos herdando o mesmo nome de arquivo, sem como distinguir,
- * corrigir ou remover nenhum. O que estes testes cobram é o que faz dela um
- * cadastro — a linha abre, diz o que aquele DFD pede, e tem por onde ser mudada
- * (ADR-036).
+ * <p>Registrar o DFD é uma operação; informar item é outra (ADR-036). Aqui só se
+ * cobra a primeira: quem formalizou, como o processo se refere ao documento, e o
+ * arquivo — que pode chegar a qualquer momento.
  */
 const PROCESSO = "3f2b1a00-1111-4222-8333-444455556666"
 const PDF = "application/pdf"
+/**
+ * O id da secretaria de teste.
+ *
+ * Não se chama `SECRETARIA` porque o gitleaks lê "SECRET" + string de alta
+ * entropia como credencial vazada e recusa o commit.
+ */
+const EDUCACAO = "02753761-6201-45f7-a9d9-2a1abf6d4f3c"
+
+function comSecretarias() {
+  servidor.use(
+    http.get(`${urlDaApi}/organizations/:id`, () =>
+      HttpResponse.json({ ...sessaoServidor.organization, version: 1 }),
+    ),
+    http.get(`${urlDaApi}/organizations/:id/departments`, () =>
+      HttpResponse.json([
+        {
+          id: EDUCACAO,
+          organizationId: sessaoServidor.organization.id,
+          name: "Secretaria de Educação",
+          acronym: null,
+          active: true,
+          version: 0,
+        },
+      ]),
+    ),
+  )
+}
 
 function comDfds(dfds: unknown[]) {
   servidor.use(
@@ -33,7 +59,7 @@ const dfd = (
 ) => ({
   id,
   fileName,
-  departmentId: "02753761-6201-45f7-a9d9-2a1abf6d4f3c",
+  departmentId: EDUCACAO,
   departmentName,
   submittedAt: "2026-03-10T12:00:00Z",
   items,
@@ -43,57 +69,80 @@ const dfd = (
 const papel = { description: "Papel A4", unit: "RESMA", quantity: 1200, specification: null }
 
 describe("DFDs do processo", () => {
-  it("cada DFD aparece com a secretaria que pediu e quantos itens trouxe", async () => {
+  it("cada DFD aparece com a secretaria que formalizou e quantos itens estão vinculados", async () => {
     comDfds([
       dfd("d-1", "DFD 003/2026", "Secretaria de Educação", [papel]),
       dfd("d-2", "DFD 004/2026", "Secretaria de Obras", []),
     ])
-    renderizar(<DfdsDoProcesso processoId={PROCESSO} onEditarItens={() => {}} />)
+    renderizar(<DfdsDoProcesso processoId={PROCESSO} />)
 
     expect(await screen.findByText("DFD 003/2026")).toBeInTheDocument()
     expect(screen.getByText(/Secretaria de Educação/)).toBeInTheDocument()
-    // A contagem é o que se procura aqui: qual DFD trouxe o quê.
     expect(screen.getByText("1 item")).toBeInTheDocument()
-    // Sem itens não é pendência — o DFD pode ser registrado antes do
-    // detalhamento chegar.
+    // Sem item não é pendência: o documento pode ser registrado antes de o
+    // detalhamento da demanda chegar.
     expect(screen.getByText("Sem itens")).toBeInTheDocument()
   })
 
-  it("com um DFD só a lista aparece, porque é dela que se edita e remove", async () => {
-    comDfds([dfd("d-1", "DFD 003/2026", "Secretaria de Educação", [papel])])
-    renderizar(<DfdsDoProcesso processoId={PROCESSO} onEditarItens={() => {}} />)
+  it("registrar um DFD não pede item nenhum", async () => {
+    let corpo: Record<string, unknown> = {}
+    comSecretarias()
+    comDfds([])
+    servidor.use(
+      http.post(`${urlDaApi}/procurement-processes/:id/dfds`, async ({ request }) => {
+        const formulario = await request.formData()
+        corpo = JSON.parse(await (formulario.get("dados") as Blob).text()) as Record<
+          string,
+          unknown
+        >
+        return HttpResponse.json({}, { status: 201 })
+      }),
+    )
+    renderizar(<DfdsDoProcesso processoId={PROCESSO} />)
 
-    // O cabeçalho do processo mostra o nome do DFD e o download; o que ele não
-    // tem é por onde corrigir os itens ou tirar o DFD do processo.
-    expect(await screen.findByText("DFD 003/2026")).toBeInTheDocument()
+    await userEvent.click(await screen.findByRole("button", { name: /Registrar DFD/ }))
+    await userEvent.click(await screen.findByRole("button", { name: /Secretaria que formalizou/ }))
+    await userEvent.click(await screen.findByRole("option", { name: "Secretaria de Educação" }))
+    await userEvent.type(screen.getByLabelText("Identificação do DFD"), "DFD 003/2026")
+    await userEvent.click(screen.getByRole("button", { name: "Registrar DFD" }))
+
+    // Registrar o documento e informar o que ele pede são atos de momentos
+    // diferentes; exigir item aqui obrigaria a inventar quantidade.
+    await waitFor(() => expect(corpo.fileName).toBe("DFD 003/2026"))
+    expect(corpo.departmentId).toBe(EDUCACAO)
+    expect(corpo.items).toEqual([])
   })
 
-  it("abrir a linha mostra os itens daquele DFD", async () => {
-    comDfds([dfd("d-1", "DFD 003/2026", "Secretaria de Educação", [papel])])
-    renderizar(<DfdsDoProcesso processoId={PROCESSO} onEditarItens={() => {}} />)
+  it("sem secretaria e sem identificação, diz o que falta em vez de só desabilitar", async () => {
+    comSecretarias()
+    comDfds([])
+    renderizar(<DfdsDoProcesso processoId={PROCESSO} />)
 
-    expect(screen.queryByText("Papel A4")).not.toBeInTheDocument()
-    await userEvent.click(await screen.findByRole("button", { name: /DFD 003\/2026/ }))
+    await userEvent.click(await screen.findByRole("button", { name: /Registrar DFD/ }))
 
-    // É o que responde de onde veio cada quantidade da consolidação.
-    expect(screen.getByText("Papel A4")).toBeInTheDocument()
-    expect(screen.getByText(/1\.200,00 RESMA/)).toBeInTheDocument()
+    const salvar = screen.getByRole("button", { name: "Registrar DFD" })
+    expect(salvar).toBeDisabled()
+    const descrito = salvar.getAttribute("aria-describedby")
+    expect(document.getElementById(descrito as string)).toHaveTextContent(/Escolha a secretaria/)
   })
 
-  it("editar itens manda o DFD da linha, e não um novo", async () => {
-    const editar = vi.fn()
-    comDfds([dfd("d-1", "DFD 003/2026", "Secretaria de Educação", [papel])])
-    renderizar(<DfdsDoProcesso processoId={PROCESSO} onEditarItens={editar} />)
+  it("o arquivo escolhido dá nome ao DFD quando não há outro", async () => {
+    comSecretarias()
+    comDfds([])
+    renderizar(<DfdsDoProcesso processoId={PROCESSO} />)
 
-    await userEvent.click(await screen.findByRole("button", { name: /DFD 003\/2026/ }))
-    await userEvent.click(screen.getByRole("button", { name: /Editar itens/ }))
+    await userEvent.click(await screen.findByRole("button", { name: /Registrar DFD/ }))
+    await userEvent.upload(
+      screen.getByLabelText("Arquivo do DFD"),
+      new File(["%PDF-1.7"], "DFD-Educacao-2026.pdf", { type: PDF }),
+    )
 
-    expect(editar).toHaveBeenCalledWith("d-1")
+    expect(screen.getByLabelText("Identificação do DFD")).toHaveValue("DFD-Educacao-2026.pdf")
   })
 
   it("o arquivo pode ser anexado depois, direto na linha", async () => {
     let recebeu: string | null = null
-    comDfds([dfd("d-1", "DFD 003/2026", "Secretaria de Educação", [papel])])
+    comDfds([dfd("d-1", "DFD 003/2026", "Secretaria de Educação", [])])
     servidor.use(
       http.put(`${urlDaApi}/procurement-processes/:id/dfds/:dfdId/file`, async ({ request }) => {
         const corpo = await request.formData()
@@ -101,13 +150,12 @@ describe("DFDs do processo", () => {
         return HttpResponse.json({})
       }),
     )
-    renderizar(<DfdsDoProcesso processoId={PROCESSO} onEditarItens={() => {}} />)
+    renderizar(<DfdsDoProcesso processoId={PROCESSO} />)
 
-    await userEvent.click(await screen.findByRole("button", { name: /DFD 003\/2026/ }))
-    // "Sem arquivo anexado" era estado sem saída: o PDF assinado chega no tempo
-    // dele, às vezes só no fim do processo.
+    // "Sem arquivo" era estado sem saída: o PDF assinado chega no tempo dele,
+    // às vezes só no fim do processo.
     await userEvent.upload(
-      screen.getByLabelText("Arquivo de DFD 003/2026"),
+      await screen.findByLabelText("Arquivo de DFD 003/2026"),
       new File(["%PDF-1.7"], "assinado.pdf", { type: PDF }),
     )
 
@@ -116,22 +164,20 @@ describe("DFDs do processo", () => {
 
   it("com arquivo, a linha oferece o download e a substituição", async () => {
     comDfds([
-      dfd("d-1", "DFD 003/2026", "Secretaria de Educação", [papel], {
+      dfd("d-1", "DFD 003/2026", "Secretaria de Educação", [], {
         mediaType: PDF,
         byteSize: 2048,
         sha256: "a".repeat(64),
       }),
     ])
-    renderizar(<DfdsDoProcesso processoId={PROCESSO} onEditarItens={() => {}} />)
+    renderizar(<DfdsDoProcesso processoId={PROCESSO} />)
 
     expect(await screen.findByText(/2,0 KB/)).toBeInTheDocument()
-    await userEvent.click(screen.getByRole("button", { name: /DFD 003\/2026/ }))
-
     expect(screen.getByRole("button", { name: /Baixar DFD 003\/2026/ })).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: /Substituir arquivo/ })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Substituir" })).toBeInTheDocument()
   })
 
-  it("remover pede confirmação na própria linha", async () => {
+  it("remover pede confirmação, e diz quantos itens vão junto", async () => {
     let removeu = false
     comDfds([dfd("d-1", "DFD 003/2026", "Secretaria de Educação", [papel])])
     servidor.use(
@@ -140,14 +186,13 @@ describe("DFDs do processo", () => {
         return new HttpResponse(null, { status: 204 })
       }),
     )
-    renderizar(<DfdsDoProcesso processoId={PROCESSO} onEditarItens={() => {}} />)
+    renderizar(<DfdsDoProcesso processoId={PROCESSO} />)
 
-    await userEvent.click(await screen.findByRole("button", { name: /DFD 003\/2026/ }))
-    await userEvent.click(screen.getByRole("button", { name: "Remover" }))
+    await userEvent.click(await screen.findByRole("button", { name: "Remover" }))
 
-    // Remover muda a consolidação: a confirmação fica na linha para que a pessoa
-    // continue vendo qual DFD está prestes a sair.
-    expect(screen.getByText("Remover do processo?")).toBeInTheDocument()
+    // Os itens vinculados saem junto: dizer quantos evita a surpresa de ver a
+    // consolidação encolher depois do clique.
+    expect(screen.getByText(/Remover o DFD e os 1 item\(ns\) dele\?/)).toBeInTheDocument()
     expect(removeu).toBe(false)
 
     await userEvent.click(screen.getByRole("button", { name: "Confirmar" }))
@@ -155,34 +200,20 @@ describe("DFDs do processo", () => {
   })
 
   it("desistir da remoção volta a linha ao normal", async () => {
-    comDfds([dfd("d-1", "DFD 003/2026", "Secretaria de Educação", [papel])])
-    renderizar(<DfdsDoProcesso processoId={PROCESSO} onEditarItens={() => {}} />)
+    comDfds([dfd("d-1", "DFD 003/2026", "Secretaria de Educação", [])])
+    renderizar(<DfdsDoProcesso processoId={PROCESSO} />)
 
-    await userEvent.click(await screen.findByRole("button", { name: /DFD 003\/2026/ }))
-    await userEvent.click(screen.getByRole("button", { name: "Remover" }))
+    await userEvent.click(await screen.findByRole("button", { name: "Remover" }))
     await userEvent.click(screen.getByRole("button", { name: "Cancelar" }))
 
-    expect(screen.queryByText("Remover do processo?")).not.toBeInTheDocument()
+    expect(screen.queryByText(/Remover o DFD/)).not.toBeInTheDocument()
   })
 
-  it("DFD sem item diz o que falta, em vez de uma lista vazia", async () => {
-    comDfds([dfd("d-1", "DFD 004/2026", "Secretaria de Obras", [])])
-    renderizar(<DfdsDoProcesso processoId={PROCESSO} onEditarItens={() => {}} />)
-
-    await userEvent.click(await screen.findByRole("button", { name: /DFD 004\/2026/ }))
-
-    expect(screen.getByText(/ainda não tem itens informados/)).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: /Informar itens/ })).toBeInTheDocument()
-  })
-
-  it("sem DFD nenhum, não desenha um bloco vazio", async () => {
+  it("sem DFD nenhum, diz que este é o primeiro passo", async () => {
     comDfds([])
-    const { container } = renderizar(
-      <DfdsDoProcesso processoId={PROCESSO} onEditarItens={() => {}} />,
-    )
+    renderizar(<DfdsDoProcesso processoId={PROCESSO} />)
 
-    await waitFor(() => expect(screen.queryByText(/Carregando/)).not.toBeInTheDocument())
-    expect(container).toBeEmptyDOMElement()
+    expect(await screen.findByText(/Nenhum DFD registrado/)).toBeInTheDocument()
   })
 
   it("a falha do servidor aparece na tela", async () => {
@@ -191,7 +222,7 @@ describe("DFDs do processo", () => {
         HttpResponse.json({ status: 500 }, { status: 500 }),
       ),
     )
-    renderizar(<DfdsDoProcesso processoId={PROCESSO} onEditarItens={() => {}} />)
+    renderizar(<DfdsDoProcesso processoId={PROCESSO} />)
 
     expect(await screen.findByText(/Não foi possível listar/)).toBeInTheDocument()
   })

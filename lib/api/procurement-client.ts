@@ -430,21 +430,19 @@ export interface ItemDoDfd {
 }
 
 /**
- * Anexa um DFD com os itens que a secretaria pediu — e, quando houver, o arquivo.
+ * Registra um DFD no processo — e, quando houver, o arquivo assinado.
  *
- * <p>Itens não saem de um PDF assinado: leitura automática de PDF é OCR, e a
- * plataforma não faz. Eles são informados, e é deles que saem a consolidação, o
- * painel de quantidades do ETP e a Cotação.
+ * <p><b>Sem itens.</b> Registrar o documento é uma operação; informar o que ele
+ * pede é outra, e é lá que o vínculo entre item e DFD é declarado (ADR-036).
  *
  * <p>O arquivo é opcional de propósito (ADR-028): há processo em que o servidor
  * sabe o número do DFD e ainda não tem o PDF em mãos, e travar aqui seria
  * transformar um facilitador em bloqueio.
  */
-export async function anexarDfdComItens(
+export async function registrarDfd(
   processoId: string,
   secretariaId: string,
-  nomeDoArquivo: string,
-  itens: ItemDoDfd[],
+  identificacao: string,
   arquivo?: File | null,
 ): Promise<void> {
   const corpo = new FormData();
@@ -456,13 +454,8 @@ export async function anexarDfdComItens(
       [
         JSON.stringify({
           departmentId: secretariaId,
-          fileName: nomeDoArquivo,
-          items: itens.map((item) => ({
-            description: item.descricao.trim(),
-            unit: item.unidade.trim(),
-            quantity: parseValorBR(item.quantidade),
-            specification: item.especificacao?.trim() || null,
-          })),
+          fileName: identificacao,
+          items: [],
         }),
       ],
       { type: "application/json" },

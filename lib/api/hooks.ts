@@ -26,9 +26,9 @@ import {
 import { iaDisponivel } from "@/lib/api/ai-client"
 import {
   anexarArquivoAoDfd,
-  anexarDfdComItens,
   atualizarItensDoDfd,
   listarDfds,
+  registrarDfd,
   removerDfd,
   type ItemDoDfd,
 } from "@/lib/api/procurement-client"
@@ -718,27 +718,20 @@ export function useRemoverBrasao(entidadeId: string | undefined) {
 }
 
 /**
- * Informa os itens de um DFD.
+ * Registra um DFD no processo — quem formalizou, como o processo se refere a
+ * ele e, quando houver, o arquivo assinado.
  *
  * <p>Recarrega a consolidação: é dela que saem o painel de quantidades do ETP e
  * a Cotação, e mantê-la velha faria a tela mostrar um total que já mudou.
  */
-export function useAnexarDfdComItens(processoId: string) {
+export function useRegistrarDfd(processoId: string) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (input: {
       secretariaId: string
-      nomeDoArquivo: string
-      itens: ItemDoDfd[]
+      identificacao: string
       arquivo?: File | null
-    }) =>
-      anexarDfdComItens(
-        processoId,
-        input.secretariaId,
-        input.nomeDoArquivo,
-        input.itens,
-        input.arquivo,
-      ),
+    }) => registrarDfd(processoId, input.secretariaId, input.identificacao, input.arquivo),
     onSuccess: () => recarregarDemanda(queryClient, processoId),
   })
 }
