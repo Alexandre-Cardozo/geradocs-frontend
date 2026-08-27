@@ -407,8 +407,7 @@ export function usePlanosPca() {
   const queryClient = useQueryClient()
   const planos = useQuery({ queryKey: ["planos-pca"], queryFn: () => api.getPlanosPca() })
   const importar = useMutation({
-    mutationFn: (entrada: { ano: number; arquivo: string; conteudo: string }) =>
-      api.importarPlanoPca(entrada),
+    mutationFn: (entrada: { ano: number; arquivo: File }) => api.importarPlanoPca(entrada),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["planos-pca"] })
       void queryClient.invalidateQueries({ queryKey: ["plano-pca"] })

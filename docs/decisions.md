@@ -699,3 +699,17 @@ A tela de PCA mostrava **um** plano e dizia "PCA do exercício"; o servidor, por
 
 `GET /pca-plans` nasceu para essa lista; `GET /pca-plan` passou a significar "o plano do exercício corrente", que é o que o nome sempre prometeu. `PcaVerificationResponse` ganhou `exerciseYear` — sem ele a tela não teria como dizer qual ano falta.
 
+## 50. A tela de PCA aceita a planilha como ela existe, e devolve o arquivo importado
+
+Três coisas faltavam à tela, e as três apareceram no uso.
+
+**Só CSV.** O órgão que tem o plano em XLSX — a maioria — precisava abrir a planilha e salvar de novo antes de importar. Agora a tela aceita **XLSX e CSV**, e o que ela não lê continua escrito: PDF não é lido, e o XLS antigo precisa ser salvo como XLSX. O leitor é do back-end (ADR-032), sem biblioteca de planilha.
+
+**O arquivo ia embora.** A plataforma guardava os itens lidos e o nome do arquivo; os bytes, não. Cada exercício agora tem **botão de baixar** a planilha que foi importada — é o que permite conferir depois o que entrou. Plano importado antes disso não oferece download e diz por quê: prometer um arquivo que não existe é pior que não oferecer.
+
+**A substituição era invisível.** Um plano por exercício, e importar de novo substitui por inteiro — plano se revisa durante o ano, e isso é previsto. O que não podia era acontecer em silêncio: a tela avisa **antes do clique** qual plano será substituído, com nome, contagem de itens, quem importou e quando, e diz que a troca fica registrada na trilha do órgão com o arquivo que saiu e o que entrou.
+
+Cada linha da lista passou a mostrar **quem importou**: substituir um plano é ato de gestão, e a tela diz de quem foi sem obrigar a abrir a trilha.
+
+O upload virou multipart e manda o arquivo **como veio**. Ler o conteúdo no navegador para mandar como texto — o que a tela fazia — quebraria o XLSX, que é binário, e jogaria fora o original que agora será baixado.
+

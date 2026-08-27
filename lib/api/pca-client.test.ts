@@ -18,6 +18,8 @@ const planoApi = {
   sourceFileName: "pca-2026.csv",
   importedAt: "2026-08-22T12:00:00-03:00",
   indexedItems: 247,
+  importedBy: "Maria Costa Andrade",
+  fileStored: true,
 }
 
 function verificacaoApi(sobrescrever: Record<string, unknown> = {}) {
@@ -52,6 +54,8 @@ describe("planoVigente", () => {
       arquivo: "pca-2026.csv",
       importadoEm: "2026-08-22T12:00:00-03:00",
       itensIndexados: 247,
+      importadoPor: "Maria Costa Andrade",
+      arquivoGuardado: true,
     })
   })
 
@@ -66,11 +70,13 @@ describe("planoVigente", () => {
 })
 
 describe("importarPlano", () => {
-  it("envia o exercício, o nome e o conteúdo do arquivo", async () => {
-    let corpo: Record<string, unknown> | undefined
+  it("manda a planilha como arquivo, e o exercício na consulta", async () => {
+    let enviado: FormDataEntryValue | null = null
+    let exercicio: string | null = null
     servidor.use(
       http.post(`${urlDaApi}/pca-plan`, async ({ request }) => {
-        corpo = (await request.json()) as Record<string, unknown>
+        exercicio = new URL(request.url).searchParams.get("year")
+        enviado = (await request.formData()).get("file")
         return HttpResponse.json({ ...planoApi, indexedItems: 2 })
       }),
     )
@@ -78,16 +84,34 @@ describe("importarPlano", () => {
 
     const plano = await importarPlano({
       ano: 2026,
-      arquivo: "pca-2026.csv",
-      conteudo: "2026-0142;Papel A4",
+      arquivo: new File(["2026-0142;Papel A4"], "pca-2026.xlsx", {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      }),
     })
 
-    expect(corpo).toEqual({
-      year: 2026,
-      fileName: "pca-2026.csv",
-      content: "2026-0142;Papel A4",
-    })
+    // O arquivo vai como veio: XLSX é binário, e lê-lo aqui para mandar como
+    // texto quebraria a planilha e jogaria fora o original que será baixado.
+    expect(exercicio).toBe("2026")
+    expect((enviado as unknown as File).name).toBe("pca-2026.xlsx")
     expect(plano.itensIndexados).toBe(2)
+  })
+})
+
+describe("planosDoOrgao", () => {
+  it("traz um plano por exercício, do mais recente ao mais antigo", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/pca-plans`, () =>
+        HttpResponse.json([planoApi, { ...planoApi, year: 2025, fileStored: false }]),
+      ),
+    )
+    const { planosDoOrgao } = await carregarClienteLimpo()
+
+    const planos = await planosDoOrgao()
+
+    expect(planos.map((p) => p.ano)).toEqual([2026, 2025])
+    // O plano importado antes de a plataforma guardar o arquivo não oferece
+    // download: prometer o arquivo dele seria prometer o que não existe.
+    expect(planos[1]?.arquivoGuardado).toBe(false)
   })
 })
 

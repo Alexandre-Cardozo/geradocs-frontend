@@ -356,6 +356,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/pca-plans/{year}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["planFile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/procurement-processes": {
         parameters: {
             query?: never;
@@ -1076,12 +1092,6 @@ export interface components {
             requestedAt: string;
             succeeded: boolean;
         };
-        ImportPcaPlanRequest: {
-            content: string;
-            fileName: string;
-            /** Format: int32 */
-            year: number;
-        };
         IncongruenceView: {
             itemDescription: string;
             /** @enum {string} */
@@ -1169,8 +1179,10 @@ export interface components {
             token: string;
         };
         PcaPlanResponse: {
+            fileStored: boolean;
             /** Format: date-time */
             importedAt: string;
+            importedBy: string;
             /** Format: int32 */
             indexedItems: number;
             sourceFileName: string;
@@ -2064,14 +2076,19 @@ export interface operations {
     };
     importPlan: {
         parameters: {
-            query?: never;
+            query: {
+                year: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
         };
-        requestBody: {
+        requestBody?: {
             content: {
-                "application/json": components["schemas"]["ImportPcaPlanRequest"];
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
             };
         };
         responses: {
@@ -2102,6 +2119,28 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["PcaPlanResponse"][];
+                };
+            };
+        };
+    };
+    planFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                year: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string;
                 };
             };
         };

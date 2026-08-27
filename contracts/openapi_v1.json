@@ -808,28 +808,6 @@
         "required" : [ "attempts", "documentVersion", "files", "id", "requestedAt", "succeeded" ],
         "type" : "object"
       },
-      "ImportPcaPlanRequest" : {
-        "properties" : {
-          "content" : {
-            "maxLength" : 2000000,
-            "minLength" : 0,
-            "type" : "string"
-          },
-          "fileName" : {
-            "maxLength" : 255,
-            "minLength" : 0,
-            "type" : "string"
-          },
-          "year" : {
-            "format" : "int32",
-            "maximum" : 2100,
-            "minimum" : 2021,
-            "type" : "integer"
-          }
-        },
-        "required" : [ "content", "fileName", "year" ],
-        "type" : "object"
-      },
       "IncongruenceView" : {
         "properties" : {
           "itemDescription" : {
@@ -1050,8 +1028,14 @@
       },
       "PcaPlanResponse" : {
         "properties" : {
+          "fileStored" : {
+            "type" : "boolean"
+          },
           "importedAt" : {
             "format" : "date-time",
+            "type" : "string"
+          },
+          "importedBy" : {
             "type" : "string"
           },
           "indexedItems" : {
@@ -1066,7 +1050,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "importedAt", "indexedItems", "sourceFileName", "year" ],
+        "required" : [ "fileStored", "importedAt", "importedBy", "indexedItems", "sourceFileName", "year" ],
         "type" : "object"
       },
       "PcaVerificationResponse" : {
@@ -2517,15 +2501,30 @@
       },
       "post" : {
         "operationId" : "importPlan",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "year",
+          "required" : true,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
         "requestBody" : {
           "content" : {
-            "application/json" : {
+            "multipart/form-data" : {
               "schema" : {
-                "$ref" : "#/components/schemas/ImportPcaPlanRequest"
+                "properties" : {
+                  "file" : {
+                    "format" : "binary",
+                    "type" : "string"
+                  }
+                },
+                "required" : [ "file" ],
+                "type" : "object"
               }
             }
-          },
-          "required" : true
+          }
         },
         "responses" : {
           "200" : {
@@ -2554,6 +2553,34 @@
                     "$ref" : "#/components/schemas/PcaPlanResponse"
                   },
                   "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "pca-controller" ]
+      }
+    },
+    "/api/v1/pca-plans/{year}/file" : {
+      "get" : {
+        "operationId" : "planFile",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "year",
+          "required" : true,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "format" : "byte",
+                  "type" : "string"
                 }
               }
             },

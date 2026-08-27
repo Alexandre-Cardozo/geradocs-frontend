@@ -27,6 +27,7 @@ vi.mock("@/lib/api/authoring-client")
 vi.mock("@/lib/api/pca-client")
 vi.mock("@/lib/api/generation-client")
 
+const ARQUIVO_PCA = new File(["1;P"], "p.csv", { type: "text/csv" })
 const PROCESSO = "3f2b1a00-1111-4222-8333-444455556666"
 const ENTIDADE = "1b7c8e10-2d3f-4a5b-8c9d-0e1f2a3b4c5d"
 
@@ -105,7 +106,9 @@ describe("a fachada liga cada chamada no lugar certo", () => {
     ["declararPrevisaoNoPca", (a) => a.declararPrevisaoNoPca(PROCESSO, { codigo: "2026-1" }), pca.declararPrevisao, [PROCESSO, { codigo: "2026-1" }]],
     ["citarPcaNaSecao", (a) => a.citarPcaNaSecao(PROCESSO), pca.citarNaSecao, [PROCESSO]],
     ["getPlanoPca", (a) => a.getPlanoPca(), pca.planoVigente, []],
-    ["importarPlanoPca", (a) => a.importarPlanoPca({ ano: 2026, arquivo: "p.csv", conteudo: "1;P" }), pca.importarPlano, [{ ano: 2026, arquivo: "p.csv", conteudo: "1;P" }]],
+    ["importarPlanoPca", (a) => a.importarPlanoPca({ ano: 2026, arquivo: ARQUIVO_PCA }), pca.importarPlano, [{ ano: 2026, arquivo: ARQUIVO_PCA }]],
+    ["baixarPlanoPca", (a) => a.baixarPlanoPca(2026), pca.baixarPlano, [2026]],
+    ["getPlanosPca", (a) => a.getPlanosPca(), pca.planosDoOrgao, []],
     ["getEntidades", (a) => a.getEntidades(), acesso.listarEntidades, []],
     ["criarEntidade", (a) => a.criarEntidade({ nome: "P", tipo: "prefeitura" }), acesso.criarEntidade, [{ nome: "P", tipo: "prefeitura" }]],
     ["removerEntidade", (a) => a.removerEntidade(ENTIDADE), acesso.desativarEntidade, [ENTIDADE]],

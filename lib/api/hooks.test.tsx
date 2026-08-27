@@ -450,7 +450,10 @@ describe("previsão no PCA", () => {
 
     const { result } = renderHook(() => hooks.usePlanosPca(), { wrapper })
     await waitFor(() => expect(api.getPlanosPca).toHaveBeenCalled())
-    result.current.importar.mutate({ ano: 2026, arquivo: "pca.csv", conteudo: "1;Papel" })
+    result.current.importar.mutate({
+      ano: 2026,
+      arquivo: new File(["1;Papel"], "pca.csv", { type: "text/csv" }),
+    })
 
     await waitFor(() => expect(invalidadas(invalidou)).toContain(chave(["planos-pca"])))
     // Sem isto, a seção do inciso II continuaria dizendo "nenhum PCA anexado"

@@ -1,5 +1,5 @@
 import { HttpResponse, http } from "msw"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 
 import { ImportarPca } from "@/components/configuracoes/importar-pca"
 import { urlDaApi } from "@/lib/teste/handlers"
@@ -31,18 +31,26 @@ function semPlano() {
   comPlanos([])
 }
 
-function plano(ano: number, itens = 247) {
+function plano(ano: number, itens = 247, arquivoGuardado = true) {
   return {
     year: ano,
     sourceFileName: `pca-${ano}.csv`,
     importedAt: "2026-08-22T12:00:00-03:00",
     indexedItems: itens,
+    importedBy: "Maria Costa Andrade",
+    fileStored: arquivoGuardado,
   }
 }
 
 function arquivoCsv(nome = "pca-2026.csv") {
   return new File(["2026-0142;Papel A4 75 g/m2;RESMA;1.200;28.800,00"], nome, {
     type: "text/csv",
+  })
+}
+
+function arquivoXlsx(nome = "pca-2026.xlsx") {
+  return new File([new Uint8Array([0x50, 0x4b, 0x03, 0x04])], nome, {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   })
 }
 
@@ -61,9 +69,9 @@ describe("importar o PCA do órgão", () => {
 
     expect(await screen.findByText("247 itens indexados")).toBeInTheDocument()
     // O nome do arquivo aparece na linha do plano e no aviso de substituição;
-    // "importado em" só existe na linha.
+    // "importado por … em" com o nome de quem importou só existe na linha.
     expect(
-      screen.getByText(new RegExp(`pca-${EXERCICIO}\\.csv · importado em`)),
+      screen.getByText(new RegExp(`pca-${EXERCICIO}\\.csv · importado por Maria Costa Andrade em`)),
     ).toBeInTheDocument()
     expect(screen.getByText("Exercício corrente")).toBeInTheDocument()
   })
@@ -91,7 +99,7 @@ describe("importar o PCA do órgão", () => {
     ).toBeInTheDocument()
   })
 
-  it("importar sobre um exercício que já tem plano avisa antes do clique", async () => {
+  it("importar sobre um exercício que já tem plano avisa antes do clique, e diz que fica registrado", async () => {
     comPlanos([plano(EXERCICIO)])
     renderizar(<ImportarPca anos={ANOS} />)
 
@@ -99,6 +107,9 @@ describe("importar o PCA do órgão", () => {
       await screen.findByText(new RegExp(`Já existe um PCA de ${EXERCICIO}`)),
     ).toBeInTheDocument()
     expect(screen.getByText(/substitui o plano desse exercício por inteiro/)).toBeInTheDocument()
+    // Substituir é permitido; o que não pode é ser silencioso.
+    expect(screen.getByText(/trilha do órgão com o arquivo que saiu e o que entrou/))
+      .toBeInTheDocument()
   })
 
   it("o botão só libera com arquivo, e diz o que falta enquanto não há", async () => {
@@ -110,32 +121,75 @@ describe("importar o PCA do órgão", () => {
     expect(importar).toHaveAttribute("aria-describedby")
   })
 
-  it("envia o conteúdo do arquivo, e não só o nome", async () => {
+  it("envia o arquivo como veio, e o exercício na consulta", async () => {
     semPlano()
-    let corpo: Record<string, unknown> | undefined
+    let enviado: File | null = null
+    let exercicio: string | null = null
     servidor.use(
       http.post(`${urlDaApi}/pca-plan`, async ({ request }) => {
-        corpo = (await request.json()) as Record<string, unknown>
+        exercicio = new URL(request.url).searchParams.get("year")
+        enviado = (await request.formData()).get("file") as File
         return HttpResponse.json(plano(EXERCICIO, 1))
       }),
     )
     renderizar(<ImportarPca anos={ANOS} />)
 
-    await userEvent.upload(
-      await screen.findByLabelText("Arquivo CSV do PCA"),
-      arquivoCsv(),
-    )
+    await userEvent.upload(await screen.findByLabelText("Planilha do PCA"), arquivoCsv())
     await userEvent.click(screen.getByRole("button", { name: "Importar e indexar" }))
 
-    // Mandar só o nome deixaria a plataforma dizendo "indexado" sobre um
-    // arquivo que ela nunca leu.
-    await waitFor(() =>
-      expect(corpo).toEqual({
-        year: EXERCICIO,
-        fileName: "pca-2026.csv",
-        content: "2026-0142;Papel A4 75 g/m2;RESMA;1.200;28.800,00",
+    // Mandar só o nome deixaria a plataforma dizendo "indexado" sobre um arquivo
+    // que ela nunca leu; ler o conteúdo aqui quebraria o XLSX, que é binário.
+    await waitFor(() => expect(exercicio).toBe(String(EXERCICIO)))
+    expect(enviado).not.toBeNull()
+    expect((enviado as unknown as File).name).toBe("pca-2026.csv")
+  })
+
+  it("aceita XLSX, que é como a planilha costuma existir no órgão", async () => {
+    semPlano()
+    let enviado: File | null = null
+    servidor.use(
+      http.post(`${urlDaApi}/pca-plan`, async ({ request }) => {
+        enviado = (await request.formData()).get("file") as File
+        return HttpResponse.json({ ...plano(EXERCICIO, 1), sourceFileName: "pca-2026.xlsx" })
       }),
     )
+    renderizar(<ImportarPca anos={ANOS} />)
+
+    await userEvent.upload(await screen.findByLabelText("Planilha do PCA"), arquivoXlsx())
+    await userEvent.click(screen.getByRole("button", { name: "Importar e indexar" }))
+
+    await waitFor(() => expect(enviado).not.toBeNull())
+    expect((enviado as unknown as File).name).toBe("pca-2026.xlsx")
+  })
+
+  it("o plano importado pode ser baixado", async () => {
+    comPlanos([plano(EXERCICIO)])
+    let pediu = false
+    servidor.use(
+      http.get(`${urlDaApi}/pca-plans/:ano/file`, () => {
+        pediu = true
+        return HttpResponse.text("2026-0142;Papel A4", {
+          headers: { "Content-Type": "text/csv" },
+        })
+      }),
+    )
+    Object.assign(URL, { createObjectURL: vi.fn(() => "blob:pca"), revokeObjectURL: vi.fn() })
+    renderizar(<ImportarPca anos={ANOS} />)
+
+    await userEvent.click(await screen.findByRole("button", { name: /Baixar/ }))
+
+    // Guardar o arquivo é o que permite conferir depois o que foi importado.
+    await waitFor(() => expect(pediu).toBe(true))
+  })
+
+  it("plano sem arquivo guardado não oferece download", async () => {
+    // Importado antes de a plataforma guardar a planilha: oferecer o download
+    // prometeria um arquivo que não existe.
+    comPlanos([plano(EXERCICIO, 247, false)])
+    renderizar(<ImportarPca anos={ANOS} />)
+
+    expect(await screen.findByText("Arquivo não guardado")).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /Baixar/ })).not.toBeInTheDocument()
   })
 
   it("arquivo recusado mostra a linha do problema, e não “formato inválido”", async () => {
@@ -150,24 +204,19 @@ describe("importar o PCA do órgão", () => {
     )
     renderizar(<ImportarPca anos={ANOS} />)
 
-    await userEvent.upload(
-      await screen.findByLabelText("Arquivo CSV do PCA"),
-      arquivoCsv(),
-    )
+    await userEvent.upload(await screen.findByLabelText("Planilha do PCA"), arquivoCsv())
     await userEvent.click(screen.getByRole("button", { name: "Importar e indexar" }))
 
     // Sem a linha, a pessoa procura sozinha o erro em uma planilha de 400 itens.
     expect(await screen.findByText(/Linha 2/)).toBeInTheDocument()
   })
 
-  it("diz que só lê CSV, em vez de aceitar PDF e mentir que leu", async () => {
+  it("diz o que lê, em vez de aceitar PDF e mentir que leu", async () => {
     semPlano()
     renderizar(<ImportarPca anos={ANOS} />)
 
-    expect(await screen.findByText(/PDF e XLSX ainda não são lidos/)).toBeInTheDocument()
-    expect(screen.getByLabelText("Arquivo CSV do PCA")).toHaveAttribute(
-      "accept",
-      ".csv,text/csv",
-    )
+    expect(await screen.findByText(/PDF não é lido/)).toBeInTheDocument()
+    expect(screen.getByLabelText("Planilha do PCA").getAttribute("accept"))
+      .toContain(".xlsx")
   })
 })

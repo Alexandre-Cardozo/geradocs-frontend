@@ -66,6 +66,7 @@ import {
   citarNaSecao,
   declararPrevisao,
   importarPlano,
+  baixarPlano,
   planoVigente,
   planosDoOrgao,
   verificacaoDoProcesso,
@@ -486,12 +487,13 @@ export async function getPlanosPca() {
   return planosDoOrgao()
 }
 
-export async function importarPlanoPca(entrada: {
-  ano: number
-  arquivo: string
-  conteudo: string
-}) {
+export async function importarPlanoPca(entrada: { ano: number; arquivo: File }) {
   return importarPlano(entrada)
+}
+
+/** Os bytes da planilha importada naquele exercício. */
+export async function baixarPlanoPca(ano: number) {
+  return baixarPlano(ano)
 }
 
 /** Compara duas versões geradas e traz a errata. */

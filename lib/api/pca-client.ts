@@ -1,6 +1,6 @@
 import "client-only";
 
-import { requisicaoProtegida } from "@/lib/api/auth-client";
+import { baixarProtegido, requisicaoProtegida } from "@/lib/api/auth-client";
 
 /**
  * Como a previsão foi estabelecida — e a tela mostra a diferença.
@@ -44,6 +44,15 @@ export interface PlanoPca {
   arquivo: string;
   importadoEm: string;
   itensIndexados: number;
+  /** Quem importou. Substituir um plano é ato de gestão, e tem dono. */
+  importadoPor: string;
+  /**
+   * A planilha está guardada e pode ser baixada.
+   *
+   * Falso nos planos importados antes de a plataforma guardar o arquivo:
+   * oferecer o download deles prometeria o que não existe.
+   */
+  arquivoGuardado: boolean;
 }
 
 export interface AchadoDoPca {
@@ -83,6 +92,8 @@ interface PlanoApi {
   sourceFileName: string;
   importedAt: string;
   indexedItems: number;
+  importedBy: string;
+  fileStored: boolean;
 }
 
 interface VerificacaoApi {
@@ -110,6 +121,8 @@ function mapearPlano(plano: PlanoApi): PlanoPca {
     arquivo: plano.sourceFileName,
     importadoEm: plano.importedAt,
     itensIndexados: plano.indexedItems,
+    importadoPor: plano.importedBy,
+    arquivoGuardado: plano.fileStored,
   };
 }
 
@@ -151,21 +164,32 @@ export async function planosDoOrgao(): Promise<PlanoPca[]> {
   return planos.map(mapearPlano);
 }
 
+/**
+ * Importa a planilha do exercício.
+ *
+ * <p>Multipart, e o arquivo vai como veio: XLSX é binário, e a plataforma passou
+ * a guardar o arquivo para que ele possa ser baixado depois. Ler o conteúdo aqui
+ * para mandar como texto quebraria o XLSX e jogaria fora o original.
+ */
 export async function importarPlano(entrada: {
   ano: number;
-  arquivo: string;
-  conteudo: string;
+  arquivo: File;
 }): Promise<PlanoPca> {
+  const corpo = new FormData();
+  corpo.append("file", entrada.arquivo);
   return mapearPlano(
-    await requisicaoProtegida<PlanoApi>("/pca-plan", {
+    await requisicaoProtegida<PlanoApi>(`/pca-plan?year=${entrada.ano}`, {
       method: "POST",
-      body: JSON.stringify({
-        year: entrada.ano,
-        fileName: entrada.arquivo,
-        content: entrada.conteudo,
-      }),
+      body: corpo,
     }),
   );
+}
+
+/** Os bytes da planilha importada naquele exercício, com o nome que o servidor deu. */
+export async function baixarPlano(
+  ano: number,
+): Promise<{ conteudo: Blob; nomeSugerido: string | null }> {
+  return baixarProtegido(`/pca-plans/${ano}/file`);
 }
 
 export async function verificacaoDoProcesso(processoId: string): Promise<VerificacaoPca> {
