@@ -26,21 +26,10 @@ export function ConsolidacaoDaDemanda({ processoId }: { processoId: string }) {
   if (consolidacao.isError) {
     return <div className="text-sm text-danger">Não foi possível consolidar a demanda.</div>
   }
-  if (consolidacao.data.itens.length === 0) {
-    return (
-      <div className="rounded-xl border border-dashed border-border bg-surface px-4 py-3.5 text-sm text-text-muted">
-        {/*
-          O que falta aqui é sempre a mesma coisa, com DFD registrado ou sem
-          nenhum: os itens. Eles não são lidos de um PDF assinado — ler item de
-          PDF é OCR, e a plataforma não adivinha quantidade em documento que
-          vira edital.
-        */}
-        Nenhum item informado ainda. Registre os DFDs abaixo — um por secretaria
-        requisitante — e informe, em cada um, o que aquela secretaria pediu. É daí
-        que saem esta consolidação, o painel de quantidades do ETP e a Cotação.
-      </div>
-    )
-  }
+  // Sem item, a consolidação não desenha nada: os dois blocos logo abaixo —
+  // o cadastro de DFDs e a tabela de itens — já dizem o que falta e onde
+  // informá-lo. Repetir aqui era uma terceira voz sobre o mesmo assunto.
+  if (consolidacao.data.itens.length === 0) return null
 
   const secretarias = [
     ...new Set(

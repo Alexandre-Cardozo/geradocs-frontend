@@ -819,3 +819,5 @@ O formulário anterior fazia as duas coisas de uma vez: escolher o DFD *e* digit
 **Sem DFD registrado não há "Adicionar item".** Um item solto não teria como dizer qual secretaria o pediu, que é exatamente a pergunta que a consolidação responde.
 
 Do lado do cliente, `registrarDfd` deixou de aceitar itens: a função de registro e a de troca de itens (`atualizarItensDoDfd`) são as duas operações, e nada mais mistura as duas. A gravação de item passa pela lista inteira do DFD alvo, montada na tela a partir da que está lá — o que mantém a troca atômica por DFD.
+
+**A consolidação vazia deixou de dizer o que falta.** Com o cadastro de DFDs e a tabela de itens logo abaixo — cada um já anunciando o que falta e onde informá-lo —, o aviso no lugar da tabela era uma terceira voz sobre o mesmo assunto. Sem item, a consolidação simplesmente não desenha nada.

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest"
 
 import { ConsolidacaoDaDemanda } from "@/components/processos/consolidacao-da-demanda"
 import { urlDaApi } from "@/lib/teste/handlers"
-import { renderizar, screen } from "@/lib/teste/renderizar"
+import { renderizar, screen, waitFor } from "@/lib/teste/renderizar"
 import { servidor } from "@/lib/teste/servidor-msw"
 
 /**
@@ -134,14 +134,13 @@ describe("consolidação da demanda", () => {
     expect(screen.getAllByText("—")).toHaveLength(2)
   })
 
-  it("sem item informado, diz o que falta em vez de mostrar tabela vazia", async () => {
+  it("sem item informado, não desenha nada: quem diz o que falta são os blocos de baixo", async () => {
     comConsolidacao({ items: [], incongruences: [] })
-    renderizar(<ConsolidacaoDaDemanda processoId={PROCESSO} />)
+    const { container } = renderizar(<ConsolidacaoDaDemanda processoId={PROCESSO} />)
 
-    // O que falta é sempre a mesma coisa, com DFD registrado ou sem nenhum: os
-    // itens. Eles não saem de um PDF assinado — e a tela aponta para onde eles
-    // são informados, que é o cadastro de DFDs logo abaixo.
-    expect(await screen.findByText(/Nenhum item informado ainda/i)).toBeInTheDocument()
-    expect(screen.getByText(/uma por secretaria|um por secretaria/i)).toBeInTheDocument()
+    // O cadastro de DFDs e a tabela de itens já dizem o que falta e onde
+    // informá-lo; um aviso aqui era uma terceira voz sobre o mesmo assunto.
+    await waitFor(() => expect(screen.queryByText(/Consolidando/)).not.toBeInTheDocument())
+    expect(container).toBeEmptyDOMElement()
   })
 })
