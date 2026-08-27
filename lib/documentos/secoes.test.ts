@@ -93,9 +93,10 @@ describe("painéis especiais", () => {
     // código, `painel` morria no mapeamento e os painéis do editor
     // simplesmente não apareciam — que foi o que aconteceu quando o front
     // deixou o mock, e nenhum teste percebeu.
+    expect(painelDaSecao("ETP", "1")).toBe("necessidade")
     expect(painelDaSecao("ETP", "2")).toBe("pca")
     expect(painelDaSecao("ETP", "4")).toBe("quantidades")
-    expect(painelDaSecao("ETP", "1")).toBeUndefined()
+    expect(painelDaSecao("ETP", "3")).toBeUndefined()
     expect(painelDaSecao("TR", "2")).toBeUndefined()
   })
 
@@ -103,9 +104,11 @@ describe("painéis especiais", () => {
     const comPainel = ORDEM_FLUXO.flatMap((tipo) =>
       secoesPorTipoBase[tipo].filter((s) => s.painel).map((s) => `${tipo}:${s.painel}`),
     )
-    // PCA (inciso II), quantidades (IV), ATA (V) e valor (VI) — todos no ETP.
+    // Necessidade (inciso I), PCA (II), quantidades (IV), ATA (V) e valor (VI)
+    // — todos no ETP, e todos onde já existe dado anterior a aproveitar.
     expect(comPainel.sort()).toEqual([
       "ETP:ata",
+      "ETP:necessidade",
       "ETP:pca",
       "ETP:quantidades",
       "ETP:valor",

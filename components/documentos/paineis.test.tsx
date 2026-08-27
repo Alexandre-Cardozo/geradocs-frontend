@@ -18,7 +18,7 @@ import type { SecaoDocumento } from "@/lib/types"
  */
 const PROCESSO = "3f2b1a00-1111-4222-8333-444455556666"
 
-const secao = (titulo: string, painel: "quantidades" | "valor"): SecaoDocumento => ({
+const secao = (titulo: string, painel: "necessidade" | "quantidades" | "valor"): SecaoDocumento => ({
   id: "4",
   titulo,
   fundamentoLegal: "Art. 18, § 1º, Lei 14.133/21",
@@ -54,11 +54,17 @@ const dfd = (fileName: string, departmentName: string, items: unknown[]) => ({
   file: null,
 })
 
-function renderizarPainel(qual: "quantidades" | "valor") {
+const TITULOS = {
+  necessidade: "Descrição da Necessidade",
+  quantidades: "Estimativa das Quantidades",
+  valor: "Estimativa do Valor",
+} as const
+
+function renderizarPainel(qual: "necessidade" | "quantidades" | "valor") {
   const setRascunho = vi.fn()
   renderizar(
     <PainelDaSecao
-      secao={secao(qual === "valor" ? "Estimativa do Valor" : "Estimativa das Quantidades", qual)}
+      secao={secao(TITULOS[qual], qual)}
       processoId={PROCESSO}
       rascunho=""
       setRascunho={setRascunho}
@@ -193,5 +199,37 @@ describe("painel de valor", () => {
     renderizarPainel("valor")
 
     expect(await screen.findByText(/Nenhum item informado nos DFDs/)).toBeInTheDocument()
+  })
+})
+
+describe("painel da necessidade", () => {
+  const papel = {
+    description: "Papel A4",
+    unit: "RESMA",
+    quantity: 100,
+    specification: null,
+    unitPrice: null,
+  }
+
+  it("escreve o rascunho com o objeto, as secretarias e os itens", async () => {
+    comDfds([dfd("DFD 003/2026", "Secretaria de Educação", [papel])])
+    const { setRascunho } = renderizarPainel("necessidade")
+
+    await userEvent.click(await screen.findByRole("button", { name: /Escrever o rascunho/ }))
+
+    const texto = setRascunho.mock.calls[0]?.[0] as string
+    expect(texto).toContain("Secretaria de Educação")
+    expect(texto).toContain("Papel A4")
+    // O problema é juízo de quem conduz o processo, e fica marcado como tal:
+    // escrevê-lo por inferência seria a plataforma assinando no lugar dela.
+    expect(texto).toContain("[Descrever o problema")
+  })
+
+  it("sem DFD registrado, não oferece um rascunho que não teria base", async () => {
+    comDfds([])
+    renderizarPainel("necessidade")
+
+    await screen.findByLabelText(/Descrição da Necessidade/)
+    expect(screen.queryByRole("button", { name: /rascunho/ })).not.toBeInTheDocument()
   })
 })

@@ -865,3 +865,19 @@ O status **"Em Revisão"** era o mesmo par âmbar e foi junto, para o tom elétr
 **Ficou de fora, e é deliberado:** os acentos por tipo de documento (`doc-mapa` é âmbar, `doc-cotacao` violeta, `doc-edital` rosa). Eles não são alerta — são identidade, e formam um espectro em que cada documento se distingue dos outros. Trocá-los por tons da marca faria Mapa colidir com ETP. Se o incômodo se estender a eles, é outra conversa e outro critério.
 
 **Quem escreve à mão não precisa de um cartão dizendo isso.** A seção do editor tinha dois cartões lado a lado — "Escrever à mão" e "Gerar com IA" —, e o primeiro só levava o cursor ao campo de texto que está logo acima, aberto e vazio. Anunciar o que a tela já permite é instrução, não caminho, e custava metade da largura da seção. Ficou só o da IA, que precisa existir mesmo indisponível: é ele que diz, antes do clique, que esta instalação não tem modelo configurado (ADR-029).
+
+## 65. As seções do ETP passam a partir do que o processo já registrou
+
+Levantamento pedido pelo cliente: o que, entre as seções, se fundamenta em informação anterior. O achado que mudou a pergunta veio antes da resposta — **os painéis de Quantidades e de Valor eram fixture do protótipo**. `useState("150,00")`, `useState("3.233,33")`, e o total `R$ 484.999,50` aparecendo idêntico em toda contratação, sem relação com o processo e sem ser salvo em lugar nenhum. Só a memória de cálculo ia para a seção. Não era "falta pré-preencher": era número inventado numa peça que vai ao controle.
+
+O que ficou, na ordem em que foi construído:
+
+**Unidades canônicas.** A unidade era texto livre no item do DFD e uma lista de quatro opções no painel — duas fontes que não conversavam, e por isso "UN" e "Unidade" viravam divergência entre secretarias que pediram a mesma coisa. Agora é uma lista só, agrupada por natureza (contagem, massa, volume, comprimento e área, tempo e serviço), guardando a sigla — que é o que cabe na coluna de 20 caracteres do servidor. **"Outra" com campo livre existe de propósito**: unidade de contratação municipal tem exceção, e recusá-la transformaria orientação em obstáculo. Unidade antiga fora da lista continua aparecendo como foi gravada.
+
+**Quantidades (inciso IV) saem da consolidação.** Tabela item × unidade × origem × total, somada pelo servidor, com "—" no total quando as unidades divergem: mostrar um número ali seria a plataforma afirmando o que ninguém pode usar. A memória de cálculo é escrita como rascunho, dizendo de onde veio cada quantidade, e deixa entre colchetes o critério — que é de quem conduz o processo.
+
+**Valor (inciso VI) sai dos itens.** O preço unitário, que o servidor já modelava e a interface ignorava, passou a ser coletado no item — opcional, porque a secretaria nem sempre tem preço na hora do DFD. O total é comparado com **o valor declarado na abertura**, e a diferença é dita: escondê-la deixaria a estimativa se contradizer em silêncio. Item sem preço vira pendência nomeada, e não zero — zero é um preço.
+
+**Necessidade (inciso I) ganha rascunho.** A plataforma afirma só o que está registrado — objeto, secretarias requisitantes, itens — e marca entre colchetes o problema, a consequência de não contratar e o alinhamento com o planejamento. Escrever a necessidade por inferência e apresentá-la como pronta seria assinar no lugar de quem responde.
+
+**O que não é pré-preenchido, e é deliberado:** parcelamento, riscos, impactos ambientais e posicionamento conclusivo. São juízo, não dado. A plataforma entrega os números; a conclusão é de quem assina.

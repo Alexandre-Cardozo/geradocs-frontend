@@ -72,6 +72,7 @@ const secoesETP: SecaoDocumento[] = secoes([
     titulo: "Descrição da Necessidade",
     fundamentoLegal: "Art. 18, § 1º, I, Lei 14.133/21",
     hint: "Descreva o problema a ser resolvido sob a perspectiva do interesse público, e não a solução pretendida. Fundamente-se no DFD e no planejamento da unidade.",
+    painel: "necessidade",
   },
   {
     titulo: "Demonstração da Previsão no PCA",

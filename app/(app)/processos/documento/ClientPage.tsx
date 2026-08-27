@@ -255,12 +255,26 @@ export default function EditorDocumento() {
         <div className="relative flex-1 overflow-y-auto p-4 lg:p-6">
 
           {active?.painel && active.painel !== "ata" ? (
-            <PainelDaSecao
-              secao={active}
-              processoId={processoId}
-              rascunho={rascunho}
-              setRascunho={setRascunho}
-            />
+            <>
+              <PainelDaSecao
+                secao={active}
+                processoId={processoId}
+                rascunho={rascunho}
+                setRascunho={setRascunho}
+              />
+              {/*
+                A necessidade é texto corrido como qualquer outra seção — o
+                painel dela só acrescenta o rascunho a partir do processo. Tirar
+                dela o atalho da IA seria perdê-lo justamente na seção mais
+                extensa do ETP. Quantidade e valor não entram: ali o texto é
+                derivado dos itens, não redigido.
+              */}
+              {active.painel === "necessidade" && rascunho.trim() === "" && (
+                <div className="mt-4">
+                  <CaminhosDaSecao gerando={gerar.isPending} onGerarComIa={handleGerarIA} />
+                </div>
+              )}
+            </>
           ) : active ? (
             <SectionBlock title={active.titulo} hint={active.hint ?? ""}>
               {active.status === "Completo" && rascunho === active.conteudo && active.conteudo !== "" ? (

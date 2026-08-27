@@ -17,10 +17,10 @@ import { InlineSpinner } from "@/components/shared/estados"
 import { useToast } from "@/components/shared/providers"
 import { Th } from "@/components/shared/tabela"
 import { useConsolidacaoDaDemanda, useDfdsDoProcesso, useProcesso } from "@/lib/api/hooks"
-import type { ItemConsolidado } from "@/lib/api/procurement-client"
+import type { DfdAnexado, ItemConsolidado } from "@/lib/api/procurement-client"
 import { rotuloDaUnidade } from "@/lib/dominio/unidades"
 import { formatBRL, formatNumeroBR, parseValorBR } from "@/lib/format"
-import type { ModoATA, PainelSecao, SecaoDocumento } from "@/lib/types"
+import type { ModoATA, PainelSecao, Processo, SecaoDocumento } from "@/lib/types"
 
 /**
  * Painéis especiais do editor de documentos.
@@ -42,9 +42,111 @@ interface PainelProps {
 /** Renderiza o painel da seção, quando ela tiver um. */
 export function PainelDaSecao(props: PainelProps) {
   const painel: PainelSecao | undefined = props.secao.painel
+  if (painel === "necessidade") return <PainelNecessidade {...props} />
   if (painel === "quantidades") return <PainelQuantidades {...props} />
   if (painel === "valor") return <PainelValor {...props} />
   return null
+}
+
+/**
+ * Descrição da Necessidade — Art. 18, § 1º, I, Lei 14.133/21.
+ *
+ * <p>O inciso pede o <b>problema</b> sob a perspectiva do interesse público, e
+ * não a solução pretendida. Nada disso a plataforma sabe: ela sabe o objeto que
+ * o processo declarou, quais secretarias formalizaram a demanda e o que cada
+ * uma pediu — e é com isso que monta o parágrafo de abertura, deixando entre
+ * colchetes exatamente o que só quem conduz o processo pode escrever.
+ *
+ * <p>Rascunho, e dito como rascunho. Escrever a necessidade por inferência e
+ * apresentá-la como pronta seria a plataforma assinando no lugar de quem
+ * responde pelo documento.
+ */
+function PainelNecessidade({ secao, processoId, rascunho, setRascunho }: PainelProps) {
+  const processo = useProcesso(processoId)
+  const dfds = useDfdsDoProcesso(processoId)
+  const showToast = useToast()
+
+  const registrados = dfds.data ?? []
+  const temBase = processo.data != null && registrados.length > 0
+
+  return (
+    <SectionBlock title={secao.titulo} hint={secao.hint ?? ""}>
+      <div className="flex flex-col gap-3">
+        {temBase && (
+          <>
+            <p className="m-0 text-sm text-text-muted">
+              O processo já registra o objeto da demanda e{" "}
+              {registrados.length === 1
+                ? "o DFD de uma secretaria"
+                : `os DFDs de ${registrados.length} secretarias`}
+              . O rascunho parte daí — o problema a resolver continua sendo seu para escrever.
+            </p>
+            <div>
+              <Button
+                size="sm"
+                variant="secondary"
+                icon={<IconFileText size={13} />}
+                onClick={() => {
+                  setRascunho(rascunhoDaNecessidade(processo.data!, registrados))
+                  showToast("Rascunho escrito a partir do processo. Revise antes de salvar.")
+                }}
+              >
+                {rascunho.trim() === "" ? "Escrever o rascunho" : "Refazer o rascunho"}
+              </Button>
+            </div>
+          </>
+        )}
+
+        <FormField
+          label="Descrição da Necessidade"
+          required
+          hint="O problema sob a perspectiva do interesse público — quem assina responde pelo texto."
+        >
+          <Textarea
+            value={rascunho}
+            onChange={(e) => setRascunho(e.target.value)}
+            rows={10}
+            placeholder="Descreva o problema a ser resolvido, e não a solução pretendida..."
+          />
+        </FormField>
+      </div>
+    </SectionBlock>
+  )
+}
+
+/**
+ * O rascunho da necessidade a partir do que o processo já registrou.
+ *
+ * <p>Afirma só o que está registrado — objeto, secretarias requisitantes, itens
+ * — e marca entre colchetes o que é juízo: o problema, a consequência de não
+ * contratar e o alinhamento com o planejamento da unidade.
+ */
+export function rascunhoDaNecessidade(processo: Processo, dfds: DfdAnexado[]): string {
+  const secretarias = [...new Set(dfds.map((dfd) => dfd.secretaria))]
+  const origem =
+    secretarias.length === 1
+      ? `pela ${secretarias[0]}`
+      : `pelas seguintes secretarias requisitantes: ${secretarias.join(", ")}`
+  const partes = [
+    `A presente contratação tem por objeto ${processo.objetoDemanda ?? processo.objeto}, `
+      + `demanda formalizada ${origem} por meio dos respectivos Documentos de Formalização de `
+      + "Demanda juntados a este processo.",
+    "[Descrever o problema a ser resolvido sob a perspectiva do interesse público — a situação "
+      + "atual, o que ela impede ou compromete no serviço prestado, e a consequência de a "
+      + "contratação não se realizar.]",
+  ]
+  const itens = dfds.flatMap((dfd) => dfd.itens.map((item) => item.descricao))
+  if (itens.length > 0) {
+    partes.push(
+      `A necessidade compreende ${itens.length === 1 ? "o item" : "os itens"}: `
+        + `${[...new Set(itens)].join("; ")}.`,
+    )
+  }
+  partes.push(
+    "[Indicar o alinhamento da contratação com o planejamento da unidade e com os instrumentos "
+      + "de planejamento do órgão.]",
+  )
+  return partes.join("\n\n")
 }
 
 /**

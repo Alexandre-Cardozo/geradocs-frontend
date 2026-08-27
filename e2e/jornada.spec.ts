@@ -134,7 +134,10 @@ test.describe("elaboração do ETP", () => {
     await page.goto(
       rota(`/processos/documento?id=${encodeURIComponent(processo.id)}&tipo=etp`),
     )
-    const editor = page.getByPlaceholder("Preencha o conteúdo desta seção...")
+    // Pelo rótulo, e não pelo placeholder: a seção da necessidade tem painel
+    // próprio desde que passou a oferecer o rascunho a partir do processo, e o
+    // texto de exemplo dela é outro.
+    const editor = page.getByLabel("Descrição da Necessidade")
     await expect(editor).toBeVisible()
     await editor.fill("Necessidade descrita pela secretaria.")
     await page.getByRole("button", { name: /^Salvar$/ }).click()
@@ -165,8 +168,7 @@ test.describe("elaboração do ETP", () => {
     // E o caminho manual continua inteiro — sem cartão nenhum a anunciá-lo: o
     // campo está aberto na tela, e escrever nele é o que sempre foi.
     await expect(page.getByRole("button", { name: "Escrever agora" })).toHaveCount(0)
-    const editor = page.getByPlaceholder("Preencha o conteúdo desta seção...")
-    await editor.fill("Necessidade descrita pela secretaria.")
+    await page.getByLabel("Descrição da Necessidade").fill("Necessidade descrita pela secretaria.")
     await page.getByRole("button", { name: /^Salvar$/ }).click()
 
     await expect(page.getByText("Necessidade descrita pela secretaria.")).toBeVisible()
