@@ -512,3 +512,53 @@ describe("registrarDfd", () => {
     expect(capturado.arquivo?.type).toBe("application/pdf")
   })
 })
+
+describe("atualizarItensDoDfd", () => {
+  /**
+   * O preço unitário é opcional de propósito: a secretaria pede o item, e nem
+   * sempre tem preço de referência na hora do DFD. Quando tem, é dele que a
+   * Estimativa do Valor sai calculada em vez de digitada.
+   */
+  const PROCESSO = "3f2b1a00-1111-4222-8333-444455556666"
+
+  function capturar() {
+    const corpo: { items?: Array<Record<string, unknown>> } = {}
+    servidor.use(
+      http.put(
+        `${urlDaApi}/procurement-processes/:id/dfds/:dfdId/items`,
+        async ({ request }) => {
+          Object.assign(corpo, await request.json())
+          return HttpResponse.json({})
+        },
+      ),
+    )
+    return corpo
+  }
+
+  it("manda o preço unitário como número quando ele foi informado", async () => {
+    const corpo = capturar()
+    const { atualizarItensDoDfd } = await carregarClienteLimpo()
+
+    await atualizarItensDoDfd(PROCESSO, "d-1", [
+      { descricao: "Papel A4", unidade: "RESMA", quantidade: "1.200", valorUnitario: "25,50" },
+    ])
+
+    // "25,50" precisa chegar como 25,5: mandar a string faria o servidor ler
+    // outro número — o mesmo defeito que o import do PCA já teve.
+    expect(corpo.items?.[0]?.unitPrice).toBe(25.5)
+    expect(corpo.items?.[0]?.quantity).toBe(1200)
+  })
+
+  it("sem preço informado, manda nulo — e não zero", async () => {
+    const corpo = capturar()
+    const { atualizarItensDoDfd } = await carregarClienteLimpo()
+
+    await atualizarItensDoDfd(PROCESSO, "d-1", [
+      { descricao: "Papel A4", unidade: "RESMA", quantidade: "1.200" },
+    ])
+
+    // Zero é um preço; "ninguém estimou" é outra coisa, e a estimativa do ETP
+    // conta os dois de formas diferentes.
+    expect(corpo.items?.[0]?.unitPrice).toBeNull()
+  })
+})

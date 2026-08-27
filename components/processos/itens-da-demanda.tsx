@@ -2,12 +2,14 @@
 
 import { useState } from "react"
 
-import { Button, Dropdown, FormField, Input, QuantityInput } from "@/components/ui"
+import { Button, Dropdown, FormField, Input, MoneyInput, QuantityInput } from "@/components/ui"
 import { IconCheck, IconPencil, IconPlus, IconTrash, IconX } from "@/components/ui/icons"
+import { CampoDeUnidade } from "@/components/shared/campo-de-unidade"
 import { Th } from "@/components/shared/tabela"
 import { useToast } from "@/components/shared/providers"
 import { useAtualizarItensDoDfd, useDfdsDoProcesso } from "@/lib/api/hooks"
 import type { DfdAnexado, ItemDoDfd } from "@/lib/api/procurement-client"
+import { rotuloDaUnidade } from "@/lib/dominio/unidades"
 
 /** Um item da demanda com o DFD a que ele pertence. */
 interface ItemVinculado {
@@ -188,6 +190,7 @@ export function ItensDaDemanda({ processoId }: { processoId: string }) {
                     <Th>Item</Th>
                     <Th>Unidade</Th>
                     <Th>Quantidade</Th>
+                    <Th>Valor unitário</Th>
                     <Th>DFD de origem</Th>
                     <Th> </Th>
                   </tr>
@@ -200,11 +203,18 @@ export function ItensDaDemanda({ processoId }: { processoId: string }) {
                         <td className="px-2.5 py-2 font-medium text-text-1">
                           {vinculado.item.descricao}
                         </td>
-                        <td className="px-2.5 py-2 font-mono text-xs text-text-3">
-                          {vinculado.item.unidade}
+                        <td className="px-2.5 py-2 text-xs text-text-3">
+                          {/* Unidade fora da lista aparece como foi gravada. */}
+                          {rotuloDaUnidade(vinculado.item.unidade)}
                         </td>
                         <td className="px-2.5 py-2 font-mono text-xs text-text-1">
                           {vinculado.item.quantidade}
+                        </td>
+                        <td className="px-2.5 py-2 font-mono text-xs text-text-3">
+                          {/* "—" e não "R$ 0,00": não estimado é diferente de zero. */}
+                          {vinculado.item.valorUnitario
+                            ? `R$ ${vinculado.item.valorUnitario}`
+                            : "—"}
                         </td>
                         <td className="px-2.5 py-2 text-xs text-text-3">
                           <span className="block font-mono text-text-1">
@@ -289,6 +299,7 @@ function FormularioDoItem({
   const [descricao, setDescricao] = useState(inicial?.item.descricao ?? "")
   const [unidade, setUnidade] = useState(inicial?.item.unidade ?? "")
   const [quantidade, setQuantidade] = useState(inicial?.item.quantidade ?? "")
+  const [valorUnitario, setValorUnitario] = useState(inicial?.item.valorUnitario ?? "")
   // Com um DFD só não há escolha a fazer, e deixar o campo em branco seria
   // pedir à pessoa que confirmasse o óbvio.
   const [dfdId, setDfdId] = useState(inicial?.dfd.id ?? (dfds.length === 1 ? dfds[0]!.id : ""))
@@ -309,7 +320,7 @@ function FormularioDoItem({
 
   return (
     <div className="mb-3 rounded-lg border border-royal bg-surface p-4">
-      <div className="grid grid-cols-1 items-start gap-2.5 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 items-start gap-2.5 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
         <FormField label="Descrição do item" required>
           <Input
             value={descricao}
@@ -319,14 +330,21 @@ function FormularioDoItem({
           />
         </FormField>
         <FormField label="Unidade" required>
-          <Input
-            value={unidade}
-            onChange={(e) => setUnidade(e.target.value)}
-            placeholder="Ex: RESMA"
-          />
+          {/*
+            A mesma lista do painel de quantidades do ETP: é a unidade do item
+            que vai para a seção, e duas listas faziam "UN" e "Unidade"
+            aparecerem como divergência entre secretarias.
+          */}
+          <CampoDeUnidade value={unidade} onChange={setUnidade} ariaLabel="Unidade" />
         </FormField>
         <FormField label="Quantidade" required>
           <QuantityInput value={quantidade} onChange={setQuantidade} />
+        </FormField>
+        <FormField
+          label="Valor unitário"
+          hint="Opcional. Informado, é dele que a Estimativa do Valor do ETP sai calculada."
+        >
+          <MoneyInput value={valorUnitario} onChange={setValorUnitario} />
         </FormField>
       </div>
 
@@ -364,7 +382,13 @@ function FormularioDoItem({
           onClick={() =>
             destino &&
             onSalvar(
-              { descricao: descricao.trim(), unidade: unidade.trim(), quantidade },
+              {
+                descricao: descricao.trim(),
+                unidade: unidade.trim(),
+                quantidade,
+                // Vazio é "não estimado", e não zero: zero é um preço.
+                ...(valorUnitario === "" ? {} : { valorUnitario }),
+              },
               destino,
             )
           }

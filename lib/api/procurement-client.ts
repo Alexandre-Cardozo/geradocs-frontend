@@ -427,6 +427,14 @@ export interface ItemDoDfd {
   unidade: string;
   quantidade: string;
   especificacao?: string;
+  /**
+   * O preço unitário que a secretaria estimou, quando ela o estimou.
+   *
+   * <p>Opcional de propósito: a secretaria pede o item, e nem sempre tem preço
+   * de referência na hora do DFD. Quando tem, é dele que a Estimativa do Valor
+   * (Art. 18, § 1º, VI) sai calculada em vez de digitada.
+   */
+  valorUnitario?: string;
 }
 
 /**
@@ -498,6 +506,7 @@ interface DfdDaApi {
     unit: string;
     quantity: number;
     specification?: string | null;
+    unitPrice?: number | null;
   }>;
   file?: { mediaType: string; byteSize: number; sha256: string } | null;
 }
@@ -525,6 +534,9 @@ export async function listarDfds(processoId: string): Promise<DfdAnexado[]> {
       // De volta ao formato do formulário: é lá que ele vai ser editado.
       quantidade: formatNumeroBR(item.quantity),
       especificacao: item.specification ?? undefined,
+      // `formatNumeroBR`, e não `formatBRL`: o campo de dinheiro do formulário
+      // recebe "3.233,33" — com o símbolo ele leria outro número.
+      valorUnitario: item.unitPrice == null ? undefined : formatNumeroBR(item.unitPrice),
     })),
     arquivo: dfd.file
       ? { tipo: dfd.file.mediaType, bytes: dfd.file.byteSize, resumo: dfd.file.sha256 }
@@ -553,6 +565,9 @@ export async function atualizarItensDoDfd(
           unit: item.unidade.trim(),
           quantity: parseValorBR(item.quantidade),
           specification: item.especificacao?.trim() || null,
+          // Sem preço informado o campo não vai como zero: zero é um preço, e
+          // "não estimado" é outra coisa.
+          unitPrice: item.valorUnitario ? parseValorBR(item.valorUnitario) : null,
         })),
       }),
     },

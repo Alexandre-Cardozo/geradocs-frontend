@@ -255,7 +255,12 @@ export default function EditorDocumento() {
         <div className="relative flex-1 overflow-y-auto p-4 lg:p-6">
 
           {active?.painel && active.painel !== "ata" ? (
-            <PainelDaSecao secao={active} rascunho={rascunho} setRascunho={setRascunho} />
+            <PainelDaSecao
+              secao={active}
+              processoId={processoId}
+              rascunho={rascunho}
+              setRascunho={setRascunho}
+            />
           ) : active ? (
             <SectionBlock title={active.titulo} hint={active.hint ?? ""}>
               {active.status === "Completo" && rascunho === active.conteudo && active.conteudo !== "" ? (

@@ -5,20 +5,21 @@ import { useState } from "react"
 import {
   Button,
   ChoiceCard,
-  Dropdown,
   FileUpload,
   FormField,
   InfoBanner,
   Input,
-  MoneyInput,
-  QuantityInput,
   SectionBlock,
   Textarea,
 } from "@/components/ui"
 import { IconCheck, IconCheckCircle, IconFileText } from "@/components/ui/icons"
 import { InlineSpinner } from "@/components/shared/estados"
 import { useToast } from "@/components/shared/providers"
-import { formatBRL, parseValorBR } from "@/lib/format"
+import { Th } from "@/components/shared/tabela"
+import { useConsolidacaoDaDemanda, useDfdsDoProcesso, useProcesso } from "@/lib/api/hooks"
+import type { ItemConsolidado } from "@/lib/api/procurement-client"
+import { rotuloDaUnidade } from "@/lib/dominio/unidades"
+import { formatBRL, formatNumeroBR, parseValorBR } from "@/lib/format"
 import type { ModoATA, PainelSecao, SecaoDocumento } from "@/lib/types"
 
 /**
@@ -31,6 +32,8 @@ import type { ModoATA, PainelSecao, SecaoDocumento } from "@/lib/types"
 
 interface PainelProps {
   secao: SecaoDocumento
+  /** Os painéis leem o que o processo já registrou — itens, DFDs, valor. */
+  processoId: string
   /** Conteúdo em edição da seção — os painéis alimentam a memória de cálculo. */
   rascunho: string
   setRascunho: (v: string) => void
@@ -44,46 +47,68 @@ export function PainelDaSecao(props: PainelProps) {
   return null
 }
 
-/** Estimativa das Quantidades — Art. 18, § 1º, IV, Lei 14.133/21. */
-function PainelQuantidades({ secao, rascunho, setRascunho }: PainelProps) {
-  const [qty, setQty] = useState("150,00")
-  const [unidade, setUnidade] = useState("Unidade")
-  const [vigencia, setVigencia] = useState("12 meses")
+/**
+ * Estimativa das Quantidades — Art. 18, § 1º, IV, Lei 14.133/21.
+ *
+ * <p>Os números vêm dos itens que as secretarias pediram nos DFDs, somados pelo
+ * servidor. Antes eram três campos com valores fixos do protótipo — 150,00,
+ * "Unidade", "12 meses" — que ninguém digitava e nada salvava: a tela exibia
+ * quantidade inventada numa peça que vai ao controle.
+ *
+ * <p>O que a lei pede aqui é a <b>memória de cálculo</b>, e é ela que a seção
+ * guarda. A plataforma escreve o rascunho a partir da consolidação — item,
+ * quantidade e secretaria de origem —, e quem assina revisa. Sem itens
+ * informados, não há o que rascunhar, e a tela diz onde informá-los.
+ */
+function PainelQuantidades({ secao, processoId, rascunho, setRascunho }: PainelProps) {
+  const consolidacao = useConsolidacaoDaDemanda(processoId)
+  const showToast = useToast()
+
+  const itens = consolidacao.data?.itens ?? []
 
   return (
     <SectionBlock title={secao.titulo} hint={secao.hint ?? ""}>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <FormField label="Quantidade Estimada" required>
-          <QuantityInput value={qty} onChange={setQty} />
-        </FormField>
-        <FormField label="Unidade de Medida" required>
-          <Dropdown
-            value={unidade}
-            onChange={setUnidade}
-            ariaLabel="Unidade de medida"
-            options={["Unidade", "Serviço", "Metro Quadrado", "Licença"].map((o) => ({ value: o, label: o }))}
-          />
-        </FormField>
-        <FormField label="Período de Vigência" required>
-          <Dropdown
-            value={vigencia}
-            onChange={setVigencia}
-            ariaLabel="Período de vigência"
-            options={["12 meses", "24 meses", "36 meses", "48 meses", "60 meses"].map((o) => ({ value: o, label: o }))}
-          />
-        </FormField>
-      </div>
+      {consolidacao.isPending ? (
+        <InlineSpinner label="Somando o que as secretarias pediram..." />
+      ) : consolidacao.isError ? (
+        <InfoBanner tone="warning">
+          Não foi possível ler a demanda consolidada agora. Você pode escrever a memória de
+          cálculo mesmo assim.
+        </InfoBanner>
+      ) : itens.length === 0 ? (
+        <InfoBanner tone="warning">
+          Nenhum item informado nos DFDs deste processo. As quantidades saem de lá — informe-as
+          na demanda consolidada do processo, e elas aparecem aqui somadas por secretaria.
+        </InfoBanner>
+      ) : (
+        <div className="flex flex-col gap-3">
+          <TabelaDeQuantidades itens={itens} />
+          <div>
+            <Button
+              size="sm"
+              variant="secondary"
+              icon={<IconFileText size={13} />}
+              onClick={() => {
+                setRascunho(memoriaDasQuantidades(itens))
+                showToast("Memória de cálculo preenchida a partir dos DFDs. Revise antes de salvar.")
+              }}
+            >
+              {rascunho.trim() === "" ? "Escrever a memória a partir dos DFDs" : "Refazer a partir dos DFDs"}
+            </Button>
+          </div>
+        </div>
+      )}
 
       <div className="mt-4">
         <FormField
           label="Memória de Cálculo"
           required
-          hint="A lei exige a memória de cálculo e os documentos que dão suporte às quantidades."
+          hint="A lei exige a memória de cálculo e os documentos que lhe dão suporte. O rascunho acima é ponto de partida — quem assina responde pelo texto."
         >
           <Textarea
             value={rascunho}
             onChange={(e) => setRascunho(e.target.value)}
-            rows={4}
+            rows={8}
             placeholder="Ex: Quantidade estimada com base no levantamento realizado junto às 30 unidades escolares da rede municipal. Média de 5 equipamentos por unidade, considerando substituição de equipamentos com mais de 8 anos de uso..."
           />
         </FormField>
@@ -92,49 +117,164 @@ function PainelQuantidades({ secao, rascunho, setRascunho }: PainelProps) {
   )
 }
 
-/** Estimativa do Valor da Contratação — Art. 18, § 1º, VI, Lei 14.133/21. */
-function PainelValor({ secao, rascunho, setRascunho }: PainelProps) {
-  const [qty, setQty] = useState("150,00")
-  const [valorUnit, setValorUnit] = useState("3.233,33")
-  const [fonte, setFonte] = useState("painel")
+/** O que cada secretaria pediu e o total por item. */
+function TabelaDeQuantidades({ itens }: { itens: ItemConsolidado[] }) {
+  return (
+    <div className="overflow-x-auto rounded-xl border border-border">
+      <table className="w-full border-collapse text-sm">
+        <thead>
+          <tr className="bg-ice">
+            <Th>Item</Th>
+            <Th>Unidade</Th>
+            <Th>Origem</Th>
+            <Th>Total</Th>
+          </tr>
+        </thead>
+        <tbody>
+          {itens.map((item) => (
+            <tr key={item.descricao} className="border-t border-border-soft">
+              <td className="px-2.5 py-2 font-medium text-text-1">{item.descricao}</td>
+              <td className="px-2.5 py-2 text-xs text-text-3">{rotuloDaUnidade(item.unidade)}</td>
+              <td className="px-2.5 py-2 text-xs text-text-3">
+                {item.porSecretaria
+                  .map((o) => `${o.secretaria}: ${formatNumeroBR(o.quantidade)}`)
+                  .join(" · ")}
+              </td>
+              <td className="px-2.5 py-2 font-mono text-xs font-semibold text-text-1">
+                {/*
+                  Unidades divergentes não somam: mostrar um total ali seria a
+                  plataforma afirmando um número que ninguém pode usar.
+                */}
+                {item.somavel ? formatNumeroBR(item.total) : "—"}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+/**
+ * O rascunho da memória de cálculo a partir da consolidação.
+ *
+ * <p>Diz de onde veio cada quantidade — é isso que a lei chama de memória — e
+ * deixa entre colchetes o que só quem conduz o processo sabe: o critério que
+ * levou àquela quantidade.
+ */
+export function memoriaDasQuantidades(itens: ItemConsolidado[]): string {
+  const linhas = itens.map((item) => {
+    const origens = item.porSecretaria
+      .map((o) => `${o.secretaria} (${formatNumeroBR(o.quantidade)} ${o.unidade})`)
+      .join("; ")
+    const total = item.somavel
+      ? `${formatNumeroBR(item.total)} ${item.unidade}`
+      : "total não somável — as secretarias usaram unidades diferentes"
+    return `- ${item.descricao}: ${total}. Origem: ${origens}.`
+  })
+  return [
+    "As quantidades abaixo resultam da consolidação dos Documentos de Formalização de Demanda "
+      + "apresentados pelas secretarias requisitantes:",
+    ...linhas,
+    "[Descrever o critério que fundamenta as quantidades — histórico de consumo, demanda "
+      + "projetada, número de unidades atendidas — e os documentos que lhe dão suporte.]",
+  ].join("\n\n")
+}
+
+/**
+ * Estimativa do Valor da Contratação — Art. 18, § 1º, VI, Lei 14.133/21.
+ *
+ * <p>Antes eram três campos fixos do protótipo — 150,00 × R$ 3.233,33 =
+ * R$ 484.999,50 — que não vinham do processo, não iam para lugar nenhum e
+ * apareciam idênticos em toda contratação. Agora o total é calculado dos itens
+ * que as secretarias pediram, item a item, e comparado com o valor que o
+ * processo declarou na abertura: a diferença entre os dois é informação, e
+ * escondê-la seria deixar a estimativa se contradizer em silêncio.
+ *
+ * <p>Item sem preço informado não vira zero — entra como pendência, porque zero
+ * é um preço e "ninguém estimou" é outra coisa.
+ */
+function PainelValor({ secao, processoId, rascunho, setRascunho }: PainelProps) {
+  const dfds = useDfdsDoProcesso(processoId)
+  const processo = useProcesso(processoId)
+  const showToast = useToast()
+  const [fonte, setFonte] = useState("")
   const [outroTexto, setOutroTexto] = useState("")
 
-  // Total derivado dos campos ao lado (quantidade × valor unitário).
-  const valorTotal = parseValorBR(qty) * parseValorBR(valorUnit)
-
-  // Ordem de preferência das fontes de pesquisa de preços (IN SEGES 65/2021, Art. 5º).
-  const fontesOpcoes = [
-    { key: "pncp", label: "Portal Nacional de Contratações Públicas (PNCP)" },
-    { key: "contratos", label: "Contratações similares celebradas por outros entes" },
-    { key: "painel", label: "Painel de Preços do Governo Federal (gov.br/compras)" },
-    { key: "cotacoes", label: "Pesquisa direta com fornecedores" },
-    { key: "outro", label: "Outro" },
-  ]
+  const itens = (dfds.data ?? []).flatMap((dfd) =>
+    dfd.itens.map((item) => ({ ...item, dfd: dfd.nomeDoArquivo, secretaria: dfd.secretaria })),
+  )
+  const precificados = itens.filter((item) => item.valorUnitario)
+  const semPreco = itens.filter((item) => !item.valorUnitario)
+  const total = precificados.reduce(
+    (soma, item) => soma + parseValorBR(item.quantidade) * parseValorBR(item.valorUnitario ?? "0"),
+    0,
+  )
+  const declarado = processo.data?.valorEstimado ?? 0
+  const fonteEscolhida = FONTES_DE_PRECO.find((f) => f.key === fonte)
 
   return (
     <SectionBlock title={secao.titulo} hint={secao.hint ?? ""}>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <FormField label="Quantidade" required>
-          <QuantityInput value={qty} onChange={setQty} />
-        </FormField>
-        <FormField label="Valor Unitário Estimado" required>
-          <MoneyInput value={valorUnit} onChange={setValorUnit} />
-        </FormField>
-        <FormField label="Valor Total Estimado">
-          <div className="flex w-full items-center rounded-md border border-border bg-ice px-3.25 py-2.5 font-mono text-md font-bold text-petroleum">
-            {formatBRL(valorTotal)}
+      {dfds.isPending ? (
+        <InlineSpinner label="Somando os itens precificados..." />
+      ) : itens.length === 0 ? (
+        <InfoBanner tone="warning">
+          Nenhum item informado nos DFDs deste processo. O valor sai da quantidade e do preço
+          unitário de cada item — informe-os na demanda consolidada do processo.
+        </InfoBanner>
+      ) : (
+        <div className="flex flex-col gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <ValorApurado
+              rotulo="Total dos itens precificados"
+              valor={total}
+              detalhe={`${precificados.length} de ${itens.length} ${itens.length === 1 ? "item" : "itens"} com preço informado`}
+            />
+            <ValorApurado
+              rotulo="Valor declarado na abertura"
+              valor={declarado}
+              detalhe={
+                total === 0 || declarado === 0
+                  ? "Sem base de comparação"
+                  : `Diferença de ${formatBRL(Math.abs(declarado - total))} (${total > declarado ? "acima" : "abaixo"} do declarado)`
+              }
+            />
           </div>
-        </FormField>
-      </div>
+
+          {semPreco.length > 0 && (
+            <InfoBanner tone="warning">
+              {semPreco.length === 1 ? "Um item ainda não tem" : `${semPreco.length} itens ainda não têm`}{" "}
+              preço unitário informado: {semPreco.map((i) => i.descricao).join(", ")}. Enquanto
+              faltarem, o total apurado fica abaixo do que a contratação custa.
+            </InfoBanner>
+          )}
+
+          <div>
+            <Button
+              size="sm"
+              variant="secondary"
+              icon={<IconFileText size={13} />}
+              disabled={precificados.length === 0}
+              onClick={() => {
+                setRascunho(
+                  memoriaDoValor(precificados, total, declarado, fonteEscolhida?.label ?? outroTexto),
+                )
+                showToast("Memória de cálculo preenchida a partir dos itens. Revise antes de salvar.")
+              }}
+            >
+              {rascunho.trim() === "" ? "Escrever a memória a partir dos itens" : "Refazer a partir dos itens"}
+            </Button>
+          </div>
+        </div>
+      )}
 
       <div className="mt-4">
         <FormField
           label="Fonte de Pesquisa de Preços"
-          required
-          hint="Ordem de preferência da IN SEGES 65/2021, Art. 5º — a pesquisa direta com fornecedores é a última alternativa."
+          hint="Ordem de preferência da IN SEGES 65/2021, Art. 5º — a pesquisa direta com fornecedores é a última alternativa. A escolha entra na memória de cálculo, que é o que a seção guarda."
         >
           <div className="flex flex-col gap-2">
-            {fontesOpcoes.map((opt) => (
+            {FONTES_DE_PRECO.map((opt) => (
               <label key={opt.key} className="flex cursor-pointer items-center gap-2.5 text-base text-text-2">
                 <input
                   type="radio"
@@ -168,13 +308,79 @@ function PainelValor({ secao, rascunho, setRascunho }: PainelProps) {
           <Textarea
             value={rascunho}
             onChange={(e) => setRascunho(e.target.value)}
-            rows={4}
+            rows={8}
             placeholder="Ex: Valor de referência apurado pela mediana de 5 preços coletados no PNCP entre 01/06 e 15/06, descartado 1 preço excessivamente elevado..."
           />
         </FormField>
       </div>
     </SectionBlock>
   )
+}
+
+/** Ordem de preferência das fontes de pesquisa de preços (IN SEGES 65/2021, Art. 5º). */
+const FONTES_DE_PRECO = [
+  { key: "pncp", label: "Portal Nacional de Contratações Públicas (PNCP)" },
+  { key: "contratos", label: "Contratações similares celebradas por outros entes" },
+  { key: "painel", label: "Painel de Preços do Governo Federal (gov.br/compras)" },
+  { key: "cotacoes", label: "Pesquisa direta com fornecedores" },
+  { key: "outro", label: "Outro" },
+]
+
+/** Um número apurado, com a conta que o produziu logo abaixo. */
+function ValorApurado({
+  rotulo,
+  valor,
+  detalhe,
+}: {
+  rotulo: string
+  valor: number
+  detalhe: string
+}) {
+  return (
+    <div className="rounded-xl border border-border bg-ice px-4 py-3.5">
+      <div className="text-2xs font-semibold tracking-caps text-text-muted uppercase">{rotulo}</div>
+      <div className="mt-1 font-mono text-lg font-bold text-petroleum">{formatBRL(valor)}</div>
+      <div className="mt-0.5 text-xs text-text-3">{detalhe}</div>
+    </div>
+  )
+}
+
+/** O rascunho da memória de cálculo a partir dos itens precificados. */
+export function memoriaDoValor(
+  itens: Array<{ descricao: string; unidade: string; quantidade: string; valorUnitario?: string }>,
+  total: number,
+  declarado: number,
+  fonte: string,
+): string {
+  const linhas = itens.map((item) => {
+    const subtotal = parseValorBR(item.quantidade) * parseValorBR(item.valorUnitario ?? "0")
+    return `- ${item.descricao}: ${item.quantidade} ${item.unidade} × R$ ${item.valorUnitario} = ${formatBRL(subtotal)}.`
+  })
+  const partes = [
+    "O valor estimado da contratação resulta dos preços unitários referenciais aplicados às "
+      + "quantidades consolidadas dos Documentos de Formalização de Demanda:",
+    ...linhas,
+    `Valor total estimado: ${formatBRL(total)}.`,
+  ]
+  partes.push(
+    fonte
+      ? `Fonte de pesquisa de preços: ${fonte}.`
+      : "[Indicar a fonte de pesquisa de preços utilizada, observada a ordem de preferência da "
+        + "IN SEGES 65/2021, Art. 5º.]",
+  )
+  if (declarado > 0 && Math.abs(declarado - total) >= 0.01) {
+    // A divergência é dito, e não escondida: o valor da abertura consta do
+    // processo, e quem lê depois vai comparar os dois de qualquer forma.
+    partes.push(
+      `O valor declarado na abertura do processo foi de ${formatBRL(declarado)}. `
+        + "[Justificar a diferença entre a estimativa apurada e o valor inicialmente declarado.]",
+    )
+  }
+  partes.push(
+    "[Anexar os documentos de suporte da pesquisa de preços e registrar eventuais preços "
+      + "descartados por excessividade ou inexequibilidade.]",
+  )
+  return partes.join("\n\n")
 }
 
 const modosATA: Array<{ key: ModoATA; label: string; desc: string }> = [

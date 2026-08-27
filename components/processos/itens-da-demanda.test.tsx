@@ -50,9 +50,15 @@ const dfd = (id: string, fileName: string, departmentName: string, items: unknow
 const papel = { description: "Papel A4", unit: "RESMA", quantity: 1200, specification: null }
 const caneta = { description: "Caneta azul", unit: "UN", quantity: 50, specification: null }
 
+/**
+ * A unidade vem da lista canônica — a mesma do painel de quantidades do ETP.
+ *
+ * @param unidade o rótulo da opção, como "Resma (RESMA)"
+ */
 async function preencher(descricao: string, unidade: string, quantidade: string) {
   await userEvent.type(screen.getByLabelText(/Descrição do item/), descricao)
-  await userEvent.type(screen.getByLabelText(/Unidade/), unidade)
+  await userEvent.click(screen.getByRole("button", { name: /Unidade/ }))
+  await userEvent.click(await screen.findByRole("option", { name: unidade }))
   await userEvent.type(screen.getByLabelText(/Quantidade/), quantidade)
 }
 
@@ -90,7 +96,7 @@ describe("itens da demanda", () => {
     renderizar(<ItensDaDemanda processoId={PROCESSO} />)
 
     await userEvent.click(await screen.findByRole("button", { name: /Adicionar item/ }))
-    await preencher("Caneta azul", "UN", "50")
+    await preencher("Caneta azul", "Unidade (UN)", "50")
     await userEvent.click(screen.getByRole("button", { name: /DFD em que foi pedido/ }))
     await userEvent.click(
       await screen.findByRole("option", { name: /DFD 004\/2026 · Secretaria de Obras/ }),
@@ -110,7 +116,7 @@ describe("itens da demanda", () => {
     renderizar(<ItensDaDemanda processoId={PROCESSO} />)
 
     await userEvent.click(await screen.findByRole("button", { name: /Adicionar item/ }))
-    await preencher("Papel A4", "RESMA", "1200")
+    await preencher("Papel A4", "Resma (RESMA)", "1200")
     await userEvent.click(screen.getByRole("button", { name: "Adicionar item" }))
 
     // Pedir para confirmar o óbvio seria um clique a mais sem informação nenhuma.
@@ -128,7 +134,7 @@ describe("itens da demanda", () => {
     await userEvent.click(await screen.findByRole("button", { name: /Adicionar item/ }))
     expect(screen.getByText(/Informe a descrição do item/)).toBeInTheDocument()
 
-    await preencher("Papel A4", "RESMA", "1200")
+    await preencher("Papel A4", "Resma (RESMA)", "1200")
 
     // Com dois DFDs não há vínculo óbvio, e gravar sem ele deixaria o item sem
     // origem — que é a única coisa que a consolidação não pode perguntar depois.
