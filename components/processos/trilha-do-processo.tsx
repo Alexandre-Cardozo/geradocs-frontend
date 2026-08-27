@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { type ReactNode, useState } from "react"
 
 import { IconChevronDown, IconChevronRight, IconClock } from "@/components/ui/icons"
 import { useTrilhaDoProcesso } from "@/lib/api/hooks"
@@ -23,30 +23,54 @@ import { EVENTO_LABEL } from "@/lib/processos/fluxo"
  * é "o que aconteceu por último"; o histórico inteiro é consulta, e ocupava a
  * tela toda para respondê-la. Quantos eventos ficaram guardados vai no próprio
  * botão, para que ninguém precise abrir só para descobrir se há mais.
+ *
+ * <p><b>O cartão inteiro abre e fecha.</b> Mirar a linha "Ver N evento(s)" era
+ * pedir precisão para uma ação que vale em qualquer ponto do cartão. O botão
+ * continua existindo — é por ele que o teclado e o leitor de tela chegam, com o
+ * estado anunciado —, e o cartão é a mesma ação com alvo maior.
  */
+/** A moldura da seção — a mesma com ou sem evento para mostrar. */
+function Cartao({ className = "", children }: { className?: string; children: ReactNode }) {
+  return <div className={`rounded-card border border-border bg-surface p-5 ${className}`}>{children}</div>
+}
+
 export function TrilhaDoProcesso({ processoId }: { processoId: string }) {
   const trilha = useTrilhaDoProcesso(processoId)
   const [aberta, setAberta] = useState(false)
 
+  // Carregando, em falha ou vazia, a trilha continua sendo o mesmo cartão: sem
+  // a moldura, a seção pareceria não existir enquanto a resposta não chega.
   if (trilha.isPending) {
-    return <div className="text-sm text-text-muted">Carregando a trilha...</div>
+    return <Cartao className="text-sm text-text-muted">Carregando a trilha...</Cartao>
   }
   if (trilha.isError) {
-    return <div className="text-sm text-danger">Não foi possível carregar a trilha.</div>
+    return <Cartao className="text-sm text-danger">Não foi possível carregar a trilha.</Cartao>
   }
   if (trilha.data.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-border bg-surface px-4 py-3.5 text-sm text-text-muted">
+      <Cartao className="text-sm text-text-muted">
         Nenhum evento registrado para este processo.
-      </div>
+      </Cartao>
     )
   }
 
   const anteriores = trilha.data.length - 1
   const visiveis = aberta ? trilha.data : trilha.data.slice(0, 1)
+  const alternar = () => setAberta((estava) => !estava)
 
   return (
-    <>
+    <div
+      /*
+        O clique no cartão é conveniência de ponteiro: a semântica fica no botão
+        de baixo, que é o que o teclado alcança e o leitor de tela anuncia. Um
+        `role="button"` aqui envolveria esse botão num outro, o que nenhum dos
+        dois entende.
+      */
+      onClick={anteriores > 0 ? alternar : undefined}
+      className={`rounded-card border border-border bg-surface p-5 ${
+        anteriores > 0 ? "cursor-pointer transition-colors hover:bg-ice" : ""
+      }`}
+    >
       <ol className="m-0 flex list-none flex-col gap-0 p-0">
         {visiveis.map((evento, i) => (
           <li key={`${evento.data}-${evento.evento}-${i}`} className="flex gap-3">
@@ -87,7 +111,12 @@ export function TrilhaDoProcesso({ processoId }: { processoId: string }) {
       {anteriores > 0 && (
         <button
           type="button"
-          onClick={() => setAberta((v) => !v)}
+          onClick={(e) => {
+            // Sem isto o clique conta duas vezes — no botão e no cartão —, e a
+            // trilha voltaria a fechar no mesmo gesto que a abriu.
+            e.stopPropagation()
+            alternar()
+          }}
           aria-expanded={aberta}
           className="mt-1 flex cursor-pointer items-center gap-1.5 border-0 bg-transparent p-0 text-sm font-semibold text-royal"
         >
@@ -97,6 +126,6 @@ export function TrilhaDoProcesso({ processoId }: { processoId: string }) {
             : `Ver ${anteriores} evento(s) anterior(es)`}
         </button>
       )}
-    </>
+    </div>
   )
 }

@@ -1,27 +1,20 @@
-"use client"
+"use client";
 
-import { useRef, useState } from "react"
+import { useRef, useState } from "react";
 
-import { Button, Dropdown, FormField, Input, Tag } from "@/components/ui"
-import {
-  IconCheck,
-  IconFileText,
-  IconPlus,
-  IconTrash,
-  IconUpload,
-  IconX,
-} from "@/components/ui/icons"
-import { BaixarDfd } from "@/components/processos/baixar-dfd"
-import { useToast } from "@/components/shared/providers"
+import { Button, Dropdown, FormField, Input, Tag } from "@/components/ui";
+import { IconCheck, IconFileText, IconPlus, IconTrash, IconUpload, IconX } from "@/components/ui/icons";
+import { BaixarDfd } from "@/components/processos/baixar-dfd";
+import { useToast } from "@/components/shared/providers";
 import {
   useAnexarArquivoAoDfd,
   useRegistrarDfd,
   useConfigTenant,
   useDfdsDoProcesso,
   useRemoverDfd,
-} from "@/lib/api/hooks"
-import type { DfdAnexado } from "@/lib/api/procurement-client"
-import { formatarBytes } from "@/lib/format"
+} from "@/lib/api/hooks";
+import type { DfdAnexado } from "@/lib/api/procurement-client";
+import { formatarBytes } from "@/lib/format";
 
 /**
  * O cadastro de DFDs do processo.
@@ -37,27 +30,25 @@ import { formatarBytes } from "@/lib/format"
  * no fim (ADR-028).
  */
 export function DfdsDoProcesso({ processoId }: { processoId: string }) {
-  const dfds = useDfdsDoProcesso(processoId)
-  const [registrando, setRegistrando] = useState(false)
+  const dfds = useDfdsDoProcesso(processoId);
+  const [registrando, setRegistrando] = useState(false);
 
   if (dfds.isPending) {
-    return <div className="text-sm text-text-muted">Carregando os DFDs do processo...</div>
+    return <div className="text-sm text-text-muted">Carregando os DFDs do processo...</div>;
   }
   if (dfds.isError) {
-    return <div className="text-sm text-danger">Não foi possível listar os DFDs do processo.</div>
+    return <div className="text-sm text-danger">Não foi possível listar os DFDs do processo.</div>;
   }
 
   return (
     /* Sem moldura própria: é uma seção do cartão da demanda, não outro cartão. */
-    <div className="border-t border-border-soft pt-4">
+    <div>
       <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="m-0 font-display text-base font-bold text-text-1">
-            DFDs do processo ({dfds.data.length})
-          </h3>
+          <h3 className="m-0 font-display text-base font-bold text-text-1">DFDs do processo ({dfds.data.length})</h3>
           <p className="m-0 mt-1 text-sm text-text-3">
-            Um por secretaria que formalizou a demanda. Podem ser registrados a qualquer momento
-            do processo, com ou sem o documento assinado em mãos.
+            Um por secretaria que formalizou a demanda. Podem ser registrados a qualquer momento do processo, com ou sem
+            o documento assinado em mãos.
           </p>
         </div>
         {!registrando && (
@@ -83,8 +74,7 @@ export function DfdsDoProcesso({ processoId }: { processoId: string }) {
       {dfds.data.length === 0 ? (
         !registrando && (
           <p className="m-0 rounded-lg border border-dashed border-border bg-surface px-3.5 py-3 text-sm text-text-muted">
-            Nenhum DFD registrado. É o primeiro passo: sem um DFD, não há a que vincular os itens
-            da demanda.
+            Nenhum DFD registrado. É o primeiro passo: sem um DFD, não há a que vincular os itens da demanda.
           </p>
         )
       ) : (
@@ -95,7 +85,7 @@ export function DfdsDoProcesso({ processoId }: { processoId: string }) {
         </ul>
       )}
     </div>
-  )
+  );
 }
 
 /** Registrar um DFD: quem formalizou, como o processo se refere a ele, e o arquivo. */
@@ -104,26 +94,26 @@ function RegistrarDfd({
   onPronto,
   onCancelar,
 }: {
-  processoId: string
-  onPronto: () => void
-  onCancelar: () => void
+  processoId: string;
+  onPronto: () => void;
+  onCancelar: () => void;
 }) {
-  const tenant = useConfigTenant()
-  const registrar = useRegistrarDfd(processoId)
-  const showToast = useToast()
+  const tenant = useConfigTenant();
+  const registrar = useRegistrarDfd(processoId);
+  const showToast = useToast();
 
-  const [secretaria, setSecretaria] = useState("")
-  const [identificacao, setIdentificacao] = useState("")
-  const [arquivo, setArquivo] = useState<File | null>(null)
-  const campoDeArquivo = useRef<HTMLInputElement>(null)
+  const [secretaria, setSecretaria] = useState("");
+  const [identificacao, setIdentificacao] = useState("");
+  const [arquivo, setArquivo] = useState<File | null>(null);
+  const campoDeArquivo = useRef<HTMLInputElement>(null);
 
-  const secretarias = tenant.data?.secretarias ?? []
+  const secretarias = tenant.data?.secretarias ?? [];
   const impedimento =
     secretaria === ""
       ? "Escolha a secretaria que formalizou este DFD."
       : identificacao.trim() === ""
         ? "Informe o número ou o nome do DFD."
-        : null
+        : null;
 
   return (
     <div className="mb-3 rounded-lg border border-royal bg-surface p-4">
@@ -134,11 +124,7 @@ function RegistrarDfd({
       */}
       <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-3">
         <div className="min-w-0">
-          <FormField
-            label="Secretaria que formalizou"
-            required
-            hint="Quem pediu a contratação."
-          >
+          <FormField label="Secretaria que formalizou" required hint="Quem pediu a contratação.">
             <Dropdown
               value={secretaria}
               onChange={setSecretaria}
@@ -151,11 +137,7 @@ function RegistrarDfd({
           </FormField>
         </div>
         <div className="min-w-0">
-          <FormField
-            label="Identificação do DFD"
-            required
-            hint="Nº, ofício ou o nome do arquivo."
-          >
+          <FormField label="Identificação do DFD" required hint="Nº, ofício ou o nome do arquivo.">
             <Input
               value={identificacao}
               onChange={(e) => setIdentificacao(e.target.value)}
@@ -173,11 +155,11 @@ function RegistrarDfd({
                 accept="application/pdf,.pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 aria-label="Arquivo do DFD"
                 onChange={(e) => {
-                  const escolhido = e.target.files?.[0] ?? null
-                  setArquivo(escolhido)
+                  const escolhido = e.target.files?.[0] ?? null;
+                  setArquivo(escolhido);
                   // Com o documento em mãos, o nome dele identifica melhor que
                   // um campo obrigatório em branco.
-                  if (escolhido && identificacao.trim() === "") setIdentificacao(escolhido.name)
+                  if (escolhido && identificacao.trim() === "") setIdentificacao(escolhido.name);
                 }}
                 className="sr-only"
               />
@@ -214,13 +196,11 @@ function RegistrarDfd({
               { secretariaId: secretaria, identificacao: identificacao.trim(), arquivo },
               {
                 onSuccess: () => {
-                  showToast(`${identificacao.trim()} registrado no processo.`)
-                  onPronto()
+                  showToast(`${identificacao.trim()} registrado no processo.`);
+                  onPronto();
                 },
                 onError: (erro) =>
-                  showToast(
-                    erro instanceof Error ? erro.message : "Não foi possível registrar o DFD.",
-                  ),
+                  showToast(erro instanceof Error ? erro.message : "Não foi possível registrar o DFD."),
               },
             )
           }
@@ -230,43 +210,37 @@ function RegistrarDfd({
         <Button size="sm" variant="secondary" onClick={onCancelar}>
           Cancelar
         </Button>
-        <p
-          id={`motivo-dfd-${processoId}`}
-          className={impedimento ? "m-0 text-xs text-text-muted" : "sr-only"}
-        >
+        <p id={`motivo-dfd-${processoId}`} className={impedimento ? "m-0 text-xs text-text-muted" : "sr-only"}>
           {impedimento ?? "Tudo certo para registrar."}
         </p>
       </div>
     </div>
-  )
+  );
 }
 
 /** Uma linha do cadastro: o DFD, o arquivo dele e as ações sobre ele. */
 function LinhaDoDfd({ processoId, dfd }: { processoId: string; dfd: DfdAnexado }) {
-  const [confirmandoRemocao, setConfirmandoRemocao] = useState(false)
-  const campoDeArquivo = useRef<HTMLInputElement>(null)
-  const anexarArquivo = useAnexarArquivoAoDfd(processoId)
-  const remover = useRemoverDfd(processoId)
-  const showToast = useToast()
+  const [confirmandoRemocao, setConfirmandoRemocao] = useState(false);
+  const campoDeArquivo = useRef<HTMLInputElement>(null);
+  const anexarArquivo = useAnexarArquivoAoDfd(processoId);
+  const remover = useRemoverDfd(processoId);
+  const showToast = useToast();
 
   const enviarArquivo = (arquivo: File | null) => {
-    if (!arquivo) return
+    if (!arquivo) return;
     anexarArquivo.mutate(
       { dfdId: dfd.id, arquivo },
       {
         onSuccess: () =>
           showToast(
-            dfd.arquivo
-              ? `Arquivo de ${dfd.nomeDoArquivo} substituído.`
-              : `Arquivo anexado a ${dfd.nomeDoArquivo}.`,
+            dfd.arquivo ? `Arquivo de ${dfd.nomeDoArquivo} substituído.` : `Arquivo anexado a ${dfd.nomeDoArquivo}.`,
           ),
-        onError: (erro) =>
-          showToast(erro instanceof Error ? erro.message : "Não foi possível anexar o arquivo."),
+        onError: (erro) => showToast(erro instanceof Error ? erro.message : "Não foi possível anexar o arquivo."),
       },
-    )
+    );
     // Sem limpar, escolher o mesmo arquivo de novo não dispara `change`.
-    if (campoDeArquivo.current) campoDeArquivo.current.value = ""
-  }
+    if (campoDeArquivo.current) campoDeArquivo.current.value = "";
+  };
 
   return (
     <li className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-ice px-3.5 py-2.5">
@@ -285,9 +259,7 @@ function LinhaDoDfd({ processoId, dfd }: { processoId: string; dfd: DfdAnexado }
         o documento pode ser registrado antes de o detalhamento chegar.
       */}
       <Tag tone={dfd.itens.length === 0 ? "warning" : "neutral"}>
-        {dfd.itens.length === 0
-          ? "Sem itens"
-          : `${dfd.itens.length} ${dfd.itens.length === 1 ? "item" : "itens"}`}
+        {dfd.itens.length === 0 ? "Sem itens" : `${dfd.itens.length} ${dfd.itens.length === 1 ? "item" : "itens"}`}
       </Tag>
       <input
         ref={campoDeArquivo}
@@ -306,9 +278,7 @@ function LinhaDoDfd({ processoId, dfd }: { processoId: string; dfd: DfdAnexado }
       >
         {anexarArquivo.isPending ? "Enviando..." : dfd.arquivo ? "Substituir" : "Anexar arquivo"}
       </Button>
-      {dfd.arquivo && (
-        <BaixarDfd processoId={processoId} dfdId={dfd.id} nomeDoArquivo={dfd.nomeDoArquivo} />
-      )}
+      {dfd.arquivo && <BaixarDfd processoId={processoId} dfdId={dfd.id} nomeDoArquivo={dfd.nomeDoArquivo} />}
       {confirmandoRemocao ? (
         /*
           Confirmar na própria linha, e não num diálogo: remover um DFD leva os
@@ -316,9 +286,7 @@ function LinhaDoDfd({ processoId, dfd }: { processoId: string; dfd: DfdAnexado }
           está prestes a sair.
         */
         <span className="flex items-center gap-2">
-          <span className="text-xs text-text-3">
-            Remover o DFD e os {dfd.itens.length} item(ns) dele?
-          </span>
+          <span className="text-xs text-text-3">Remover o DFD e os {dfd.itens.length} item(ns) dele?</span>
           <Button
             size="sm"
             variant="danger-soft"
@@ -327,21 +295,13 @@ function LinhaDoDfd({ processoId, dfd }: { processoId: string; dfd: DfdAnexado }
             onClick={() =>
               remover.mutate(dfd.id, {
                 onSuccess: () => showToast(`${dfd.nomeDoArquivo} removido do processo.`),
-                onError: (erro) =>
-                  showToast(
-                    erro instanceof Error ? erro.message : "Não foi possível remover o DFD.",
-                  ),
+                onError: (erro) => showToast(erro instanceof Error ? erro.message : "Não foi possível remover o DFD."),
               })
             }
           >
             {remover.isPending ? "Removendo..." : "Confirmar"}
           </Button>
-          <Button
-            size="sm"
-            variant="secondary"
-            icon={<IconX size={13} />}
-            onClick={() => setConfirmandoRemocao(false)}
-          >
+          <Button size="sm" variant="secondary" icon={<IconX size={13} />} onClick={() => setConfirmandoRemocao(false)}>
             Cancelar
           </Button>
         </span>
@@ -356,5 +316,5 @@ function LinhaDoDfd({ processoId, dfd }: { processoId: string; dfd: DfdAnexado }
         </Button>
       )}
     </li>
-  )
+  );
 }

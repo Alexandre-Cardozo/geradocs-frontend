@@ -118,6 +118,38 @@ describe("trilha do processo", () => {
     expect(screen.queryByText("Criação do Processo")).not.toBeInTheDocument()
   })
 
+  it("clicar no cartão abre o histórico, e clicar de novo fecha", async () => {
+    comTrilha([
+      { event: "PROCUREMENT_PROCESS_CLOSED", occurredAt: "2026-08-25T14:30:00-03:00", actorName: "Maria" },
+      { event: "PROCUREMENT_PROCESS_CREATED", occurredAt: "2026-08-20T10:00:00-03:00", actorName: "Maria" },
+    ])
+    const { container } = renderizar(<TrilhaDoProcesso processoId={PROCESSO} />)
+    await screen.findByText("Encerramento")
+
+    // Mirar a linha "Ver N evento(s)" era pedir precisão para uma ação que vale
+    // em qualquer ponto do cartão.
+    const cartao = container.firstElementChild as HTMLElement
+    await userEvent.click(cartao)
+    expect(screen.getByText("Criação do Processo")).toBeInTheDocument()
+
+    await userEvent.click(cartao)
+    expect(screen.queryByText("Criação do Processo")).not.toBeInTheDocument()
+  })
+
+  it("o clique no botão não conta duas vezes", async () => {
+    comTrilha([
+      { event: "PROCUREMENT_PROCESS_CLOSED", occurredAt: "2026-08-25T14:30:00-03:00", actorName: "Maria" },
+      { event: "PROCUREMENT_PROCESS_CREATED", occurredAt: "2026-08-20T10:00:00-03:00", actorName: "Maria" },
+    ])
+    renderizar(<TrilhaDoProcesso processoId={PROCESSO} />)
+
+    // O botão está dentro do cartão: sem parar a propagação, o mesmo gesto
+    // abriria e fecharia a trilha.
+    await userEvent.click(await screen.findByRole("button", { name: /Ver 1 evento/ }))
+
+    expect(screen.getByText("Criação do Processo")).toBeInTheDocument()
+  })
+
   it("com um evento só, não há o que abrir", async () => {
     comTrilha([
       { event: "PROCUREMENT_PROCESS_CREATED", occurredAt: "2026-08-20T10:00:00-03:00", actorName: "Maria" },

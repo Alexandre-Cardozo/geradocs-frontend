@@ -616,9 +616,8 @@ export default function HubProcesso() {
             Registro do que aconteceu, com quem agiu e por quê.
           </span>
         </div>
-        <div className="rounded-card border border-border bg-surface p-5">
-          <TrilhaDoProcesso processoId={processoId} />
-        </div>
+        {/* O cartão é do próprio componente: é ele o alvo do clique que abre. */}
+        <TrilhaDoProcesso processoId={processoId} />
       </div>
     </div>
   )

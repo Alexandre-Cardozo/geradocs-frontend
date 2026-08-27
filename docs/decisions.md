@@ -821,3 +821,5 @@ O formulário anterior fazia as duas coisas de uma vez: escolher o DFD *e* digit
 Do lado do cliente, `registrarDfd` deixou de aceitar itens: a função de registro e a de troca de itens (`atualizarItensDoDfd`) são as duas operações, e nada mais mistura as duas. A gravação de item passa pela lista inteira do DFD alvo, montada na tela a partir da que está lá — o que mantém a troca atômica por DFD.
 
 **A consolidação vazia deixou de dizer o que falta.** Com o cadastro de DFDs e a tabela de itens logo abaixo — cada um já anunciando o que falta e onde informá-lo —, o aviso no lugar da tabela era uma terceira voz sobre o mesmo assunto. Sem item, a consolidação simplesmente não desenha nada.
+
+**A trilha abre pelo cartão inteiro.** Mirar a linha "Ver N evento(s) anterior(es)" era pedir precisão para uma ação que vale em qualquer ponto do cartão. O botão continua lá — é por ele que o teclado e o leitor de tela chegam, com `aria-expanded` anunciando o estado —, e o clique no cartão é a mesma ação com alvo maior. O botão para a propagação: sem isso, o mesmo gesto abriria e fecharia a trilha.
