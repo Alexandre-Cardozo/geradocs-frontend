@@ -77,8 +77,6 @@ function tenantDa(organization: BackendOrganization, secretarias: Secretaria[] =
     nome: organization.name,
     tipo: tipoDaEntidade(organization.entityType),
     secretarias,
-    logoArquivo: null,
-    logoDataUrl: null,
     timbrado: true,
     cabecalho: organization.name.toUpperCase(),
     rodape: "Documento gerado eletronicamente pela plataforma GeraDocs · {data} · Processo nº {numero}",

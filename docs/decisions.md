@@ -845,3 +845,11 @@ O que ficou desta investigação:
 **`sr-only` ficou ancorado no topo.** A classe é `position: absolute`, e um elemento absoluto vai para a sua posição estática — no fim de um formulário longo, centenas de pixels abaixo. Foi exatamente esse o defeito que o `relative` do `main` corrigiu na época; `top: 0; left: 0` resolve na origem, para qualquer aninhamento. Medi que **não** é a causa quando existe um painel com `overflow` no caminho — ele recorta o elemento antes —, então isto é endurecimento, não a correção do relato.
 
 **Os painéis que rolam ganharam `relative`.** No editor e na sidebar: sem isso, o bloco de contenção de um filho absoluto salta para o `main`, e ele é colocado na posição estática que tem dentro do conteúdo rolado.
+
+## 63. O brasão da entidade aparece na barra lateral
+
+A entidade cadastrava o brasão no timbre e a barra lateral continuava com o ícone genérico. A causa não era a barra: ela já sabia desenhar a imagem — lia de `entidade.logoDataUrl`, um campo do tipo `Tenant` que **os dois mapeadores preenchiam com `null`, sempre**. A ponte nunca teve de onde tirar o dado: o brasão é do timbre, e vem por rota autenticada, em bytes.
+
+A barra passou a lê-lo de onde ele existe — `useTimbre` para saber se há um, `useBrasao` para os bytes —, e os campos mortos saíram do tipo. Um campo que só sabe dizer `null` não é um dado ausente: é uma promessa que a interface acredita e o usuário não vê cumprida.
+
+É a mesma imagem do cabeçalho dos documentos, e não uma segunda cópia: cadastrar em um lugar aparece nos dois.

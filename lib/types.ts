@@ -344,10 +344,13 @@ export interface Tenant {
   nome: string
   tipo: TipoEntidade
   secretarias: Secretaria[]
-  /** Nome do arquivo do logotipo/brasão configurado (metadado exibido). */
-  logoArquivo: string | null
-  /** Imagem do logotipo/brasão em data URL, para exibição (sidebar, timbre). Null = sem logo. */
-  logoDataUrl: string | null
+  /*
+    O brasão não mora aqui. Ele é do timbre, e quem o quer o pede por
+    `useTimbre`/`useBrasao` — a rota é autenticada e devolve bytes. Os campos
+    `logoArquivo` e `logoDataUrl` existiam nesta interface e eram sempre nulos:
+    a barra lateral lia daqui e ficava com o ícone genérico mesmo depois de a
+    entidade ter cadastrado o brasão.
+  */
   timbrado: boolean
   cabecalho: string
   rodape: string

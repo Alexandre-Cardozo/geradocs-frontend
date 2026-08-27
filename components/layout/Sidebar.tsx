@@ -19,7 +19,7 @@ import {
   IconUser,
 } from "@/components/ui/icons";
 import { FotoDePerfil } from "@/components/shared/foto-de-perfil";
-import { useLogout, useSessao } from "@/lib/api/hooks";
+import { useBrasao, useLogout, useSessao, useTimbre } from "@/lib/api/hooks";
 import { navPrincipal, navSistema, type IconeNav } from "@/lib/auth/acesso";
 import { PERFIL_ACESSO_LABEL, TIPO_ENTIDADE_LABEL } from "@/lib/types";
 
@@ -113,6 +113,11 @@ export default function Sidebar({
 
   const usuario = sessao?.usuario;
   const entidade = sessao?.entidade;
+  // O brasão vem do timbre, que é onde ele é cadastrado. A sessão trazia um
+  // campo `logoDataUrl` que nunca era preenchido: a barra ficava com o ícone
+  // genérico mesmo depois de a entidade subir o brasão.
+  const timbre = useTimbre(entidade?.id);
+  const brasaoUrl = useBrasao(entidade?.id, timbre.data?.temBrasao ?? false);
   const perfil = usuario?.perfilAcesso ?? "servidor";
 
   const paraItem = (i: { href: string; label: string; icone: IconeNav }): NavItem => ({
@@ -164,14 +169,18 @@ export default function Sidebar({
           {perfil === "admin_geral" ? "Contexto" : "Entidade Atual"}
         </div>
         <div className="flex items-center gap-2 rounded-md">
-          {entidade?.logoDataUrl ? (
-            <Image
-              src={entidade.logoDataUrl}
+          {brasaoUrl ? (
+            /*
+              O brasão que a entidade cadastrou no timbre, e não um segundo
+              lugar para a mesma imagem: é o mesmo que sai no cabeçalho dos
+              documentos. `img` e não `next/image` porque a origem é um object
+              URL de rota autenticada — o otimizador não tem o que buscar.
+            */
+            // eslint-disable-next-line @next/next/no-img-element -- object URL de rota autenticada
+            <img
+              src={brasaoUrl}
               alt=""
-              width={22}
-              height={22}
-              unoptimized
-              className="size-5.5 shrink-0 object-contain"
+              className="size-5.5 shrink-0 rounded-[5px] object-contain"
             />
           ) : (
             <span className="flex size-5.5 shrink-0 items-center justify-center rounded-[5px] bg-on-dark-royal-chip text-electric">

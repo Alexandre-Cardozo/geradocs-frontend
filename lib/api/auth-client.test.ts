@@ -457,7 +457,8 @@ describe("tenant sintetizado (ponte temporária)", () => {
     // organização ainda não devolve configuração. Quando passar a devolver, este
     // teste falha — que é o objetivo: a ponte não pode sumir sem alguém notar.
     expect(entidade?.secretarias).toEqual([])
-    expect(entidade?.logoDataUrl).toBeNull()
+    // O brasão não vem daqui: é do timbre, por rota autenticada.
+    expect(entidade).not.toHaveProperty("logoDataUrl")
     // O PCA saiu daqui no 10.5: ele é do módulo `pca` e vem indexado do
     // servidor, e não um `itensIndexados: 0` fabricado na ponte.
     expect(entidade).not.toHaveProperty("pca")
