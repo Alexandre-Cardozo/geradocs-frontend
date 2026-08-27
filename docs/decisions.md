@@ -833,3 +833,15 @@ As telas passaram a `w-full`. O que limita linha de leitura continua limitando o
 **Vai coberto por e2e**, e não por teste de componente: só com uma janela de verdade dá para medir que o conteúdo tem a mesma largura do `main`. Três telas — painel, listagem e documentos — verificam isso a 1900px.
 
 **O painel perdeu duas caixas.** "Documentos Pendentes" repetia em prosa o número que o cartão de estatística já dá, e "Ações Rápidas" levava as três opções ao mesmo lugar que o botão do topo. Ocupavam um terço da largura para não dizer nada novo; sem elas, os processos recentes ficam com a linha inteira. A listagem do painel também passou a mostrar o **número do processo** no lugar do UUID, como a de processos já fazia (§54).
+
+## 62. A rolagem termina onde o conteúdo termina — e agora há teste que cobra isso
+
+Relato de que algumas telas rolam além do conteúdo, parando numa faixa vazia. **Não consegui reproduzir** com os dados de teste: uma varredura das doze telas do aplicativo, em 1500×800 e em 2000×1195, não encontrou sobra nenhuma entre a área rolável do `main` e o ponto onde o conteúdo acaba.
+
+O que ficou desta investigação:
+
+**A varredura virou teste.** As doze telas passaram a ser verificadas em e2e — para cada uma, a área rolável do `main` não pode passar do elemento visível mais baixo, e o documento não pode rolar. Se o defeito voltar (ou aparecer numa tela nova), ele falha aqui em vez de ser notado por acaso.
+
+**`sr-only` ficou ancorado no topo.** A classe é `position: absolute`, e um elemento absoluto vai para a sua posição estática — no fim de um formulário longo, centenas de pixels abaixo. Foi exatamente esse o defeito que o `relative` do `main` corrigiu na época; `top: 0; left: 0` resolve na origem, para qualquer aninhamento. Medi que **não** é a causa quando existe um painel com `overflow` no caminho — ele recorta o elemento antes —, então isto é endurecimento, não a correção do relato.
+
+**Os painéis que rolam ganharam `relative`.** No editor e na sidebar: sem isso, o bloco de contenção de um filho absoluto salta para o `main`, e ele é colocado na posição estática que tem dentro do conteúdo rolado.

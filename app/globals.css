@@ -186,6 +186,23 @@
   --container-review: 820px;
 }
 
+/*
+  `sr-only` é `position: absolute`, e um elemento absoluto é colocado na sua
+  posição estática — que, no fim de um formulário longo ou dentro de um painel
+  que rola, fica centenas de pixels abaixo. Como o contêiner que rola quase
+  nunca é o bloco de contenção dele, esse aviso invisível **estica a área de
+  rolagem**: a tela rola muito além do conteúdo e termina numa faixa vazia.
+  Nada disso muda o que o leitor de tela lê — a ordem é a do DOM, não a da
+  posição —, então ancorar no topo do bloco de contenção é ganho puro.
+
+  A ADR do shell (`relative` no `main`) tratava o mesmo defeito um nível acima;
+  isto o resolve na origem, para qualquer aninhamento.
+*/
+.sr-only {
+  top: 0;
+  left: 0;
+}
+
 /* Gradientes — só nos usos canônicos do DS (chip da logo, avatar, progresso,
    painel escuro, hero). Não são um namespace do Tailwind; viram utilities. */
 :root {

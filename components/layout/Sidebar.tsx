@@ -197,7 +197,7 @@ export default function Sidebar({
       </div>
 
       {/* Navegação */}
-      <nav className="flex-1 overflow-y-auto p-3">
+      <nav className="relative flex-1 overflow-y-auto p-3">
         <SectionLabel top>Principal</SectionLabel>
         {navItems.map((item) => (
           <NavLink

@@ -171,7 +171,12 @@ export default function EditorDocumento() {
           <ProgressBar percent={progress} label={`Progresso do ${tipo}`} sub={`${completedCount} de ${lista.length} seções concluídas`} />
         </div>
 
-        <div className="flex gap-1.5 overflow-x-auto p-2.5 lg:block lg:flex-1 lg:overflow-x-hidden lg:overflow-y-auto">
+        {/*
+          `relative` nos painéis que rolam: sem isso, o bloco de contenção de um
+          filho absoluto é o `main`, e ele é colocado na posição estática que
+          tem *dentro do conteúdo rolado* — esticando a rolagem da tela inteira.
+        */}
+        <div className="relative flex gap-1.5 overflow-x-auto p-2.5 lg:block lg:flex-1 lg:overflow-x-hidden lg:overflow-y-auto">
           {lista.map((s) => {
             const cfg = statusRail[s.status]
             const isActive = activeSection === s.id
@@ -247,7 +252,7 @@ export default function EditorDocumento() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 lg:p-6">
+        <div className="relative flex-1 overflow-y-auto p-4 lg:p-6">
 
           {active?.painel && active.painel !== "ata" ? (
             <PainelDaSecao secao={active} rascunho={rascunho} setRascunho={setRascunho} />

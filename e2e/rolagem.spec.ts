@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test"
 
-import { comSessao, processo, rota } from "./api"
+import { comProcessoEDocumento, comSessao, processo, rota } from "./api"
 
 /**
  * Uma rolagem só, e nada de faixa branca no fim.
@@ -133,6 +133,66 @@ test.describe("largura do conteúdo", () => {
       // Sobrar mais que um arredondamento é a faixa branca de volta.
       expect(main).toBeGreaterThan(1200)
       expect(main - pagina).toBeLessThanOrEqual(1)
+    })
+  }
+})
+
+/**
+ * A rolagem para onde o conteúdo acaba.
+ *
+ * <p>Rolar além do conteúdo — a tela desce e termina num vazio — vem de
+ * elemento absoluto colocado na sua posição estática lá embaixo, tipicamente um
+ * `sr-only` no fim de um formulário longo ou dentro de um painel que rola. O
+ * bloco de contenção dele quase nunca é o painel, então a área rolável do
+ * ancestral cresce sem que nada visível ocupe o espaço.
+ *
+ * <p>A varredura cobre as telas do aplicativo: é barata, e o defeito reaparece
+ * em qualquer uma que ganhe um aviso invisível novo.
+ */
+test.describe("a rolagem termina no conteúdo", () => {
+  const TELAS = [
+    ["o painel", "/"],
+    ["a listagem", "/processos"],
+    ["os documentos", "/documentos"],
+    ["o novo processo", "/processos/novo"],
+    ["o perfil", "/perfil"],
+    ["o timbre", "/configuracoes/timbre"],
+    ["as secretarias", "/configuracoes/secretarias"],
+    ["o PCA", "/configuracoes/pca"],
+    ["os usuários", "/configuracoes/usuarios"],
+    ["o processo", `/processos/detalhe?id=${processo.id}`],
+    ["o editor", `/processos/documento?id=${processo.id}&tipo=etp`],
+    ["a verificação do DFD", `/processos/dfd?id=${processo.id}`],
+  ] as const
+
+  for (const [nome, caminho] of TELAS) {
+    test(`${nome} não rola além do que mostra`, async ({ page }) => {
+      await page.setViewportSize({ width: 1500, height: 800 })
+      await comSessao(page)
+      await comProcessoEDocumento(page)
+      await page.goto(rota(caminho))
+      await page.waitForLoadState("networkidle")
+
+      const medida = await page.evaluate(() => {
+        const main = document.querySelector("main") as HTMLElement
+        const topo = main.getBoundingClientRect().top
+        let fundo = 0
+        for (const el of Array.from(main.querySelectorAll("*")) as HTMLElement[]) {
+          const caixa = el.getBoundingClientRect()
+          // Ignora o que está escondido: não é ele que deveria dar altura.
+          if (caixa.width === 0 && caixa.height === 0) continue
+          fundo = Math.max(fundo, caixa.bottom - topo + main.scrollTop)
+        }
+        return {
+          sobra: main.scrollHeight - Math.max(fundo, main.clientHeight),
+          documento: document.documentElement.scrollHeight - document.documentElement.clientHeight,
+        }
+      })
+
+      // Mais que um arredondamento de sobra é rolagem para o vazio.
+      expect(medida.sobra).toBeLessThanOrEqual(1)
+      // E o documento continua sem rolar: quem rola é o conteúdo.
+      expect(medida.documento).toBeLessThanOrEqual(1)
     })
   }
 })
