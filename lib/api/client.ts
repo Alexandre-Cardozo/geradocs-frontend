@@ -321,11 +321,16 @@ export async function atualizarSecao(input: AtualizarSecaoInput): Promise<SecaoD
  * no documento é quem assina. A seção devolvida traz o texto proposto com o
  * status que ela teria se fosse aceito — e é a tela que decide aceitar.
  */
-export async function gerarSecao(processoId: string, tipo: TipoDocumento, secaoId: string): Promise<SecaoDocumento> {
+export async function gerarSecao(
+  processoId: string,
+  tipo: TipoDocumento,
+  secaoId: string,
+  rascunho?: string,
+): Promise<SecaoDocumento> {
   const documento = await abrirDocumento(processoId, tipo)
   const secao = documento.secoes.find((s) => s.id === secaoId)
   if (!secao) throw new Error(`Seção ${secaoId} não encontrada`)
-  const texto = await gerarTextoDaSecao(processoId, tipo, secaoId)
+  const texto = await gerarTextoDaSecao(processoId, tipo, secaoId, rascunho)
   return { ...secao, conteudo: texto, status: statusAposEditar(texto) }
 }
 

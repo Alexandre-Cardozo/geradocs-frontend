@@ -293,7 +293,8 @@ export function useAtualizarSecao(processoId: string, tipo: TipoDocumento) {
 export function useGerarSecao(processoId: string, tipo: TipoDocumento) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (secaoId: string) => api.gerarSecao(processoId, tipo, secaoId),
+    mutationFn: (input: { secaoId: string; rascunho?: string }) =>
+      api.gerarSecao(processoId, tipo, input.secaoId, input.rascunho),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: chaves.secoes(processoId, tipo) })
     },

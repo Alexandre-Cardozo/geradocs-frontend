@@ -70,7 +70,9 @@ export const UNIDADES: GrupoDeUnidades[] = [
     grupo: "Comprimento e área",
     unidades: [
       { sigla: "M", nome: "Metro" },
-      { sigla: "ML", nome: "Metro linear" },
+      // "ML" já é mililitro: duas unidades com a mesma sigla colidem na lista,
+      // e o item pedido em metro linear apareceria como pedido em mililitro.
+      { sigla: "M LIN", nome: "Metro linear" },
       { sigla: "M²", nome: "Metro quadrado" },
       { sigla: "KM", nome: "Quilômetro" },
     ],

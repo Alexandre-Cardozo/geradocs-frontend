@@ -62,15 +62,18 @@ const TITULOS = {
 
 function renderizarPainel(qual: "necessidade" | "quantidades" | "valor") {
   const setRascunho = vi.fn()
+  const gerar = vi.fn()
   renderizar(
     <PainelDaSecao
       secao={secao(TITULOS[qual], qual)}
       processoId={PROCESSO}
       rascunho=""
       setRascunho={setRascunho}
+      gerando={false}
+      onGerarComIa={gerar}
     />,
   )
-  return { setRascunho }
+  return { setRascunho, gerar }
 }
 
 describe("painel de quantidades", () => {
@@ -231,5 +234,38 @@ describe("painel da necessidade", () => {
 
     await screen.findByLabelText(/Descrição da Necessidade/)
     expect(screen.queryByRole("button", { name: /rascunho/ })).not.toBeInTheDocument()
+  })
+})
+
+describe("rascunho e IA convivem", () => {
+  const papel = {
+    description: "Papel A4",
+    unit: "RESMA",
+    quantity: 100,
+    specification: null,
+    unitPrice: 25,
+  }
+
+  it("os dois botões ficam lado a lado, e o da IA não some depois do rascunho", async () => {
+    comDfds([dfd("DFD 003/2026", "Secretaria de Educação", [papel])])
+    renderizarPainel("necessidade")
+
+    // Um rascunho não substitui a IA: um serve a quem não usa o modelo, o
+    // outro a quem usa — e o modelo parte do que já está escrito.
+    await screen.findByRole("button", { name: /Escrever o rascunho/ })
+    expect(screen.getByRole("button", { name: /Gerar com IA/ })).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole("button", { name: /Escrever o rascunho/ }))
+    expect(screen.getByRole("button", { name: /Gerar com IA/ })).toBeInTheDocument()
+  })
+
+  it("o painel de valor também oferece os dois", async () => {
+    comDfds([dfd("DFD 003/2026", "Secretaria de Educação", [papel])])
+    renderizarPainel("valor")
+
+    expect(
+      await screen.findByRole("button", { name: /a partir dos itens/ }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /Gerar com IA/ })).toBeInTheDocument()
   })
 })

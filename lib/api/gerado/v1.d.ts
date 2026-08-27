@@ -1091,6 +1091,9 @@ export interface components {
         GenerateDocumentRequest: {
             formats: ("DOCX" | "PDF")[];
         };
+        GenerateSectionRequest: {
+            draft?: string;
+        };
         GeneratedFileResponse: {
             /** Format: int64 */
             byteSize: number;
@@ -2791,7 +2794,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["GenerateSectionRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {

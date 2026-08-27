@@ -26,9 +26,14 @@ describe("unidades de medida", () => {
     }
   })
 
-  it("nenhum grupo está vazio, e nenhum nome se repete", () => {
+  it("nenhum grupo está vazio, e nem sigla nem nome se repetem", () => {
     const nomes = TODAS_AS_UNIDADES.map((u) => u.nome)
     expect(new Set(nomes).size).toBe(nomes.length)
+    // A sigla é o valor gravado e a chave da lista na tela: repetida, o React
+    // reclama de chave duplicada e a segunda unidade some do dropdown — foi o
+    // que aconteceu com "ML", que era mililitro e metro linear.
+    const siglas = TODAS_AS_UNIDADES.map((u) => u.sigla)
+    expect(new Set(siglas).size).toBe(siglas.length)
     for (const grupo of UNIDADES) {
       expect(grupo.unidades.length, grupo.grupo).toBeGreaterThan(0)
     }

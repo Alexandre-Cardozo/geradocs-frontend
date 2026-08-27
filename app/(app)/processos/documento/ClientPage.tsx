@@ -116,11 +116,16 @@ export default function EditorDocumento() {
   const handleGerarIA = () => {
     if (!active) return
     const secaoId = active.id
-    gerar.mutate(secaoId, {
-      onSuccess: (secaoGerada) => {
-        if (secaoAtivaRef.current === secaoId) setRascunho(secaoGerada.conteudo)
+    // O que está na tela vai junto: rascunho montado pela plataforma ou texto
+    // escrito à mão. É dele que o modelo parte.
+    gerar.mutate(
+      { secaoId, rascunho },
+      {
+        onSuccess: (secaoGerada) => {
+          if (secaoAtivaRef.current === secaoId) setRascunho(secaoGerada.conteudo)
+        },
       },
-    })
+    )
   }
 
   if (processo.isPending || secoes.isPending) {
@@ -255,26 +260,18 @@ export default function EditorDocumento() {
         <div className="relative flex-1 overflow-y-auto p-4 lg:p-6">
 
           {active?.painel && active.painel !== "ata" ? (
-            <>
-              <PainelDaSecao
-                secao={active}
-                processoId={processoId}
-                rascunho={rascunho}
-                setRascunho={setRascunho}
-              />
-              {/*
-                A necessidade é texto corrido como qualquer outra seção — o
-                painel dela só acrescenta o rascunho a partir do processo. Tirar
-                dela o atalho da IA seria perdê-lo justamente na seção mais
-                extensa do ETP. Quantidade e valor não entram: ali o texto é
-                derivado dos itens, não redigido.
-              */}
-              {active.painel === "necessidade" && rascunho.trim() === "" && (
-                <div className="mt-4">
-                  <CaminhosDaSecao gerando={gerar.isPending} onGerarComIa={handleGerarIA} />
-                </div>
-              )}
-            </>
+            /*
+              O painel recebe a geração: ele é quem sabe montar o rascunho a
+              partir do processo, e os dois botões ficam lado a lado lá dentro.
+            */
+            <PainelDaSecao
+              secao={active}
+              processoId={processoId}
+              rascunho={rascunho}
+              setRascunho={setRascunho}
+              gerando={gerar.isPending}
+              onGerarComIa={handleGerarIA}
+            />
           ) : active ? (
             <SectionBlock title={active.titulo} hint={active.hint ?? ""}>
               {active.status === "Completo" && rascunho === active.conteudo && active.conteudo !== "" ? (
@@ -302,26 +299,27 @@ export default function EditorDocumento() {
                     rows={6}
                     placeholder="Preencha o conteúdo desta seção..."
                   />
+                  {/*
+                    A IA fica **sempre**: sem modelo configurado o botão vem
+                    desabilitado com o motivo (ADR-029), e com texto na tela ela
+                    parte do que está escrito — sumir depois da primeira linha
+                    tirava justamente o caminho de "redija a partir do que eu
+                    rascunhei".
+                  */}
+                  <CaminhosDaSecao gerando={gerar.isPending} onGerarComIa={handleGerarIA} />
                   {rascunho.trim() === "" ? (
-                    <>
-                      {/*
-                        Sem modelo configurado o botão vem desabilitado com o
-                        motivo, em vez de devolver 503 no clique (ADR-029).
-                      */}
-                      <CaminhosDaSecao gerando={gerar.isPending} onGerarComIa={handleGerarIA} />
-                      {!active.obrigatoria && (
-                        <DispensaDeSecao
-                          secao={active}
-                          pendente={salvar.isPending}
-                          onDispensar={(justificativa) =>
-                            salvar.mutate({ secaoId: active.id, conteudo: "", justificativaDispensa: justificativa })
-                          }
-                          onDesfazer={() =>
-                            salvar.mutate({ secaoId: active.id, conteudo: "", justificativaDispensa: "" })
-                          }
-                        />
-                      )}
-                    </>
+                    !active.obrigatoria && (
+                      <DispensaDeSecao
+                        secao={active}
+                        pendente={salvar.isPending}
+                        onDispensar={(justificativa) =>
+                          salvar.mutate({ secaoId: active.id, conteudo: "", justificativaDispensa: justificativa })
+                        }
+                        onDesfazer={() =>
+                          salvar.mutate({ secaoId: active.id, conteudo: "", justificativaDispensa: "" })
+                        }
+                      />
+                    )
                   ) : (
                     <ValidationMsg type="ok" msg="Texto suficiente para fundamentar a seção." />
                   )}

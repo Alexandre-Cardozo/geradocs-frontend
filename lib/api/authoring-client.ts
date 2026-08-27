@@ -173,10 +173,16 @@ export async function gerarTextoDaSecao(
   processoId: string,
   tipo: TipoDocumento,
   secaoId: string,
+  rascunho?: string,
 ): Promise<string> {
   const gerada = await requisicaoProtegida<{ text: string }>(
     `${rota(processoId, tipo)}/sections/${encodeURIComponent(secaoId)}/generate`,
-    { method: "POST" },
+    {
+      method: "POST",
+      // O que já está escrito vai junto — rascunho da plataforma ou texto do
+      // servidor. Pedir ajuda não pode custar o que já foi feito.
+      body: JSON.stringify({ draft: rascunho?.trim() ? rascunho : null }),
+    },
   );
   return gerada.text;
 }

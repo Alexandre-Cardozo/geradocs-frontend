@@ -13,6 +13,7 @@ import {
   Textarea,
 } from "@/components/ui"
 import { IconCheck, IconCheckCircle, IconFileText } from "@/components/ui/icons"
+import { CaminhosDaSecao } from "@/components/documentos/caminhos-da-secao"
 import { InlineSpinner } from "@/components/shared/estados"
 import { useToast } from "@/components/shared/providers"
 import { Th } from "@/components/shared/tabela"
@@ -37,6 +38,15 @@ interface PainelProps {
   /** Conteúdo em edição da seção — os painéis alimentam a memória de cálculo. */
   rascunho: string
   setRascunho: (v: string) => void
+  /**
+   * A geração por IA da seção.
+   *
+   * <p>Vem de cima porque é o editor que sabe pedir e receber. O rascunho da
+   * plataforma **não substitui** a IA: os dois ficam lado a lado, e o texto já
+   * escrito é o que o modelo recebe como base.
+   */
+  gerando: boolean
+  onGerarComIa: () => void
 }
 
 /** Renderiza o painel da seção, quando ela tiver um. */
@@ -61,7 +71,14 @@ export function PainelDaSecao(props: PainelProps) {
  * apresentá-la como pronta seria a plataforma assinando no lugar de quem
  * responde pelo documento.
  */
-function PainelNecessidade({ secao, processoId, rascunho, setRascunho }: PainelProps) {
+function PainelNecessidade({
+  secao,
+  processoId,
+  rascunho,
+  setRascunho,
+  gerando,
+  onGerarComIa,
+}: PainelProps) {
   const processo = useProcesso(processoId)
   const dfds = useDfdsDoProcesso(processoId)
   const showToast = useToast()
@@ -73,28 +90,13 @@ function PainelNecessidade({ secao, processoId, rascunho, setRascunho }: PainelP
     <SectionBlock title={secao.titulo} hint={secao.hint ?? ""}>
       <div className="flex flex-col gap-3">
         {temBase && (
-          <>
-            <p className="m-0 text-sm text-text-muted">
-              O processo já registra o objeto da demanda e{" "}
-              {registrados.length === 1
-                ? "o DFD de uma secretaria"
-                : `os DFDs de ${registrados.length} secretarias`}
-              . O rascunho parte daí — o problema a resolver continua sendo seu para escrever.
-            </p>
-            <div>
-              <Button
-                size="sm"
-                variant="secondary"
-                icon={<IconFileText size={13} />}
-                onClick={() => {
-                  setRascunho(rascunhoDaNecessidade(processo.data!, registrados))
-                  showToast("Rascunho escrito a partir do processo. Revise antes de salvar.")
-                }}
-              >
-                {rascunho.trim() === "" ? "Escrever o rascunho" : "Refazer o rascunho"}
-              </Button>
-            </div>
-          </>
+          <p className="m-0 text-sm text-text-muted">
+            O processo já registra o objeto da demanda e{" "}
+            {registrados.length === 1
+              ? "o DFD de uma secretaria"
+              : `os DFDs de ${registrados.length} secretarias`}
+            . O rascunho parte daí — o problema a resolver continua sendo seu para escrever.
+          </p>
         )}
 
         <FormField
@@ -109,6 +111,22 @@ function PainelNecessidade({ secao, processoId, rascunho, setRascunho }: PainelP
             placeholder="Descreva o problema a ser resolvido, e não a solução pretendida..."
           />
         </FormField>
+
+        <CaminhosDaSecao
+          gerando={gerando}
+          onGerarComIa={onGerarComIa}
+          rascunhoAutomatico={
+            temBase
+              ? {
+                  rotulo: rascunho.trim() === "" ? "Escrever o rascunho" : "Refazer o rascunho",
+                  onEscrever: () => {
+                    setRascunho(rascunhoDaNecessidade(processo.data!, registrados))
+                    showToast("Rascunho escrito a partir do processo. Revise antes de salvar.")
+                  },
+                }
+              : undefined
+          }
+        />
       </div>
     </SectionBlock>
   )
@@ -162,7 +180,14 @@ export function rascunhoDaNecessidade(processo: Processo, dfds: DfdAnexado[]): s
  * quantidade e secretaria de origem —, e quem assina revisa. Sem itens
  * informados, não há o que rascunhar, e a tela diz onde informá-los.
  */
-function PainelQuantidades({ secao, processoId, rascunho, setRascunho }: PainelProps) {
+function PainelQuantidades({
+  secao,
+  processoId,
+  rascunho,
+  setRascunho,
+  gerando,
+  onGerarComIa,
+}: PainelProps) {
   const consolidacao = useConsolidacaoDaDemanda(processoId)
   const showToast = useToast()
 
@@ -185,19 +210,6 @@ function PainelQuantidades({ secao, processoId, rascunho, setRascunho }: PainelP
       ) : (
         <div className="flex flex-col gap-3">
           <TabelaDeQuantidades itens={itens} />
-          <div>
-            <Button
-              size="sm"
-              variant="secondary"
-              icon={<IconFileText size={13} />}
-              onClick={() => {
-                setRascunho(memoriaDasQuantidades(itens))
-                showToast("Memória de cálculo preenchida a partir dos DFDs. Revise antes de salvar.")
-              }}
-            >
-              {rascunho.trim() === "" ? "Escrever a memória a partir dos DFDs" : "Refazer a partir dos DFDs"}
-            </Button>
-          </div>
         </div>
       )}
 
@@ -214,6 +226,29 @@ function PainelQuantidades({ secao, processoId, rascunho, setRascunho }: PainelP
             placeholder="Ex: Quantidade estimada com base no levantamento realizado junto às 30 unidades escolares da rede municipal. Média de 5 equipamentos por unidade, considerando substituição de equipamentos com mais de 8 anos de uso..."
           />
         </FormField>
+      </div>
+
+      <div className="mt-4">
+        <CaminhosDaSecao
+          gerando={gerando}
+          onGerarComIa={onGerarComIa}
+          rascunhoAutomatico={
+            itens.length > 0
+              ? {
+                  rotulo:
+                    rascunho.trim() === ""
+                      ? "Escrever a memória a partir dos DFDs"
+                      : "Refazer a partir dos DFDs",
+                  onEscrever: () => {
+                    setRascunho(memoriaDasQuantidades(itens))
+                    showToast(
+                      "Memória de cálculo preenchida a partir dos DFDs. Revise antes de salvar.",
+                    )
+                  },
+                }
+              : undefined
+          }
+        />
       </div>
     </SectionBlock>
   )
@@ -296,7 +331,14 @@ export function memoriaDasQuantidades(itens: ItemConsolidado[]): string {
  * <p>Item sem preço informado não vira zero — entra como pendência, porque zero
  * é um preço e "ninguém estimou" é outra coisa.
  */
-function PainelValor({ secao, processoId, rascunho, setRascunho }: PainelProps) {
+function PainelValor({
+  secao,
+  processoId,
+  rascunho,
+  setRascunho,
+  gerando,
+  onGerarComIa,
+}: PainelProps) {
   const dfds = useDfdsDoProcesso(processoId)
   const processo = useProcesso(processoId)
   const showToast = useToast()
@@ -351,22 +393,6 @@ function PainelValor({ secao, processoId, rascunho, setRascunho }: PainelProps) 
             </InfoBanner>
           )}
 
-          <div>
-            <Button
-              size="sm"
-              variant="secondary"
-              icon={<IconFileText size={13} />}
-              disabled={precificados.length === 0}
-              onClick={() => {
-                setRascunho(
-                  memoriaDoValor(precificados, total, declarado, fonteEscolhida?.label ?? outroTexto),
-                )
-                showToast("Memória de cálculo preenchida a partir dos itens. Revise antes de salvar.")
-              }}
-            >
-              {rascunho.trim() === "" ? "Escrever a memória a partir dos itens" : "Refazer a partir dos itens"}
-            </Button>
-          </div>
         </div>
       )}
 
@@ -414,6 +440,36 @@ function PainelValor({ secao, processoId, rascunho, setRascunho }: PainelProps) 
             placeholder="Ex: Valor de referência apurado pela mediana de 5 preços coletados no PNCP entre 01/06 e 15/06, descartado 1 preço excessivamente elevado..."
           />
         </FormField>
+      </div>
+
+      <div className="mt-4">
+        <CaminhosDaSecao
+          gerando={gerando}
+          onGerarComIa={onGerarComIa}
+          rascunhoAutomatico={
+            precificados.length > 0
+              ? {
+                  rotulo:
+                    rascunho.trim() === ""
+                      ? "Escrever a memória a partir dos itens"
+                      : "Refazer a partir dos itens",
+                  onEscrever: () => {
+                    setRascunho(
+                      memoriaDoValor(
+                        precificados,
+                        total,
+                        declarado,
+                        fonteEscolhida?.label ?? outroTexto,
+                      ),
+                    )
+                    showToast(
+                      "Memória de cálculo preenchida a partir dos itens. Revise antes de salvar.",
+                    )
+                  },
+                }
+              : undefined
+          }
+        />
       </div>
     </SectionBlock>
   )

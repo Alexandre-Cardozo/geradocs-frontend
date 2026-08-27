@@ -881,3 +881,15 @@ O que ficou, na ordem em que foi construído:
 **Necessidade (inciso I) ganha rascunho.** A plataforma afirma só o que está registrado — objeto, secretarias requisitantes, itens — e marca entre colchetes o problema, a consequência de não contratar e o alinhamento com o planejamento. Escrever a necessidade por inferência e apresentá-la como pronta seria assinar no lugar de quem responde.
 
 **O que não é pré-preenchido, e é deliberado:** parcelamento, riscos, impactos ambientais e posicionamento conclusivo. São juízo, não dado. A plataforma entrega os números; a conclusão é de quem assina.
+
+## 66. O rascunho não substitui a IA — e a IA parte do rascunho
+
+Três correções que vêm da mesma observação do cliente: *"um botão de rascunho não substitui o botão de gerar com IA"*.
+
+**A chave duplicada.** `ML` era mililitro **e** metro linear na lista de unidades. O React reclamava de chave repetida e a segunda unidade sumia do dropdown. Metro linear virou `M LIN`, e agora há teste cobrando siglas únicas — o teste antigo só cobrava nomes.
+
+**Os dois botões ficam lado a lado.** O rascunho serve a quem não usa o modelo; a IA, a quem usa. Eles ocupam a mesma linha, dentro do cartão da IA, em todas as seções que sabem montar um rascunho: necessidade, quantidades e valor.
+
+**Nenhum dos dois some depois que a seção tem texto.** O card da IA aparecia só com a seção vazia — o que tirava justamente o caminho de "redija a partir do que eu rascunhei". Agora fica sempre; com modelo ausente, desabilitado com o motivo escrito (ADR-029).
+
+**O que já está escrito vai no pedido de redação.** `POST .../sections/{code}/generate` passou a aceitar `draft`, e a tela manda o conteúdo da seção — rascunho da plataforma ou texto do servidor. É a regra que o cliente pediu para valer em todas as seções: o modelo parte do que existe em vez de descartá-lo. O provedor de template, que não redige, devolve o rascunho junto do aviso — perder o texto de quem pediu ajuda seria o pior resultado possível.

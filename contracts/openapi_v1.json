@@ -727,6 +727,16 @@
         "required" : [ "formats" ],
         "type" : "object"
       },
+      "GenerateSectionRequest" : {
+        "properties" : {
+          "draft" : {
+            "maxLength" : 20000,
+            "minLength" : 0,
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
       "GeneratedFileResponse" : {
         "properties" : {
           "byteSize" : {
@@ -3543,6 +3553,15 @@
             "type" : "string"
           }
         } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/GenerateSectionRequest"
+              }
+            }
+          }
+        },
         "responses" : {
           "200" : {
             "content" : {

@@ -137,6 +137,32 @@ describe("gerar texto da seção", () => {
     expect(texto).toBe("Texto proposto pelo servidor.")
     expect(gravou).toBe(false)
   })
+
+  it("o que já está escrito vai junto — e branco não vira rascunho", async () => {
+    let corpo: Record<string, unknown> | undefined
+    servidor.use(
+      http.post(
+        `${urlDaApi}/procurement-processes/:id/documents/:tipo/sections/:secao/generate`,
+        async ({ request }) => {
+          corpo = (await request.json()) as Record<string, unknown>
+          return HttpResponse.json({ text: "Texto proposto." })
+        },
+      ),
+    )
+    const { gerarTextoDaSecao } = await carregarClienteLimpo()
+
+    // Pedir ajuda não pode custar o que já foi feito: rascunho da plataforma ou
+    // texto do servidor, o modelo parte dele.
+    await gerarTextoDaSecao(PROCESSO, "ETP", "1", "A rede tem 30 escolas.")
+    expect(corpo?.draft).toBe("A rede tem 30 escolas.")
+
+    // Espaços não são rascunho: mandá-los seria dizer ao modelo que há algo.
+    await gerarTextoDaSecao(PROCESSO, "ETP", "1", "   ")
+    expect(corpo?.draft).toBeNull()
+
+    await gerarTextoDaSecao(PROCESSO, "ETP", "1")
+    expect(corpo?.draft).toBeNull()
+  })
 })
 
 describe("concluir documento", () => {
