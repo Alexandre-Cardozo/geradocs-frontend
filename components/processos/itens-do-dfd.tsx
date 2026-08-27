@@ -5,70 +5,137 @@ import { useRef, useState } from "react"
 import { Button, Dropdown, FormField, Input, QuantityInput } from "@/components/ui"
 import { IconPlus, IconTrash, IconUpload } from "@/components/ui/icons"
 import { useToast } from "@/components/shared/providers"
-import { useAnexarDfdComItens, useConfigTenant } from "@/lib/api/hooks"
+import {
+  useAnexarDfdComItens,
+  useAtualizarItensDoDfd,
+  useConfigTenant,
+  useDfdsDoProcesso,
+} from "@/lib/api/hooks"
 import type { ItemDoDfd } from "@/lib/api/procurement-client"
 
+/** Vale para o DFD que ainda não existe: o formulário registra um novo. */
+const NOVO = "novo"
+
 /**
- * Informar os itens que a secretaria pediu no DFD.
+ * Informar os itens de um DFD — o novo ou um que já está no processo.
  *
  * <p>Itens não saem do PDF assinado: ler item de PDF é OCR, e a plataforma não
- * faz — nem deveria adivinhar quantidade em documento que vira edital. Eles são
- * informados aqui, e é deles que saem a consolidação, o painel de quantidades
- * do ETP e a Cotação.
+ * faz — nem deveria adivinhar quantidade em documento que vira edital.
  *
- * <p>Um DFD por secretaria, e não um formulário só: a consolidação existe
- * justamente para somar o que três secretarias pediram separado, e é a
- * secretaria de origem que se pergunta quando os pedidos divergem.
- *
- * <p><b>O arquivo aqui é o DFD *desta* secretaria.</b> O DFD escolhido na
- * abertura já sobe com o processo (ADR-035) e não precisa ser reenviado; este
- * campo existe para a demanda que vem de mais de uma secretaria, em que cada
- * uma tem o seu documento assinado (ADR-028). Parecia campo repetido porque as
- * duas telas diziam "DFD" para coisas diferentes; agora o rótulo diz qual é qual.
- *
- * <p>Continua opcional: há processo em que o servidor sabe o número do DFD e
- * ainda não tem o PDF em mãos, e exigi-lo transformaria um facilitador em
- * bloqueio.
+ * <p><b>Todo item pertence a um DFD</b>, e o DFD é escolhido aqui em cima. Antes
+ * o formulário só sabia criar: corrigir uma quantidade registrava outro DFD com
+ * o mesmo nome, e o processo acumulava linhas iguais que ninguém conseguia
+ * distinguir (ADR-036). Escolhendo um DFD já registrado, o que se faz é trocar
+ * os itens dele; escolhendo "novo", registra-se o DFD de outra secretaria — que
+ * é como nasce a contratação compartilhada.
  */
 export function ItensDoDfd({
   processoId,
-  nomeDoArquivo,
+  dfdSelecionado,
   onPronto,
   onFechar,
 }: {
   processoId: string
-  /** O DFD já registrado no processo; o item herda o nome dele. */
-  nomeDoArquivo: string
+  /** O DFD que a linha do cadastro mandou editar; ausente abre em "novo DFD". */
+  dfdSelecionado?: string | null
   onPronto: () => void
   /** Ausente quando não há o que fechar — sem itens, o formulário é o passo. */
   onFechar?: () => void
 }) {
   const tenant = useConfigTenant()
-  const anexar = useAnexarDfdComItens(processoId)
+  const dfds = useDfdsDoProcesso(processoId)
+  const registrar = useAnexarDfdComItens(processoId)
+  const trocarItens = useAtualizarItensDoDfd(processoId)
   const showToast = useToast()
 
+  const [alvo, setAlvo] = useState(dfdSelecionado ?? NOVO)
   const [secretaria, setSecretaria] = useState("")
+  const [identificacao, setIdentificacao] = useState("")
   const [arquivo, setArquivo] = useState<File | null>(null)
   const campoDeArquivo = useRef<HTMLInputElement>(null)
-  const [itens, setItens] = useState<ItemDoDfd[]>([
-    { descricao: "", unidade: "", quantidade: "" },
-  ])
+  const [itens, setItens] = useState<ItemDoDfd[]>([{ descricao: "", unidade: "", quantidade: "" }])
 
   const secretarias = tenant.data?.secretarias ?? []
+  const registrados = dfds.data ?? []
+  const emEdicao = registrados.find((dfd) => dfd.id === alvo) ?? null
+
+  // Trocar o DFD alvo carrega os itens dele: editar é partir do que está lá, e
+  // não de um formulário em branco que apagaria o resto ao salvar.
+  const [carregado, setCarregado] = useState<string | null>(null)
+  if (emEdicao && carregado !== emEdicao.id) {
+    setCarregado(emEdicao.id)
+    setItens(
+      emEdicao.itens.length > 0 ? emEdicao.itens : [{ descricao: "", unidade: "", quantidade: "" }],
+    )
+  }
+
   const preenchidos = itens.filter(
     (item) => item.descricao.trim() !== "" && item.unidade.trim() !== "" && item.quantidade !== "",
   )
-  const impedimento =
-    secretaria === ""
-      ? "Escolha a secretaria que pediu estes itens."
-      : preenchidos.length === 0
-        ? "Informe ao menos um item com descrição, unidade e quantidade."
+  const registrandoNovo = alvo === NOVO
+  const impedimento = registrandoNovo
+    ? secretaria === ""
+      ? "Escolha a secretaria que formalizou este DFD."
+      : identificacao.trim() === ""
+        ? "Informe o número ou o nome do DFD."
         : null
+    : preenchidos.length === 0
+      ? "Informe ao menos um item com descrição, unidade e quantidade."
+      : null
 
   const alterar = (indice: number, campo: keyof ItemDoDfd, valor: string) =>
     setItens((atuais) =>
       atuais.map((item, i) => (i === indice ? { ...item, [campo]: valor } : item)),
     )
+
+  const limpar = () => {
+    setItens([{ descricao: "", unidade: "", quantidade: "" }])
+    setSecretaria("")
+    setIdentificacao("")
+    setArquivo(null)
+    if (campoDeArquivo.current) campoDeArquivo.current.value = ""
+  }
+
+  const aviso = (erro: unknown) =>
+    showToast(erro instanceof Error ? erro.message : "Não foi possível salvar.")
+
+  const salvar = () => {
+    if (registrandoNovo) {
+      registrar.mutate(
+        {
+          secretariaId: secretaria,
+          nomeDoArquivo: identificacao.trim(),
+          itens: preenchidos,
+          arquivo,
+        },
+        {
+          onSuccess: () => {
+            showToast(
+              preenchidos.length === 0
+                ? `${identificacao.trim()} registrado. Informe os itens quando eles chegarem.`
+                : `${identificacao.trim()} registrado com ${preenchidos.length} item(ns).`,
+            )
+            limpar()
+            onPronto()
+          },
+          onError: aviso,
+        },
+      )
+      return
+    }
+    trocarItens.mutate(
+      { dfdId: alvo, itens: preenchidos },
+      {
+        onSuccess: () => {
+          showToast(`${preenchidos.length} item(ns) salvo(s) em ${emEdicao?.nomeDoArquivo ?? ""}.`)
+          onPronto()
+        },
+        onError: aviso,
+      },
+    )
+  }
+
+  const salvando = registrar.isPending || trocarItens.isPending
 
   return (
     /* Sem moldura própria: é uma seção do cartão da demanda, não outro cartão. */
@@ -76,11 +143,11 @@ export function ItensDoDfd({
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="m-0 font-display text-base font-bold text-text-1">
-            Informar itens do DFD
+            {registrandoNovo ? "Registrar DFD" : `Itens de ${emEdicao?.nomeDoArquivo ?? "um DFD"}`}
           </h3>
           <p className="m-0 mt-1 text-sm text-text-3">
-            A quantidade que cada secretaria pediu. É daqui que saem a consolidação, o painel de
-            quantidades do ETP e a Cotação.
+            A quantidade que cada secretaria pediu, no DFD em que ela pediu. É daqui que saem a
+            consolidação, o painel de quantidades do ETP e a Cotação.
           </p>
         </div>
         {onFechar && (
@@ -96,46 +163,99 @@ export function ItensDoDfd({
 
       <div className="mb-4 flex flex-wrap items-end gap-4">
         <div className="min-w-0 flex-1 basis-64">
-        <FormField label="Secretaria que pediu" required>
-          <Dropdown
-            value={secretaria}
-            onChange={setSecretaria}
-            ariaLabel="Secretaria que pediu"
-            options={[
-              { value: "", label: "Selecione a secretaria..." },
-              ...secretarias.map((s) => ({ value: s.id, label: s.nome })),
-            ]}
-          />
-        </FormField>
-        </div>
-        <div className="min-w-0 flex-1 basis-64">
           <FormField
-            label="Arquivo assinado desta secretaria"
-            hint="Opcional, PDF ou DOCX. O DFD enviado na abertura do processo já fica guardado; este é o DFD desta secretaria, quando a demanda vem de mais de uma."
+            label="DFD destes itens"
+            required
+            hint="Todo item pertence ao DFD em que a secretaria o pediu."
           >
-            <div className="flex items-center gap-2.5">
-              <input
-                ref={campoDeArquivo}
-                type="file"
-                accept="application/pdf,.pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                aria-label="Arquivo do DFD"
-                onChange={(e) => setArquivo(e.target.files?.[0] ?? null)}
-                className="sr-only"
-              />
-              <Button
-                size="sm"
-                variant="secondary"
-                icon={<IconUpload size={14} />}
-                onClick={() => campoDeArquivo.current?.click()}
-              >
-                Escolher arquivo
-              </Button>
-              <span className="min-w-0 flex-1 truncate text-xs text-text-3">
-                {arquivo ? arquivo.name : "Pode ser anexado depois."}
-              </span>
-            </div>
+            <Dropdown
+              value={alvo}
+              onChange={setAlvo}
+              ariaLabel="DFD destes itens"
+              options={[
+                ...registrados.map((dfd) => ({
+                  value: dfd.id,
+                  label: `${dfd.nomeDoArquivo} · ${dfd.secretaria}`,
+                })),
+                { value: NOVO, label: "Registrar um novo DFD..." },
+              ]}
+            />
           </FormField>
         </div>
+
+        {registrandoNovo ? (
+          <>
+            <div className="min-w-0 flex-1 basis-64">
+              <FormField label="Secretaria que pediu" required>
+                <Dropdown
+                  value={secretaria}
+                  onChange={setSecretaria}
+                  ariaLabel="Secretaria que pediu"
+                  options={[
+                    { value: "", label: "Selecione a secretaria..." },
+                    ...secretarias.map((s) => ({ value: s.id, label: s.nome })),
+                  ]}
+                />
+              </FormField>
+            </div>
+            <div className="min-w-0 flex-1 basis-64">
+              <FormField
+                label="Identificação do DFD"
+                required
+                hint="Como o processo se refere a ele: nº, ofício ou o nome do arquivo."
+              >
+                <Input
+                  value={identificacao}
+                  onChange={(e) => setIdentificacao(e.target.value)}
+                  ariaLabel="Identificação do DFD"
+                  placeholder="Ex: DFD 003/2026 — Educação"
+                />
+              </FormField>
+            </div>
+            <div className="min-w-0 flex-1 basis-64">
+              <FormField
+                label="Arquivo assinado"
+                hint="Opcional — pode ser anexado depois, na própria linha do DFD."
+              >
+                <div className="flex items-center gap-2.5">
+                  <input
+                    ref={campoDeArquivo}
+                    type="file"
+                    accept="application/pdf,.pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    aria-label="Arquivo do DFD"
+                    onChange={(e) => {
+                      const escolhido = e.target.files?.[0] ?? null
+                      setArquivo(escolhido)
+                      // O nome do arquivo serve de identificação enquanto não
+                      // houver outra: é melhor que deixar o campo obrigatório
+                      // em branco com o documento já em mãos.
+                      if (escolhido && identificacao.trim() === "") {
+                        setIdentificacao(escolhido.name)
+                      }
+                    }}
+                    className="sr-only"
+                  />
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    icon={<IconUpload size={14} />}
+                    onClick={() => campoDeArquivo.current?.click()}
+                  >
+                    Escolher arquivo
+                  </Button>
+                  <span className="min-w-0 flex-1 truncate text-xs text-text-3">
+                    {arquivo ? arquivo.name : "Pode ser anexado depois."}
+                  </span>
+                </div>
+              </FormField>
+            </div>
+          </>
+        ) : (
+          <p className="m-0 basis-64 text-sm text-text-3">
+            Pedido por <strong className="text-text-1">{emEdicao?.secretaria}</strong>. Salvar troca
+            os itens deste DFD — nenhum outro é criado.
+          </p>
+        )}
       </div>
 
       <div className="flex flex-col gap-3">
@@ -190,38 +310,25 @@ export function ItensDoDfd({
         >
           Acrescentar item
         </Button>
-        <p id={`motivo-itens-${processoId}`} className={impedimento ? "m-0 text-xs text-text-muted" : "sr-only"}>
+        <p
+          id={`motivo-itens-${processoId}`}
+          className={impedimento ? "m-0 text-xs text-text-muted" : "sr-only"}
+        >
           {impedimento ?? "Tudo certo para salvar."}
         </p>
         <Button
           size="sm"
-          disabled={impedimento !== null || anexar.isPending}
+          disabled={impedimento !== null || salvando}
           ariaDescribedBy={`motivo-itens-${processoId}`}
-          onClick={() =>
-            anexar.mutate(
-              { secretariaId: secretaria, nomeDoArquivo: arquivo?.name ?? nomeDoArquivo, itens: preenchidos, arquivo },
-              {
-                onSuccess: () => {
-                  showToast(
-                    arquivo
-                      ? `${preenchidos.length} item(ns) e o arquivo anexados.`
-                      : `${preenchidos.length} item(ns) informado(s).`,
-                  )
-                  setItens([{ descricao: "", unidade: "", quantidade: "" }])
-                  setSecretaria("")
-                  setArquivo(null)
-                  if (campoDeArquivo.current) campoDeArquivo.current.value = ""
-                  onPronto()
-                },
-                onError: (erro) =>
-                  showToast(
-                    erro instanceof Error ? erro.message : "Não foi possível salvar os itens.",
-                  ),
-              },
-            )
-          }
+          onClick={salvar}
         >
-          {anexar.isPending ? "Salvando..." : "Salvar itens"}
+          {salvando
+            ? "Salvando..."
+            : registrandoNovo
+              ? preenchidos.length === 0
+                ? "Registrar DFD"
+                : "Registrar DFD e itens"
+              : "Salvar itens"}
         </Button>
       </div>
     </div>

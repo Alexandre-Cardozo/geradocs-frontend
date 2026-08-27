@@ -779,3 +779,17 @@ A criação virou **multipart** (ADR-035), como já era o import do PCA: o JSON 
 **"DFDs anexados" continua existindo, mas só a partir do segundo anexo.** Com um anexo só, a lista repetia, uma linha abaixo, exatamente o que o cabeçalho já dizia — e era esse o incômodo. Do segundo em diante ela responde algo que o cabeçalho não responde: *de qual secretaria veio cada um* e *qual versão embasou o ETP daquela data*. Apagá-la de vez custaria a consolidação de demanda vinda de várias secretarias (ADR-028), que é a razão de o formulário de itens existir.
 
 O campo de arquivo do formulário de itens deixou de ser "o único lugar onde o arquivo fica guardado" — agora é o DFD **daquela** secretaria, para a demanda que vem de mais de uma. A dica e o teste foram corrigidos junto: a afirmação de §56 valia até esta mudança.
+
+## 58. Os DFDs anexados viram um cadastro, e cada item sabe de qual DFD veio
+
+O processo do cliente chegou com **seis DFDs**, cinco com exatamente o mesmo nome e nenhum arquivo guardado. Não foi uso errado: era o que a tela permitia. Informar itens só sabia *criar* um DFD, e a identificação vinha preenchida com o nome do arquivo do processo — então cada correção de quantidade e cada secretaria nova produziam mais uma linha idêntica, que não podia ser aberta, corrigida nem removida.
+
+**Sim, mais de um DFD por processo faz sentido** — é a demanda consolidada. Três secretarias pedem o mesmo material, cada uma formaliza o seu DFD com os seus itens, e o órgão compra uma vez. O que não fazia sentido era tratá-los como uma pilha de anexos.
+
+**O bloco virou cadastro.** Cada linha traz a secretaria que pediu, quantos itens trouxe e se tem arquivo; abrindo, mostra os itens daquele DFD e as ações sobre ele — informar/editar itens, anexar ou substituir o arquivo, baixar, remover. É o mesmo formato do cadastro de secretarias (§48), e aparece já a partir do primeiro DFD: o cabeçalho do processo mostra o nome e o download, mas não tem por onde corrigir nem remover nada.
+
+**Todo item pertence a um DFD, e o formulário passou a dizer a qual.** O primeiro campo é o DFD destes itens: um dos já registrados, ou "registrar um novo". Escolhendo um existente, os itens dele entram no formulário e salvar **troca** os itens daquele DFD — nenhum outro é criado. Escolhendo novo, pede secretaria, identificação e o arquivo (opcional).
+
+**A identificação deixou de ser adivinhada.** O campo pergunta como o processo se refere ao DFD — nº, ofício ou o nome do arquivo — e só se preenche sozinho com o nome do arquivo escolhido, quando há um. Era o preenchimento automático com o nome do DFD do processo que fabricava as linhas iguais.
+
+**O DFD pode chegar depois.** Registrar o documento é um ato; informar o que ele pede é outro; e o PDF assinado é um terceiro, que às vezes só aparece no fim do processo. Os três são independentes agora — "Sem arquivo anexado" tem botão, e "Sem itens" também. No servidor, isso é ADR-036.

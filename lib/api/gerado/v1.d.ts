@@ -468,6 +468,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/procurement-processes/{id}/dfds/{dfdId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["removeDfd"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/procurement-processes/{id}/dfds/{dfdId}/file": {
         parameters: {
             query?: never;
@@ -476,7 +492,23 @@ export interface paths {
             cookie?: never;
         };
         get: operations["dfdFile"];
-        put?: never;
+        put: operations["attachDfdFile"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/procurement-processes/{id}/dfds/{dfdId}/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updateDfdItems"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1331,6 +1363,9 @@ export interface components {
         UpdateDepartmentRequest: {
             acronym?: string;
             name: string;
+        };
+        UpdateDfdItemsRequest: {
+            items: components["schemas"]["DemandItemRequest"][];
         };
         UpdateLetterheadRequest: {
             footerText?: string;
@@ -2368,6 +2403,27 @@ export interface operations {
             };
         };
     };
+    removeDfd: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                dfdId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     dfdFile: {
         parameters: {
             query?: never;
@@ -2387,6 +2443,63 @@ export interface operations {
                 };
                 content: {
                     "*/*": string;
+                };
+            };
+        };
+    };
+    attachDfdFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                dfdId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ProcessDfdResponse"];
+                };
+            };
+        };
+    };
+    updateDfdItems: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                dfdId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateDfdItemsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ProcessDfdResponse"];
                 };
             };
         };

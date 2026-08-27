@@ -125,7 +125,6 @@
             "items" : {
               "$ref" : "#/components/schemas/DemandItemRequest"
             },
-            "minItems" : 1,
             "type" : "array"
           }
         },
@@ -1452,6 +1451,18 @@
           }
         },
         "required" : [ "name" ],
+        "type" : "object"
+      },
+      "UpdateDfdItemsRequest" : {
+        "properties" : {
+          "items" : {
+            "items" : {
+              "$ref" : "#/components/schemas/DemandItemRequest"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "items" ],
         "type" : "object"
       },
       "UpdateLetterheadRequest" : {
@@ -2902,6 +2913,34 @@
         "tags" : [ "procurement-process-controller" ]
       }
     },
+    "/api/v1/procurement-processes/{id}/dfds/{dfdId}" : {
+      "delete" : {
+        "operationId" : "removeDfd",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "dfdId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "procurement-process-controller" ]
+      }
+    },
     "/api/v1/procurement-processes/{id}/dfds/{dfdId}/file" : {
       "get" : {
         "operationId" : "dfdFile",
@@ -2929,6 +2968,100 @@
                 "schema" : {
                   "format" : "byte",
                   "type" : "string"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "procurement-process-controller" ]
+      },
+      "put" : {
+        "operationId" : "attachDfdFile",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "dfdId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "multipart/form-data" : {
+              "schema" : {
+                "properties" : {
+                  "file" : {
+                    "format" : "binary",
+                    "type" : "string"
+                  }
+                },
+                "required" : [ "file" ],
+                "type" : "object"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProcessDfdResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "procurement-process-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{id}/dfds/{dfdId}/items" : {
+      "put" : {
+        "operationId" : "updateDfdItems",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "dfdId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UpdateDfdItemsRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProcessDfdResponse"
                 }
               }
             },

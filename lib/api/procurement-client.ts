@@ -2,7 +2,7 @@ import "client-only";
 
 import { baixarProtegido, requisicaoProtegida } from "@/lib/api/auth-client";
 import { ordenar } from "@/lib/documentos";
-import { parseValorBR } from "@/lib/format";
+import { formatNumeroBR, parseValorBR } from "@/lib/format";
 import type {
   Modalidade,
   NovoProcessoInput,
@@ -481,21 +481,37 @@ export async function anexarDfdComItens(
   );
 }
 
-/** Um DFD anexado ao processo, como a tela o mostra. */
+/** Um DFD do processo, como a tela o mostra. */
 export interface DfdAnexado {
   id: string;
   nomeDoArquivo: string;
   secretaria: string;
+  /** A secretaria de origem pelo id: é por ela que o formulário abre no DFD certo. */
+  secretariaId: string;
   anexadoEm: string;
-  /** Nulo quando o DFD foi registrado só pelo nome: não há download a oferecer. */
+  /**
+   * O que esta secretaria pediu neste DFD.
+   *
+   * <p>A listagem descartava os itens, e a tela não tinha como dizer o que cada
+   * DFD contribuiu para a consolidação — nem por onde corrigi-lo.
+   */
+  itens: ItemDoDfd[];
+  /** Nulo quando o DFD foi registrado só pelo número: não há download a oferecer. */
   arquivo: { tipo: string; bytes: number; resumo: string } | null;
 }
 
 interface DfdDaApi {
   id: string;
   fileName: string;
+  departmentId: string;
   departmentName: string;
   submittedAt: string;
+  items: Array<{
+    description: string;
+    unit: string;
+    quantity: number;
+    specification?: string | null;
+  }>;
   file?: { mediaType: string; byteSize: number; sha256: string } | null;
 }
 
@@ -514,11 +530,74 @@ export async function listarDfds(processoId: string): Promise<DfdAnexado[]> {
     id: dfd.id,
     nomeDoArquivo: dfd.fileName,
     secretaria: dfd.departmentName,
+    secretariaId: dfd.departmentId,
     anexadoEm: dfd.submittedAt,
+    itens: dfd.items.map((item) => ({
+      descricao: item.description,
+      unidade: item.unit,
+      // De volta ao formato do formulário: é lá que ele vai ser editado.
+      quantidade: formatNumeroBR(item.quantity),
+      especificacao: item.specification ?? undefined,
+    })),
     arquivo: dfd.file
       ? { tipo: dfd.file.mediaType, bytes: dfd.file.byteSize, resumo: dfd.file.sha256 }
       : null,
   }));
+}
+
+/**
+ * Troca os itens de um DFD já registrado.
+ *
+ * <p>O item pertence ao DFD — é o documento que a secretaria assinou —, e
+ * corrigir uma quantidade não pode custar um DFD novo na listagem.
+ */
+export async function atualizarItensDoDfd(
+  processoId: string,
+  dfdId: string,
+  itens: ItemDoDfd[],
+): Promise<void> {
+  await requisicaoProtegida<unknown>(
+    `/procurement-processes/${encodeURIComponent(processoId)}/dfds/${encodeURIComponent(dfdId)}/items`,
+    {
+      method: "PUT",
+      body: JSON.stringify({
+        items: itens.map((item) => ({
+          description: item.descricao.trim(),
+          unit: item.unidade.trim(),
+          quantity: parseValorBR(item.quantidade),
+          specification: item.especificacao?.trim() || null,
+        })),
+      }),
+    },
+  );
+}
+
+/**
+ * Guarda o arquivo de um DFD já registrado, no lugar do que houvesse.
+ *
+ * <p>O DFD nem sempre chega no começo do processo: o número é registrado, os
+ * itens são informados e o PDF assinado aparece depois — às vezes só no fim
+ * (ADR-036). A substituição fica na trilha com o nome do arquivo trocado.
+ */
+export async function anexarArquivoAoDfd(
+  processoId: string,
+  dfdId: string,
+  arquivo: File,
+): Promise<void> {
+  const corpo = new FormData();
+  corpo.append("file", arquivo);
+  await requisicaoProtegida<unknown>(
+    `/procurement-processes/${encodeURIComponent(processoId)}/dfds/${encodeURIComponent(dfdId)}/file`,
+    { method: "PUT", body: corpo },
+  );
+}
+
+/** Tira um DFD do processo, com os itens e o arquivo dele. */
+export async function removerDfd(processoId: string, dfdId: string): Promise<void> {
+  await requisicaoProtegida<unknown>(
+    `/procurement-processes/${encodeURIComponent(processoId)}/dfds/${encodeURIComponent(dfdId)}`,
+    { method: "DELETE" },
+  );
 }
 
 /** Os bytes de um DFD anexado, autenticados. */

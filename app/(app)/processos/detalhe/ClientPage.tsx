@@ -30,7 +30,7 @@ import {
 } from "@/lib/api/hooks"
 import { BaixarDfd } from "@/components/processos/baixar-dfd"
 import { ConsolidacaoDaDemanda } from "@/components/processos/consolidacao-da-demanda"
-import { DfdsAnexados } from "@/components/processos/dfds-anexados"
+import { DfdsDoProcesso } from "@/components/processos/dfds-do-processo"
 import { ItensDoDfd } from "@/components/processos/itens-do-dfd"
 import { TrilhaDoProcesso } from "@/components/processos/trilha-do-processo"
 import { PainelRetificacao } from "@/components/processos/painel-retificacao"
@@ -79,6 +79,9 @@ export default function HubProcesso() {
   // alerta de impacto está na tela.
   const [novaModalidade, setNovaModalidade] = useState<Modalidade | null>(null)
   const [informandoItens, setInformandoItens] = useState(false)
+  // O DFD que o formulário está editando; nulo quando ele abre para registrar
+  // um novo. Todo item pertence a um DFD, e é aqui que se diz a qual (ADR-036).
+  const [dfdEmEdicao, setDfdEmEdicao] = useState<string | null>(null)
   // Mesma consulta do bloco de consolidação — vem do cache, sem requisição nova.
   const consolidacao = useConsolidacaoDaDemanda(processoId)
   // Mesma consulta da lista de anexos — vem do cache, sem requisição nova.
@@ -448,45 +451,62 @@ export default function HubProcesso() {
         <div className="flex flex-col gap-5 rounded-card border border-border bg-surface p-5">
           <ConsolidacaoDaDemanda processoId={processoId} dfdAnexado={proc.dfdArquivo} />
           {/*
-            Os anexos em si, com data e download. Anexar de novo versiona em vez
-            de substituir (ADR-028): é esta lista que responde qual DFD embasou
-            os documentos gerados até aqui.
+            O cadastro de DFDs: um por secretaria que pediu, cada um com os itens
+            dele. Abrir a linha mostra o que aquele DFD trouxe para a
+            consolidação, e é de lá que se corrige, se anexa o arquivo — que
+            chega no tempo dele — ou se remove o DFD registrado por engano.
           */}
-          <DfdsAnexados processoId={processoId} />
+          <DfdsDoProcesso
+            processoId={processoId}
+            onEditarItens={(dfdId) => {
+              setDfdEmEdicao(dfdId)
+              setInformandoItens(true)
+            }}
+          />
           {/*
             O formulário fica recolhido: informar item é ato pontual — uma vez
-            por secretaria —, e aberto o tempo todo empurrava os documentos do
-            processo para fora da tela. Abre sozinho enquanto não há nada
-            consolidado, que é quando ele é o próximo passo.
-
-            Só quando há DFD registrado: informar item de um DFD que não existe
-            seria inventar a origem do pedido.
+            por DFD —, e aberto o tempo todo empurrava os documentos do processo
+            para fora da tela. Abre sozinho enquanto não há nada consolidado, que
+            é quando ele é o próximo passo.
           */}
-          {proc.dfdArquivo &&
-            (formularioAberto ? (
-              <ItensDoDfd
-                processoId={processoId}
-                nomeDoArquivo={proc.dfdArquivo}
-                // Sem nada consolidado o formulário é o próximo passo, e fechá-lo
-                // deixaria a tela sem saída: aí não há o que fechar.
-                onFechar={semItensConsolidados ? undefined : () => setInformandoItens(false)}
-                onPronto={() => {
-                  showToast("Consolidação atualizada.")
-                  setInformandoItens(false)
+          {formularioAberto ? (
+            <ItensDoDfd
+              // Trocar o DFD alvo remonta o formulário: é outro documento sendo
+              // editado, e reaproveitar o estado do anterior salvaria os itens
+              // de um DFD dentro do outro.
+              key={dfdEmEdicao ?? "novo"}
+              processoId={processoId}
+              dfdSelecionado={dfdEmEdicao}
+              // Sem nada consolidado o formulário é o próximo passo, e fechá-lo
+              // deixaria a tela sem saída: aí não há o que fechar.
+              onFechar={
+                semItensConsolidados
+                  ? undefined
+                  : () => {
+                      setInformandoItens(false)
+                      setDfdEmEdicao(null)
+                    }
+              }
+              onPronto={() => {
+                setInformandoItens(false)
+                setDfdEmEdicao(null)
+              }}
+            />
+          ) : (
+            <div className="border-t border-border-soft pt-4">
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={<IconPlus size={13} strokeWidth={2.5} />}
+                onClick={() => {
+                  setDfdEmEdicao(null)
+                  setInformandoItens(true)
                 }}
-              />
-            ) : (
-              <div className="border-t border-border-soft pt-4">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  icon={<IconPlus size={13} strokeWidth={2.5} />}
-                  onClick={() => setInformandoItens(true)}
-                >
-                  Informar itens de uma secretaria
-                </Button>
-              </div>
-            ))}
+              >
+                Registrar DFD ou informar itens
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 

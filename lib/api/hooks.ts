@@ -1,6 +1,12 @@
 "use client"
 
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import {
+  keepPreviousData,
+  type QueryClient,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query"
 import { useEffect, useMemo, useState } from "react"
 
 import {
@@ -18,7 +24,14 @@ import {
   removerFotoDePerfil,
 } from "@/lib/api/avatar-client"
 import { iaDisponivel } from "@/lib/api/ai-client"
-import { anexarDfdComItens, listarDfds, type ItemDoDfd } from "@/lib/api/procurement-client"
+import {
+  anexarArquivoAoDfd,
+  anexarDfdComItens,
+  atualizarItensDoDfd,
+  listarDfds,
+  removerDfd,
+  type ItemDoDfd,
+} from "@/lib/api/procurement-client"
 import * as api from "@/lib/api/client"
 import type { ListaProcessosParams } from "@/lib/api/client"
 import type { TipoDocumento, Tenant } from "@/lib/types"
@@ -726,11 +739,54 @@ export function useAnexarDfdComItens(processoId: string) {
         input.itens,
         input.arquivo,
       ),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["consolidacao-demanda", processoId] })
-      void queryClient.invalidateQueries({ queryKey: chaves.dfds(processoId) })
-      void queryClient.invalidateQueries({ queryKey: chaves.processo(processoId) })
-    },
+    onSuccess: () => recarregarDemanda(queryClient, processoId),
+  })
+}
+
+/**
+ * O que muda quando o cadastro de DFDs muda.
+ *
+ * <p>A consolidação sai dos itens dos DFDs, e é dela que saem o painel de
+ * quantidades do ETP e a Cotação: mantê-la velha faria a tela mostrar um total
+ * que já mudou.
+ */
+function recarregarDemanda(queryClient: QueryClient, processoId: string) {
+  void queryClient.invalidateQueries({ queryKey: ["consolidacao-demanda", processoId] })
+  void queryClient.invalidateQueries({ queryKey: chaves.dfds(processoId) })
+  void queryClient.invalidateQueries({ queryKey: chaves.processo(processoId) })
+}
+
+/**
+ * Troca os itens de um DFD já registrado.
+ *
+ * <p>O item pertence ao DFD, e corrigir uma quantidade não pode custar um DFD
+ * novo na listagem — foi assim que o cadastro virou uma pilha de linhas iguais.
+ */
+export function useAtualizarItensDoDfd(processoId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { dfdId: string; itens: ItemDoDfd[] }) =>
+      atualizarItensDoDfd(processoId, input.dfdId, input.itens),
+    onSuccess: () => recarregarDemanda(queryClient, processoId),
+  })
+}
+
+/** Guarda o arquivo de um DFD já registrado — ele chega no tempo dele (ADR-036). */
+export function useAnexarArquivoAoDfd(processoId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { dfdId: string; arquivo: File }) =>
+      anexarArquivoAoDfd(processoId, input.dfdId, input.arquivo),
+    onSuccess: () => recarregarDemanda(queryClient, processoId),
+  })
+}
+
+/** Tira um DFD do processo, com os itens e o arquivo dele. */
+export function useRemoverDfd(processoId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (dfdId: string) => removerDfd(processoId, dfdId),
+    onSuccess: () => recarregarDemanda(queryClient, processoId),
   })
 }
 
