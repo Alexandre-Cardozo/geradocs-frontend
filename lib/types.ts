@@ -71,8 +71,16 @@ export interface ConfigATA {
 }
 
 export interface Processo {
-  /** Formato PROC-AAAA-NNN. */
+  /** UUID do processo no servidor. Não aparece em tela: ninguém o digita. */
   id: string
+  /**
+   * O número do processo administrativo — `PROC-2026-000007`.
+   *
+   * <p>Sequencial por entidade e por exercício, gerado pelo servidor na
+   * criação. É por ele que o servidor se refere ao processo em ofício, despacho
+   * e e-mail, e é ele que aparece nas telas.
+   */
+  numero: string
   /** Entidade dona do processo (escopo multi-tenant). */
   entidadeId: string
   /** Descrição/nomenclatura do processo — identifica-o no painel, listas e documentos. */

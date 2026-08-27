@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest"
 
 import { TrilhaDoProcesso } from "@/components/processos/trilha-do-processo"
 import { urlDaApi } from "@/lib/teste/handlers"
-import { renderizar, screen } from "@/lib/teste/renderizar"
+import { renderizar, screen, userEvent } from "@/lib/teste/renderizar"
 import { servidor } from "@/lib/teste/servidor-msw"
 
 /**
@@ -85,6 +85,47 @@ describe("trilha do processo", () => {
     await screen.findByText("Criação do Processo")
     // Uma ação nova no servidor não pode produzir um item sem rótulo na tela.
     expect(screen.getAllByRole("listitem")).toHaveLength(1)
+  })
+
+  it("fechada, mostra só o evento mais recente e diz quantos ficaram guardados", async () => {
+    comTrilha([
+      { event: "PROCUREMENT_PROCESS_CLOSED", occurredAt: "2026-08-25T14:30:00-03:00", actorName: "Maria" },
+      { event: "PROCUREMENT_PROCESS_UPDATED", occurredAt: "2026-08-25T14:00:00-03:00", actorName: "Maria" },
+      { event: "PROCUREMENT_PROCESS_CREATED", occurredAt: "2026-08-20T10:00:00-03:00", actorName: "Maria" },
+    ])
+    renderizar(<TrilhaDoProcesso processoId={PROCESSO} />)
+
+    // A pergunta de quem abre o processo é "o que aconteceu por último"; o
+    // histórico inteiro é consulta, e ocupava a tela para respondê-la.
+    expect(await screen.findByText("Encerramento")).toBeInTheDocument()
+    expect(screen.queryByText("Criação do Processo")).not.toBeInTheDocument()
+    // O número vai no botão: ninguém precisa abrir para descobrir se há mais.
+    expect(screen.getByRole("button", { name: /Ver 2 evento\(s\) anterior\(es\)/ }))
+      .toBeInTheDocument()
+  })
+
+  it("abrir mostra o histórico inteiro, e fechar volta ao último", async () => {
+    comTrilha([
+      { event: "PROCUREMENT_PROCESS_CLOSED", occurredAt: "2026-08-25T14:30:00-03:00", actorName: "Maria" },
+      { event: "PROCUREMENT_PROCESS_CREATED", occurredAt: "2026-08-20T10:00:00-03:00", actorName: "Maria" },
+    ])
+    renderizar(<TrilhaDoProcesso processoId={PROCESSO} />)
+
+    await userEvent.click(await screen.findByRole("button", { name: /Ver 1 evento/ }))
+    expect(screen.getByText("Criação do Processo")).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole("button", { name: /Ocultar o histórico/ }))
+    expect(screen.queryByText("Criação do Processo")).not.toBeInTheDocument()
+  })
+
+  it("com um evento só, não há o que abrir", async () => {
+    comTrilha([
+      { event: "PROCUREMENT_PROCESS_CREATED", occurredAt: "2026-08-20T10:00:00-03:00", actorName: "Maria" },
+    ])
+    renderizar(<TrilhaDoProcesso processoId={PROCESSO} />)
+
+    await screen.findByText("Criação do Processo")
+    expect(screen.queryByRole("button", { name: /evento/ })).not.toBeInTheDocument()
   })
 
   it("processo sem eventos diz isso", async () => {

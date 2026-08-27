@@ -200,7 +200,7 @@ export default function HubProcesso() {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2.5">
-              <span className="font-mono text-xs text-text-muted">{proc.id}</span>
+              <span className="font-mono text-xs text-text-muted">{proc.numero}</span>
               <StatusBadge status={proc.status} size="sm" />
               <Tag tone="info">{MODALIDADE_LABEL[proc.modalidade]}</Tag>
               {proc.status !== "concluido" && novaModalidade === null && (

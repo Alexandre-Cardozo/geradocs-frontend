@@ -123,6 +123,9 @@ export default function Processos() {
                       >
                         {p.objeto}
                       </button>
+                      {/* O número do processo administrativo, que é como o
+                          servidor se refere a ele fora da plataforma. */}
+                      <div className="mt-0.75 font-mono text-xs text-text-muted">{p.numero}</div>
                     </td>
                     <td className="max-w-40 px-4 py-3.5 text-sm text-text-3">{p.secretaria}</td>
                     <td className="px-4 py-3.5">

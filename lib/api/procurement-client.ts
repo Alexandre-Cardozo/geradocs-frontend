@@ -80,6 +80,7 @@ function mapear(item: ProcessoApi): Processo {
 
   return {
     id: item.id,
+    numero: item.processNumber,
     entidadeId: item.organizationId,
     objeto: item.objectDescription,
     objetoDemanda: item.demandObject,

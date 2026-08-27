@@ -739,3 +739,13 @@ Duas correções de layout, pelo mesmo motivo: a página gastava largura com o q
 
 **Fica registrado o que falta:** a API devolve `processNumber` — "PROC-2026-000007" —, e o front o descarta no mapeamento; `Processo.id` guarda o UUID, e o comentário do tipo ainda diz "Formato PROC-AAAA-NNN". É esse número que um servidor usa para se referir ao processo, e hoje nenhuma tela o mostra.
 
+## 54. O número do processo aparece, e a trilha para de ocupar a tela
+
+**O número do processo passou a existir na interface.** A API sempre devolveu `processNumber` — `PROC-2026-000007` — e o mapeamento o descartava; o que a tela mostrava era o UUID. É o número que o servidor usa em ofício, despacho e e-mail, e ele agora está na listagem (onde estava o UUID) e no cabeçalho do processo. O UUID continua sendo a chave da URL e da API: o que ele não é, é identificador para gente.
+
+Do lado do servidor, a numeração virou sequencial **por entidade e por exercício** (ADR-034): era uma sequência única da plataforma, e a numeração de cada órgão nascia com saltos que denunciavam o volume dos outros clientes.
+
+**A trilha fechada mostra só o último evento.** A pergunta de quem abre o processo é "o que aconteceu por último"; o histórico inteiro é consulta, e ocupava metade da tela para respondê-la — cinco eventos empurravam tudo o mais para fora da vista. Quantos eventos ficaram guardados vai escrito no botão, para que ninguém precise abrir só para descobrir se há mais.
+
+**"Autor não registrado" não é defeito de hoje.** O nome de quem age é gravado com o evento desde 25/08/2026 (V025 e ADR-024), e há teste de integração cobrando isso na criação e no encerramento. Os eventos que aparecem sem autor no banco de desenvolvimento são anteriores àquela data: a coluna não existia quando foram gravados, e preenchê-los agora com o nome atual do cadastro seria reescrever a trilha.
+
