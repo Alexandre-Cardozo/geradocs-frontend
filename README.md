@@ -17,7 +17,7 @@ O projeto está em integração progressiva com o backend Spring Boot. Autentica
 ## Comandos
 
 ```bash
-npm install
+npm ci             # instala a partir do lock (não o reescreve)
 npm run dev        # desenvolvimento (http://localhost:3000/GeraDocsFrontend)
 npm run build      # build de produção
 npm start          # servir o build
@@ -25,7 +25,24 @@ npm run lint       # eslint-config-next + regras de aderência ao DS (hex/px/fon
 npm run lint:ds    # oxlint com o config de aderência do DS
 npm run typecheck  # tsc --noEmit
 npm run check      # tudo acima
+npm run deps:sync  # reresolve o lock no linux, que é onde o CI instala
 ```
+
+### Subir e encerrar
+
+```bash
+./scripts/dev/subir_front.sh          # primeiro plano; Ctrl+C para parar
+./scripts/dev/subir_front.sh fundo    # segundo plano; sobrevive ao terminal fechar
+./scripts/dev/subir_front.sh parar
+./scripts/dev/subir_front.sh status
+./scripts/dev/subir_front.sh logs
+```
+
+O nome e os verbos são os mesmos do back-end (`subir_api.sh`) e os mesmos dos
+dois repositórios do Resgate Certo: alternar de projeto não muda o comando.
+
+`parar` derruba **quem escuta a porta**, e não o PID anotado na subida: `npm run
+dev` é um lançador, e matar o pai deixaria o servidor de pé segurando a 3000.
 
 ## Estrutura
 
@@ -79,9 +96,9 @@ docs/                   # estrutura.md · decisions.md · fluxo-contratacao.md (
 
 ## Integração local com o backend
 
-1. Inicie o PostgreSQL/Mailpit e o Spring Boot conforme o README do backend.
+1. Inicie o PostgreSQL/Mailpit e o Spring Boot: no repositório do backend, `./scripts/dev/subir_api.sh fundo`.
 2. Copie `.env.example` para `.env.local` somente se a API não estiver em `http://localhost:8080/api/v1`.
-3. Execute `npm run dev` e acesse `http://localhost:3000/GeraDocsFrontend/login`.
+3. Execute `./scripts/dev/subir_front.sh fundo` e acesse `http://localhost:3000/GeraDocsFrontend/login`.
 
 O access token JWT fica somente em memória. O refresh token é rotativo e permanece em cookie `HttpOnly`; ao recarregar a página, o frontend renova a sessão e consulta `GET /api/v1/me`. Não armazene tokens no `localStorage`.
 
