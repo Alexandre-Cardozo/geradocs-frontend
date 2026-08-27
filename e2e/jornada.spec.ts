@@ -162,10 +162,10 @@ test.describe("elaboração do ETP", () => {
     await expect(gerar).toBeDisabled()
     await expect(page.getByText(/não tem modelo de IA configurado/)).toBeVisible()
 
-    // E o caminho manual continua inteiro: o botão leva o cursor ao campo.
-    await page.getByRole("button", { name: "Escrever agora" }).click()
+    // E o caminho manual continua inteiro — sem cartão nenhum a anunciá-lo: o
+    // campo está aberto na tela, e escrever nele é o que sempre foi.
+    await expect(page.getByRole("button", { name: "Escrever agora" })).toHaveCount(0)
     const editor = page.getByPlaceholder("Preencha o conteúdo desta seção...")
-    await expect(editor).toBeFocused()
     await editor.fill("Necessidade descrita pela secretaria.")
     await page.getByRole("button", { name: /^Salvar$/ }).click()
 

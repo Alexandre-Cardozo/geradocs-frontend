@@ -853,3 +853,15 @@ A entidade cadastrava o brasão no timbre e a barra lateral continuava com o íc
 A barra passou a lê-lo de onde ele existe — `useTimbre` para saber se há um, `useBrasao` para os bytes —, e os campos mortos saíram do tipo. Um campo que só sabe dizer `null` não é um dado ausente: é uma promessa que a interface acredita e o usuário não vê cumprida.
 
 É a mesma imagem do cabeçalho dos documentos, e não uma segunda cópia: cadastrar em um lugar aparece nos dois.
+
+## 64. O tom de atenção volta para a paleta da plataforma
+
+Os avisos vinham em âmbar `#FFFBEB` com texto `#92400E` — amarelo com o texto tirando para o vermelho. Era herança do protótipo e não existia em lugar nenhum do produto: a interface é navy, petróleo, royal, elétrico e ardósia, e no meio dela aquele par parecia de outro sistema.
+
+**A correção foi no token, não nas telas.** `tint-warning-*` passou a ser ardósia `#F1F5F9` com texto petróleo `#0D3B66` e borda `#CBD5E1`; `--color-warning` virou royal, e `--color-warning-strong`, petróleo. Os dez lugares que usam essas utilities — o aviso de senha provisória, o `InfoBanner` de atenção, a `Tag`, o `StatCard` "Em Elaboração", o painel do PCA, o parecer do DFD — mudaram junto, sem uma linha de JSX tocada. É para isso que os tokens existem.
+
+O status **"Em Revisão"** era o mesmo par âmbar e foi junto, para o tom elétrico da marca: distinto de "Aguardando" (royal) e de "Rascunho" (ardósia).
+
+**Ficou de fora, e é deliberado:** os acentos por tipo de documento (`doc-mapa` é âmbar, `doc-cotacao` violeta, `doc-edital` rosa). Eles não são alerta — são identidade, e formam um espectro em que cada documento se distingue dos outros. Trocá-los por tons da marca faria Mapa colidir com ETP. Se o incômodo se estender a eles, é outra conversa e outro critério.
+
+**Quem escreve à mão não precisa de um cartão dizendo isso.** A seção do editor tinha dois cartões lado a lado — "Escrever à mão" e "Gerar com IA" —, e o primeiro só levava o cursor ao campo de texto que está logo acima, aberto e vazio. Anunciar o que a tela já permite é instrução, não caminho, e custava metade da largura da seção. Ficou só o da IA, que precisa existir mesmo indisponível: é ele que diz, antes do clique, que esta instalação não tem modelo configurado (ADR-029).

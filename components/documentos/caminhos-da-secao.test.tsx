@@ -7,12 +7,14 @@ import { renderizar, screen, userEvent, waitFor } from "@/lib/teste/renderizar"
 import { servidor } from "@/lib/teste/servidor-msw"
 
 /**
- * Os dois caminhos de preenchimento da seção.
+ * O atalho da IA na seção.
  *
- * <p>Antes havia um botão só — "Gerar com IA". Com o provedor `none`, que é o
- * padrão e o que roda hoje, o clique devolvia `503`: o servidor descobria **por
- * erro** que o facilitador não existe. A regra do produto é a inversa — a IA é
- * facilitadora, nunca bloqueadora, e escrever à mão é o caminho normal.
+ * <p>Com o provedor `none`, que é o padrão e o que roda hoje, o clique devolvia
+ * `503`: o servidor descobria **por erro** que o facilitador não existe. A IA é
+ * facilitadora, nunca bloqueadora — o motivo vem escrito antes do clique.
+ *
+ * <p>O cartão "Escrever à mão" que ficava ao lado saiu: o campo de texto está
+ * logo acima, aberto, e quem vai escrever já está escrevendo.
  */
 function comIa(disponivel: boolean) {
   servidor.use(
@@ -21,17 +23,9 @@ function comIa(disponivel: boolean) {
 }
 
 function renderizarCaminhos(props: Partial<Parameters<typeof CaminhosDaSecao>[0]> = {}) {
-  const escrever = vi.fn()
   const gerar = vi.fn()
-  renderizar(
-    <CaminhosDaSecao
-      gerando={false}
-      onEscreverAMao={escrever}
-      onGerarComIa={gerar}
-      {...props}
-    />,
-  )
-  return { escrever, gerar }
+  renderizar(<CaminhosDaSecao gerando={false} onGerarComIa={gerar} {...props} />)
+  return { gerar }
 }
 
 describe("caminhos da seção", () => {
@@ -51,20 +45,15 @@ describe("caminhos da seção", () => {
     expect(screen.getByText("Indisponível")).toBeInTheDocument()
   })
 
-  it("o caminho manual aparece junto, e não como o que sobra", async () => {
+  it("não há um cartão para anunciar que dá para escrever à mão", async () => {
     comIa(false)
-    const { escrever } = renderizarCaminhos()
+    renderizarCaminhos()
 
-    // Escrever à mão preenche a seção por inteiro: dizer isso é o que impede
-    // que a ausência de IA pareça uma falta.
-    expect(await screen.findByText("Escrever à mão")).toBeInTheDocument()
-    expect(screen.getByText(/caminho normal, e completo/)).toBeInTheDocument()
-
-    await userEvent.click(screen.getByRole("button", { name: "Escrever agora" }))
-
-    // O botão leva o cursor ao campo — apontar sem levar deixaria a ação pela
-    // metade.
-    expect(escrever).toHaveBeenCalledOnce()
+    // O campo de texto está aberto logo acima. Um cartão com um botão que só
+    // leva o cursor até ele é instrução, não caminho.
+    await screen.findByRole("button", { name: /Gerar com IA/ })
+    expect(screen.queryByText("Escrever à mão")).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Escrever agora" })).not.toBeInTheDocument()
   })
 
   it("com modelo configurado, a IA fica disponível e diz quem responde pelo texto", async () => {

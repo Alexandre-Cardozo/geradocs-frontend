@@ -57,7 +57,7 @@
 
   /* ── Cores — semânticas ─────────────────────────────────────────────────── */
   --color-success: #10B981;
-  --color-warning: #F59E0B;
+  --color-warning: #2563EB;
   --color-danger: #EF4444;
   --color-info: #38BDF8;
 
@@ -65,9 +65,11 @@
   --color-status-draft-bg: #F1F5F9;
   --color-status-draft-fg: #475569;
   --color-status-draft-dot: #94A3B8;
-  --color-status-review-bg: #FEF3C7;
-  --color-status-review-fg: #92400E;
-  --color-status-review-dot: #F59E0B;
+  /* "Em Revisão" era o mesmo par âmbar dos avisos; agora é o tom elétrico da
+     marca, distinto de "Aguardando" (royal) e de "Rascunho" (ardósia). */
+  --color-status-review-bg: #E0F2FE;
+  --color-status-review-fg: #0D3B66;
+  --color-status-review-dot: #38BDF8;
   --color-status-waiting-bg: #EFF6FF;
   --color-status-waiting-fg: #1D4ED8;
   --color-status-waiting-dot: #3B82F6;
@@ -103,11 +105,20 @@
   --color-tint-success-border: #A7F3D0;
   --color-tint-success-fg: #065F46;
   --color-tint-success-fg-soft: #047857;
-  --color-tint-warning-bg: #FFFBEB;
-  --color-tint-warning-border: #FDE68A;
-  --color-tint-warning-fg: #92400E;
-  --color-tint-warning-fg-strong: #B45309;
-  --color-tint-warning-chip-bg: #FEF3C7;
+  /*
+    O tom de atenção é da paleta da plataforma, e não âmbar.
+    O par #FFFBEB/#92400E vinha do protótipo e não existia em lugar nenhum do
+    produto: amarelo com texto tirando para o vermelho, no meio de uma interface
+    de navy, petróleo e royal. Quem avisa aqui é o ícone e o texto — a cor não
+    precisa vir de fora da paleta para dizer "olhe isto".
+    Neutro de ardósia com texto petróleo: fica distinto do informativo (azul
+    claro), do sucesso (verde) e do erro (vermelho), sem inventar um sexto tom.
+  */
+  --color-tint-warning-bg: #F1F5F9;
+  --color-tint-warning-border: #CBD5E1;
+  --color-tint-warning-fg: #0D3B66;
+  --color-tint-warning-fg-strong: #071A3D;
+  --color-tint-warning-chip-bg: #E2E8F0;
   --color-tint-danger-bg: #FEF2F2;
   --color-tint-danger-border: #FECACA;
   --color-tint-danger-border-strong: #FCA5A5;
@@ -118,7 +129,7 @@
   --color-violet: #7C3AED;
   --color-teal: #0D9488;
   --color-green: #16A34A;
-  --color-warning-strong: #D97706;
+  --color-warning-strong: #0D3B66;
   --color-slate-strong: #475569;
   --color-surface-upload: #FAFAFA;
 

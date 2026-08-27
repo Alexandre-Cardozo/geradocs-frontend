@@ -286,16 +286,10 @@ export default function EditorDocumento() {
                   {rascunho.trim() === "" ? (
                     <>
                       {/*
-                        Os dois caminhos lado a lado. Antes havia só "Gerar com
-                        IA": sem modelo configurado, o clique devolvia 503 e o
-                        servidor descobria por erro que o facilitador não
-                        existe (ADR-029).
+                        Sem modelo configurado o botão vem desabilitado com o
+                        motivo, em vez de devolver 503 no clique (ADR-029).
                       */}
-                      <CaminhosDaSecao
-                        gerando={gerar.isPending}
-                        onEscreverAMao={() => campoDoTexto.current?.focus()}
-                        onGerarComIa={handleGerarIA}
-                      />
+                      <CaminhosDaSecao gerando={gerar.isPending} onGerarComIa={handleGerarIA} />
                       {!active.obrigatoria && (
                         <DispensaDeSecao
                           secao={active}
