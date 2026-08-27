@@ -215,7 +215,10 @@ describe("importar o PCA do órgão", () => {
     semPlano()
     renderizar(<ImportarPca anos={ANOS} />)
 
-    expect(await screen.findByText(/PDF não é lido/)).toBeInTheDocument()
+    // A leitura é pelo cabeçalho: o plano municipal chega como planilha de
+    // planejamento, e não na ordem de colunas que a plataforma inventaria.
+    expect(await screen.findByText(/cabeçalho da primeira aba/)).toBeInTheDocument()
+    expect(screen.getByText(/PDF não é lido/)).toBeInTheDocument()
     expect(screen.getByLabelText("Planilha do PCA").getAttribute("accept"))
       .toContain(".xlsx")
   })

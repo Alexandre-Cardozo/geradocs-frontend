@@ -145,9 +145,13 @@ export function ImportarPca({ anos }: { anos: { value: string; label: string }[]
           )}
 
           <p className="m-0 text-xs text-text-muted">
-            Cinco colunas, nesta ordem: <code>código, descrição, unidade, quantidade, valor</code> —
-            em XLSX, uma por coluna da primeira aba; em CSV, separadas por ponto e vírgula. PDF não
-            é lido, e o XLS antigo precisa ser salvo como XLSX.
+            A leitura é pelo <strong>cabeçalho da primeira aba</strong>: a plataforma procura as
+            colunas de <code>código</code>, <code>descrição</code> (ou <code>objeto</code>),{" "}
+            <code>unidade</code>, <code>quantidade</code> e <code>valor</code> (ou{" "}
+            <code>totais</code>), e ignora as demais. Sem cabeçalho reconhecível, valem essas cinco
+            colunas nessa ordem — em CSV, separadas por ponto e vírgula. Linha sem objeto, como a de
+            totais, não vira contratação. PDF não é lido, e o XLS antigo precisa ser salvo como
+            XLSX.
           </p>
           {importar.isError && (
             <InfoBanner tone="warning">

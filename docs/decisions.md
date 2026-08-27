@@ -713,3 +713,11 @@ Cada linha da lista passou a mostrar **quem importou**: substituir um plano é a
 
 O upload virou multipart e manda o arquivo **como veio**. Ler o conteúdo no navegador para mandar como texto — o que a tela fazia — quebraria o XLSX, que é binário, e jogaria fora o original que agora será baixado.
 
+## 51. A tela diz como a planilha é lida, porque a leitura mudou
+
+O PCA de um município real era recusado pela importação (ADR-033 do back-end): o plano chega como planilha de planejamento — `OBJETO, MODALIDADE, MÊS, TOTAIS` e uma coluna por secretaria —, e a plataforma exigia cinco colunas na ordem que ela inventou.
+
+A leitura passou a ser **pelo cabeçalho da primeira aba**, e o texto da tela diz isso: quais títulos a plataforma procura (`código`, `descrição` ou `objeto`, `unidade`, `quantidade`, `valor` ou `totais`), que as demais colunas são ignoradas, que sem cabeçalho reconhecível valem as cinco na ordem, e que linha sem objeto — como a de totais — não vira contratação.
+
+Instrução de formato que não corresponde ao que o programa faz é pior que instrução nenhuma: manda a pessoa editar a planilha para atender a uma regra que já não existe.
+
