@@ -211,7 +211,6 @@ export interface AtualizarProcessoInput {
   secretaria?: string
   objeto?: string
   objetoDemanda?: string
-  dfdArquivo?: string | null
   documentos?: Array<TipoDocumento>
   modalidade?: Modalidade
   /**
@@ -253,7 +252,6 @@ export async function atualizarProcesso(input: AtualizarProcessoInput): Promise<
     objetoDemanda: input.objetoDemanda,
     modalidade: input.modalidade,
     documentos: input.documentos,
-    dfdArquivo: input.dfdArquivo,
     motivo,
   })
 }

@@ -17,14 +17,7 @@ import { useConsolidacaoDaDemanda } from "@/lib/api/hooks"
  * travar transformaria orientação em obstáculo. O que a plataforma faz é não
  * deixar passar em silêncio.
  */
-export function ConsolidacaoDaDemanda({
-  processoId,
-  dfdAnexado,
-}: {
-  processoId: string
-  /** Nome do arquivo de DFD registrado no processo, quando há um. */
-  dfdAnexado?: string | null
-}) {
+export function ConsolidacaoDaDemanda({ processoId }: { processoId: string }) {
   const consolidacao = useConsolidacaoDaDemanda(processoId)
 
   if (consolidacao.isPending) {
@@ -36,30 +29,15 @@ export function ConsolidacaoDaDemanda({
   if (consolidacao.data.itens.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-border bg-surface px-4 py-3.5 text-sm text-text-muted">
-        {dfdAnexado ? (
-          <>
-            {/*
-              Dizer "nenhum DFD foi anexado" logo abaixo do nome do arquivo
-              anexado é desmentir a própria tela. São dois estados diferentes: o
-              arquivo está registrado, e os itens dele é que não foram lidos.
-            */}
-            {/*
-              A frase anterior dizia que a plataforma "guarda o arquivo como
-              comprovação", o que soa como se o DFD não servisse para mais nada.
-              Ele é a base de todo documento do processo — e será a base da
-              geração de texto quando houver modelo. O que falta é outra coisa:
-              a lista de itens, que é um dado estruturado.
-            */}
-            O DFD <span className="font-mono">{dfdAnexado}</span> é a base dos documentos
-            deste processo e acompanha tudo o que for gerado nele. O que ainda não foi
-            informado são os <strong>itens</strong> — quantidade por secretaria —, e é
-            deles que sai esta consolidação, o painel de quantidades do ETP e a Cotação.
-            Itens não são lidos de um PDF assinado: precisam ser informados no formulário
-            abaixo, uma vez por secretaria.
-          </>
-        ) : (
-          "Nenhum DFD foi anexado a este processo."
-        )}
+        {/*
+          O que falta aqui é sempre a mesma coisa, com DFD registrado ou sem
+          nenhum: os itens. Eles não são lidos de um PDF assinado — ler item de
+          PDF é OCR, e a plataforma não adivinha quantidade em documento que
+          vira edital.
+        */}
+        Nenhum item informado ainda. Registre os DFDs abaixo — um por secretaria
+        requisitante — e informe, em cada um, o que aquela secretaria pediu. É daí
+        que saem esta consolidação, o painel de quantidades do ETP e a Cotação.
       </div>
     )
   }

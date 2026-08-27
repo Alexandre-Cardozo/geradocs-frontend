@@ -954,7 +954,6 @@ export interface components {
             demandObject?: string;
             /** Format: uuid */
             departmentId: string;
-            dfdFileName?: string;
             documents?: ("COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO")[];
             estimatedValue: number;
             legalBasis?: string;
@@ -1274,7 +1273,6 @@ export interface components {
             /** Format: uuid */
             departmentId?: string;
             departmentName?: string;
-            dfdFileName?: string;
             documents: ("COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO")[];
             estimatedValue?: number;
             /** Format: uuid */
@@ -1380,7 +1378,6 @@ export interface components {
         UpdateProcurementProcessRequest: {
             changeNote?: string;
             demandObject?: string;
-            dfdFileName?: string;
             documents?: ("COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO")[];
             estimatedValue: number;
             legalBasis?: string;

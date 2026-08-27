@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useState } from "react"
 
-import { Button, Dropdown, FileUpload, InfoBanner, ProgressBar, StatusBadge, Tag, Textarea } from "@/components/ui"
+import { Button, Dropdown, InfoBanner, ProgressBar, StatusBadge, Tag, Textarea } from "@/components/ui"
 import {
   IconArrowRight,
   IconCheckCircle,
@@ -20,7 +20,6 @@ import {
   useAtualizarProcesso,
   useConfigTenant,
   useConsolidacaoDaDemanda,
-  useDfdsDoProcesso,
   useDocumentos,
   useEncerrarProcesso,
   useGerarDocumento,
@@ -28,7 +27,6 @@ import {
   useProcesso,
   useSecoes,
 } from "@/lib/api/hooks"
-import { BaixarDfd } from "@/components/processos/baixar-dfd"
 import { ConsolidacaoDaDemanda } from "@/components/processos/consolidacao-da-demanda"
 import { DfdsDoProcesso } from "@/components/processos/dfds-do-processo"
 import { ItensDoDfd } from "@/components/processos/itens-do-dfd"
@@ -74,7 +72,6 @@ export default function HubProcesso() {
   const [objeto, setObjeto] = useState("")
   const [objetoDemanda, setObjetoDemanda] = useState("")
   const [secretaria, setSecretaria] = useState("")
-  const [dfd, setDfd] = useState<string | null>(null)
   // Modalidade escolhida mas ainda não aplicada: fica pendente enquanto o
   // alerta de impacto está na tela.
   const [novaModalidade, setNovaModalidade] = useState<Modalidade | null>(null)
@@ -84,9 +81,6 @@ export default function HubProcesso() {
   const [dfdEmEdicao, setDfdEmEdicao] = useState<string | null>(null)
   // Mesma consulta do bloco de consolidação — vem do cache, sem requisição nova.
   const consolidacao = useConsolidacaoDaDemanda(processoId)
-  // Mesma consulta da lista de anexos — vem do cache, sem requisição nova.
-  const dfds = useDfdsDoProcesso(processoId)
-  const dfdParaBaixar = (dfds.data ?? []).find((dfd) => dfd.arquivo !== null) ?? null
   const semItensConsolidados = consolidacao.isSuccess && consolidacao.data.itens.length === 0
   const formularioAberto = informandoItens || semItensConsolidados
   // Documento cuja retificação está sendo declarada. Um por vez: retificar dois
@@ -98,7 +92,6 @@ export default function HubProcesso() {
     setObjeto(processo.data.objeto)
     setObjetoDemanda(processo.data.objetoDemanda ?? "")
     setSecretaria(processo.data.secretaria)
-    setDfd(processo.data.dfdArquivo ?? null)
     setEditando(true)
   }
 
@@ -109,7 +102,6 @@ export default function HubProcesso() {
         objeto: objeto.trim() || undefined,
         objetoDemanda: objetoDemanda.trim(),
         secretaria,
-        dfdArquivo: dfd,
       },
       {
         onSuccess: () => {
@@ -375,36 +367,6 @@ export default function HubProcesso() {
             )}
           </div>
 
-          <div className="sm:col-span-2 lg:col-span-4">
-            <dt className="text-2xs font-semibold tracking-caps text-text-muted uppercase">
-              Documento de Formalização de Demanda (DFD)
-            </dt>
-            {!editando ? (
-              <dd className="m-0 mt-0.5 flex flex-wrap items-center gap-2.5 text-base text-text-1">
-                {proc.dfdArquivo ? (
-                  <span className="font-mono text-sm">{proc.dfdArquivo}</span>
-                ) : (
-                  <span className="text-text-faint">Não anexado</span>
-                )}
-                {/*
-                  O download fica aqui porque é aqui que o DFD é nomeado. Com um
-                  anexo só, a lista de baixo não aparece — e sem este botão o
-                  arquivo ficaria guardado sem porta de saída.
-                */}
-                {dfdParaBaixar && (
-                  <BaixarDfd
-                    processoId={processoId}
-                    dfdId={dfdParaBaixar.id}
-                    nomeDoArquivo={dfdParaBaixar.nomeDoArquivo}
-                  />
-                )}
-              </dd>
-            ) : (
-              <dd className="m-0 mt-1.5 max-w-xl">
-                <FileUpload file={dfd} onChange={setDfd} placeholder="Anexar ou substituir o DFD (PDF ou DOCX)" accept=".pdf,.docx,.doc" />
-              </dd>
-            )}
-          </div>
         </dl>
       </div>
 
@@ -449,7 +411,7 @@ export default function HubProcesso() {
           —, e separá-las em cartões fazia a tela parecer três assuntos.
         */}
         <div className="flex flex-col gap-5 rounded-card border border-border bg-surface p-5">
-          <ConsolidacaoDaDemanda processoId={processoId} dfdAnexado={proc.dfdArquivo} />
+          <ConsolidacaoDaDemanda processoId={processoId} />
           {/*
             O cadastro de DFDs: um por secretaria que pediu, cada um com os itens
             dele. Abrir a linha mostra o que aquele DFD trouxe para a

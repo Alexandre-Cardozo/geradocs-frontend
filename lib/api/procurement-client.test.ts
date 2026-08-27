@@ -34,7 +34,6 @@ const processoApi = {
   legalBasis: "Art. 28, I, Lei 14.133/21",
   urgency: false,
   documents: ["ETP", "TR", "EDITAL"],
-  dfdFileName: "dfd-2026-014.pdf",
   status: "DRAFT" as const,
   createdAt: "2026-08-20T10:00:00-03:00",
   updatedAt: "2026-08-20T10:30:00-03:00",
@@ -269,13 +268,14 @@ describe("criarProcessoReal", () => {
       secretaria: DEPARTAMENTO_ID,
       documentos: ["ETP"],
       fases: { verificacaoDFD: false, retificacao: false },
-      dfdArquivo: "DFD-2026-014.pdf",
       dfdConteudo: new File(["%PDF-1.7"], "DFD-2026-014.pdf", { type: "application/pdf" }),
     })
 
     // Antes só o nome do arquivo era enviado: a tela mostrava um DFD que não
-    // existia em lugar nenhum, e não havia o que baixar depois.
-    expect(corpo.dfdFileName).toBe("DFD-2026-014.pdf")
+    // existia em lugar nenhum, e não havia o que baixar depois. O nome do DFD
+    // registrado é o do próprio arquivo — o processo não declara mais um
+    // "DFD dele" (ADR-037).
+    expect(corpo.dfdFileName).toBeUndefined()
     expect(arquivo).toBeInstanceOf(File)
     expect((arquivo as unknown as File).name).toBe("DFD-2026-014.pdf")
   })
@@ -299,12 +299,11 @@ describe("atualizarProcessoReal", () => {
     // PATCH que omitisse o valor estimado o zeraria: a API substitui o recurso.
     expect(corpo.objectDescription).toBe("Descrição revisada")
     expect(corpo.estimatedValue).toBe(485000)
-    expect(corpo.dfdFileName).toBe("dfd-2026-014.pdf")
   })
 
-  it("processo sem DFD e sem urgência declarada não inventa valores", async () => {
+  it("processo sem urgência declarada e sem versão não inventa valores", async () => {
     let corpo: Record<string, unknown> = {}
-    const semOpcionais = { ...processoApi, dfdFileName: undefined, urgency: false, version: undefined }
+    const semOpcionais = { ...processoApi, urgency: false, version: undefined }
     servidor.use(
       http.get(`${urlDaApi}/procurement-processes/:id`, () => HttpResponse.json(semOpcionais)),
       http.patch(`${urlDaApi}/procurement-processes/:id`, async ({ request }) => {
@@ -315,30 +314,12 @@ describe("atualizarProcessoReal", () => {
     const { atualizarProcessoReal, obterProcesso } = await carregarClienteLimpo()
     const atual = await obterProcesso(processoApi.id)
 
-    expect(atual.dfdArquivo).toBeNull()
     await atualizarProcessoReal(atual, {})
 
-    expect(corpo.dfdFileName).toBeNull()
     expect(corpo.urgency).toBe(false)
-  })
-
-  it("remover o DFD é diferente de não mexer nele", async () => {
-    let corpo: Record<string, unknown> = {}
-    servidor.use(
-      http.get(`${urlDaApi}/procurement-processes/:id`, () => HttpResponse.json(processoApi)),
-      http.patch(`${urlDaApi}/procurement-processes/:id`, async ({ request }) => {
-        corpo = (await request.json()) as Record<string, unknown>
-        return HttpResponse.json(processoApi)
-      }),
-    )
-    const { atualizarProcessoReal, obterProcesso } = await carregarClienteLimpo()
-    const atual = await obterProcesso(processoApi.id)
-
-    // `null` retira o anexo; `undefined` mantém o que está lá. Colapsar os dois
-    // faria salvar a descrição apagar o DFD anexado.
-    await atualizarProcessoReal(atual, { dfdArquivo: null })
-
-    expect(corpo.dfdFileName).toBeNull()
+    // O DFD não é campo do processo: salvar a descrição não mexe em anexo
+    // nenhum, porque não há campo de anexo a mexer (ADR-037).
+    expect(corpo).not.toHaveProperty("dfdFileName")
   })
 
   it("envia If-Match com a versão que a tela leu, e zero quando não há", async () => {

@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/icons"
 import { ErrorState, LoadingState } from "@/components/shared/estados"
 import { useToast } from "@/components/shared/providers"
-import { useAnalisarDFD, useParecerDFD, useProcesso } from "@/lib/api/hooks"
+import { useAnalisarDFD, useDfdsDoProcesso, useParecerDFD, useProcesso } from "@/lib/api/hooks"
 import { MarcaSintetica } from "@/components/shared/marca-sintetica";
 import { CATALOGO, ordenar, totalSecoes } from "@/lib/documentos"
 import { formatDataHora } from "@/lib/format"
@@ -52,9 +52,15 @@ export default function VerificacaoDFD() {
   const parecer = useParecerDFD(processoId)
   const analisar = useAnalisarDFD(processoId)
 
-  // undefined = usuário ainda não mexeu → herda o DFD anexado na criação do processo.
+  // undefined = usuário ainda não mexeu → herda o primeiro DFD registrado no
+  // processo. O processo não guarda mais um DFD próprio: eles são um cadastro,
+  // um por secretaria requisitante (ADR-037).
+  const dfds = useDfdsDoProcesso(processoId)
   const [dfdFileEscolhido, setDfdFile] = useState<string | null | undefined>(undefined)
-  const dfdFile = dfdFileEscolhido === undefined ? (processo.data?.dfdArquivo ?? null) : dfdFileEscolhido
+  const dfdFile =
+    dfdFileEscolhido === undefined
+      ? (dfds.data?.[0]?.nomeDoArquivo ?? null)
+      : dfdFileEscolhido
   const [progress, setProgress] = useState(0)
   const [analisando, setAnalisando] = useState(false)
   const [reenviando, setReenviando] = useState(false)

@@ -42,7 +42,6 @@ interface ProcessoApi {
   legalBasis?: string;
   urgency: boolean;
   documents: TipoDocumento[];
-  dfdFileName?: string;
   status: "DRAFT" | "CLOSED";
   closedAt?: string;
   closureNote?: string;
@@ -99,7 +98,6 @@ function mapear(item: ProcessoApi): Processo {
     fundamentoLegal: item.legalBasis,
     ata: null,
     fases: { verificacaoDFD: false, retificacao: false },
-    dfdArquivo: item.dfdFileName ?? null,
     urgente: item.urgency,
     versao: item.version,
   };
@@ -156,7 +154,6 @@ export async function criarProcessoReal(input: NovoProcessoInput): Promise<Proce
           legalBasis: input.fundamentoLegal,
           urgency: false,
           documents: input.documentos.map((tipo) => tipos[tipo]),
-          dfdFileName: input.dfdArquivo,
         }),
       ],
       { type: "application/json" },
@@ -189,7 +186,6 @@ export async function atualizarProcessoReal(
     objetoDemanda?: string;
     modalidade?: Modalidade;
     documentos?: TipoDocumento[];
-    dfdArquivo?: string | null;
     /** Por que mudou; vai literal para a trilha do servidor (ADR-024). */
     motivo?: string;
   },
@@ -211,8 +207,6 @@ export async function atualizarProcessoReal(
         // mapeador sempre o define — o fallback seria um caminho sem entrada.
         urgency: Boolean(atual.urgente),
         documents: (mudancas.documentos ?? atual.documentos).map((tipo) => tipos[tipo]),
-        dfdFileName:
-          mudancas.dfdArquivo !== undefined ? mudancas.dfdArquivo : atual.dfdArquivo,
         changeNote: mudancas.motivo ?? null,
       }),
     },

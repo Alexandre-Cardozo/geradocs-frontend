@@ -296,11 +296,6 @@
             "format" : "uuid",
             "type" : "string"
           },
-          "dfdFileName" : {
-            "maxLength" : 255,
-            "minLength" : 0,
-            "type" : "string"
-          },
           "documents" : {
             "items" : {
               "enum" : [ "COTACAO", "ETP", "MAPA", "TR", "EDITAL", "CONTRATO" ],
@@ -1188,9 +1183,6 @@
           "departmentName" : {
             "type" : "string"
           },
-          "dfdFileName" : {
-            "type" : "string"
-          },
           "documents" : {
             "items" : {
               "enum" : [ "COTACAO", "ETP", "MAPA", "TR", "EDITAL", "CONTRATO" ],
@@ -1510,11 +1502,6 @@
           "demandObject" : {
             "maxLength" : 2000,
             "minLength" : 3,
-            "type" : "string"
-          },
-          "dfdFileName" : {
-            "maxLength" : 255,
-            "minLength" : 0,
             "type" : "string"
           },
           "documents" : {

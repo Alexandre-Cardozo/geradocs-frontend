@@ -110,7 +110,6 @@ export interface Processo {
     verificacaoDFD: boolean
     retificacao: boolean
   }
-  dfdArquivo?: string | null
   urgente?: boolean
   /** Trilha de auditoria das transições de status (fonte única — a fila de aprovações projeta daqui). */
   /** Versão do recurso no servidor, para concorrência otimista (If-Match). */
@@ -124,13 +123,12 @@ export interface NovoProcessoInput {
   secretaria: string
   valorEstimado?: number
   fundamentoLegal?: string
-  /** Nome do DFD declarado no cadastro — é o que aparece na tela do processo. */
-  dfdArquivo?: string | null
   /**
-   * O arquivo do DFD, quando a pessoa o escolheu.
+   * O arquivo do DFD, quando a pessoa o escolheu no assistente.
    *
-   * <p>Vai junto na criação e vira o primeiro DFD anexado (ADR-035). Antes só o
-   * nome subia: o processo nascia dizendo ter um DFD que ninguém baixava.
+   * <p>Vai junto na criação e vira o **primeiro registro do cadastro de DFDs**
+   * do processo (ADR-035, ADR-037). O processo não guarda um "DFD dele": a
+   * demanda pode vir de várias secretarias, cada uma com o seu documento.
    */
   dfdConteudo?: File | null
   ata?: ConfigATA | null

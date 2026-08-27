@@ -793,3 +793,15 @@ O processo do cliente chegou com **seis DFDs**, cinco com exatamente o mesmo nom
 **A identificação deixou de ser adivinhada.** O campo pergunta como o processo se refere ao DFD — nº, ofício ou o nome do arquivo — e só se preenche sozinho com o nome do arquivo escolhido, quando há um. Era o preenchimento automático com o nome do DFD do processo que fabricava as linhas iguais.
 
 **O DFD pode chegar depois.** Registrar o documento é um ato; informar o que ele pede é outro; e o PDF assinado é um terceiro, que às vezes só aparece no fim do processo. Os três são independentes agora — "Sem arquivo anexado" tem botão, e "Sem itens" também. No servidor, isso é ADR-036.
+
+## 59. O DFD sai do bloco principal: ele é o cadastro, e nada mais
+
+O cartão de dados do processo tinha um campo "Documento de Formalização de Demanda (DFD)" — um nome de arquivo, um só, editável junto com a descrição. Era o que restava de quando o caso previsto era um DFD por processo. Com o cadastro no lugar (§58), esse campo virou **um segundo lugar dizendo a mesma coisa, e dizendo menos**: numa demanda de três secretarias ele mostra o DFD de uma e cala os outros dois, e não havia como declarar ali nenhum dos demais.
+
+**O campo saiu.** O cabeçalho do processo agora traz o que é do processo — descrição, secretaria requisitante, valor, responsável, objeto da demanda. Os DFDs ficam onde eles são vários: no cadastro, um por secretaria, com arquivo, itens e ações próprias. O download que estava no cabeçalho foi junto — cada linha do cadastro tem o seu.
+
+**O assistente de novo processo continua aceitando um DFD**, e ele entra como o primeiro registro do cadastro, nomeado pelo próprio arquivo. Sem um campo no processo para declarar o nome, o nome do arquivo é o que existe — e é o que a pessoa reconhece.
+
+**A consolidação vazia parou de falar em "o DFD do processo".** O que falta ali é sempre a mesma coisa, com DFD registrado ou sem nenhum: os **itens**, que não saem de um PDF assinado. A mensagem agora aponta para onde eles são informados — o cadastro logo abaixo, com o vínculo item ↔ DFD explícito.
+
+No servidor, isso é ADR-037: `dfdFileName` saiu do processo, e a migração converte o nome que estava declarado em um registro do cadastro, para nenhum processo perder o que afirmava.

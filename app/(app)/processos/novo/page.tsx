@@ -268,7 +268,6 @@ export default function NovoProcesso() {
         secretaria,
         valorEstimado: valorNumerico,
         fundamentoLegal: fundamento.trim() || undefined,
-        dfdArquivo: dfdFile,
         dfdConteudo,
         ata:
           isAdesaoATA && ataMode !== ""

@@ -84,7 +84,6 @@ export const processoApi = {
   legalBasis: "Art. 28, I, Lei 14.133/21",
   urgency: false,
   documents: ["ETP", "TR", "EDITAL"],
-  dfdFileName: "dfd-2026-014.pdf",
   status: "DRAFT" as const,
   createdAt: "2026-08-20T10:00:00-03:00",
   updatedAt: "2026-08-20T10:30:00-03:00",

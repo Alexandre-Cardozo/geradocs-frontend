@@ -134,27 +134,14 @@ describe("consolidação da demanda", () => {
     expect(screen.getAllByText("—")).toHaveLength(2)
   })
 
-  it("processo sem DFD explica em vez de mostrar tabela vazia", async () => {
+  it("sem item informado, diz o que falta em vez de mostrar tabela vazia", async () => {
     comConsolidacao({ items: [], incongruences: [] })
     renderizar(<ConsolidacaoDaDemanda processoId={PROCESSO} />)
 
-    expect(await screen.findByText(/Nenhum DFD foi anexado/i)).toBeInTheDocument()
-  })
-
-  it("com DFD anexado e sem itens, não desmente a própria tela", async () => {
-    comConsolidacao({ items: [], incongruences: [] })
-    renderizar(
-      <ConsolidacaoDaDemanda processoId={PROCESSO} dfdAnexado="DFD-CE-003.2026.pdf" />,
-    )
-
-    // Dizer "nenhum DFD foi anexado" logo abaixo do nome do arquivo anexado é
-    // contradizer o que a tela acabou de mostrar. São dois estados: o arquivo
-    // está registrado, e os itens dele é que não foram informados.
-    expect(await screen.findByText(/é a base dos documentos/i)).toBeInTheDocument()
-    expect(screen.getByText("DFD-CE-003.2026.pdf")).toBeInTheDocument()
-    expect(screen.queryByText(/Nenhum DFD foi anexado/i)).not.toBeInTheDocument()
-    // E não pode sugerir que o arquivo só serve de comprovante: ele é a base de
-    // todo documento do processo, e será a base da geração por modelo.
-    expect(screen.queryByText(/apenas como comprovação/i)).not.toBeInTheDocument()
+    // O que falta é sempre a mesma coisa, com DFD registrado ou sem nenhum: os
+    // itens. Eles não saem de um PDF assinado — e a tela aponta para onde eles
+    // são informados, que é o cadastro de DFDs logo abaixo.
+    expect(await screen.findByText(/Nenhum item informado ainda/i)).toBeInTheDocument()
+    expect(screen.getByText(/uma por secretaria|um por secretaria/i)).toBeInTheDocument()
   })
 })
