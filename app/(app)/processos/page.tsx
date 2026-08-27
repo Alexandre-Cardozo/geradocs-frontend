@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 import { Button, DocPill, FilterTabs, SearchInput, StatusBadge, Tag } from "@/components/ui"
-import { IconChevronRight, IconDownload, IconFilter } from "@/components/ui/icons"
+import { IconDownload, IconFilter } from "@/components/ui/icons"
 import { EmptyState, ErrorState, SkeletonRows } from "@/components/shared/estados"
 import { Th } from "@/components/shared/tabela"
 import { useToast } from "@/components/shared/providers"
@@ -91,11 +91,14 @@ export default function Processos() {
 
         {processos.isSuccess && itens.length > 0 && (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[880px] border-collapse">
+            {/* 780px: a largura mínima caiu com a coluna do ícone e o
+                identificador que saíram. Manter 880 forçaria rolagem horizontal
+                por causa de espaço que já não é ocupado. */}
+            <table className="w-full min-w-[780px] border-collapse">
               <thead>
                 <tr className="border-b border-border bg-ice">
-                  {["Processo / Objeto", "Secretaria", "Modalidade", "Valor Est.", "ETP", "TR", "Responsável", "Status", ""].map((h, i) => (
-                    <Th key={h === "" ? `vazio-${i}` : h}>{h}</Th>
+                  {["Processo / Objeto", "Secretaria", "Modalidade", "Valor Est.", "ETP", "TR", "Responsável", "Status"].map((h) => (
+                    <Th key={h}>{h}</Th>
                   ))}
                 </tr>
               </thead>
@@ -107,8 +110,19 @@ export default function Processos() {
                     className={`cursor-pointer transition-colors hover:bg-ice ${i < itens.length - 1 ? "border-b border-ice" : ""}`}
                   >
                     <td className="px-4 py-3.5">
-                      <div className="max-w-65 text-base font-semibold break-words text-text-1">{p.objeto}</div>
-                      <div className="mt-0.75 font-mono text-xs text-text-muted">{p.id}</div>
+                      {/*
+                        A linha inteira abre o processo, e o objeto é um botão de
+                        verdade: sem ele, quem navega por teclado não teria como
+                        chegar aqui — `<tr>` não recebe foco. Sem `onClick`
+                        próprio, porque o clique (inclusive o do Enter) sobe para
+                        a linha, que trata; um handler aqui navegaria duas vezes.
+                      */}
+                      <button
+                        type="button"
+                        className="max-w-65 cursor-pointer border-0 bg-transparent p-0 text-left text-base font-semibold break-words text-text-1"
+                      >
+                        {p.objeto}
+                      </button>
                     </td>
                     <td className="max-w-40 px-4 py-3.5 text-sm text-text-3">{p.secretaria}</td>
                     <td className="px-4 py-3.5">
@@ -126,19 +140,6 @@ export default function Processos() {
                     <td className="px-4 py-3.5 text-sm text-text-3">{p.responsavel}</td>
                     <td className="px-4 py-3.5">
                       <StatusBadge status={p.status} size="sm" />
-                    </td>
-                    <td className="px-4 py-3.5">
-                      <button
-                        type="button"
-                        aria-label={`Abrir processo ${p.id}`}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          router.push(`/processos/detalhe?id=${encodeURIComponent(p.id)}`)
-                        }}
-                        className="flex size-7 cursor-pointer items-center justify-center rounded-sm border border-border bg-ice text-text-3"
-                      >
-                        <IconChevronRight size={13} strokeWidth={2.5} />
-                      </button>
                     </td>
                   </tr>
                 ))}

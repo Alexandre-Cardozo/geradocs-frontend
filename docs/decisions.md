@@ -729,3 +729,13 @@ Duas correções de layout, pelo mesmo motivo: a página gastava largura com o q
 
 **A importação subiu.** Importar é a ação da tela; a lista é o resultado dela. Com a lista em cima, quem vinha anexar o plano do exercício descia a página para achar o formulário — e a lista tende a crescer, o que pioraria a rolagem a cada ano.
 
+## 53. A listagem de processos termina no status, e sem o identificador interno
+
+**A coluna do ícone saiu.** A linha inteira já abre o processo; o botão de seta ao fim repetia a mesma ação e era a única coisa que empurrava a tabela para além da largura da tela — a rolagem horizontal existia para mostrar um ícone.
+
+**O acesso pelo teclado continua.** O objeto virou botão de verdade dentro da primeira célula, como na tabela de servidores: sem ele, quem navega por teclado não teria como abrir processo nenhum, porque `<tr>` não recebe foco. Sem `onClick` próprio — o clique, inclusive o do Enter, sobe para a linha, que trata; um handler ali navegaria duas vezes.
+
+**O identificador saiu da listagem.** Era o UUID do processo, em monoespaçado sob o objeto: ninguém o digita, ninguém o cita em ofício, e ele ocupava uma linha em toda a tabela.
+
+**Fica registrado o que falta:** a API devolve `processNumber` — "PROC-2026-000007" —, e o front o descarta no mapeamento; `Processo.id` guarda o UUID, e o comentário do tipo ainda diz "Formato PROC-AAAA-NNN". É esse número que um servidor usa para se referir ao processo, e hoje nenhuma tela o mostra.
+
