@@ -19,6 +19,7 @@ import { useToast } from "@/components/shared/providers"
 import {
   useAtualizarProcesso,
   useConfigTenant,
+  useConsolidacaoDaDemanda,
   useDocumentos,
   useEncerrarProcesso,
   useGerarDocumento,
@@ -75,6 +76,11 @@ export default function HubProcesso() {
   // Modalidade escolhida mas ainda não aplicada: fica pendente enquanto o
   // alerta de impacto está na tela.
   const [novaModalidade, setNovaModalidade] = useState<Modalidade | null>(null)
+  const [informandoItens, setInformandoItens] = useState(false)
+  // Mesma consulta do bloco de consolidação — vem do cache, sem requisição nova.
+  const consolidacao = useConsolidacaoDaDemanda(processoId)
+  const semItensConsolidados = consolidacao.isSuccess && consolidacao.data.itens.length === 0
+  const formularioAberto = informandoItens || semItensConsolidados
   // Documento cuja retificação está sendo declarada. Um por vez: retificar dois
   // ao mesmo tempo esconderia qual histórico está sendo lido.
   const [retificando, setRetificando] = useState<TipoDocumento | null>(null)
@@ -413,7 +419,12 @@ export default function HubProcesso() {
             Alimenta o painel de quantidades do ETP e a Cotação.
           </span>
         </div>
-        <div className="flex flex-col gap-4">
+        {/*
+          Um cartão só, e não três empilhados. As três partes respondem a uma
+          pergunta encadeada — o que foi pedido, de onde veio, e como acrescentar
+          —, e separá-las em cartões fazia a tela parecer três assuntos.
+        */}
+        <div className="flex flex-col gap-5 rounded-card border border-border bg-surface p-5">
           <ConsolidacaoDaDemanda processoId={processoId} dfdAnexado={proc.dfdArquivo} />
           {/*
             Os anexos em si, com data e download. Anexar de novo versiona em vez
@@ -422,16 +433,39 @@ export default function HubProcesso() {
           */}
           <DfdsAnexados processoId={processoId} />
           {/*
+            O formulário fica recolhido: informar item é ato pontual — uma vez
+            por secretaria —, e aberto o tempo todo empurrava os documentos do
+            processo para fora da tela. Abre sozinho enquanto não há nada
+            consolidado, que é quando ele é o próximo passo.
+
             Só quando há DFD registrado: informar item de um DFD que não existe
             seria inventar a origem do pedido.
           */}
-          {proc.dfdArquivo && (
-            <ItensDoDfd
-              processoId={processoId}
-              nomeDoArquivo={proc.dfdArquivo}
-              onPronto={() => showToast("Consolidação atualizada.")}
-            />
-          )}
+          {proc.dfdArquivo &&
+            (formularioAberto ? (
+              <ItensDoDfd
+                processoId={processoId}
+                nomeDoArquivo={proc.dfdArquivo}
+                // Sem nada consolidado o formulário é o próximo passo, e fechá-lo
+                // deixaria a tela sem saída: aí não há o que fechar.
+                onFechar={semItensConsolidados ? undefined : () => setInformandoItens(false)}
+                onPronto={() => {
+                  showToast("Consolidação atualizada.")
+                  setInformandoItens(false)
+                }}
+              />
+            ) : (
+              <div className="border-t border-border-soft pt-4">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  icon={<IconPlus size={13} strokeWidth={2.5} />}
+                  onClick={() => setInformandoItens(true)}
+                >
+                  Informar itens de uma secretaria
+                </Button>
+              </div>
+            ))}
         </div>
       </div>
 

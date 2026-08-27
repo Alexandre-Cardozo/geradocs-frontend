@@ -757,3 +757,13 @@ Virou um botão de ícone **colado na tag da modalidade**, com rótulo acessíve
 
 Enquanto o painel de troca está aberto, o lápis some: a ação já está em curso, e oferecê-la de novo abriria a pergunta de o que o segundo clique faz.
 
+## 56. A demanda consolidada vira um bloco só, e o formulário recolhe
+
+Três cartões empilhados — consolidação, DFDs anexados e o formulário de itens — respondiam a uma pergunta encadeada: *o que foi pedido*, *de onde veio* e *como acrescentar*. Separados, pareciam três assuntos, e o formulário aberto o tempo todo empurrava os documentos do processo para fora da tela.
+
+Agora é **um cartão com três seções**, e o formulário fica **recolhido atrás de um botão**. Informar item é ato pontual — uma vez por secretaria —, não estado permanente da tela. Enquanto não há nada consolidado ele abre sozinho, porque aí é o próximo passo; e é justamente aí que não há "Fechar", que deixaria a tela sem saída.
+
+**O campo de arquivo não era redundante — o rótulo é que dizia "DFD" para duas coisas diferentes.** O cadastro do processo guarda o **nome** do DFD (o assistente de criação pede um arquivo e fica só com o nome dele); o arquivo em si é gravado aqui, por secretaria (ADR-028). O rótulo passou a ser "Arquivo assinado desta secretaria", e a dica diz o que estava implícito: *é o único lugar onde o arquivo fica guardado*.
+
+**Fica registrado o que falta:** o passo 2 do assistente de novo processo usa `FileUpload`, que devolve só o nome — o arquivo escolhido ali é descartado. A tela promete um anexo que não acontece, e é por isso que os DFDs deste processo aparecem como "Sem arquivo anexado" com um nome de PDF assinado ao lado. Corrigir exige mudar a criação para multipart, como já foi feito no PCA.
+

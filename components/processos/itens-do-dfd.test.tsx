@@ -1,5 +1,5 @@
 import { HttpResponse, http } from "msw"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 
 import { ItensDoDfd } from "@/components/processos/itens-do-dfd"
 import { sessaoServidor } from "@/lib/teste/fixtures-api"
@@ -217,5 +217,38 @@ describe("itens do DFD", () => {
     await waitFor(() =>
       expect(screen.getByLabelText(/Descrição do item/)).toHaveValue("Caneta"),
     )
+  })
+
+  it("fecha quando há o que fechar, e não oferece saída quando é o próximo passo", async () => {
+    // Sem nada consolidado o formulário é o passo seguinte, e um "Fechar" ali
+    // deixaria a tela sem saída: o bloco reabriria sozinho.
+    const fechar = vi.fn()
+    const { unmount } = renderizar(
+      <ItensDoDfd processoId={PROCESSO} nomeDoArquivo="dfd.pdf" onPronto={() => {}} />,
+    )
+    expect(screen.queryByRole("button", { name: "Fechar" })).not.toBeInTheDocument()
+    unmount()
+
+    renderizar(
+      <ItensDoDfd
+        processoId={PROCESSO}
+        nomeDoArquivo="dfd.pdf"
+        onPronto={() => {}}
+        onFechar={fechar}
+      />,
+    )
+    await userEvent.click(screen.getByRole("button", { name: "Fechar" }))
+
+    expect(fechar).toHaveBeenCalled()
+  })
+
+  it("o campo de arquivo diz que é o único lugar onde o DFD fica guardado", () => {
+    renderizar(
+      <ItensDoDfd processoId={PROCESSO} nomeDoArquivo="dfd.pdf" onPronto={() => {}} />,
+    )
+
+    // Parecia campo repetido porque o cadastro do processo também fala em "DFD"
+    // — e lá entra só o nome, não o arquivo.
+    expect(screen.getByText(/único lugar onde o arquivo fica guardado/)).toBeInTheDocument()
   })
 })

@@ -51,9 +51,12 @@ export function DfdsAnexados({ processoId }: { processoId: string }) {
   }
 
   return (
-    <div className="rounded-card border border-border bg-surface p-5">
-      <h3 className="m-0 font-display text-base font-bold text-text-1">DFDs Anexados</h3>
-      <p className="m-0 mt-1 mb-4 text-sm text-text-3">
+    /* Sem moldura própria: é uma seção do cartão da demanda, não outro cartão. */
+    <div className="border-t border-border-soft pt-4">
+      <h3 className="m-0 font-display text-base font-bold text-text-1">
+        DFDs anexados ({dfds.data.length})
+      </h3>
+      <p className="m-0 mt-1 mb-3 text-sm text-text-3">
         Cada anexo fica guardado com a data. Um DFD novo não apaga o anterior — é ele que
         mostra o que embasou os documentos gerados até aqui.
       </p>

@@ -54,7 +54,8 @@ export function ConsolidacaoDaDemanda({
             deste processo e acompanha tudo o que for gerado nele. O que ainda não foi
             informado são os <strong>itens</strong> — quantidade por secretaria —, e é
             deles que sai esta consolidação, o painel de quantidades do ETP e a Cotação.
-            Itens não são lidos de um PDF assinado: precisam ser informados abaixo.
+            Itens não são lidos de um PDF assinado: precisam ser informados no formulário
+            abaixo, uma vez por secretaria.
           </>
         ) : (
           "Nenhum DFD foi anexado a este processo."

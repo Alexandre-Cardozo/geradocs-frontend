@@ -20,20 +20,27 @@ import type { ItemDoDfd } from "@/lib/api/procurement-client"
  * justamente para somar o que três secretarias pediram separado, e é a
  * secretaria de origem que se pergunta quando os pedidos divergem.
  *
- * <p>O arquivo assinado entra aqui e passa a ser guardado (ADR-028) — antes só
- * o nome dele era anotado. Continua opcional: há processo em que o servidor
- * sabe o número do DFD e ainda não tem o PDF em mãos, e exigi-lo transformaria
- * um facilitador em bloqueio.
+ * <p><b>O arquivo assinado entra aqui, e só aqui.</b> O cadastro do processo
+ * guarda o **nome** do DFD, não o arquivo — é neste formulário que os bytes são
+ * gravados (ADR-028), por secretaria. Parecia campo repetido porque as duas
+ * telas diziam "DFD" para coisas diferentes; agora o rótulo diz qual é qual.
+ *
+ * <p>Continua opcional: há processo em que o servidor sabe o número do DFD e
+ * ainda não tem o PDF em mãos, e exigi-lo transformaria um facilitador em
+ * bloqueio.
  */
 export function ItensDoDfd({
   processoId,
   nomeDoArquivo,
   onPronto,
+  onFechar,
 }: {
   processoId: string
   /** O DFD já registrado no processo; o item herda o nome dele. */
   nomeDoArquivo: string
   onPronto: () => void
+  /** Ausente quando não há o que fechar — sem itens, o formulário é o passo. */
+  onFechar?: () => void
 }) {
   const tenant = useConfigTenant()
   const anexar = useAnexarDfdComItens(processoId)
@@ -63,14 +70,28 @@ export function ItensDoDfd({
     )
 
   return (
-    <div className="rounded-card border border-border bg-surface p-5">
-      <h3 className="m-0 font-display text-base font-bold text-text-1">
-        Informar itens do DFD
-      </h3>
-      <p className="m-0 mt-1 mb-4 text-sm text-text-3">
-        A quantidade que cada secretaria pediu. É daqui que saem a consolidação, o painel de
-        quantidades do ETP e a Cotação.
-      </p>
+    /* Sem moldura própria: é uma seção do cartão da demanda, não outro cartão. */
+    <div className="border-t border-border-soft pt-4">
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="m-0 font-display text-base font-bold text-text-1">
+            Informar itens do DFD
+          </h3>
+          <p className="m-0 mt-1 text-sm text-text-3">
+            A quantidade que cada secretaria pediu. É daqui que saem a consolidação, o painel de
+            quantidades do ETP e a Cotação.
+          </p>
+        </div>
+        {onFechar && (
+          <button
+            type="button"
+            onClick={onFechar}
+            className="cursor-pointer border-0 bg-transparent p-0 text-sm font-semibold text-text-3"
+          >
+            Fechar
+          </button>
+        )}
+      </div>
 
       <div className="mb-4 flex flex-wrap items-end gap-4">
         <div className="min-w-0 flex-1 basis-64">
@@ -87,7 +108,10 @@ export function ItensDoDfd({
         </FormField>
         </div>
         <div className="min-w-0 flex-1 basis-64">
-          <FormField label="Arquivo do DFD (PDF ou DOCX)">
+          <FormField
+            label="Arquivo assinado desta secretaria"
+            hint="Opcional, PDF ou DOCX. É o único lugar onde o arquivo fica guardado: o cadastro do processo registra só o nome do DFD."
+          >
             <div className="flex items-center gap-2.5">
               <input
                 ref={campoDeArquivo}
@@ -106,7 +130,7 @@ export function ItensDoDfd({
                 Escolher arquivo
               </Button>
               <span className="min-w-0 flex-1 truncate text-xs text-text-3">
-                {arquivo ? arquivo.name : "Opcional — o DFD pode ser anexado depois."}
+                {arquivo ? arquivo.name : "Pode ser anexado depois."}
               </span>
             </div>
           </FormField>
