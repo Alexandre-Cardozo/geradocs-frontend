@@ -905,3 +905,13 @@ Dois relatos sobre a mesma tela, e os dois procedem.
 **"O que vai para a seção" virou campo editável.** Era um bloco de leitura, e "Citar na seção" escrevia o parágrafo **direto no documento** — texto de processo administrativo entrando sem ninguém ler, sem como ajustar. Agora o botão preenche o campo, você revisa, edita e grava com o Salvar de sempre. É o mesmo comportamento da IA (§66), e a rota que gravava sozinha saiu do servidor (ADR-039).
 
 Com o campo aberto, a seção também aceita o que a plataforma não sabe propor: a justificativa da contratação não prevista, escrita à mão. E o par de botões da §66 está lá — citar não substitui a IA, e a IA parte do que estiver escrito.
+
+## 68. Salvar deixa de apagar a dispensa
+
+Relato: dispensar a seção, clicar em "Salvar e Avançar", e nada acontecer. Reproduzido em e2e: o `PUT` da seção troca o par (texto, justificativa), e o salvamento mandava `dispensationJustification: null` — **apagando a dispensa registrada segundos antes**, em silêncio. A seção voltava a "não iniciada" e o progresso caía. Valia para os dois botões, "Salvar" e "Salvar e Avançar", e para toda seção dispensável.
+
+Agora, enquanto o texto continua em branco, o salvamento reenvia a justificativa que está lá. Escrever na seção continua desfazendo a dispensa — é o que escrever significa, e aí a justificativa sai porque a seção passou a ter conteúdo.
+
+**A dispensa também passou a valer onde não valia.** Ela só era oferecida no editor genérico; a seção do inciso II (Demonstração da Previsão no PCA) é dispensável pelo Art. 18, § 2º e tem painel próprio — ficava sem o caminho. Agora o bloco é renderizado uma vez, abaixo do conteúdo, para **toda** seção dispensável, tenha painel ou não.
+
+Vai coberto por e2e com um servidor que guarda o que recebe: em teste de componente o `PUT` some no mock, e o defeito — que era exatamente o servidor receber o campo errado — passaria batido.

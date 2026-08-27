@@ -97,8 +97,25 @@ export default function EditorDocumento() {
 
   const handleSave = (avancar = false) => {
     if (!active) return
+    /*
+      Salvar não pode desfazer a dispensa. O `PUT` da seção troca o par
+      (texto, justificativa), e mandar a justificativa vazia apagava a dispensa
+      que a pessoa acabara de registrar — em silêncio, no clique seguinte.
+
+      Só enquanto o texto continua em branco: escrever na seção **é** desfazer a
+      dispensa, e aí a justificativa some porque a seção passou a ter conteúdo.
+    */
+    const dispensaAPreservar =
+      rascunho.trim() === "" && foiDispensada(active)
+        ? { justificativaDispensa: active.justificativaDispensa }
+        : {}
     salvar.mutate(
-      { secaoId: active.id, conteudo: rascunho, ...(avancar ? { status: "Completo" as const } : {}) },
+      {
+        secaoId: active.id,
+        conteudo: rascunho,
+        ...dispensaAPreservar,
+        ...(avancar ? { status: "Completo" as const } : {}),
+      },
       {
         onSuccess: () => {
           setSaved(true)
@@ -307,20 +324,7 @@ export default function EditorDocumento() {
                     rascunhei".
                   */}
                   <CaminhosDaSecao gerando={gerar.isPending} onGerarComIa={handleGerarIA} />
-                  {rascunho.trim() === "" ? (
-                    !active.obrigatoria && (
-                      <DispensaDeSecao
-                        secao={active}
-                        pendente={salvar.isPending}
-                        onDispensar={(justificativa) =>
-                          salvar.mutate({ secaoId: active.id, conteudo: "", justificativaDispensa: justificativa })
-                        }
-                        onDesfazer={() =>
-                          salvar.mutate({ secaoId: active.id, conteudo: "", justificativaDispensa: "" })
-                        }
-                      />
-                    )
-                  ) : (
+                  {rascunho.trim() !== "" && (
                     <ValidationMsg type="ok" msg="Texto suficiente para fundamentar a seção." />
                   )}
                   {gerar.isPending && <InlineSpinner label="Gerando conteúdo da seção... aguarde." />}
@@ -344,6 +348,31 @@ export default function EditorDocumento() {
               onGerarComIa={handleGerarIA}
             />
           )}
+
+          {/*
+            A dispensa vale para toda seção dispensável, tenha painel ou não. A
+            do inciso II tem painel próprio e ficava sem a ação: a lei permite
+            dispensá-la (Art. 18, § 2º) e a tela não oferecia o caminho.
+          */}
+          {active && !active.obrigatoria && rascunho.trim() === "" && (
+            <div className="mt-4">
+              <DispensaDeSecao
+                secao={active}
+                pendente={salvar.isPending}
+                onDispensar={(justificativa) =>
+                  salvar.mutate({
+                    secaoId: active.id,
+                    conteudo: "",
+                    justificativaDispensa: justificativa,
+                  })
+                }
+                onDesfazer={() =>
+                  salvar.mutate({ secaoId: active.id, conteudo: "", justificativaDispensa: "" })
+                }
+              />
+            </div>
+          )}
+
 
           {(() => {
             const isLast = activeSection === lista[lista.length - 1]?.id
