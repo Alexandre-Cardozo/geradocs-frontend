@@ -27,6 +27,7 @@ import {
   atualizarUsuario as atualizarUsuarioNaApi,
   criarUsuario as criarUsuarioNaApi,
   desativarDepartamento as desativarDepartamentoNaApi,
+  renomearDepartamento as renomearDepartamentoNaApi,
   desativarEntidade as desativarEntidadeNaApi,
   desativarUsuario as desativarUsuarioNaApi,
   listarEntidades as listarEntidadesNaApi,
@@ -686,6 +687,14 @@ export async function removerUsuario(id: string): Promise<void> {
 
 export async function criarSecretaria(entidadeId: string, nome: string): Promise<Secretaria> {
   return criarDepartamentoNaApi(entidadeId, nome)
+}
+
+export async function renomearSecretaria(
+  entidadeId: string,
+  secretariaId: string,
+  nome: string,
+): Promise<Secretaria> {
+  return renomearDepartamentoNaApi(entidadeId, secretariaId, nome)
 }
 
 export async function removerSecretaria(entidadeId: string, secretariaId: string): Promise<void> {

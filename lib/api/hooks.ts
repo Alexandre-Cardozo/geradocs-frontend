@@ -603,6 +603,23 @@ export function useCriarSecretaria(entidadeId: string | undefined) {
   })
 }
 
+/**
+ * Renomeia a secretaria.
+ *
+ * <p>Invalida o tenant, que é de onde a lista vem: a tela mostra o nome novo
+ * porque o servidor confirmou, e não porque a tela adiantou.
+ */
+export function useRenomearSecretaria(entidadeId: string | undefined) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { id: string; nome: string }) => {
+      if (!entidadeId) throw new Error("Entidade não identificada.")
+      return api.renomearSecretaria(entidadeId, input.id, input.nome)
+    },
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: chaves.tenant(entidadeId) }),
+  })
+}
+
 export function useRemoverSecretaria(entidadeId: string | undefined) {
   const queryClient = useQueryClient()
   return useMutation({

@@ -515,6 +515,7 @@ describe("cadastros", () => {
   it("secretaria sem entidade identificada recusa antes de chamar o servidor", async () => {
     for (const usar of [
       () => hooks.useCriarSecretaria(undefined),
+      () => hooks.useRenomearSecretaria(undefined),
       () => hooks.useRemoverSecretaria(undefined),
     ]) {
       const { wrapper } = ambiente()
@@ -525,6 +526,7 @@ describe("cadastros", () => {
       // nenhum — e o erro só apareceria depois, na lista.
       await waitFor(() => expect(result.current.isError).toBe(true))
       expect(api.criarSecretaria).not.toHaveBeenCalled()
+      expect(api.renomearSecretaria).not.toHaveBeenCalled()
       expect(api.removerSecretaria).not.toHaveBeenCalled()
     }
   })
@@ -532,6 +534,11 @@ describe("cadastros", () => {
   it("secretaria com entidade recarrega a configuração daquele órgão", async () => {
     for (const [usar, entrada, fn] of [
       [() => hooks.useCriarSecretaria(ENTIDADE), "Secretaria de Compras", "criarSecretaria"],
+      [
+        () => hooks.useRenomearSecretaria(ENTIDADE),
+        { id: "s1", nome: "Secretaria de Educação" },
+        "renomearSecretaria",
+      ],
       [() => hooks.useRemoverSecretaria(ENTIDADE), "s1", "removerSecretaria"],
     ] as const) {
       const { wrapper, invalidou } = ambiente()

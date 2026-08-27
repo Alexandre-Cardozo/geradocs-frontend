@@ -60,6 +60,8 @@ export function Input({
   title,
   className = "",
   id,
+  ariaLabel,
+  autoFocus,
 }: {
   value?: string
   onChange?: (e: ChangeEvent<HTMLInputElement>) => void
@@ -75,8 +77,18 @@ export function Input({
   title?: string
   className?: string
   id?: string
+  /**
+   * Nome acessível de um campo que não vive dentro de um `FormField`.
+   *
+   * <p>É o caso da edição em linha: o rótulo ali é a própria linha que está
+   * sendo editada, e sem isto o campo chegaria sem nome ao leitor de tela —
+   * `placeholder` não é nome acessível.
+   */
+  ariaLabel?: string
+  /** Foco ao montar. Para campo que aparece **em resposta a um clique**. */
+  autoFocus?: boolean
 }) {
-  const rotulo = useRotuloDoCampo()
+  const rotulo = useRotuloDoCampo(ariaLabel)
   const disabledCls = disabled ? "cursor-not-allowed bg-ice text-text-3" : ""
   if (prefix) {
     return (
@@ -87,6 +99,8 @@ export function Input({
         <input
           id={id}
           aria-labelledby={rotulo}
+          aria-label={ariaLabel}
+          autoFocus={autoFocus}
           value={value}
           onChange={onChange}
           onKeyDown={onKeyDown}
@@ -105,6 +119,8 @@ export function Input({
     <input
       id={id}
       aria-labelledby={rotulo}
+      aria-label={ariaLabel}
+      autoFocus={autoFocus}
       value={value}
       onChange={onChange}
       onKeyDown={onKeyDown}

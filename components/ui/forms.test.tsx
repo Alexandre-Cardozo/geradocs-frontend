@@ -127,6 +127,16 @@ describe("rótulo do campo", () => {
     expect(screen.queryByLabelText("Unidade")).not.toBeInTheDocument()
   })
 
+  it("o campo fora de um FormField tem nome quando o escrevem à mão", () => {
+    // É o caso da edição em linha (secretarias): o rótulo é a própria linha que
+    // está sendo editada, e `placeholder` não é nome acessível.
+    renderizar(
+      <Input value="" onChange={() => {}} ariaLabel="Novo nome de Secretaria de Obras" placeholder="Nome" />,
+    )
+
+    expect(screen.getByLabelText("Novo nome de Secretaria de Obras")).toBeInTheDocument()
+  })
+
   it("o campo obrigatório não vira “Nome *” no leitor de tela", () => {
     renderizar(
       <FormField label="Nome Completo" required>

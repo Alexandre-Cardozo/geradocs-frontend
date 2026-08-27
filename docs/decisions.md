@@ -671,3 +671,17 @@ Três defeitos da mesma família, achados ao usar a área de administração.
 
 **O identificador da entidade saiu das telas.** Aparecia sob o nome na listagem de entidades e como valor da coluna "Entidade" na de servidores. Ninguém digita um UUID em lugar nenhum do produto — e onde ele aparecia era justamente onde faltava um nome.
 
+## 48. O cadastro de secretarias passa a ser feito com o teclado, e o nome deixa de ser imutável
+
+A tela pedia mouse para cada secretaria: digitar, largar o teclado, clicar. E o que fosse cadastrado com um erro de digitação só tinha uma saída — desativar e cadastrar de novo, deixando na trilha do órgão uma secretaria extinta que nunca existiu de fato.
+
+**Enter cadastra.** No campo, `Enter` faz o que o botão faz. Quem prefere o botão chega nele com um `Tab` — não há nada focável entre os dois — e o `Enter` de lá é o do próprio botão. O botão continua desabilitado com o campo vazio, então o `Tab` também não passa por ele à toa.
+
+**O nome passou a ser editável, na própria linha.** Um lápis ao lado da lixeira abre o campo com o nome atual; `Enter` confirma, `Esc` desiste, e os dois botões (✓ e ✕) fazem o mesmo para quem está no mouse. A edição acontece **na lista**, e não num diálogo: o que muda é uma palavra, e tirar a pessoa da lista para isso a faria perder de vista o que já existe — que é justamente o que evita cadastrar duas parecidas.
+
+**Confirmar sem mudar nada não vira requisição.** Gravar o que não mudou subiria a versão do registro e apareceria na trilha do órgão como uma edição que não houve.
+
+**A sigla é reenviada como está.** O `PATCH` troca o recurso inteiro; mandar só o nome apagaria de passagem um campo que ninguém pediu para mudar. É o mesmo cuidado que `atualizarEntidade` tem com a unidade.
+
+**`Input` do DS ganhou `ariaLabel` e `autoFocus`.** O campo da edição não vive dentro de um `FormField` — o rótulo dele é a linha que está sendo editada —, e sem nome acessível chegaria ao leitor de tela como "caixa de edição" e nada mais; `placeholder` não é nome. A precedência já existia no `useRotuloDoCampo`: `aria-label` escrito à mão vence o rótulo visível, porque `aria-labelledby` sobrepõe `aria-label` e deixar os dois faria o texto à mão ser ignorado em silêncio. O campo de cadastro, que também não tinha nome nenhum, ganhou o seu no caminho.
+

@@ -113,6 +113,7 @@ describe("a fachada liga cada chamada no lugar certo", () => {
     ["atualizarUsuario", (a) => a.atualizarUsuario({ id: "u1", nome: "Maria" }), acesso.atualizarUsuario, [{ id: "u1", nome: "Maria" }]],
     ["removerUsuario", (a) => a.removerUsuario("u1"), acesso.desativarUsuario, ["u1"]],
     ["criarSecretaria", (a) => a.criarSecretaria(ENTIDADE, "Compras"), acesso.criarDepartamento, [ENTIDADE, "Compras"]],
+    ["renomearSecretaria", (a) => a.renomearSecretaria(ENTIDADE, "s1", "Educação"), acesso.renomearDepartamento, [ENTIDADE, "s1", "Educação"]],
     ["removerSecretaria", (a) => a.removerSecretaria(ENTIDADE, "s1"), acesso.desativarDepartamento, [ENTIDADE, "s1"]],
     ["recuperarSenha", (a) => a.recuperarSenha("  a@b.gov.br  "), autenticacao.solicitarRedefinicao, ["a@b.gov.br"]],
     ["resetarSenha", (a) => a.resetarSenha("t", "s"), autenticacao.redefinirSenha, ["t", "s"]],

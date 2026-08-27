@@ -203,10 +203,46 @@ export async function criarDepartamento(organizationId: string, name: string, ac
   return secretariaDa(department)
 }
 
-export async function desativarDepartamento(organizationId: string, departmentId: string): Promise<void> {
-  const departments = await requisicaoProtegida<BackendDepartment[]>(`/organizations/${organizationId}/departments`)
+/**
+ * Renomeia a secretaria.
+ *
+ * <p>Só o nome: é o que a tela deixa editar, e a sigla é reenviada como está —
+ * a API troca o recurso inteiro, e omiti-la apagaria de passagem um campo que
+ * ninguém pediu para mudar.
+ *
+ * <p>A versão vem da listagem porque não há GET de uma secretaria só; é o mesmo
+ * caminho da desativação, e é ele que carrega o `If-Match` que impede
+ * sobrescrever a edição de outra pessoa.
+ */
+export async function renomearDepartamento(
+  organizationId: string,
+  departmentId: string,
+  name: string,
+): Promise<Secretaria> {
+  const atual = await departamentoDa(organizationId, departmentId)
+  const department = await requisicaoProtegida<BackendDepartment>(
+    `/organizations/${organizationId}/departments/${departmentId}`,
+    {
+      method: "PATCH",
+      headers: { "If-Match": ifMatch(atual.version) },
+      body: JSON.stringify({ name: name.trim(), acronym: atual.acronym ?? "" }),
+    },
+  )
+  return secretariaDa(department)
+}
+
+/** A secretaria dentro da organização — o escopo é o que impede alcançar a de outro órgão. */
+async function departamentoDa(organizationId: string, departmentId: string): Promise<BackendDepartment> {
+  const departments = await requisicaoProtegida<BackendDepartment[]>(
+    `/organizations/${organizationId}/departments`,
+  )
   const department = departments.find((item) => item.id === departmentId)
   if (!department) throw new Error("Secretaria não encontrada.")
+  return department
+}
+
+export async function desativarDepartamento(organizationId: string, departmentId: string): Promise<void> {
+  const department = await departamentoDa(organizationId, departmentId)
   await requisicaoProtegida<void>(`/organizations/${organizationId}/departments/${departmentId}/deactivate`, {
     method: "POST",
     headers: { "If-Match": ifMatch(department.version) },

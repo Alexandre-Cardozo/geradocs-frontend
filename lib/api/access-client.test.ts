@@ -178,6 +178,44 @@ describe("criarDepartamento", () => {
   })
 })
 
+describe("renomearDepartamento", () => {
+  it("manda o nome aparado, mantém a sigla e carrega a versão em If-Match", async () => {
+    let corpo: Record<string, unknown> = {}
+    let ifMatch: string | null = null
+    servidor.use(
+      http.get(`${urlDaApi}/organizations/:id/departments`, () => HttpResponse.json([departamento])),
+      http.patch(`${urlDaApi}/organizations/:id/departments/:dep`, async ({ request }) => {
+        corpo = (await request.json()) as Record<string, unknown>
+        ifMatch = request.headers.get("If-Match")
+        return HttpResponse.json({ ...departamento, name: "Secretaria de Educação" })
+      }),
+    )
+    const { renomearDepartamento } = await carregarClienteLimpo()
+
+    const secretaria = await renomearDepartamento(
+      organizacao.id,
+      departamento.id,
+      "  Secretaria de Educação  ",
+    )
+
+    expect(corpo.name).toBe("Secretaria de Educação")
+    // A API troca o recurso inteiro: omitir a sigla a apagaria de passagem.
+    expect(corpo.acronym).toBe(departamento.acronym)
+    expect(ifMatch).toContain("2")
+    expect(secretaria.nome).toBe("Secretaria de Educação")
+  })
+
+  it("recusa renomear secretaria que não está na organização", async () => {
+    servidor.use(http.get(`${urlDaApi}/organizations/:id/departments`, () => HttpResponse.json([departamento])))
+    const { renomearDepartamento } = await carregarClienteLimpo()
+
+    // O escopo é o que impede alcançar a secretaria de outro órgão por id.
+    await expect(
+      renomearDepartamento(organizacao.id, "de-outra-entidade", "Secretaria de Educação"),
+    ).rejects.toThrow(/Secretaria não encontrada/i)
+  })
+})
+
 describe("desativarDepartamento", () => {
   it("localiza a secretaria na lista para descobrir a versão", async () => {
     let ifMatch: string | null = null
