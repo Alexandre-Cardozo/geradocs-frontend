@@ -127,9 +127,18 @@ function RegistrarDfd({
 
   return (
     <div className="mb-3 rounded-lg border border-royal bg-surface p-4">
-      <div className="flex flex-wrap items-end gap-4">
-        <div className="min-w-0 flex-1 basis-56">
-          <FormField label="Secretaria que formalizou" required>
+      {/*
+        Grade de três colunas, e não flex com `basis`: as colunas têm largura
+        fixa e o topo alinhado, então a dica de um campo não empurra os outros
+        para baixo — o formulário não muda de forma enquanto é preenchido.
+      */}
+      <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-3">
+        <div className="min-w-0">
+          <FormField
+            label="Secretaria que formalizou"
+            required
+            hint="Quem pediu a contratação."
+          >
             <Dropdown
               value={secretaria}
               onChange={setSecretaria}
@@ -141,11 +150,11 @@ function RegistrarDfd({
             />
           </FormField>
         </div>
-        <div className="min-w-0 flex-1 basis-56">
+        <div className="min-w-0">
           <FormField
             label="Identificação do DFD"
             required
-            hint="Como o processo se refere a ele: nº, ofício ou o nome do arquivo."
+            hint="Nº, ofício ou o nome do arquivo."
           >
             <Input
               value={identificacao}
@@ -155,7 +164,7 @@ function RegistrarDfd({
             />
           </FormField>
         </div>
-        <div className="min-w-0 flex-1 basis-56">
+        <div className="min-w-0">
           <FormField label="Arquivo assinado" hint="Opcional — pode ser anexado depois.">
             <div className="flex items-center gap-2.5">
               <input
@@ -188,13 +197,12 @@ function RegistrarDfd({
         </div>
       </div>
 
+      {/*
+        Os botões vêm primeiro e o motivo ao lado deles: com o texto na frente,
+        ele aparecia e sumia empurrando os botões pela linha — e o que estava
+        embaixo do ponteiro deixava de estar.
+      */}
       <div className="mt-3.5 flex flex-wrap items-center gap-2.5">
-        <p
-          id={`motivo-dfd-${processoId}`}
-          className={impedimento ? "m-0 flex-1 text-xs text-text-muted" : "sr-only"}
-        >
-          {impedimento ?? "Tudo certo para registrar."}
-        </p>
         <Button
           size="sm"
           disabled={impedimento !== null || registrar.isPending}
@@ -222,6 +230,12 @@ function RegistrarDfd({
         <Button size="sm" variant="secondary" onClick={onCancelar}>
           Cancelar
         </Button>
+        <p
+          id={`motivo-dfd-${processoId}`}
+          className={impedimento ? "m-0 text-xs text-text-muted" : "sr-only"}
+        >
+          {impedimento ?? "Tudo certo para registrar."}
+        </p>
       </div>
     </div>
   )

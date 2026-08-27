@@ -309,7 +309,7 @@ function FormularioDoItem({
 
   return (
     <div className="mb-3 rounded-lg border border-royal bg-surface p-4">
-      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 items-start gap-2.5 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)]">
         <FormField label="Descrição do item" required>
           <Input
             value={descricao}
@@ -351,10 +351,12 @@ function FormularioDoItem({
         </FormField>
       </div>
 
+      {/*
+        Os botões vêm primeiro e o motivo ao lado deles: com o texto na frente,
+        ele aparecia e sumia empurrando os botões pela linha — e o que estava
+        embaixo do ponteiro deixava de estar.
+      */}
       <div className="mt-3.5 flex flex-wrap items-center gap-2.5">
-        <p id="motivo-item" className={impedimento ? "m-0 flex-1 text-xs text-text-muted" : "sr-only"}>
-          {impedimento ?? "Tudo certo para salvar."}
-        </p>
         <Button
           size="sm"
           disabled={impedimento !== null || salvando}
@@ -372,6 +374,12 @@ function FormularioDoItem({
         <Button size="sm" variant="secondary" onClick={onCancelar}>
           Cancelar
         </Button>
+        <p
+          id="motivo-item"
+          className={impedimento ? "m-0 text-xs text-text-muted" : "sr-only"}
+        >
+          {impedimento ?? "Tudo certo para salvar."}
+        </p>
       </div>
     </div>
   )

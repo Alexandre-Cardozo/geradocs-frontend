@@ -126,6 +126,22 @@ describe("DFDs do processo", () => {
     expect(document.getElementById(descrito as string)).toHaveTextContent(/Escolha a secretaria/)
   })
 
+  it("o motivo vem depois dos botões, para não empurrá-los quando aparece", async () => {
+    comSecretarias()
+    comDfds([])
+    renderizar(<DfdsDoProcesso processoId={PROCESSO} />)
+
+    await userEvent.click(await screen.findByRole("button", { name: /Registrar DFD/ }))
+
+    // Com o texto na frente, ele aparecia e sumia deslocando os botões pela
+    // linha — e o que estava embaixo do ponteiro deixava de estar.
+    const salvar = screen.getByRole("button", { name: "Registrar DFD" })
+    const motivo = document.getElementById(salvar.getAttribute("aria-describedby") as string)
+    expect(salvar.compareDocumentPosition(motivo as Node)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    )
+  })
+
   it("o arquivo escolhido dá nome ao DFD quando não há outro", async () => {
     comSecretarias()
     comDfds([])
