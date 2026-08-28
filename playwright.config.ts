@@ -3,12 +3,12 @@ import { defineConfig, devices } from "@playwright/test"
 const ORIGEM = "http://localhost:3000"
 
 /**
- * O app é servido sob um `basePath` (GitHub Pages). O `baseURL` guarda só a
- * origem e as rotas vêm de `e2e/api.ts` já com o prefixo: um caminho iniciado
- * por "/" descarta a parte de caminho do baseURL, e o teste iria para a URL
- * errada sem reclamar de nada.
+ * O prefixo da publicação, quando há um (GitHub Pages). Em desenvolvimento é
+ * vazio. O `baseURL` guarda só a origem e as rotas vêm de `e2e/api.ts` já com o
+ * prefixo: um caminho iniciado por "/" descarta a parte de caminho do baseURL, e
+ * o teste iria para a URL errada sem reclamar de nada.
  */
-const BASE_PATH = "/GeraDocsFrontend"
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? ""
 
 /**
  * E2E sobe o servidor de desenvolvimento e intercepta a API (`e2e/api.ts`).

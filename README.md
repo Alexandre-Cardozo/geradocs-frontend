@@ -18,7 +18,7 @@ O projeto está em integração progressiva com o backend Spring Boot. Autentica
 
 ```bash
 npm ci             # instala a partir do lock (não o reescreve)
-npm run dev        # desenvolvimento (http://localhost:3000/GeraDocsFrontend)
+npm run dev        # desenvolvimento (http://localhost:3000)
 npm run build      # build de produção
 npm start          # servir o build
 npm run lint       # eslint-config-next + regras de aderência ao DS (hex/px/fonte)
@@ -98,7 +98,7 @@ docs/                   # estrutura.md · decisions.md · fluxo-contratacao.md (
 
 1. Inicie o PostgreSQL/Mailpit e o Spring Boot: no repositório do backend, `./scripts/dev/subir_api.sh fundo`.
 2. Copie `.env.example` para `.env.local` somente se a API não estiver em `http://localhost:8080/api/v1`.
-3. Execute `./scripts/dev/subir_front.sh fundo` e acesse `http://localhost:3000/GeraDocsFrontend/login`.
+3. Execute `./scripts/dev/subir_front.sh fundo` e acesse `http://localhost:3000/login`.
 
 O access token JWT fica somente em memória. O refresh token é rotativo e permanece em cookie `HttpOnly`; ao recarregar a página, o frontend renova a sessão e consulta `GET /api/v1/me`. Não armazene tokens no `localStorage`.
 

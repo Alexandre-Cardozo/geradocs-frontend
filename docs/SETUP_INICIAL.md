@@ -28,8 +28,9 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Acesse <http://localhost:3000/GeraDocsFrontend>. O `basePath` existe porque o app
-é publicado no GitHub Pages sob esse caminho — a raiz sem ele devolve 404.
+Acesse <http://localhost:3000>. O `basePath` `/GeraDocsFrontend` só existe na
+publicação — o GitHub Pages serve o projeto sob esse caminho, e quem o declara é
+o `deploy.yml` (`NEXT_PUBLIC_BASE_PATH`). Localmente a aplicação abre na raiz.
 
 Você precisa de uma conta ativa cadastrada no back-end. Não há usuário de
 demonstração desde a integração real.

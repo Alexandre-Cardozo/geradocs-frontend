@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test"
 import type { Page } from "@playwright/test"
 
 import {
+  APP,
   comProcessoEDocumento,
   comSessao,
   prestesALogar,
@@ -92,7 +93,7 @@ test.describe("navegação por perfil", () => {
 
     // O RBAC de rota é conveniência de interface — quem barra de verdade é o
     // backend —, mas mostrar a tela e depois falhar seria pior que não mostrar.
-    await expect(page).toHaveURL(/GeraDocsFrontend\/?$/)
+    await expect(page).toHaveURL(new RegExp(`^http://localhost:3000${APP}/?$`))
   })
 })
 

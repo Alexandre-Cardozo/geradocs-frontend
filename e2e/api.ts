@@ -11,9 +11,9 @@ import type { Page } from "@playwright/test"
 const API = "**/api/v1"
 
 /** Prefixo do app no GitHub Pages. Toda navegação do e2e passa por aqui. */
-export const APP = "/GeraDocsFrontend"
+export const APP = process.env.NEXT_PUBLIC_BASE_PATH ?? ""
 
-/** Caminho absoluto de uma rota do app. `rota("/processos")` → "/GeraDocsFrontend/processos". */
+/** Caminho absoluto de uma rota do app — com o prefixo da publicação, se houver. */
 export function rota(caminho = "/") {
   return `${APP}${caminho}`.replace(/\/$/, "") || APP
 }

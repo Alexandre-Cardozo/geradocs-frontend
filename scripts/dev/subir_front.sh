@@ -18,9 +18,9 @@ cd "$RAIZ"
 PORTA=3000
 REGISTRO=/tmp/geradocs-front.log
 ARQUIVO_PID=/tmp/geradocs-front.pid
-# O `basePath` do next.config.ts: a raiz responde 308 para cá, e é este endereço
-# que abre a aplicação.
-URL="http://localhost:$PORTA/GeraDocsFrontend"
+# A aplicação abre na raiz: o prefixo `/GeraDocsFrontend` é da publicação no
+# GitHub Pages, declarado no deploy, e não vale em desenvolvimento (§71).
+URL="http://localhost:$PORTA"
 API="${GERADOCS_API_URL:-http://localhost:8080}"
 
 # ---------------------------------------------------------------------------

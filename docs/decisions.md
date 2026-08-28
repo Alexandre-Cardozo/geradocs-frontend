@@ -183,7 +183,7 @@ Login por CPF + senha, várias prefeituras e três perfis de acesso, **mockados*
 
 ## 22. Static export (GitHub Pages): id do processo vira query param
 
-O deploy é **static export** (`output: "export"`, `basePath: "/GeraDocsFrontend"`) publicado no GitHub Pages via GitHub Actions. Nesse modo o Next só gera HTML para os params listados em `generateStaticParams`; **rotas dinâmicas com id de runtime são impossíveis** — um processo novo (`PROC-2024-090`) nunca existiria no build e o acesso caía em 404 (era o bug: o `generateStaticParams` fixo em `{ id: "1" }` derrubava todo processo que não fosse "1", inclusive os das fixtures).
+O deploy é **static export** (`output: "export"`, com o `basePath` `/GeraDocsFrontend` declarado pela publicação — veja §71) publicado no GitHub Pages via GitHub Actions. Nesse modo o Next só gera HTML para os params listados em `generateStaticParams`; **rotas dinâmicas com id de runtime são impossíveis** — um processo novo (`PROC-2024-090`) nunca existiria no build e o acesso caía em 404 (era o bug: o `generateStaticParams` fixo em `{ id: "1" }` derrubava todo processo que não fosse "1", inclusive os das fixtures).
 
 Correção: o id do processo (e o `tipo` do documento) deixaram de ser **segmento dinâmico** e passaram a **query param**. As rotas de processo viraram páginas estáticas fixas:
 
@@ -206,7 +206,7 @@ A decisão de autenticação mockada registrada no §21 foi substituída para o 
 - `lib/api/auth-client.ts` concentra transporte, Problem Details, renovação deduplicada e mapeamento dos enums/DTOs Java para o modelo da interface.
 - O access token JWT existe somente em memória. O refresh token rotativo é enviado pelo backend em cookie `HttpOnly` e nunca fica disponível ao JavaScript ou ao `localStorage`.
 - `getSessao` tenta renovar o token após reload e confirma a identidade em `GET /me`. Requisições autenticadas repetem uma única vez após `401`, evitando ciclos infinitos.
-- A rota estática `/redefinir-senha?token=` completa o link enviado por e-mail. O backend deve usar a URL com o `basePath`: `http://localhost:3000/GeraDocsFrontend/redefinir-senha` no ambiente local.
+- A rota estática `/redefinir-senha?token=` completa o link enviado por e-mail. O backend deve apontar para a URL do ambiente: `http://localhost:3000/redefinir-senha` no local, e a URL publicada (com o prefixo do Pages) em produção.
 - A sessão real alimenta temporariamente os módulos mockados pela fachada existente. Isso preserva telas e hooks, mas dados de processos/configurações ainda não representam persistência real.
 
 ## 24. Integração real da administração de acesso
@@ -947,3 +947,13 @@ Agora são os **cinco parâmetros do Art. 23, § 1º, da Lei 14.133/21**, detalh
 **O "Salvar" do cabeçalho não é o "Salvar e Avançar" — mas se chamava igual.** A dúvida era legítima: dois botões, mesmo verbo, mesma tela. Eles fazem coisas diferentes. "Salvar e Avançar" declara a seção **Completo** — é o que conta no progresso e o que libera a geração do documento. O de cima guarda o texto **sem afirmar que a seção está pronta**, que é o que se quer ao parar no meio de um parágrafo. Remover seria tirar o único jeito de guardar trabalho inacabado. Ele ficou, com o nome do que faz: **"Salvar Rascunho"**.
 
 **E havia uma perda de trabalho por trás disso.** Trocar de seção — pela trilha ou por "Seção Anterior" — recarregava o rascunho da seção de destino e **descartava em silêncio** o que estava escrito e não salvo. O "Salvar" do cabeçalho era a única defesa, e só para quem soubesse que precisava dela. Agora a troca grava antes o que está na tela, como rascunho: nunca "Completo", que continua sendo o que só "Salvar e Avançar" declara. Coberto por e2e com servidor que guarda o que recebe — inclusive o `status`, que é onde os dois botões diferem.
+
+## 71. O `/GeraDocsFrontend` some da URL de desenvolvimento
+
+`localhost:3000` respondia 308 e a aplicação só abria em `localhost:3000/GeraDocsFrontend`. O prefixo estava fixo no `next.config.ts`, e por isso valia em toda parte — inclusive na máquina de quem desenvolve, onde ele não tem função nenhuma. Um detalhe da hospedagem aparecendo em toda URL do dia a dia.
+
+Ele existe por um motivo só: o GitHub Pages serve projeto sob o nome do repositório, e não na raiz do domínio. Então quem publica é que o declara — `NEXT_PUBLIC_BASE_PATH` no `deploy.yml` —, e o `next.config.ts` só o aplica quando ele vem. Localmente a URL é a que se espera: `localhost:3000/processos/detalhe?id=…`.
+
+**De quebra, a caixa estava errada.** O prefixo era `/GeraDocsFrontend` e o repositório é `geradocs-frontend`; o endereço publicado é `alexandre-cardozo.github.io/geradocs-frontend/`. Funcionava porque o Pages é tolerante com a caixa do segmento do repositório — não porque estivesse certo. Agora o prefixo é o nome do repositório, literal.
+
+O `playwright.config.ts` e o `e2e/api.ts` leem o mesmo env var, de modo que a suíte roda igual com prefixo ou sem. E o link de redefinição de senha do backend (`PASSWORD_RESET_FRONTEND_URL`) passou a apontar para `http://localhost:3000/redefinir-senha` no ambiente local.
