@@ -62,6 +62,7 @@ export function ConferenciaDaDispensa({ processoId }: { processoId: string }) {
         <span className="text-xs text-text-3">
           {formatBRL(dados.valorEstimado)} de {formatBRL(dados.limite ?? 0)} ·{" "}
           {dados.fundamentoLegal} · {dados.decretoDoLimite}
+          {dados.limiteDobrado ? " · limite em dobro (Art. 75, § 2º)" : ""}
         </span>
       </div>
     )
@@ -71,7 +72,8 @@ export function ConferenciaDaDispensa({ processoId }: { processoId: string }) {
     <InfoBanner tone="warning">
       O valor estimado de <strong>{formatBRL(dados.valorEstimado)}</strong> ultrapassa o limite de{" "}
       <strong>{formatBRL(dados.limite ?? 0)}</strong> da dispensa em razão do valor (
-      {dados.fundamentoLegal}, {dados.decretoDoLimite}, exercício {dados.exercicio}). Contratação
+      {dados.fundamentoLegal}, {dados.decretoDoLimite}, exercício {dados.exercicio}
+      {dados.limiteDobrado ? ", já em dobro pelo Art. 75, § 2º" : ""}). Contratação
       direta fora das hipóteses legais é causa de nulidade do ato e de responsabilização de quem lhe
       deu causa. Confira o fundamento declarado, o valor estimado, ou registre nos autos a razão de
       manter esta contratação como dispensa.

@@ -914,6 +914,8 @@ export interface ConferenciaDaDispensa {
   /** O inciso citado literalmente, para o documento. */
   fundamentoLegal?: string;
   limite?: number;
+  /** O limite vale em dobro para esta entidade (Art. 75, § 2º). */
+  limiteDobrado: boolean;
   /** O decreto que fixou o limite — sem ele o documento não tem o que citar. */
   decretoDoLimite?: string;
   valorEstimado: number;
@@ -931,6 +933,7 @@ interface ConferenciaApi {
   ground?: FundamentoDaDispensa | null;
   legalBasis?: string | null;
   limitAmount?: number | null;
+  doubledLimit: boolean;
   limitSource?: string | null;
   estimatedValue: number;
   fiscalYear: number;
@@ -951,6 +954,7 @@ export async function conferenciaDaDispensa(
     fundamento: conferencia.ground ?? undefined,
     fundamentoLegal: conferencia.legalBasis ?? undefined,
     limite: conferencia.limitAmount ?? undefined,
+    limiteDobrado: conferencia.doubledLimit,
     decretoDoLimite: conferencia.limitSource ?? undefined,
     valorEstimado: Number(conferencia.estimatedValue),
     exercicio: conferencia.fiscalYear,

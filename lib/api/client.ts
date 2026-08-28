@@ -615,6 +615,13 @@ export async function getEntidades(): Promise<Tenant[]> {
 }
 
 export interface NovaEntidadeInput {
+  /**
+   * Autarquia ou fundação qualificada como agência executiva.
+   *
+   * <p>Dobra os limites de dispensa (Art. 75, § 2º). Declarada e não deduzida do
+   * tipo: nem toda autarquia é agência executiva.
+   */
+  agenciaExecutiva?: boolean
   nome: string
   /** O servidor assume `prefeitura` sem este campo — ver `lib/types.ts`. */
   tipo: TipoEntidade

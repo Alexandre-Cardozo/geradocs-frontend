@@ -375,6 +375,8 @@ export interface Tenant {
   id: string
   nome: string
   tipo: TipoEntidade
+  /** Qualificada como agência executiva: dobra os limites de dispensa (Art. 75, § 2º). */
+  agenciaExecutiva?: boolean
   secretarias: Secretaria[]
   /*
     O brasão não mora aqui. Ele é do timbre, e quem o quer o pede por

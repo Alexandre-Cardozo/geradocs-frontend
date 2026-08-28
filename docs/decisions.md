@@ -1075,3 +1075,15 @@ A plataforma deixava marcar "Dispensa de Licitação" em processo de qualquer va
 **Declarar o inciso pode acontecer depois.** Exigi-lo na abertura faria a pessoa inventar fundamento para poder seguir. Quando falta, o próprio alerta oferece declará-lo ali — e "pendente" só existe dentro da dispensa: dizer que falta o inciso de um pregão seria pendência inventada.
 
 **E ela informa, nunca impede.** Quem escolhe o fundamento é quem responde pelo processo, e há razão que a plataforma não vê. O que ela não pode é calar sobre uma subtração que sabe fazer.
+
+## 78. Consórcio e agência executiva dobram o limite (Art. 75, § 2º)
+
+O parágrafo duplica os valores dos incisos I e II para "compras, obras e serviços contratados por consórcio público ou por autarquia ou fundação qualificadas como agências executivas". Sem isso, a conferência da §77 apontaria como irregular uma contratação que a lei permite — e alerta falso é como se aprende a ignorar alerta.
+
+**Consórcio dobra pelo próprio tipo**, que a lei nomeia sem condição e que o cadastro de entidades já guarda. **A qualificação da autarquia e da fundação é declarada**, não deduzida: nem toda autarquia é agência executiva, e presumir que sim liberaria o dobro para quem não tem direito a ele. Esse é o erro perigoso — o outro lado erra para o lado seguro, apontando algo que a pessoa vai conferir; este afirma regularidade onde ela não existe.
+
+Por isso a marcação só aparece para autarquia e fundação: oferecê-la a uma prefeitura seria escolha sem efeito, e ao consórcio seria redundante.
+
+**A regra vive uma vez**, no domínio de acesso, com uma variante estática para o módulo de contratação — que precisa da resposta e não do agregado. Duas regras iguais divergem na primeira mudança.
+
+O campo é opcional no corpo da requisição: ausente é "não", e exigi-lo quebraria todo cliente que já existia.

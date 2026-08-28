@@ -367,6 +367,9 @@
             "enum" : [ "PREFEITURA", "CAMARA", "AUTARQUIA", "FUNDACAO", "CONSORCIO", "OUTRO" ],
             "type" : "string"
           },
+          "executiveAgency" : {
+            "type" : "boolean"
+          },
           "name" : {
             "maxLength" : 200,
             "minLength" : 0,
@@ -658,6 +661,9 @@
           "dispensation" : {
             "type" : "boolean"
           },
+          "doubledLimit" : {
+            "type" : "boolean"
+          },
           "estimatedValue" : {
             "type" : "number"
           },
@@ -688,7 +694,7 @@
             "type" : "boolean"
           }
         },
-        "required" : [ "applicable", "dispensation", "estimatedValue", "exceeds", "fiscalYear", "pendingGround", "pendingLimit" ],
+        "required" : [ "applicable", "dispensation", "doubledLimit", "estimatedValue", "exceeds", "fiscalYear", "pendingGround", "pendingLimit" ],
         "type" : "object"
       },
       "DivergentValueView" : {
@@ -1053,6 +1059,9 @@
             "enum" : [ "PREFEITURA", "CAMARA", "AUTARQUIA", "FUNDACAO", "CONSORCIO", "OUTRO" ],
             "type" : "string"
           },
+          "executiveAgency" : {
+            "type" : "boolean"
+          },
           "id" : {
             "format" : "uuid",
             "type" : "string"
@@ -1076,7 +1085,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "createdAt", "entityType", "id", "name", "status", "updatedAt", "version" ],
+        "required" : [ "createdAt", "entityType", "executiveAgency", "id", "name", "status", "updatedAt", "version" ],
         "type" : "object"
       },
       "PageProcurementProcessResponse" : {
@@ -1723,6 +1732,9 @@
           "entityType" : {
             "enum" : [ "PREFEITURA", "CAMARA", "AUTARQUIA", "FUNDACAO", "CONSORCIO", "OUTRO" ],
             "type" : "string"
+          },
+          "executiveAgency" : {
+            "type" : "boolean"
           },
           "name" : {
             "maxLength" : 200,

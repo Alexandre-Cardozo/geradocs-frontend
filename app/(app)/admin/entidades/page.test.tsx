@@ -142,4 +142,33 @@ describe("desativar entidade", () => {
     const botao = await screen.findByRole("button", { name: /Desativar Prefeitura Municipal/ })
     expect(botao).toBeEnabled()
   })
+
+  it("só autarquia e fundação podem ser qualificadas como agência executiva", async () => {
+    comEntidades([])
+    let enviado: Record<string, unknown> | null = null
+    servidor.use(
+      http.post(`${urlDaApi}/organizations`, async ({ request }) => {
+        enviado = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json({ ...ENTIDADE, id: "nova" }, { status: 201 })
+      }),
+    )
+    renderizar(<AdminEntidades />)
+
+    await userEvent.click(await screen.findByRole("button", { name: /Nova Entidade/ }))
+    await userEvent.type(screen.getByLabelText(/Nome da Entidade/), "Instituto de Previdência")
+
+    // Prefeitura não entra no Art. 75, § 2º de jeito nenhum, e o consórcio já
+    // dobra pelo próprio tipo: perguntar ali seria oferecer escolha sem efeito.
+    expect(
+      screen.queryByLabelText("Qualificada como agência executiva"),
+    ).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole("button", { name: "Tipo da entidade" }))
+    await userEvent.click(await screen.findByRole("option", { name: /Autarquia/ }))
+    await userEvent.click(screen.getByLabelText("Qualificada como agência executiva"))
+    await userEvent.click(screen.getByRole("button", { name: "Cadastrar" }))
+
+    await waitFor(() => expect(enviado).not.toBeNull())
+    expect(enviado!.executiveAgency).toBe(true)
+  })
 })

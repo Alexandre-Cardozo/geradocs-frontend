@@ -1,16 +1,16 @@
-"use client"
+"use client";
 
-import { useState } from "react"
+import { useState } from "react";
 
-import { Button, Dropdown, FormField, Input, InfoBanner, Tag } from "@/components/ui"
-import { IconBuilding, IconPlus, IconTrash } from "@/components/ui/icons"
-import { EmptyState, ErrorState, SkeletonRows } from "@/components/shared/estados"
-import { Th } from "@/components/shared/tabela"
-import { useToast } from "@/components/shared/providers"
-import { useCriarEntidade, useEntidades, useRemoverEntidade, useUsuarios } from "@/lib/api/hooks"
-import { TIPO_ENTIDADE_LABEL, type TipoEntidade } from "@/lib/types"
+import { Button, Dropdown, FormField, Input, InfoBanner, Tag, Toggle } from "@/components/ui";
+import { IconBuilding, IconPlus, IconTrash } from "@/components/ui/icons";
+import { EmptyState, ErrorState, SkeletonRows } from "@/components/shared/estados";
+import { Th } from "@/components/shared/tabela";
+import { useToast } from "@/components/shared/providers";
+import { useCriarEntidade, useEntidades, useRemoverEntidade, useUsuarios } from "@/lib/api/hooks";
+import { TIPO_ENTIDADE_LABEL, type TipoEntidade } from "@/lib/types";
 
-const TIPOS = Object.entries(TIPO_ENTIDADE_LABEL).map(([value, label]) => ({ value, label }))
+const TIPOS = Object.entries(TIPO_ENTIDADE_LABEL).map(([value, label]) => ({ value, label }));
 
 /**
  * Entidades clientes da plataforma.
@@ -28,42 +28,50 @@ const TIPOS = Object.entries(TIPO_ENTIDADE_LABEL).map(([value, label]) => ({ val
  * `PREFEITURA`, e a câmara cadastrada aqui viraria prefeitura no banco.
  */
 export default function AdminEntidades() {
-  const showToast = useToast()
-  const entidades = useEntidades()
-  const usuarios = useUsuarios()
-  const criar = useCriarEntidade()
-  const remover = useRemoverEntidade()
+  const showToast = useToast();
+  const entidades = useEntidades();
+  const usuarios = useUsuarios();
+  const criar = useCriarEntidade();
+  const remover = useRemoverEntidade();
 
-  const [novo, setNovo] = useState(false)
-  const [nome, setNome] = useState("")
-  const [tipo, setTipo] = useState<TipoEntidade>("prefeitura")
+  const [novo, setNovo] = useState(false);
+  const [nome, setNome] = useState("");
+  const [tipo, setTipo] = useState<TipoEntidade>("prefeitura");
+  /*
+    A qualificação como agência executiva dobra os limites de dispensa
+    (Art. 75, § 2º). Declarada e não deduzida do tipo: nem toda autarquia a tem,
+    e presumir que sim liberaria o dobro para quem não tem direito a ele (§78).
+  */
+  const [agenciaExecutiva, setAgenciaExecutiva] = useState(false);
+  const qualificavel = tipo === "autarquia" || tipo === "fundacao";
 
-  const ordenadas = [...(entidades.data ?? [])].sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"))
+  const ordenadas = [...(entidades.data ?? [])].sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
 
   const salvar = () => {
-    if (nome.trim() === "") return
+    if (nome.trim() === "") return;
     criar.mutate(
-      { nome, tipo },
+      { nome, tipo, agenciaExecutiva: qualificavel && agenciaExecutiva },
       {
         onSuccess: () => {
-          showToast("Entidade cadastrada.")
-          setNovo(false)
-          setNome("")
-          setTipo("prefeitura")
+          showToast("Entidade cadastrada.");
+          setNovo(false);
+          setNome("");
+          setTipo("prefeitura");
+          setAgenciaExecutiva(false);
         },
         onError: (e) => showToast(e instanceof Error ? e.message : "Não foi possível cadastrar."),
       },
-    )
-  }
+    );
+  };
 
   const excluir = (id: string, nomeDaEntidade: string) => {
     remover.mutate(id, {
       onSuccess: () => showToast(`${nomeDaEntidade} desativada.`),
       onError: (e) => showToast(e instanceof Error ? e.message : "Não foi possível remover."),
-    })
-  }
+    });
+  };
 
-  const servidoresDe = (id: string) => (usuarios.data ?? []).filter((u) => u.entidadeId === id).length
+  const servidoresDe = (id: string) => (usuarios.data ?? []).filter((u) => u.entidadeId === id).length;
 
   return (
     <div className="w-full p-4 sm:p-5 lg:p-7">
@@ -71,8 +79,7 @@ export default function AdminEntidades() {
         <div>
           <h1 className="m-0 font-display text-2xl font-extrabold tracking-tight text-text-1">Entidades</h1>
           <p className="m-0 mt-1 text-md text-text-3">
-            Cadastre as entidades clientes do GeraDocs — prefeituras, câmaras, autarquias e
-            consórcios.
+            Cadastre as entidades clientes do GeraDocs — prefeituras, câmaras, autarquias e consórcios.
           </p>
         </div>
         <Button icon={<IconPlus size={14} strokeWidth={2.5} />} onClick={() => setNovo((v) => !v)}>
@@ -96,7 +103,7 @@ export default function AdminEntidades() {
                 onKeyDown={(e) => {
                   // Formulário curto: Enter cadastra, como em qualquer outro.
                   // Obrigar o mouse aqui seria atrito sem motivo.
-                  if (e.key === "Enter" && nome.trim() !== "" && !criar.isPending) salvar()
+                  if (e.key === "Enter" && nome.trim() !== "" && !criar.isPending) salvar();
                 }}
               />
             </FormField>
@@ -111,8 +118,28 @@ export default function AdminEntidades() {
               />
             </FormField>
           </div>
+          {/*
+            Só a autarquia e a fundação podem ser qualificadas: o consórcio já
+            dobra pelo próprio tipo, que a lei nomeia sem condição, e prefeitura
+            não entra no parágrafo de jeito nenhum.
+          */}
+          {qualificavel && (
+            <div className="mt-4">
+              <Toggle
+                checked={agenciaExecutiva}
+                onChange={setAgenciaExecutiva}
+                label="Qualificada como agência executiva"
+              />
+              <p className="m-0 mt-1 text-xs text-text-3">
+                Dobra os limites de dispensa em razão do valor (Art. 75, § 2º, Lei 14.133/21). Marque apenas se a
+                qualificação existir de fato.
+              </p>
+            </div>
+          )}
           <div className="mt-4 flex gap-2.5">
-            <Button variant="secondary" onClick={() => setNovo(false)}>Cancelar</Button>
+            <Button variant="secondary" onClick={() => setNovo(false)}>
+              Cancelar
+            </Button>
             <p id="motivo-criar-entidade" className="sr-only">
               O nome da entidade é obrigatório.
             </p>
@@ -128,9 +155,8 @@ export default function AdminEntidades() {
       )}
 
       <InfoBanner tone="info" className="mb-4">
-        Os servidores de cada entidade são cadastrados em <strong>Servidores</strong>. A
-        configuração da entidade (timbre, secretarias e PCA) é feita pelo respectivo coordenador em
-        Configurações.
+        Os servidores de cada entidade são cadastrados em <strong>Servidores</strong>. A configuração da entidade
+        (timbre, secretarias e PCA) é feita pelo respectivo coordenador em Configurações.
       </InfoBanner>
 
       <div className="overflow-hidden rounded-card border border-border bg-surface">
@@ -149,7 +175,7 @@ export default function AdminEntidades() {
               </thead>
               <tbody>
                 {ordenadas.map((entidade, i) => {
-                  const servidores = servidoresDe(entidade.id)
+                  const servidores = servidoresDe(entidade.id);
                   /*
                     Entidade com servidor vinculado não é desativada. Ao ser, os
                     servidores dela ficavam apontando para uma entidade fora da
@@ -161,7 +187,7 @@ export default function AdminEntidades() {
                   const motivo =
                     servidores > 0
                       ? `${entidade.nome} tem ${servidores} servidor(es) vinculado(s). Desative-os antes.`
-                      : `Desativar ${entidade.nome}`
+                      : `Desativar ${entidade.nome}`;
 
                   return (
                     <tr key={entidade.id} className={i < ordenadas.length - 1 ? "border-b border-ice" : ""}>
@@ -192,7 +218,7 @@ export default function AdminEntidades() {
                         </button>
                       </td>
                     </tr>
-                  )
+                  );
                 })}
               </tbody>
             </table>
@@ -200,5 +226,5 @@ export default function AdminEntidades() {
         )}
       </div>
     </div>
-  )
+  );
 }

@@ -25,6 +25,7 @@ function comConferencia(dados: Record<string, unknown>) {
         ground: "VALUE_GENERAL",
         legalBasis: "Art. 75, II, Lei 14.133/21",
         limitAmount: 65492.11,
+        doubledLimit: false,
         limitSource: "Decreto nº 12.807/2025",
         estimatedValue: 12500,
         fiscalYear: 2026,
@@ -131,5 +132,15 @@ describe("conferência da dispensa", () => {
     const { container } = renderizar(<ConferenciaDaDispensa processoId={PROCESSO} />)
 
     await waitFor(() => expect(container).toBeEmptyDOMElement())
+  })
+
+  it("entidade com limite em dobro diz que ele está em dobro", async () => {
+    comConferencia({ doubledLimit: true, limitAmount: 130984.22 })
+    renderizar(<ConferenciaDaDispensa processoId={PROCESSO} />)
+
+    // Aplicar o limite simples a um consórcio apontaria como irregular uma
+    // contratação que a lei permite — e não dizer que dobrou faria o número
+    // parecer errado.
+    expect(await screen.findByText(/limite em dobro \(Art. 75, § 2º\)/)).toBeInTheDocument()
   })
 })

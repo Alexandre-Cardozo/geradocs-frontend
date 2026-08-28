@@ -1058,6 +1058,7 @@ export interface components {
         CreateOrganizationRequest: {
             /** @enum {string} */
             entityType?: "PREFEITURA" | "CAMARA" | "AUTARQUIA" | "FUNDACAO" | "CONSORCIO" | "OUTRO";
+            executiveAgency?: boolean;
             name: string;
             unit?: string;
         };
@@ -1149,6 +1150,7 @@ export interface components {
         DispensationCheckResponse: {
             applicable: boolean;
             dispensation: boolean;
+            doubledLimit: boolean;
             estimatedValue: number;
             exceeds: boolean;
             /** Format: int32 */
@@ -1294,6 +1296,7 @@ export interface components {
             createdAt: string;
             /** @enum {string} */
             entityType: "PREFEITURA" | "CAMARA" | "AUTARQUIA" | "FUNDACAO" | "CONSORCIO" | "OUTRO";
+            executiveAgency: boolean;
             /** Format: uuid */
             id: string;
             name: string;
@@ -1535,6 +1538,7 @@ export interface components {
         UpdateOrganizationRequest: {
             /** @enum {string} */
             entityType?: "PREFEITURA" | "CAMARA" | "AUTARQUIA" | "FUNDACAO" | "CONSORCIO" | "OUTRO";
+            executiveAgency?: boolean;
             name: string;
             unit?: string;
         };

@@ -11,6 +11,7 @@ interface BackendOrganization {
   name: string
   unit: string | null
   entityType: BackendTipoEntidade
+  executiveAgency?: boolean
   status: "ACTIVE" | "INACTIVE"
   version: number
 }
@@ -76,6 +77,8 @@ function tenantDa(organization: BackendOrganization, secretarias: Secretaria[] =
     id: organization.id,
     nome: organization.name,
     tipo: tipoDaEntidade(organization.entityType),
+    // Só dobra o limite de dispensa quando declarada (Art. 75, § 2º).
+    agenciaExecutiva: organization.executiveAgency === true,
     secretarias,
     timbrado: true,
     cabecalho: organization.name.toUpperCase(),
@@ -118,6 +121,13 @@ function secretariaDa(department: BackendDepartment): Secretaria {
 }
 
 export interface NovaEntidadeInput {
+  /**
+   * Autarquia ou fundação qualificada como agência executiva.
+   *
+   * <p>Dobra os limites de dispensa (Art. 75, § 2º). Declarada e não deduzida do
+   * tipo: nem toda autarquia é agência executiva.
+   */
+  agenciaExecutiva?: boolean
   nome: string
   /**
    * O que a entidade é.
@@ -152,6 +162,7 @@ export async function criarEntidade(input: NovaEntidadeInput): Promise<Tenant> {
     body: JSON.stringify({
       name: input.nome.trim(),
       entityType: TIPO_PARA_BACKEND[input.tipo],
+      executiveAgency: input.agenciaExecutiva ?? false,
     }),
   })
   return tenantDa(organization)
