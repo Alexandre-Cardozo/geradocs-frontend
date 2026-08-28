@@ -548,6 +548,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/procurement-processes/{id}/dispensation-check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["dispensationCheck"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/procurement-processes/{id}/price-quotes": {
         parameters: {
             query?: never;
@@ -1049,6 +1065,8 @@ export interface components {
             demandObject?: string;
             /** Format: uuid */
             departmentId: string;
+            /** @enum {string} */
+            dispensationGround?: "VALUE_ENGINEERING" | "VALUE_GENERAL" | "OTHER";
             documents?: ("COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO")[];
             estimatedValue: number;
             legalBasis?: string;
@@ -1127,6 +1145,21 @@ export interface components {
             byteSize: number;
             mediaType: string;
             sha256: string;
+        };
+        DispensationCheckResponse: {
+            applicable: boolean;
+            dispensation: boolean;
+            estimatedValue: number;
+            exceeds: boolean;
+            /** Format: int32 */
+            fiscalYear: number;
+            /** @enum {string} */
+            ground?: "VALUE_ENGINEERING" | "VALUE_GENERAL" | "OTHER";
+            legalBasis?: string;
+            limitAmount?: number;
+            limitSource?: string;
+            pendingGround: boolean;
+            pendingLimit: boolean;
         };
         DivergentValueView: {
             departmentName: string;
@@ -1401,6 +1434,8 @@ export interface components {
             /** Format: uuid */
             departmentId?: string;
             departmentName?: string;
+            /** @enum {string} */
+            dispensationGround?: "VALUE_ENGINEERING" | "VALUE_GENERAL" | "OTHER";
             documents: ("COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO")[];
             estimatedValue?: number;
             /** Format: uuid */
@@ -1506,6 +1541,8 @@ export interface components {
         UpdateProcurementProcessRequest: {
             changeNote?: string;
             demandObject?: string;
+            /** @enum {string} */
+            dispensationGround?: "VALUE_ENGINEERING" | "VALUE_GENERAL" | "OTHER";
             documents?: ("COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO")[];
             estimatedValue: number;
             legalBasis?: string;
@@ -2721,6 +2758,28 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ProcessDfdResponse"];
+                };
+            };
+        };
+    };
+    dispensationCheck: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DispensationCheckResponse"];
                 };
             };
         };

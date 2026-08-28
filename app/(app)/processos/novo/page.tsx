@@ -45,7 +45,9 @@ import {
 } from "@/lib/documentos";
 import { formatBRL, parseValorBR } from "@/lib/format";
 import {
+  FUNDAMENTO_DA_DISPENSA,
   MODALIDADE_LABEL,
+  type FundamentoDaDispensa,
   type Modalidade,
   type ModoATA,
   type TipoDocumento,
@@ -186,6 +188,12 @@ export default function NovoProcesso() {
 
   // Passo 1 — modalidade e opções de ATA
   const [modalidade, setModalidade] = useState("");
+  /*
+    O inciso do Art. 75. Só a dispensa o tem, e o artigo tem dezoito incisos —
+    só dois com limite de valor. Sem esta declaração, ou a plataforma alerta
+    sobre valor numa dispensa por emergência, ou cala onde precisa falar (§77).
+  */
+  const [fundamentoDaDispensa, setFundamentoDaDispensa] = useState<FundamentoDaDispensa | "">("");
   const [isAdesaoATA, setIsAdesaoATA] = useState(false);
   const [ataMode, setATAMode] = useState<ModoATA | "">("");
   const [ataFile, setATAFile] = useState<string | null>(null);
@@ -265,6 +273,7 @@ export default function NovoProcesso() {
         objeto: objeto.trim(),
         objetoDemanda: objetoDemanda.trim() || undefined,
         modalidade: modalidadeSel.valor,
+        ...(fundamentoDaDispensa === "" ? {} : { fundamentoDaDispensa }),
         secretaria,
         valorEstimado: valorNumerico,
         fundamentoLegal: fundamento.trim() || undefined,
@@ -326,6 +335,38 @@ export default function NovoProcesso() {
                   />
                 ))}
               </div>
+
+              {/*
+                O inciso só aparece na dispensa, e não é obrigatório: declarar o
+                fundamento é ato de quem conduz o processo e pode acontecer
+                depois — exigi-lo aqui faria inventar fundamento para poder
+                seguir.
+              */}
+              {modalidadeSel?.valor === "Dispensa Art. 75" && (
+                <div className="mb-6 max-w-2xl">
+                  <FormField
+                    label="Fundamento da Dispensa"
+                    hint="Só os incisos I e II têm limite de valor. Pode ser declarado depois."
+                  >
+                    <Dropdown
+                      value={fundamentoDaDispensa}
+                      onChange={(escolha) =>
+                        setFundamentoDaDispensa(escolha as FundamentoDaDispensa | "")
+                      }
+                      ariaLabel="Fundamento da Dispensa"
+                      options={[
+                        { value: "", label: "Declarar depois..." },
+                        ...(
+                          Object.keys(FUNDAMENTO_DA_DISPENSA) as FundamentoDaDispensa[]
+                        ).map((chave) => ({
+                          value: chave,
+                          label: FUNDAMENTO_DA_DISPENSA[chave],
+                        })),
+                      ]}
+                    />
+                  </FormField>
+                </div>
+              )}
 
               {/* Adesão de ATA antecipada */}
               <div className="rounded-card border border-border bg-surface px-5 py-4.5">

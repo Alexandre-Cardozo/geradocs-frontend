@@ -46,6 +46,24 @@ export type Modalidade =
   | "Credenciamento"
 
 /**
+ * O inciso do Art. 75 que fundamenta a dispensa de licitação.
+ *
+ * <p>O artigo tem dezoito incisos e **só dois têm limite de valor**: o I, para
+ * obras e serviços de engenharia, e o II, para as demais compras e serviços —
+ * metade do primeiro. Emergência, fornecedor exclusivo, guerra: nenhum tem teto.
+ * Alertar sobre valor numa dispensa por emergência seria alarme falso, e alarme
+ * falso é como se aprende a ignorar alarme.
+ */
+export type FundamentoDaDispensa = "VALUE_ENGINEERING" | "VALUE_GENERAL" | "OTHER"
+
+/** O que a tela oferece ao declarar o fundamento, com o inciso citado. */
+export const FUNDAMENTO_DA_DISPENSA: Record<FundamentoDaDispensa, string> = {
+  VALUE_ENGINEERING: "Valor — obras e serviços de engenharia (Art. 75, I)",
+  VALUE_GENERAL: "Valor — compras e demais serviços (Art. 75, II)",
+  OTHER: "Outra hipótese do Art. 75 (emergência, fornecedor exclusivo, etc.)",
+}
+
+/**
  * Rótulo de exibição da modalidade — fonte única usada no wizard de Novo
  * Processo e nos filtros. Difere do valor apenas onde o nome usual não é o valor
  * técnico (ex.: "Dispensa Art. 75" é exibida como "Dispensa de Licitação").
@@ -88,6 +106,8 @@ export interface Processo {
   /** Objeto da demanda (contratação em si) — trabalha junto com o DFD e alimenta o ETP. */
   objetoDemanda?: string
   modalidade: Modalidade
+  /** O inciso do Art. 75; ausente fora da dispensa e enquanto não for declarado. */
+  fundamentoDaDispensa?: FundamentoDaDispensa
   secretaria: string
   status: StatusProcesso
   /** Quando a plataforma deixou de acompanhar o processo. */
@@ -120,6 +140,8 @@ export interface NovoProcessoInput {
   objeto: string
   objetoDemanda?: string
   modalidade: Modalidade
+  /** O inciso do Art. 75, quando a modalidade é a dispensa. */
+  fundamentoDaDispensa?: FundamentoDaDispensa
   secretaria: string
   valorEstimado?: number
   fundamentoLegal?: string

@@ -392,6 +392,10 @@
             "format" : "uuid",
             "type" : "string"
           },
+          "dispensationGround" : {
+            "enum" : [ "VALUE_ENGINEERING", "VALUE_GENERAL", "OTHER" ],
+            "type" : "string"
+          },
           "documents" : {
             "items" : {
               "enum" : [ "COTACAO", "ETP", "MAPA", "TR", "EDITAL", "CONTRATO" ],
@@ -644,6 +648,47 @@
           }
         },
         "required" : [ "byteSize", "mediaType", "sha256" ],
+        "type" : "object"
+      },
+      "DispensationCheckResponse" : {
+        "properties" : {
+          "applicable" : {
+            "type" : "boolean"
+          },
+          "dispensation" : {
+            "type" : "boolean"
+          },
+          "estimatedValue" : {
+            "type" : "number"
+          },
+          "exceeds" : {
+            "type" : "boolean"
+          },
+          "fiscalYear" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "ground" : {
+            "enum" : [ "VALUE_ENGINEERING", "VALUE_GENERAL", "OTHER" ],
+            "type" : "string"
+          },
+          "legalBasis" : {
+            "type" : "string"
+          },
+          "limitAmount" : {
+            "type" : "number"
+          },
+          "limitSource" : {
+            "type" : "string"
+          },
+          "pendingGround" : {
+            "type" : "boolean"
+          },
+          "pendingLimit" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "applicable", "dispensation", "estimatedValue", "exceeds", "fiscalYear", "pendingGround", "pendingLimit" ],
         "type" : "object"
       },
       "DivergentValueView" : {
@@ -1380,6 +1425,10 @@
           "departmentName" : {
             "type" : "string"
           },
+          "dispensationGround" : {
+            "enum" : [ "VALUE_ENGINEERING", "VALUE_GENERAL", "OTHER" ],
+            "type" : "string"
+          },
           "documents" : {
             "items" : {
               "enum" : [ "COTACAO", "ETP", "MAPA", "TR", "EDITAL", "CONTRATO" ],
@@ -1699,6 +1748,10 @@
           "demandObject" : {
             "maxLength" : 2000,
             "minLength" : 3,
+            "type" : "string"
+          },
+          "dispensationGround" : {
+            "enum" : [ "VALUE_ENGINEERING", "VALUE_GENERAL", "OTHER" ],
             "type" : "string"
           },
           "documents" : {
@@ -3382,6 +3435,33 @@
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProcessDfdResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "procurement-process-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{id}/dispensation-check" : {
+      "get" : {
+        "operationId" : "dispensationCheck",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DispensationCheckResponse"
                 }
               }
             },

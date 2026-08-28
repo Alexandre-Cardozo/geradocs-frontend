@@ -1057,3 +1057,21 @@ O **Art. 3º da IN SEGES/ME nº 65/2021** exige que a pesquisa contenha a memór
 **Substituir é permitido, e a trilha nomeia o documento trocado** — como no DFD (ADR-028). Sobrescrever o lastro de um preço em silêncio é o que não pode acontecer.
 
 Tabela separada de `price_quotes`, pela mesma razão do DFD: a série é lida inteira a cada abertura das seções da Cotação, e coluna `bytea` em entidade JPA entra no `select` por padrão — seriam dezenas de MB para desenhar uma tabela de preços.
+
+## 77. O valor da dispensa passa a ser conferido contra o limite (Art. 75, I e II)
+
+A plataforma deixava marcar "Dispensa de Licitação" em processo de qualquer valor e não dizia nada. Um processo de R$ 1,2 milhão saía com ETP, TR, Edital e Contrato citando um fundamento que o próprio valor contradiz. Contratação direta fora das hipóteses legais é **nulidade do ato** e responsabilização de quem lhe deu causa — e a plataforma tinha os dois números na mão.
+
+**Três decisões que uma conferência ingênua erraria:**
+
+**Os limites são dado, não constante.** O Art. 182 manda atualizá-los pelo IPCA-E, e o decreto sai na última semana de dezembro — em 2026 são os do Decreto nº 12.807/2025 (R$ 130.984,20 e R$ 65.492,11); em 2025, os do 12.343/2024. Constante no código ficaria errada todo 1º de janeiro. Exercício sem linha cadastrada **não vira palpite**: a tela informa que os limites daquele ano ainda não foram cadastrados, porque limite errado é pior que limite ausente — o ausente ela avisa, o errado ela afirma.
+
+**São dois limites, e qual se aplica não é inferível.** O inciso I vale para obras e serviços de engenharia; o II, para as demais compras e serviços — metade do primeiro. "Reforma da cobertura da escola" e "aquisição de telhas" começam parecidos e caem em incisos diferentes, então é declaração de quem abre o processo.
+
+**O Art. 75 tem dezoito incisos e só dois têm teto.** Emergência, fornecedor exclusivo, guerra: nenhum tem limite de valor. Alertar sobre valor numa dispensa por emergência seria alarme falso — e alarme falso é como se aprende a ignorar alarme. Por isso o fundamento é um campo só, com três opções, e o alerta só existe nas duas primeiras.
+
+**O exercício é o da abertura do processo, e não o do calendário.** Uma contratação aberta em 2026 se submete aos limites de 2026 mesmo que o documento seja gerado de novo em 2028 — amarrar ao relógio faria a conferência de um processo encerrado mudar de resultado sozinha. Mesma razão do exercício do PCA.
+
+**Declarar o inciso pode acontecer depois.** Exigi-lo na abertura faria a pessoa inventar fundamento para poder seguir. Quando falta, o próprio alerta oferece declará-lo ali — e "pendente" só existe dentro da dispensa: dizer que falta o inciso de um pregão seria pendência inventada.
+
+**E ela informa, nunca impede.** Quem escolhe o fundamento é quem responde pelo processo, e há razão que a plataforma não vê. O que ela não pode é calar sobre uma subtração que sabe fazer.

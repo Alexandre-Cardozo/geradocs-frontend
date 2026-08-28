@@ -27,6 +27,7 @@ import {
   useSecoes,
 } from "@/lib/api/hooks"
 import { ConciliacaoDeValores } from "@/components/processos/conciliacao-de-valores"
+import { ConferenciaDaDispensa } from "@/components/processos/conferencia-da-dispensa"
 import { ConsolidacaoDaDemanda } from "@/components/processos/consolidacao-da-demanda"
 import { DfdsDoProcesso } from "@/components/processos/dfds-do-processo"
 import { DotacoesDoProcesso } from "@/components/processos/dotacoes-do-processo"
@@ -361,6 +362,15 @@ export default function HubProcesso() {
           </div>
 
         </dl>
+
+        {/*
+          A conferência do valor contra o limite da dispensa. Informa e não
+          impede: quem escolhe o fundamento é quem responde pelo processo, e há
+          razão que a plataforma não vê (§77).
+        */}
+        <div className="mt-4">
+          <ConferenciaDaDispensa processoId={processoId} />
+        </div>
 
         {/*
           Os três valores do processo têm estatutos diferentes — preliminar do

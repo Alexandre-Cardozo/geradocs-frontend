@@ -27,6 +27,7 @@ import { iaDisponivel } from "@/lib/api/ai-client"
 import {
   anexarArquivoAoDfd,
   anexarDocumentoDaColeta,
+  conferenciaDaDispensa,
   atualizarColeta,
   atualizarDotacao,
   atualizarItensDoDfd,
@@ -61,6 +62,7 @@ export const chaves = {
   dfds: (id: string) => ["dfds", id] as const,
   dotacoes: (id: string) => ["dotacoes", id] as const,
   coletas: (id: string) => ["coletas", id] as const,
+  dispensa: (id: string) => ["conferencia-dispensa", id] as const,
   iaDisponivel: ["ia-disponivel"] as const,
   secoes: (id: string, tipo: TipoDocumento) => ["secoes", id, tipo] as const,
   documentos: ["documentos"] as const,
@@ -258,6 +260,9 @@ export function useAtualizarProcesso() {
       void queryClient.invalidateQueries({ queryKey: ["processos"] })
       // A edição grava o porquê na trilha do servidor.
       void queryClient.invalidateQueries({ queryKey: chaves.trilha(processo.id) })
+      // O valor e o inciso são o que a conferência compara: mantê-la velha
+      // mostraria um alerta que a edição acabou de resolver.
+      void queryClient.invalidateQueries({ queryKey: chaves.dispensa(processo.id) })
     },
   })
 }
@@ -845,6 +850,20 @@ export function useRemoverDotacao(processoId: string) {
     mutationFn: (dotacaoId: string) => removerDotacao(processoId, dotacaoId),
     onSuccess: () =>
       void queryClient.invalidateQueries({ queryKey: chaves.dotacoes(processoId) }),
+  })
+}
+
+/**
+ * A conferência do valor contra o limite da dispensa (Art. 75, I e II).
+ *
+ * <p>Depende do valor do processo e do inciso declarado, e ambos mudam na tela —
+ * por isso a chave é do processo e a consulta acompanha as invalidações dele.
+ */
+export function useConferenciaDaDispensa(processoId: string) {
+  return useQuery({
+    queryKey: chaves.dispensa(processoId),
+    queryFn: () => conferenciaDaDispensa(processoId),
+    enabled: processoId !== "",
   })
 }
 

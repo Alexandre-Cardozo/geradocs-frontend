@@ -73,6 +73,7 @@ import {
 import { baixarArquivo, gerarArquivos } from "@/lib/api/generation-client"
 import { dataHoraBrasiliaISO } from "@/lib/format"
 import type {
+  FundamentoDaDispensa,
   DocumentoGerado,
   EstatisticasDashboard,
   EventoDoProcesso,
@@ -214,6 +215,8 @@ export interface AtualizarProcessoInput {
   modalidade?: Modalidade
   /** O valor estimado, no formato do formulário — a conciliação o adota (§75). */
   valorEstimado?: string
+  /** O inciso do Art. 75, declarado depois da abertura (§77). */
+  fundamentoDaDispensa?: FundamentoDaDispensa
   /**
    * Preenchida quando a lista de documentos é mantida divergindo da
    * recomendação. Vai literal para a trilha — é ela que responde ao controle.
@@ -254,6 +257,7 @@ export async function atualizarProcesso(input: AtualizarProcessoInput): Promise<
     modalidade: input.modalidade,
     documentos: input.documentos,
     valorEstimado: input.valorEstimado,
+    fundamentoDaDispensa: input.fundamentoDaDispensa,
     motivo,
   })
 }

@@ -4,6 +4,7 @@ import { baixarProtegido, requisicaoProtegida } from "@/lib/api/auth-client";
 import { ordenar } from "@/lib/documentos";
 import { formatNumeroBR, parseValorBR } from "@/lib/format";
 import type {
+  FundamentoDaDispensa,
   Modalidade,
   NovoProcessoInput,
   Processo,
@@ -38,6 +39,7 @@ interface ProcessoApi {
   objectDescription: string;
   demandObject?: string;
   modality: string;
+  dispensationGround?: FundamentoDaDispensa | null;
   estimatedValue: number;
   legalBasis?: string;
   urgency: boolean;
@@ -89,6 +91,9 @@ function mapear(item: ProcessoApi): Processo {
     encerradoEm: item.closedAt,
     justificativaEncerramento: item.closureNote,
     valorEstimado: Number(item.estimatedValue),
+    ...(item.dispensationGround
+      ? { fundamentoDaDispensa: item.dispensationGround as FundamentoDaDispensa }
+      : {}),
     responsavel: item.responsibleUserName,
     criadoEm: item.createdAt,
     atualizadoEm: item.updatedAt,
@@ -150,6 +155,7 @@ export async function criarProcessoReal(input: NovoProcessoInput): Promise<Proce
           demandObject: input.objetoDemanda,
           modality: modalidades[input.modalidade],
           departmentId: input.secretaria,
+          dispensationGround: input.fundamentoDaDispensa ?? null,
           estimatedValue: input.valorEstimado ?? 0,
           legalBasis: input.fundamentoLegal,
           urgency: false,
@@ -194,6 +200,8 @@ export async function atualizarProcessoReal(
      * DFDs ou a pesquisa sustentam exigia abrir o processo de novo.
      */
     valorEstimado?: string;
+    /** O inciso do Art. 75; `null` retira a declaração. */
+    fundamentoDaDispensa?: FundamentoDaDispensa | null;
     /** Por que mudou; vai literal para a trilha do servidor (ADR-024). */
     motivo?: string;
   },
@@ -209,6 +217,12 @@ export async function atualizarProcessoReal(
         objectDescription: mudancas.objeto ?? atual.objeto,
         demandObject: mudancas.objetoDemanda ?? atual.objetoDemanda,
         modality: modalidades[mudancas.modalidade ?? atual.modalidade],
+        // Reenviado como o resto: o PATCH troca o recurso inteiro, e omiti-lo
+        // apagaria o inciso declarado ao salvar qualquer outro campo.
+        dispensationGround:
+          mudancas.fundamentoDaDispensa === undefined
+            ? (atual.fundamentoDaDispensa ?? null)
+            : mudancas.fundamentoDaDispensa,
         estimatedValue:
           mudancas.valorEstimado === undefined
             ? atual.valorEstimado
@@ -881,4 +895,67 @@ export function baixarDocumentoDaColeta(processoId: string, coletaId: string) {
   return baixarProtegido(
     `/procurement-processes/${encodeURIComponent(processoId)}/price-quotes/${encodeURIComponent(coletaId)}/file`,
   );
+}
+
+/**
+ * A conferência do valor contra o limite da dispensa (Art. 75, I e II).
+ *
+ * <p>Três estados que não são o mesmo, e a tela precisa distingui-los: o valor
+ * ultrapassa o limite, o fundamento ainda não foi declarado, e o exercício não
+ * tem limites cadastrados. Fundi-los num "ok/não ok" faria a pessoa procurar um
+ * problema de valor onde falta um cadastro.
+ */
+export interface ConferenciaDaDispensa {
+  /** A modalidade do processo é a dispensa do Art. 75. */
+  ehDispensa: boolean;
+  /** Há limite a conferir: só nos incisos I e II, e só em dispensa. */
+  aplicavel: boolean;
+  fundamento?: FundamentoDaDispensa;
+  /** O inciso citado literalmente, para o documento. */
+  fundamentoLegal?: string;
+  limite?: number;
+  /** O decreto que fixou o limite — sem ele o documento não tem o que citar. */
+  decretoDoLimite?: string;
+  valorEstimado: number;
+  exercicio: number;
+  ultrapassa: boolean;
+  /** Dispensa que ainda não disse com que inciso. */
+  fundamentoPendente: boolean;
+  /** Exercício sem limites cadastrados — acontece na virada do ano. */
+  limitePendente: boolean;
+}
+
+interface ConferenciaApi {
+  dispensation: boolean;
+  applicable: boolean;
+  ground?: FundamentoDaDispensa | null;
+  legalBasis?: string | null;
+  limitAmount?: number | null;
+  limitSource?: string | null;
+  estimatedValue: number;
+  fiscalYear: number;
+  exceeds: boolean;
+  pendingGround: boolean;
+  pendingLimit: boolean;
+}
+
+export async function conferenciaDaDispensa(
+  processoId: string,
+): Promise<ConferenciaDaDispensa> {
+  const conferencia = await requisicaoProtegida<ConferenciaApi>(
+    `/procurement-processes/${encodeURIComponent(processoId)}/dispensation-check`,
+  );
+  return {
+    ehDispensa: conferencia.dispensation,
+    aplicavel: conferencia.applicable,
+    fundamento: conferencia.ground ?? undefined,
+    fundamentoLegal: conferencia.legalBasis ?? undefined,
+    limite: conferencia.limitAmount ?? undefined,
+    decretoDoLimite: conferencia.limitSource ?? undefined,
+    valorEstimado: Number(conferencia.estimatedValue),
+    exercicio: conferencia.fiscalYear,
+    ultrapassa: conferencia.exceeds,
+    fundamentoPendente: conferencia.pendingGround,
+    limitePendente: conferencia.pendingLimit,
+  };
 }

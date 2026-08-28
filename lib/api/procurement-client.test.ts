@@ -845,3 +845,90 @@ describe("coletas de preço", () => {
     expect(chamada).toBe(daApi.id)
   })
 })
+
+/**
+ * A conferência do valor contra o limite da dispensa (Art. 75, I e II).
+ *
+ * <p>Os campos ausentes precisam voltar ausentes, e não como `null`: a tela
+ * distingue "não há limite a aplicar" de "o limite é nulo", e são coisas
+ * diferentes.
+ */
+describe("conferência da dispensa", () => {
+  const PROCESSO_DA_DISPENSA = "3f2b1a00-1111-4222-8333-444455556666"
+
+  it("traz o inciso, o teto e o decreto quando há limite a conferir", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id/dispensation-check`, () =>
+        HttpResponse.json({
+          dispensation: true,
+          applicable: true,
+          ground: "VALUE_GENERAL",
+          legalBasis: "Art. 75, II, Lei 14.133/21",
+          limitAmount: 65492.11,
+          limitSource: "Decreto nº 12.807/2025",
+          estimatedValue: 70000,
+          fiscalYear: 2026,
+          exceeds: true,
+          pendingGround: false,
+          pendingLimit: false,
+        }),
+      ),
+    )
+    const { conferenciaDaDispensa } = await carregarClienteLimpo()
+
+    const conferencia = await conferenciaDaDispensa(PROCESSO_DA_DISPENSA)
+
+    expect(conferencia.ultrapassa).toBe(true)
+    expect(conferencia.limite).toBe(65492.11)
+    expect(conferencia.decretoDoLimite).toBe("Decreto nº 12.807/2025")
+    expect(conferencia.fundamento).toBe("VALUE_GENERAL")
+  })
+
+  it("sem limite a aplicar, os campos voltam ausentes — e não nulos", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id/dispensation-check`, () =>
+        HttpResponse.json({
+          dispensation: false,
+          applicable: false,
+          ground: null,
+          legalBasis: null,
+          limitAmount: null,
+          limitSource: null,
+          estimatedValue: 12500,
+          fiscalYear: 2026,
+          exceeds: false,
+          pendingGround: false,
+          pendingLimit: false,
+        }),
+      ),
+    )
+    const { conferenciaDaDispensa } = await carregarClienteLimpo()
+
+    const conferencia = await conferenciaDaDispensa(PROCESSO_DA_DISPENSA)
+
+    expect(conferencia.limite).toBeUndefined()
+    expect(conferencia.fundamento).toBeUndefined()
+    expect(conferencia.fundamentoLegal).toBeUndefined()
+    expect(conferencia.decretoDoLimite).toBeUndefined()
+  })
+
+  it("o processo traz o inciso declarado, e o omite quando não há", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id`, () =>
+        HttpResponse.json({ ...processoApi, dispensationGround: "VALUE_ENGINEERING" }),
+      ),
+    )
+    const { obterProcesso } = await carregarClienteLimpo()
+
+    expect((await obterProcesso(processoApi.id)).fundamentoDaDispensa)
+      .toBe("VALUE_ENGINEERING")
+
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id`, () =>
+        HttpResponse.json({ ...processoApi, dispensationGround: null }),
+      ),
+    )
+    const limpo = await carregarClienteLimpo()
+    expect((await limpo.obterProcesso(processoApi.id)).fundamentoDaDispensa).toBeUndefined()
+  })
+})
