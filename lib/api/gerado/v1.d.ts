@@ -1162,6 +1162,8 @@ export interface components {
             limitSource?: string;
             pendingGround: boolean;
             pendingLimit: boolean;
+            yearTotal: number;
+            yearTotalExceeds: boolean;
         };
         DivergentValueView: {
             departmentName: string;

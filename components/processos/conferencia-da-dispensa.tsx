@@ -55,6 +55,26 @@ export function ConferenciaDaDispensa({ processoId }: { processoId: string }) {
     )
   }
 
+  /*
+    O fracionamento: dez dispensas de vinte mil estouram um limite que nenhuma
+    delas estoura sozinha. O Art. 75, § 1º manda somar o exercício, e é isso que
+    ninguém vê olhando um processo por vez.
+  */
+  if (!dados.ultrapassa && dados.totalDoExercicioUltrapassa) {
+    return (
+      <InfoBanner tone="warning">
+        Este processo cabe no limite, mas a entidade já dispensou{" "}
+        <strong>{formatBRL(dados.totalDoExercicio)}</strong> pelo mesmo inciso no exercício de{" "}
+        {dados.exercicio} — acima do limite de{" "}
+        <strong>{formatBRL(dados.limite ?? 0)}</strong>. O{" "}
+        <strong>Art. 75, § 1º</strong> manda considerar o somatório do que for despendido no
+        exercício pela respectiva unidade gestora, e contratações sucessivas do mesmo objeto
+        caracterizam fracionamento indevido. Confira se os objetos são de naturezas distintas — a
+        plataforma soma pelo inciso, e a natureza do objeto é juízo de quem conduz os autos.
+      </InfoBanner>
+    )
+  }
+
   if (!dados.ultrapassa) {
     return (
       <div className="flex flex-wrap items-center gap-2">
@@ -62,7 +82,8 @@ export function ConferenciaDaDispensa({ processoId }: { processoId: string }) {
         <span className="text-xs text-text-3">
           {formatBRL(dados.valorEstimado)} de {formatBRL(dados.limite ?? 0)} ·{" "}
           {dados.fundamentoLegal} · {dados.decretoDoLimite}
-          {dados.limiteDobrado ? " · limite em dobro (Art. 75, § 2º)" : ""}
+          {dados.limiteDobrado ? " · limite em dobro (Art. 75, § 2º)" : ""} · exercício com{" "}
+          {formatBRL(dados.totalDoExercicio)} dispensados neste inciso
         </span>
       </div>
     )

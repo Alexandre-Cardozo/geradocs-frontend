@@ -692,9 +692,15 @@
           },
           "pendingLimit" : {
             "type" : "boolean"
+          },
+          "yearTotal" : {
+            "type" : "number"
+          },
+          "yearTotalExceeds" : {
+            "type" : "boolean"
           }
         },
-        "required" : [ "applicable", "dispensation", "doubledLimit", "estimatedValue", "exceeds", "fiscalYear", "pendingGround", "pendingLimit" ],
+        "required" : [ "applicable", "dispensation", "doubledLimit", "estimatedValue", "exceeds", "fiscalYear", "pendingGround", "pendingLimit", "yearTotal", "yearTotalExceeds" ],
         "type" : "object"
       },
       "DivergentValueView" : {

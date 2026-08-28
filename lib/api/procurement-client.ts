@@ -919,6 +919,10 @@ export interface ConferenciaDaDispensa {
   /** O decreto que fixou o limite — sem ele o documento não tem o que citar. */
   decretoDoLimite?: string;
   valorEstimado: number;
+  /** O somatório do exercício pelo mesmo inciso (Art. 75, § 1º). */
+  totalDoExercicio: number;
+  /** O somatório estoura o limite — é o fracionamento. */
+  totalDoExercicioUltrapassa: boolean;
   exercicio: number;
   ultrapassa: boolean;
   /** Dispensa que ainda não disse com que inciso. */
@@ -936,6 +940,8 @@ interface ConferenciaApi {
   doubledLimit: boolean;
   limitSource?: string | null;
   estimatedValue: number;
+  yearTotal: number;
+  yearTotalExceeds: boolean;
   fiscalYear: number;
   exceeds: boolean;
   pendingGround: boolean;
@@ -957,6 +963,8 @@ export async function conferenciaDaDispensa(
     limiteDobrado: conferencia.doubledLimit,
     decretoDoLimite: conferencia.limitSource ?? undefined,
     valorEstimado: Number(conferencia.estimatedValue),
+    totalDoExercicio: Number(conferencia.yearTotal),
+    totalDoExercicioUltrapassa: conferencia.yearTotalExceeds,
     exercicio: conferencia.fiscalYear,
     ultrapassa: conferencia.exceeds,
     fundamentoPendente: conferencia.pendingGround,

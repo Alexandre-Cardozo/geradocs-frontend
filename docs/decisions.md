@@ -1087,3 +1087,15 @@ Por isso a marcação só aparece para autarquia e fundação: oferecê-la a uma
 **A regra vive uma vez**, no domínio de acesso, com uma variante estática para o módulo de contratação — que precisa da resposta e não do agregado. Duas regras iguais divergem na primeira mudança.
 
 O campo é opcional no corpo da requisição: ausente é "não", e exigi-lo quebraria todo cliente que já existia.
+
+## 79. O somatório do exercício — onde o fracionamento aparece
+
+O erro mais comum da dispensa por valor não é o processo grande demais. É o **fracionamento**: dez dispensas de vinte mil do mesmo objeto ao longo do ano. Nenhuma estoura o teto sozinha, e juntas estouram.
+
+O **Art. 75, § 1º** manda considerar, para efeito dos incisos I e II, "o somatório do que for despendido no exercício financeiro pela respectiva unidade gestora". Quem olha um processo por vez não vê isso — **a plataforma vê, porque ela vê todos**. É a única parte desta conferência que nenhuma planilha faz sozinha.
+
+A soma é por **entidade, exercício e inciso**, com o processo atual incluído. Não mistura entidades, porque o parágrafo fala da respectiva unidade gestora; não mistura incisos, porque os limites são dois. Fora dos incisos I e II não há somatório — somar o exercício de uma dispensa por emergência seria somar contra um limite que não existe.
+
+**O que ela não afirma:** que houve fracionamento. A caracterização depende de os objetos serem "de mesma natureza", e isso é juízo de quem conduz os autos — a plataforma enxerga o inciso, não o objeto. O alerta diz o que somou e pede a conferência, em vez de acusar.
+
+E, como o resto da §77, informa e não impede.

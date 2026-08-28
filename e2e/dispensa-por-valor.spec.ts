@@ -20,6 +20,9 @@ const conferencia = (sobrescrever: Record<string, unknown> = {}) => ({
   limitAmount: 65492.11,
   limitSource: "Decreto nº 12.807/2025",
   estimatedValue: 485000,
+  yearTotal: 485000,
+  yearTotalExceeds: true,
+  doubledLimit: false,
   fiscalYear: 2026,
   exceeds: true,
   pendingGround: false,
@@ -53,7 +56,15 @@ test.describe("dispensa em razão do valor", () => {
   test("dentro do limite, confirma sem alarde", async ({ page }) => {
     await comSessao(page)
     await comProcessoEDocumento(page)
-    await comConferencia(page, conferencia({ estimatedValue: 12500, exceeds: false }))
+    await comConferencia(
+      page,
+      conferencia({
+        estimatedValue: 12500,
+        exceeds: false,
+        yearTotal: 12500,
+        yearTotalExceeds: false,
+      }),
+    )
 
     await page.goto(rota(`/processos/detalhe?id=${processo.id}`))
 
@@ -65,7 +76,13 @@ test.describe("dispensa em razão do valor", () => {
     await comProcessoEDocumento(page)
     await comConferencia(
       page,
-      conferencia({ dispensation: false, applicable: false, ground: null, exceeds: false }),
+      conferencia({
+        dispensation: false,
+        applicable: false,
+        ground: null,
+        exceeds: false,
+        yearTotalExceeds: false,
+      }),
     )
 
     await page.goto(rota(`/processos/detalhe?id=${processo.id}`))
@@ -79,7 +96,13 @@ test.describe("dispensa em razão do valor", () => {
     await comProcessoEDocumento(page)
     await comConferencia(
       page,
-      conferencia({ applicable: false, ground: null, pendingGround: true, exceeds: false }),
+      conferencia({
+        applicable: false,
+        ground: null,
+        pendingGround: true,
+        exceeds: false,
+        yearTotalExceeds: false,
+      }),
     )
 
     await page.goto(rota(`/processos/detalhe?id=${processo.id}`))
@@ -87,5 +110,25 @@ test.describe("dispensa em razão do valor", () => {
     await expect(page.getByText(/ainda não diz com que inciso/)).toBeVisible()
     // Nasce travado: declarar sem escolher seria declarar o quê?
     await expect(page.getByRole("button", { name: "Declarar" })).toBeDisabled()
+  })
+
+  test("o fracionamento aparece mesmo com o processo dentro do limite", async ({ page }) => {
+    await comSessao(page)
+    await comProcessoEDocumento(page)
+    await comConferencia(
+      page,
+      conferencia({
+        estimatedValue: 20000,
+        exceeds: false,
+        yearTotal: 200000,
+        yearTotalExceeds: true,
+      }),
+    )
+
+    await page.goto(rota(`/processos/detalhe?id=${processo.id}`))
+
+    // É o que ninguém vê olhando um processo por vez.
+    await expect(page.getByText(/já dispensou/)).toBeVisible()
+    await expect(page.getByText(/Art. 75, § 1º/)).toBeVisible()
   })
 })

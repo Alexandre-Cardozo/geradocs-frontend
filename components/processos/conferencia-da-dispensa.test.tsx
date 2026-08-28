@@ -28,6 +28,8 @@ function comConferencia(dados: Record<string, unknown>) {
         doubledLimit: false,
         limitSource: "Decreto nº 12.807/2025",
         estimatedValue: 12500,
+        yearTotal: 12500,
+        yearTotalExceeds: false,
         fiscalYear: 2026,
         exceeds: false,
         pendingGround: false,
@@ -142,5 +144,17 @@ describe("conferência da dispensa", () => {
     // contratação que a lei permite — e não dizer que dobrou faria o número
     // parecer errado.
     expect(await screen.findByText(/limite em dobro \(Art. 75, § 2º\)/)).toBeInTheDocument()
+  })
+
+  it("aponta o fracionamento mesmo com o processo dentro do limite", async () => {
+    comConferencia({ estimatedValue: 20000, yearTotal: 200000, yearTotalExceeds: true })
+    renderizar(<ConferenciaDaDispensa processoId={PROCESSO} />)
+
+    // Dez dispensas de vinte mil: nenhuma estoura sozinha, e quem olha um
+    // processo por vez não vê.
+    expect(await screen.findByText(/já dispensou/)).toBeInTheDocument()
+    expect(screen.getByText(/Art. 75, § 1º/)).toBeInTheDocument()
+    // E diz que a natureza do objeto é juízo de quem conduz os autos.
+    expect(screen.getByText(/naturezas distintas/)).toBeInTheDocument()
   })
 })
