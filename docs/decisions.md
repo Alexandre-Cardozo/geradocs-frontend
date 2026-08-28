@@ -929,3 +929,21 @@ Três efeitos, todos ruins: para olhar o documento inteiro era preciso **abrir u
 A última seção voltou a ser seção: "Salvar e Avançar" leva à etapa final, que é o passo seguinte e antes não existia. Vale para todos os documentos — a trilha é a mesma para ETP, TR, Edital, Contrato, Mapa de Riscos e Cotação.
 
 **No DS**, os variants `success` e `dark` ganharam estado desabilitado, que só o `primary` tinha: o "Finalizar e Gerar" travado continuava verde, convidando um clique que não acontecia.
+
+## 70. A fonte de pesquisa de preços passa a ser escolha da lei, e persiste
+
+Três coisas na mesma tela do editor.
+
+**O número do processo no lugar do UUID.** O painel do editor mostrava `1b10c406-6c87-42d7-99de-962d41e6e5f2`. Ninguém identifica processo por UUID — nem para conferir, nem para falar com alguém. Agora mostra `PROC-2026-000007`, como o resto da plataforma. O UUID continua onde ele serve: na URL.
+
+**A fonte de pesquisa de preços virou lista, obrigatória e gravada.** Eram três opções soltas na tela, escolhidas com radio, e a escolha vivia só na memória da aba: trocar de seção apagava a marcação. Pior, a escolha ia para a memória de cálculo — o texto que a seção guarda — sem o fundamento legal.
+
+Agora são os **cinco parâmetros do Art. 23, § 1º, da Lei 14.133/21**, detalhados pela **IN SEGES/ME nº 65/2021**, na ordem de preferência que a IN estabelece: Painel de Preços e Banco de Preços em Saúde primeiro (inciso I); contratações similares da Administração (II); tabela de referência do Executivo federal e mídia especializada (III); base nacional de notas fiscais eletrônicas (V); e a pesquisa direta com no mínimo três fornecedores **por último**, de propósito — a IN manda evitar que ela seja fonte única. Cada opção mostra seu fundamento junto: parafrasear artigo de lei em documento de contratação é defeito, não estilo.
+
+**"Outra (informar)" existe de propósito.** Contratação municipal tem exceção — cotação de consórcio intermunicipal, tabela estadual —, e recusá-la transformaria orientação em obstáculo. O que a plataforma não faz é inventar o artigo dela.
+
+**A escolha não ganhou armazenamento próprio: ela é a linha da memória de cálculo.** É lá que o controle vai procurar de onde saiu o preço, e guardá-la em outro lugar criaria um segundo registro da mesma coisa — que divergiria. Por isso ela volta marcada ao reabrir a seção: é lida de volta do texto gravado. E o rascunho só é oferecido depois da escolha: sem a fonte não há memória a montar, porque o parágrafo afirma de onde vem o preço.
+
+**O "Salvar" do cabeçalho não é o "Salvar e Avançar" — mas se chamava igual.** A dúvida era legítima: dois botões, mesmo verbo, mesma tela. Eles fazem coisas diferentes. "Salvar e Avançar" declara a seção **Completo** — é o que conta no progresso e o que libera a geração do documento. O de cima guarda o texto **sem afirmar que a seção está pronta**, que é o que se quer ao parar no meio de um parágrafo. Remover seria tirar o único jeito de guardar trabalho inacabado. Ele ficou, com o nome do que faz: **"Salvar Rascunho"**.
+
+**E havia uma perda de trabalho por trás disso.** Trocar de seção — pela trilha ou por "Seção Anterior" — recarregava o rascunho da seção de destino e **descartava em silêncio** o que estava escrito e não salvo. O "Salvar" do cabeçalho era a única defesa, e só para quem soubesse que precisava dela. Agora a troca grava antes o que está na tela, como rascunho: nunca "Completo", que continua sendo o que só "Salvar e Avançar" declara. Coberto por e2e com servidor que guarda o que recebe — inclusive o `status`, que é onde os dois botões diferem.

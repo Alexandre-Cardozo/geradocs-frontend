@@ -140,7 +140,7 @@ test.describe("elaboração do ETP", () => {
     const editor = page.getByLabel("Descrição da Necessidade")
     await expect(editor).toBeVisible()
     await editor.fill("Necessidade descrita pela secretaria.")
-    await page.getByRole("button", { name: /^Salvar$/ }).click()
+    await page.getByRole("button", { name: /Salvar Rascunho/ }).click()
 
     await page.reload()
 
@@ -169,7 +169,7 @@ test.describe("elaboração do ETP", () => {
     // campo está aberto na tela, e escrever nele é o que sempre foi.
     await expect(page.getByRole("button", { name: "Escrever agora" })).toHaveCount(0)
     await page.getByLabel("Descrição da Necessidade").fill("Necessidade descrita pela secretaria.")
-    await page.getByRole("button", { name: /^Salvar$/ }).click()
+    await page.getByRole("button", { name: /Salvar Rascunho/ }).click()
 
     await expect(page.getByText("Necessidade descrita pela secretaria.")).toBeVisible()
   })
@@ -205,7 +205,7 @@ test.describe("elaboração do ETP", () => {
       /\[justificar a contratação não prevista no Plano de Contratações Anual\]/,
     )
 
-    await page.getByRole("button", { name: /^Salvar$/ }).click()
+    await page.getByRole("button", { name: /Salvar Rascunho/ }).click()
     await page.reload()
     await page.getByRole("button", { name: /Seção 2 do ETP/ }).first().click()
 
@@ -228,7 +228,7 @@ test.describe("elaboração do ETP", () => {
     await expect(page.getByRole("button", { name: /Finalizar e Gerar/ })).toBeVisible()
 
     // E a etapa não é seção: não tem campo para escrever nem botão de salvar.
-    await expect(page.getByRole("button", { name: /^Salvar$/ })).toHaveCount(0)
+    await expect(page.getByRole("button", { name: /Salvar Rascunho/ })).toHaveCount(0)
 
     // Da última seção, avançar leva até ela.
     await page.getByRole("button", { name: /Seção 2 do ETP/ }).first().click()

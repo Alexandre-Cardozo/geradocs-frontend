@@ -75,7 +75,7 @@ export default function EditorDocumento() {
   const secaoAtivaRef = useRef("1")
   /** Para o caminho manual levar o cursor ao campo, em vez de só apontá-lo. */
   const campoDoTexto = useRef<HTMLTextAreaElement>(null)
-  const trocarSecao = (id: string) => {
+  const irPara = (id: string) => {
     secaoAtivaRef.current = id
     setActiveSection(id)
   }
@@ -100,32 +100,54 @@ export default function EditorDocumento() {
    * <p>Da última seção o destino é a etapa final, e não outra seção: revisar o
    * documento e gerá-lo é o passo seguinte a escrever a última (§69).
    */
+  /**
+   * O que o `PUT` da seção grava.
+   *
+   * <p>Salvar não pode desfazer a dispensa. O `PUT` troca o par (texto,
+   * justificativa), e mandar a justificativa vazia apagava a dispensa que a
+   * pessoa acabara de registrar — em silêncio, no clique seguinte.
+   *
+   * <p>Só enquanto o texto continua em branco: escrever na seção **é** desfazer
+   * a dispensa, e aí a justificativa some porque a seção passou a ter conteúdo.
+   */
+  const gravacaoDa = (secao: SecaoDocumento) => ({
+    secaoId: secao.id,
+    conteudo: rascunho,
+    ...(rascunho.trim() === "" && foiDispensada(secao)
+      ? { justificativaDispensa: secao.justificativaDispensa }
+      : {}),
+  })
+
+  /** Há texto na tela que ainda não está gravado na seção. */
+  const naoGravado = active != null && rascunho !== (active.conteudo ?? "")
+
+  /**
+   * Vai para outra seção guardando antes o que estava escrito.
+   *
+   * <p>O rascunho da tela é recarregado da seção de destino: sem esta gravação,
+   * clicar na trilha ou em "Seção Anterior" descartava em silêncio o que a
+   * pessoa tinha acabado de escrever. Guarda como rascunho — nunca "Completo",
+   * que é o que só "Salvar e Avançar" declara.
+   */
+  const trocarSecao = (id: string) => {
+    if (active && naoGravado) salvar.mutate(gravacaoDa(active))
+    irPara(id)
+  }
+
   const handleSave = (avancar = false, proxima?: string) => {
     if (!active) return
-    /*
-      Salvar não pode desfazer a dispensa. O `PUT` da seção troca o par
-      (texto, justificativa), e mandar a justificativa vazia apagava a dispensa
-      que a pessoa acabara de registrar — em silêncio, no clique seguinte.
-
-      Só enquanto o texto continua em branco: escrever na seção **é** desfazer a
-      dispensa, e aí a justificativa some porque a seção passou a ter conteúdo.
-    */
-    const dispensaAPreservar =
-      rascunho.trim() === "" && foiDispensada(active)
-        ? { justificativaDispensa: active.justificativaDispensa }
-        : {}
     salvar.mutate(
       {
-        secaoId: active.id,
-        conteudo: rascunho,
-        ...dispensaAPreservar,
+        ...gravacaoDa(active),
         ...(avancar ? { status: "Completo" as const } : {}),
       },
       {
         onSuccess: () => {
           setSaved(true)
           setTimeout(() => setSaved(false), 2500)
-          if (avancar && proxima) trocarSecao(proxima)
+          // `irPara`, e não `trocarSecao`: o que havia na tela acabou de ser
+          // gravado, e regravá-lo aqui devolveria a seção ao estado de rascunho.
+          if (avancar && proxima) irPara(proxima)
         },
       }
     )
@@ -180,7 +202,12 @@ export default function EditorDocumento() {
             Voltar ao Processo
           </Link>
           <div className="mb-3.5">
-            <div className="font-mono text-xs text-text-muted">{processo.data.id}</div>
+            {/*
+              O número do processo, e não o UUID: é ele que o servidor usa em
+              ofício e despacho, e a chave interna não identifica nada para
+              gente (§54).
+            */}
+            <div className="font-mono text-xs text-text-muted">{processo.data.numero}</div>
             <div className="mt-0.5 text-base leading-snug font-bold break-words text-text-1">{processo.data.objeto}</div>
             <div className="mt-0.75 text-xs text-text-3">{processo.data.secretaria}</div>
             {documentoGerado && foiRetificado(documentoGerado.versao) && (
@@ -291,6 +318,12 @@ export default function EditorDocumento() {
             Salvar e Orientações são da seção. Na etapa final não há seção a
             salvar — o que há ali é o documento inteiro, e as ações dele estão
             no próprio bloco.
+
+            "Salvar Rascunho" não repete "Salvar e Avançar": este declara a
+            seção **Completo** — é o que conta no progresso e o que libera a
+            geração do documento —, aquele guarda o texto sem afirmar que a
+            seção está pronta. Chamar os dois de "Salvar" é que fazia parecer
+            o mesmo botão duas vezes.
           */}
           {!naEtapaFinal && (
             <div className="flex gap-2">
@@ -309,7 +342,7 @@ export default function EditorDocumento() {
                 disabled={salvar.isPending}
                 onClick={() => handleSave()}
               >
-                {saved ? "Salvo!" : salvar.isPending ? "Salvando..." : "Salvar"}
+                {saved ? "Salvo!" : salvar.isPending ? "Salvando..." : "Salvar Rascunho"}
               </Button>
             </div>
           )}

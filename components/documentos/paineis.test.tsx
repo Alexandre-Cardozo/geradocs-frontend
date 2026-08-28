@@ -188,13 +188,66 @@ describe("painel de valor", () => {
     const { setRascunho } = renderizarPainel("valor")
 
     await screen.findByText(/R\$ 2\.500,00/)
-    await userEvent.click(screen.getByLabelText(/Painel de Preços/))
+    // Sem a fonte não há rascunho: o parágrafo afirma de onde saiu o preço.
+    expect(screen.queryByRole("button", { name: /a partir dos itens/ })).not.toBeInTheDocument()
+    expect(screen.getByText(/Escolha a fonte de pesquisa de preços/)).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole("button", { name: /Fonte de pesquisa de preços/ }))
+    await userEvent.click(await screen.findByRole("option", { name: /Painel de Preços/ }))
     await userEvent.click(screen.getByRole("button", { name: /a partir dos itens/ }))
 
     const texto = setRascunho.mock.calls[0]?.[0] as string
     expect(texto).toContain("Papel A4")
+    // O fundamento vai junto: é o que o controle procura.
     expect(texto).toContain("Painel de Preços")
+    expect(texto).toContain("Art. 23, § 1º, I, Lei 14.133/21")
     expect(texto).toContain("[Justificar a diferença")
+  })
+
+  it("a fonte volta marcada do texto já gravado na seção", async () => {
+    comDfds([dfd("DFD 003/2026", "Secretaria de Educação", [papel])])
+    const setRascunho = vi.fn()
+    const memoria = [
+      "O valor estimado resulta dos preços unitários referenciais.",
+      "Fonte de pesquisa de preços: Base nacional de notas fiscais eletrônicas"
+        + " (Art. 23, § 1º, V, Lei 14.133/21).",
+    ].join("\n\n")
+    renderizar(
+      <PainelDaSecao
+        secao={secao(TITULOS.valor, "valor")}
+        processoId={PROCESSO}
+        rascunho={memoria}
+        setRascunho={setRascunho}
+        gerando={false}
+        onGerarComIa={vi.fn()}
+      />,
+    )
+
+    // A escolha não vive na memória da aba: ela é a linha do texto que a seção
+    // guarda, e é de lá que volta ao trocar de seção ou recarregar (§70).
+    // O nome acessível do dropdown é o rótulo do campo; o que mostra a escolha
+    // é o texto dentro dele — junto do fundamento, que é como a lista o exibe.
+    const campo = await screen.findByRole("button", { name: "Fonte de pesquisa de preços" })
+    expect(campo).toHaveTextContent("Base nacional de notas fiscais eletrônicas")
+    expect(campo).toHaveTextContent("Art. 23, § 1º, V, Lei 14.133/21")
+  })
+
+  it("fonte fora da lista volta no campo livre, e não some", async () => {
+    comDfds([dfd("DFD 003/2026", "Secretaria de Educação", [papel])])
+    renderizar(
+      <PainelDaSecao
+        secao={secao(TITULOS.valor, "valor")}
+        processoId={PROCESSO}
+        rascunho="Fonte de pesquisa de preços: Cotação do consórcio intermunicipal."
+        setRascunho={vi.fn()}
+        gerando={false}
+        onGerarComIa={vi.fn()}
+      />,
+    )
+
+    // Contratação municipal tem exceção; recusá-la seria transformar orientação
+    // em obstáculo.
+    expect(await screen.findByDisplayValue("Cotação do consórcio intermunicipal")).toBeInTheDocument()
   })
 
   it("sem item nenhum, não oferece uma estimativa que não existe", async () => {
@@ -263,9 +316,10 @@ describe("rascunho e IA convivem", () => {
     comDfds([dfd("DFD 003/2026", "Secretaria de Educação", [papel])])
     renderizarPainel("valor")
 
-    expect(
-      await screen.findByRole("button", { name: /a partir dos itens/ }),
-    ).toBeInTheDocument()
+    await userEvent.click(await screen.findByRole("button", { name: /Fonte de pesquisa de preços/ }))
+    await userEvent.click(await screen.findByRole("option", { name: /Painel de Preços/ }))
+
+    expect(screen.getByRole("button", { name: /a partir dos itens/ })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /Gerar com IA/ })).toBeInTheDocument()
   })
 })

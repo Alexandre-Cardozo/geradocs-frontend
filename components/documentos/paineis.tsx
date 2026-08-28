@@ -8,7 +8,6 @@ import {
   FileUpload,
   FormField,
   InfoBanner,
-  Input,
   SectionBlock,
   Textarea,
 } from "@/components/ui"
@@ -16,9 +15,11 @@ import { IconCheck, IconCheckCircle, IconFileText } from "@/components/ui/icons"
 import { CaminhosDaSecao } from "@/components/documentos/caminhos-da-secao"
 import { InlineSpinner } from "@/components/shared/estados"
 import { useToast } from "@/components/shared/providers"
+import { CampoDeFonteDePreco } from "@/components/shared/campo-de-fonte-de-preco"
 import { Th } from "@/components/shared/tabela"
 import { useConsolidacaoDaDemanda, useDfdsDoProcesso, useProcesso } from "@/lib/api/hooks"
 import type { DfdAnexado, ItemConsolidado } from "@/lib/api/procurement-client"
+import { fonteDeclarada, fundamentoDaFonte, PREFIXO_DA_FONTE } from "@/lib/dominio/fontes-de-preco"
 import { rotuloDaUnidade } from "@/lib/dominio/unidades"
 import { formatBRL, formatNumeroBR, parseValorBR } from "@/lib/format"
 import type { ModoATA, PainelSecao, Processo, SecaoDocumento } from "@/lib/types"
@@ -342,8 +343,18 @@ function PainelValor({
   const dfds = useDfdsDoProcesso(processoId)
   const processo = useProcesso(processoId)
   const showToast = useToast()
-  const [fonte, setFonte] = useState("")
-  const [outroTexto, setOutroTexto] = useState("")
+  /*
+    A fonte vive na memória de cálculo, e é de lá que ela volta. Antes era só
+    estado da aba: a marcação sumia ao trocar de seção, e a escolha que o
+    controle vai procurar no documento não estava em lugar nenhum (§70).
+  */
+  const declarada = fonteDeclarada(rascunho)
+  const [fonte, setFonte] = useState(declarada ?? "")
+  const [sincronizada, setSincronizada] = useState(declarada)
+  if (declarada !== sincronizada) {
+    setSincronizada(declarada)
+    if (declarada) setFonte(declarada)
+  }
 
   const itens = (dfds.data ?? []).flatMap((dfd) =>
     dfd.itens.map((item) => ({ ...item, dfd: dfd.nomeDoArquivo, secretaria: dfd.secretaria })),
@@ -354,8 +365,7 @@ function PainelValor({
     (soma, item) => soma + parseValorBR(item.quantidade) * parseValorBR(item.valorUnitario ?? "0"),
     0,
   )
-  const declarado = processo.data?.valorEstimado ?? 0
-  const fonteEscolhida = FONTES_DE_PRECO.find((f) => f.key === fonte)
+  const valorDeclarado = processo.data?.valorEstimado ?? 0
 
   return (
     <SectionBlock title={secao.titulo} hint={secao.hint ?? ""}>
@@ -376,11 +386,11 @@ function PainelValor({
             />
             <ValorApurado
               rotulo="Valor declarado na abertura"
-              valor={declarado}
+              valor={valorDeclarado}
               detalhe={
-                total === 0 || declarado === 0
+                total === 0 || valorDeclarado === 0
                   ? "Sem base de comparação"
-                  : `Diferença de ${formatBRL(Math.abs(declarado - total))} (${total > declarado ? "acima" : "abaixo"} do declarado)`
+                  : `Diferença de ${formatBRL(Math.abs(valorDeclarado - total))} (${total > valorDeclarado ? "acima" : "abaixo"} do declarado)`
               }
             />
           </div>
@@ -396,34 +406,13 @@ function PainelValor({
         </div>
       )}
 
-      <div className="mt-4">
+      <div className="mt-4 max-w-3xl">
         <FormField
           label="Fonte de Pesquisa de Preços"
-          hint="Ordem de preferência da IN SEGES 65/2021, Art. 5º — a pesquisa direta com fornecedores é a última alternativa. A escolha entra na memória de cálculo, que é o que a seção guarda."
+          required
+          hint="Os parâmetros do Art. 23, § 1º, Lei 14.133/21, na ordem de preferência da IN SEGES 65/2021 — a pesquisa direta com fornecedores é a última alternativa. A escolha entra na memória de cálculo, que é o que a seção guarda."
         >
-          <div className="flex flex-col gap-2">
-            {FONTES_DE_PRECO.map((opt) => (
-              <label key={opt.key} className="flex cursor-pointer items-center gap-2.5 text-base text-text-2">
-                <input
-                  type="radio"
-                  name="fonte-pesquisa-precos"
-                  checked={fonte === opt.key}
-                  onChange={() => setFonte(opt.key)}
-                  className="size-3.75 accent-royal"
-                />
-                {opt.label}
-              </label>
-            ))}
-          </div>
-          {fonte === "outro" && (
-            <div className="mt-2.5">
-              <Input
-                value={outroTexto}
-                onChange={(e) => setOutroTexto(e.target.value)}
-                placeholder="Informe qual foi o meio utilizado na pesquisa de preços"
-              />
-            </div>
-          )}
+          <CampoDeFonteDePreco value={fonte} onChange={setFonte} />
         </FormField>
       </div>
 
@@ -442,12 +431,24 @@ function PainelValor({
         </FormField>
       </div>
 
+      {precificados.length > 0 && fonte.trim() === "" && (
+        <p className="mt-4 m-0 text-xs text-text-muted">
+          Escolha a fonte de pesquisa de preços para a plataforma escrever a memória de cálculo —
+          é ela que diz de onde saiu o preço.
+        </p>
+      )}
+
       <div className="mt-4">
         <CaminhosDaSecao
           gerando={gerando}
           onGerarComIa={onGerarComIa}
           rascunhoAutomatico={
-            precificados.length > 0
+            /*
+              Sem a fonte não há rascunho a montar: o parágrafo afirma de onde
+              saiu o preço, e escrevê-lo sem isso deixaria a lacuna que o
+              Art. 23, § 1º não admite.
+            */
+            precificados.length > 0 && fonte.trim() !== ""
               ? {
                   rotulo:
                     rascunho.trim() === ""
@@ -455,12 +456,7 @@ function PainelValor({
                       : "Refazer a partir dos itens",
                   onEscrever: () => {
                     setRascunho(
-                      memoriaDoValor(
-                        precificados,
-                        total,
-                        declarado,
-                        fonteEscolhida?.label ?? outroTexto,
-                      ),
+                      memoriaDoValor(precificados, total, valorDeclarado, fonte),
                     )
                     showToast(
                       "Memória de cálculo preenchida a partir dos itens. Revise antes de salvar.",
@@ -475,14 +471,6 @@ function PainelValor({
   )
 }
 
-/** Ordem de preferência das fontes de pesquisa de preços (IN SEGES 65/2021, Art. 5º). */
-const FONTES_DE_PRECO = [
-  { key: "pncp", label: "Portal Nacional de Contratações Públicas (PNCP)" },
-  { key: "contratos", label: "Contratações similares celebradas por outros entes" },
-  { key: "painel", label: "Painel de Preços do Governo Federal (gov.br/compras)" },
-  { key: "cotacoes", label: "Pesquisa direta com fornecedores" },
-  { key: "outro", label: "Outro" },
-]
 
 /** Um número apurado, com a conta que o produziu logo abaixo. */
 function ValorApurado({
@@ -520,11 +508,11 @@ export function memoriaDoValor(
     ...linhas,
     `Valor total estimado: ${formatBRL(total)}.`,
   ]
+  // O fundamento vai junto quando a fonte é um dos parâmetros da lei: é o que o
+  // controle procura, e citá-lo por extenso é o padrão do documento.
+  const fundamento = fundamentoDaFonte(fonte)
   partes.push(
-    fonte
-      ? `Fonte de pesquisa de preços: ${fonte}.`
-      : "[Indicar a fonte de pesquisa de preços utilizada, observada a ordem de preferência da "
-        + "IN SEGES 65/2021, Art. 5º.]",
+    `${PREFIXO_DA_FONTE} ${fonte}${fundamento ? ` (${fundamento})` : ""}.`,
   )
   if (declarado > 0 && Math.abs(declarado - total) >= 0.01) {
     // A divergência é dito, e não escondida: o valor da abertura consta do
