@@ -1132,3 +1132,13 @@ O documento agora declara `changedSinceVersion`, comparado pelo **mesmo hash que
 - **Encerrar com documento pendente é permitido**, mediante justificativa.
 - **A trilha da seção** não copia o texto: quem responde "o que estava escrito" é o snapshot da versão. Só a justificativa da dispensa vai literal, porque ela **é** a decisão.
 - **Reabrir processo encerrado** existe.
+
+## 81. O atalho de gerar leva à prévia
+
+Na tela do processo, um documento com todas as indispensáveis resolvidas oferecia **"Gerar Documento"** — e gerava na hora, ali mesmo.
+
+Era o mesmo atalho que a §69 tinha tirado de dentro das seções, sobrevivendo do lado de fora. Lá o argumento foi: gerar de qualquer seção, assim que as obrigatórias estivessem resolvidas, era gerar **sem passar pela prévia** — e o documento passou a se gerar de um lugar só, depois de a pessoa poder ver o que vai sair. O botão do processo restaurava exatamente o que aquela decisão removeu.
+
+Agora ele se chama **"Revisar e Gerar"** e abre o editor já na etapa de Revisão e Geração, onde estão a estrutura, a prévia do corpo inteiro e o aviso de lacunas silenciosas. A geração continua a um clique — só que depois da leitura, e não no lugar dela.
+
+O editor passou a aceitar `&etapa=revisao` para abrir direto na etapa final. É a mesma etapa alcançável pela trilha; o parâmetro só evita que quem veio do processo tenha de procurá-la.

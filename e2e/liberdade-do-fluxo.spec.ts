@@ -88,4 +88,61 @@ test.describe("liberdade no fluxo do processo", () => {
     // não pode é ninguém avisar.
     await expect(page.getByText(/Há alterações depois da versão gerada/)).toBeVisible()
   })
+
+  test("o atalho de gerar leva à prévia, e não gera na hora", async ({ page }) => {
+    await comSessao(page)
+    await comProcessoEDocumento(page)
+    let gerou = false
+    await page.route(`${API}/procurement-processes/*/documents/*/generations`, async (rota) => {
+      gerou = true
+      await rota.fulfill({ json: { files: [] } })
+    })
+    // Todas as indispensáveis resolvidas: é quando o atalho aparecia.
+    await page.route(`${API}/procurement-processes/*/documents/*`, (rota) =>
+      rota.fulfill({
+        json: {
+          id: "5c4d3e2f-1111-4222-8333-444455556666",
+          processId: processo.id,
+          documentType: "ETP",
+          currentVersion: 0,
+          finalized: false,
+          changedSinceVersion: false,
+          progress: 100,
+          canGenerate: true,
+          sections: [
+            {
+              sectionCode: "1",
+              position: 1,
+              title: "Seção 1 do ETP",
+              legalBasis: "Art. 18, § 1º, I, Lei 14.133/21",
+              hint: "Demonstre o que a seção pede.",
+              required: true,
+              content: "Conteúdo da seção.",
+              dispensationJustification: null,
+              resolved: true,
+            },
+          ],
+          pendingRequiredSections: [],
+          silentGaps: [],
+          body: [
+            {
+              sectionCode: "1",
+              title: "Seção 1 do ETP",
+              text: "Conteúdo da seção.",
+              dispensed: false,
+            },
+          ],
+        },
+      }),
+    )
+
+    await page.goto(rota(`/processos/detalhe?id=${processo.id}`))
+    await page.getByRole("button", { name: "Revisar e Gerar" }).first().click()
+
+    // Abre o editor já na etapa final, com a prévia à vista — em vez de gerar
+    // sem que ninguém pudesse ver o que ia sair (§69).
+    await expect(page).toHaveURL(/etapa=revisao/)
+    await expect(page.getByRole("heading", { name: "Revisão e Geração" })).toBeVisible()
+    expect(gerou).toBe(false)
+  })
 })

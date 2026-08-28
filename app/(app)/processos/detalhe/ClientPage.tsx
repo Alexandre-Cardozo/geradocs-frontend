@@ -167,13 +167,6 @@ export default function HubProcesso() {
     )
   }
 
-  const gerarDireto = (tipo: TipoDocumento) => {
-    gerar.mutate(
-      { processoId, tipo },
-      { onSuccess: () => showToast(`${tipo} gerado e disponível em Documentos.`) }
-    )
-  }
-
   // Encerramento: a plataforma termina quando os documentos estão prontos. O
   // protocolo e a aprovação acontecem no sistema administrativo da entidade.
   // A regra é do domínio, e não uma filtragem repetida aqui: o servidor cobra a
@@ -566,8 +559,20 @@ export default function HubProcesso() {
                   </>
                 ) : obrigatoriasOk ? (
                   <>
-                    <Button size="sm" disabled={gerar.isPending} onClick={() => gerarDireto(tipo)}>
-                      {gerar.isPending ? "Gerando..." : "Gerar Documento"}
+                    {/*
+                      Leva à prévia, e não gera na hora.
+
+                      Este botão gerava direto: era o mesmo atalho que a §69
+                      tirou de dentro das seções — "Finalizar e Gerar" sem
+                      passar pelo que vai sair — sobrevivendo do lado de fora.
+                      Agora abre o editor já na etapa de Revisão e Geração, que
+                      é onde o documento inteiro pode ser lido antes (§81).
+                    */}
+                    <Button
+                      size="sm"
+                      onClick={() => router.push(`${editorHref}&etapa=revisao`)}
+                    >
+                      Revisar e Gerar
                     </Button>
                     <Button size="sm" variant="ghost" onClick={() => router.push(editorHref)}>
                       Revisar Seções

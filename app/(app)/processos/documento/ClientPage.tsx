@@ -55,6 +55,17 @@ const statusRail: Record<StatusDocumento, { dot: string; chip: string }> = {
  */
 const ETAPA_FINAL = "__revisao__"
 
+/**
+ * O editor pode abrir direto na etapa final.
+ *
+ * <p>É por onde a tela do processo manda quem clicou em "Revisar e Gerar":
+ * antes aquele botão gerava na hora, sem passar pela prévia — o mesmo atalho
+ * que a §69 tirou de dentro das seções, sobrevivendo do lado de fora. Gerar sem
+ * poder ver o que vai sair é o que ele restaurava (§81).
+ */
+const PARAMETRO_DA_ETAPA_FINAL = "etapa"
+const VALOR_DA_ETAPA_FINAL = "revisao"
+
 export default function EditorDocumento() {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -78,10 +89,12 @@ export default function EditorDocumento() {
   )
   const jaGerado = documentoGerado != null
 
-  const [activeSection, setActiveSection] = useState("1")
+  const [activeSection, setActiveSection] = useState(
+    searchParams.get(PARAMETRO_DA_ETAPA_FINAL) === VALOR_DA_ETAPA_FINAL ? ETAPA_FINAL : "1",
+  )
   const [rascunho, setRascunho] = useState("")
   const [saved, setSaved] = useState(false)
-  const secaoAtivaRef = useRef("1")
+  const secaoAtivaRef = useRef(activeSection)
   /** Para o caminho manual levar o cursor ao campo, em vez de só apontá-lo. */
   const campoDoTexto = useRef<HTMLTextAreaElement>(null)
   const irPara = (id: string) => {
