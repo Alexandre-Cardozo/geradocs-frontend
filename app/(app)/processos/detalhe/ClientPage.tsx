@@ -146,6 +146,27 @@ export default function HubProcesso() {
     )
   }
 
+  /**
+   * Tira um documento do processo.
+   *
+   * <p>Entrava e não saía — nem por engano, nem quando o caso deixava de pedi-lo.
+   * Enquanto ficava na lista, contava como pendência no encerramento para
+   * sempre. O servidor recusa retirar o que já foi concluído, porque aí ele
+   * virou peça dos autos; a tela nem oferece nesse caso (§80).
+   */
+  const retirarDocumento = (tipo: TipoDocumento) => {
+    atualizar.mutate(
+      { id: processoId, documentos: proc.documentos.filter((t) => t !== tipo) },
+      {
+        onSuccess: () => showToast(`${CATALOGO[tipo].titulo} retirado do processo.`),
+        onError: (erro) =>
+          showToast(
+            erro instanceof Error ? erro.message : "Não foi possível retirar o documento.",
+          ),
+      },
+    )
+  }
+
   const gerarDireto = (tipo: TipoDocumento) => {
     gerar.mutate(
       { processoId, tipo },
@@ -460,8 +481,18 @@ export default function HubProcesso() {
             total > 0 && secoesLista.filter((s) => s.obrigatoria).every((s) => s.status === "Completo")
           // Dependências ainda não geradas: o TR se fundamenta no ETP, o Edital
           // tem o TR como anexo, e a minuta de contrato vincula-se a ambos.
+          /*
+            A dependência é **orientação**, e não trava.
+
+            Antes o cartão bloqueado não tinha botão nenhum: não dava para abrir
+            o documento nem para ler o que já estava escrito. Mas o TR se
+            fundamenta no ETP e nada impede redigi-lo antes de gerar o ETP — a
+            ordem é do fluxo, não da lei —, e travar transformava orientação em
+            obstáculo, que é o que fez o fluxo de aprovação sair do produto
+            (§24). A etiqueta continua dizendo o que falta (§80).
+          */
           const bloqueios = pendencias(tipo, proc.documentos, tiposGerados)
-          const bloqueado = bloqueios.length > 0 && !finalizado
+          const dependePendente = bloqueios.length > 0 && !finalizado
           const editorHref = `/processos/documento?id=${encodeURIComponent(processoId)}&tipo=${meta.slug}`
 
           return (
@@ -475,7 +506,7 @@ export default function HubProcesso() {
                * justamente a etiqueta que diz o que falta para desbloquear.
                */
               className={`flex flex-col rounded-card border border-border p-5 ${
-                bloqueado ? "bg-ice" : "bg-surface"
+                dependePendente ? "bg-ice" : "bg-surface"
               }`}
             >
               <div className="mb-3 flex items-start gap-3">
@@ -514,11 +545,12 @@ export default function HubProcesso() {
 
 
               <div className="mt-4 flex flex-wrap items-center gap-2">
-                {bloqueado ? (
+                {dependePendente && (
                   <Tag tone="warning">
-                    Requer {bloqueios.map((d) => CATALOGO[d].titulo).join(" e ")}
+                    Fundamenta-se em {bloqueios.map((d) => CATALOGO[d].titulo).join(" e ")}
                   </Tag>
-                ) : finalizado ? (
+                )}
+                {finalizado ? (
                   <>
                     <Button size="sm" variant="secondary" icon={<IconEye size={13} />} onClick={() => router.push("/documentos")}>
                       Visualizar Documento
@@ -548,6 +580,21 @@ export default function HubProcesso() {
                     onClick={() => router.push(editorHref)}
                   >
                     {progresso > 0 ? `Continuar ${tipo}` : `Elaborar ${tipo}`}
+                  </Button>
+                )}
+                {/*
+                  Documento entrava no processo e não saía — nem por engano, e
+                  enquanto ficasse contava como pendência no encerramento para
+                  sempre. Concluído não sai: virou peça dos autos (§80).
+                */}
+                {!finalizado && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    disabled={atualizar.isPending}
+                    onClick={() => retirarDocumento(tipo)}
+                  >
+                    Retirar do processo
                   </Button>
                 )}
               </div>

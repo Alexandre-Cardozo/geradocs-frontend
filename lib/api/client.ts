@@ -40,6 +40,7 @@ import {
 } from "@/lib/api/generation-client"
 import {
   abrirDocumento,
+  type DocumentoEmElaboracao,
   acrescentarSecao,
   compararVersoes as compararVersoesNaApi,
   concluirDocumento,
@@ -290,6 +291,21 @@ export async function getParecerDFD(processoId: string): Promise<ParecerDFD | nu
 
 export async function getSecoes(processoId: string, tipo: TipoDocumento): Promise<SecaoDocumento[]> {
   return (await abrirDocumento(processoId, tipo)).secoes
+}
+
+/**
+ * O documento em elaboração inteiro.
+ *
+ * <p>`getSecoes` devolve só as seções e joga fora o resto da mesma resposta. O
+ * editor precisa do estado do documento — se o rascunho já não é o que a versão
+ * gerada guardou (§80) —, e pedir o mesmo documento duas vezes seriam duas
+ * viagens pela mesma resposta.
+ */
+export async function getDocumento(
+  processoId: string,
+  tipo: TipoDocumento,
+): Promise<DocumentoEmElaboracao> {
+  return abrirDocumento(processoId, tipo)
 }
 
 export interface AtualizarSecaoInput {

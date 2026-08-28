@@ -15,6 +15,7 @@ import {
   useGerarDocumento,
   useGerarSecao,
   useProcesso,
+  useDocumentoEmElaboracao,
   useSecoes,
 } from "@/lib/api/hooks"
 import { CATALOGO, porSlug } from "@/lib/documentos"
@@ -65,6 +66,7 @@ export default function EditorDocumento() {
   const meta = CATALOGO[tipo]
 
   const processo = useProcesso(processoId)
+  const documento = useDocumentoEmElaboracao(processoId, tipo)
   const secoes = useSecoes(processoId, tipo)
   const documentos = useDocumentos()
   const salvar = useAtualizarSecao(processoId, tipo)
@@ -222,6 +224,22 @@ export default function EditorDocumento() {
               // sobre um documento já retificado — antes de gerar mais uma versão.
               <div className="mt-1.5 inline-flex rounded-sm bg-tint-warning-bg px-1.5 py-0.5 font-mono text-2xs font-semibold text-tint-warning-fg">
                 {rotuloDaVersao(documentoGerado.versao)}
+              </div>
+            )}
+            {/*
+              O rascunho já não é o que a versão gerada guardou.
+
+              Editar depois de concluir é permitido — retificar é ato previsto, e
+              travar transformaria orientação em obstáculo. O que não podia
+              acontecer é a divergência ser silenciosa: o arquivo anexado ao
+              processo dizendo uma coisa, esta tela mostrando outra e nada
+              avisando (§80).
+            */}
+            {documento.data?.alteradoDesdeAVersao && (
+              <div className="mt-1.5 rounded-sm bg-tint-warning-bg px-2 py-1 text-2xs leading-snug text-tint-warning-fg">
+                Há alterações depois da versão gerada. O arquivo que está no
+                processo ainda é o anterior — gere de novo para que ele passe a
+                dizer o que você está lendo aqui.
               </div>
             )}
           </div>

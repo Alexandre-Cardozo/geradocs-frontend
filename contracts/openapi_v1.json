@@ -726,6 +726,9 @@
           "canGenerate" : {
             "type" : "boolean"
           },
+          "changedSinceVersion" : {
+            "type" : "boolean"
+          },
           "currentVersion" : {
             "format" : "int32",
             "type" : "integer"
@@ -768,7 +771,7 @@
             "type" : "array"
           }
         },
-        "required" : [ "body", "canGenerate", "currentVersion", "documentType", "finalized", "id", "pendingRequiredSections", "processId", "progress", "sections", "silentGaps" ],
+        "required" : [ "body", "canGenerate", "changedSinceVersion", "currentVersion", "documentType", "finalized", "id", "pendingRequiredSections", "processId", "progress", "sections", "silentGaps" ],
         "type" : "object"
       },
       "DocumentVersionResponse" : {

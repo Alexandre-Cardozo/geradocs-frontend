@@ -285,11 +285,28 @@ export function useAnalisarDFD(processoId: string) {
   })
 }
 
+/**
+ * O documento em elaboração inteiro.
+ *
+ * <p>Uma consulta só, e duas leituras dela: as seções — que é o que a maior
+ * parte da tela usa — e o estado do documento, que o editor precisa para dizer
+ * que o rascunho já não é o que a versão gerada guardou (§80). Duas consultas
+ * para o mesmo documento seriam duas viagens pela mesma resposta.
+ */
+export function useDocumentoEmElaboracao(processoId: string, tipo: TipoDocumento) {
+  return useQuery({
+    queryKey: chaves.secoes(processoId, tipo),
+    queryFn: () => api.getDocumento(processoId, tipo),
+    enabled: processoId !== "",
+  })
+}
+
 export function useSecoes(processoId: string, tipo: TipoDocumento) {
   return useQuery({
     queryKey: chaves.secoes(processoId, tipo),
-    queryFn: () => api.getSecoes(processoId, tipo),
+    queryFn: () => api.getDocumento(processoId, tipo),
     enabled: processoId !== "",
+    select: (documento) => documento.secoes,
   })
 }
 

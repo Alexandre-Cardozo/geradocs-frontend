@@ -1172,6 +1172,7 @@ export interface components {
         DocumentResponse: {
             body: components["schemas"]["BlockView"][];
             canGenerate: boolean;
+            changedSinceVersion: boolean;
             /** Format: int32 */
             currentVersion: number;
             /** @enum {string} */

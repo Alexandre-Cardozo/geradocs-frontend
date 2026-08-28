@@ -1099,3 +1099,36 @@ A soma é por **entidade, exercício e inciso**, com o processo atual incluído.
 **O que ela não afirma:** que houve fracionamento. A caracterização depende de os objetos serem "de mesma natureza", e isso é juízo de quem conduz os autos — a plataforma enxerga o inciso, não o objeto. O alerta diz o que somou e pede a conferência, em vez de acusar.
 
 E, como o resto da §77, informa e não impede.
+
+## 80. Auditoria do fluxo: o que a plataforma decidia no lugar do servidor
+
+Validação do fluxo inteiro — sessões do editor, geração e processo — com um objetivo declarado: encontrar onde a plataforma decide no lugar de quem responde pelos autos.
+
+**Primeiro, a boa notícia, e ela era suposição até agora.** A geração só tinha sido exercitada com o ETP; os outros cinco documentos nunca haviam saído da plataforma como arquivo. Agora os seis atravessam o caminho inteiro em teste — abrir o processo, escrever as indispensáveis, concluir, gerar em DOCX e PDF, **baixar** —, e o DOCX é aberto para conferir que o texto escrito, o título da seção e o número do processo chegaram ao arquivo. Os seis passam. "O fluxo está completo" deixou de ser leitura de código.
+
+Três irregularidades apareceram no percurso.
+
+### O documento dependente não tinha botão nenhum
+
+O TR se fundamenta no ETP, o Edital tem o TR como anexo. A tela transformava isso em **trava**: enquanto a dependência não estivesse *gerada*, o cartão do documento não tinha ação alguma — não dava para abrir, nem para ler o que já estava escrito, nem para adiantar a redação.
+
+Mas a ordem é do fluxo, não da lei: nada impede redigir o TR antes de gerar o ETP, e é assim que se trabalha quando o prazo aperta. Travar transformava orientação em obstáculo — exatamente o que fez o fluxo de aprovação sair do produto (§24). A dependência **continua dita**, agora como o que ela é: "Fundamenta-se em Estudo Técnico Preliminar". O botão voltou.
+
+### Documento entrava no processo e não saía
+
+Dava para acrescentar documentos ao processo e não havia como retirar nenhum — nem o que entrou por engano, nem o que a modalidade deixou de pedir. E enquanto ficasse na lista, contava como pendência no encerramento **para sempre**.
+
+Retirar passou a existir. O que **não** sai é o documento já concluído: o arquivo foi gerado, baixado e provavelmente protocolado, e sumir da tela o documento que o próprio processo produziu deixaria o acervo com um arquivo sem origem. O servidor recusa dizendo por quê, e a tela nem oferece nesse caso.
+
+### O rascunho divergia da versão gerada em silêncio
+
+Depois de concluir um documento, editar o texto continuava permitido — e deve continuar: retificar é ato previsto. Mas nada avisava. O arquivo anexado ao processo dizia uma coisa, o editor mostrava outra, e a tela exibia "Finalizado" sobre um texto que já não era o do arquivo.
+
+O documento agora declara `changedSinceVersion`, comparado pelo **mesmo hash que prova a versão** — forma canônica do corpo, que é o que sai impresso. O editor diz: há alterações depois da versão gerada, e o arquivo que está no processo ainda é o anterior.
+
+### O que a auditoria confirmou como correto
+
+- **Seção indispensável não admite dispensa**, e a dispensa exige justificativa — é o Art. 18, § 2º, e a recusa acontece no servidor, não só na tela.
+- **Encerrar com documento pendente é permitido**, mediante justificativa.
+- **A trilha da seção** não copia o texto: quem responde "o que estava escrito" é o snapshot da versão. Só a justificativa da dispensa vai literal, porque ela **é** a decisão.
+- **Reabrir processo encerrado** existe.

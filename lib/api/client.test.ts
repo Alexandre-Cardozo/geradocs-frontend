@@ -95,6 +95,15 @@ describe("a fachada liga cada chamada no lugar certo", () => {
     ["criarProcesso", (a) => a.criarProcesso({ objeto: "Papel" } as never), contratacao.criarProcessoReal, [{ objeto: "Papel" }]],
     ["getConsolidacaoDaDemanda", (a) => a.getConsolidacaoDaDemanda(PROCESSO), contratacao.consolidacaoDaDemanda, [PROCESSO]],
     ["getSecoes", (a) => a.getSecoes(PROCESSO, "ETP"), elaboracao.abrirDocumento, [PROCESSO, "ETP"]],
+    // O documento inteiro: `getSecoes` recorta as seções da mesma resposta, e o
+    // editor precisa do estado do documento para dizer que o rascunho já não é
+    // o que a versão gerada guardou (§80).
+    [
+      "getDocumento",
+      (a) => a.getDocumento(PROCESSO, "ETP"),
+      elaboracao.abrirDocumento,
+      [PROCESSO, "ETP"],
+    ],
     ["getCorpoDocumento", (a) => a.getCorpoDocumento(PROCESSO, "ETP"), elaboracao.corpoDaVersaoVigente, [PROCESSO, "ETP"]],
     ["getHistoricoVersoes", (a) => a.getHistoricoVersoes(PROCESSO, "ETP"), elaboracao.historicoDeVersoes, [PROCESSO, "ETP"]],
     ["getVersoesComTexto", (a) => a.getVersoesComTexto(PROCESSO, "ETP"), elaboracao.versoesComTexto, [PROCESSO, "ETP"]],

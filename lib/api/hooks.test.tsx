@@ -74,7 +74,20 @@ describe("consultas: cada uma pede ao servidor o que a sua chave promete", () =>
     ["useProcessos", () => hooks.useProcessos(), chaves.processos({}), "getProcessos"],
     ["useProcesso", () => hooks.useProcesso(PROCESSO), chaves.processo(PROCESSO), "getProcesso"],
     ["useParecerDFD", () => hooks.useParecerDFD(PROCESSO), chaves.parecerDFD(PROCESSO), "getParecerDFD"],
-    ["useSecoes", () => hooks.useSecoes(PROCESSO, "ETP"), chaves.secoes(PROCESSO, "ETP"), "getSecoes"],
+    // Uma consulta, duas leituras: `useSecoes` recorta as seções do mesmo
+    // documento que `useDocumentoEmElaboracao` devolve inteiro (§80).
+    [
+      "useSecoes",
+      () => hooks.useSecoes(PROCESSO, "ETP"),
+      chaves.secoes(PROCESSO, "ETP"),
+      "getDocumento",
+    ],
+    [
+      "useDocumentoEmElaboracao",
+      () => hooks.useDocumentoEmElaboracao(PROCESSO, "ETP"),
+      chaves.secoes(PROCESSO, "ETP"),
+      "getDocumento",
+    ],
     ["useDocumentos", () => hooks.useDocumentos(), chaves.documentos, "getDocumentos"],
     [
       "useResumoDocumentos",

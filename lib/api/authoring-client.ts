@@ -49,6 +49,7 @@ interface DocumentoApi {
   documentType: string;
   currentVersion: number;
   finalized: boolean;
+  changedSinceVersion: boolean;
   progress: number;
   canGenerate: boolean;
   sections: SecaoApi[];
@@ -62,6 +63,8 @@ export interface DocumentoEmElaboracao {
   tipo: TipoDocumento;
   versao: number;
   concluido: boolean;
+  /** Há alteração depois da versão gerada — o arquivo do processo já diverge. */
+  alteradoDesdeAVersao: boolean;
   progresso: number;
   podeGerar: boolean;
   secoes: SecaoDocumento[];
@@ -116,6 +119,11 @@ function mapear(documento: DocumentoApi, tipo: TipoDocumento): DocumentoEmElabor
     tipo,
     versao: documento.currentVersion,
     concluido: documento.finalized,
+    // O rascunho já não é o que a última versão guardou. Editar depois de
+    // concluir é permitido — retificar é ato previsto —, mas a divergência não
+    // pode ser silenciosa: o arquivo anexado ao processo diz uma coisa e a tela
+    // mostra outra (§80).
+    alteradoDesdeAVersao: documento.changedSinceVersion,
     progresso: documento.progress,
     podeGerar: documento.canGenerate,
     // Ordenadas pela posição do catálogo: é a ordem em que o documento sai
