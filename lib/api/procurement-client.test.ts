@@ -562,3 +562,110 @@ describe("atualizarItensDoDfd", () => {
     expect(corpo.items?.[0]?.unitPrice).toBeNull()
   })
 })
+
+/**
+ * A dotação orçamentária do processo.
+ *
+ * <p>O valor viaja no formato do formulário — "1.250.000,00" — e precisa chegar
+ * ao servidor como número: mandar a string faria o crédito valer outra coisa,
+ * que é o defeito que o import do PCA já teve.
+ */
+describe("dotação orçamentária", () => {
+  const PROCESSO_DA_DOTACAO = "3f2b1a00-1111-4222-8333-444455556666"
+
+  const daApi = {
+    id: "b1c2d3e4-0000-4111-8222-333344445555",
+    budgetUnit: "02.01 — Secretaria Municipal de Educação",
+    workProgram: "12.361.0004.2.045",
+    expenseNature: "3.3.90.30.00 — Material de Consumo",
+    resourceSource: "1.500.1001 — Recursos Ordinários",
+    ledgerCode: "1245",
+    fiscalYear: 2026,
+    amount: 1250000,
+    registeredAt: "2026-08-28T12:00:00Z",
+  }
+
+  it("traz o crédito no formato do formulário, que é onde ele será editado", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id/budget-appropriations`, () =>
+        HttpResponse.json([daApi, { ...daApi, id: "outra", ledgerCode: null }]),
+      ),
+    )
+    const { listarDotacoes } = await carregarClienteLimpo()
+
+    const dotacoes = await listarDotacoes(PROCESSO_DA_DOTACAO)
+
+    expect(dotacoes[0]?.programaDeTrabalho).toBe("12.361.0004.2.045")
+    // Sem símbolo: o campo de dinheiro do formulário leria "R$" como parte do
+    // número.
+    expect(dotacoes[0]?.valor).toBe("1.250.000,00")
+    expect(dotacoes[0]?.ficha).toBe("1245")
+    // Ficha nula é o ente que não a usa, e não uma ficha chamada "null".
+    expect(dotacoes[1]?.ficha).toBeUndefined()
+  })
+
+  const dados = {
+    unidadeOrcamentaria: "  02.01 — Secretaria Municipal de Educação  ",
+    programaDeTrabalho: " 12.361.0004.2.045 ",
+    naturezaDaDespesa: " 3.3.90.30.00 — Material de Consumo ",
+    fonteDeRecurso: " 1.500.1001 — Recursos Ordinários ",
+    ficha: "  ",
+    exercicio: 2026,
+    valor: "1.250.000,00",
+  }
+
+  function capturarDotacao(metodo: "post" | "put") {
+    const corpo: Record<string, unknown> = {}
+    const rota = metodo === "post"
+      ? `${urlDaApi}/procurement-processes/:id/budget-appropriations`
+      : `${urlDaApi}/procurement-processes/:id/budget-appropriations/:dotacaoId`
+    servidor.use(
+      http[metodo](rota, async ({ request }) => {
+        Object.assign(corpo, await request.json())
+        return HttpResponse.json(daApi)
+      }),
+    )
+    return corpo
+  }
+
+  it("manda o valor como número e a ficha em branco como nula", async () => {
+    const corpo = capturarDotacao("post")
+    const { declararDotacao } = await carregarClienteLimpo()
+
+    const declarada = await declararDotacao(PROCESSO_DA_DOTACAO, dados)
+
+    expect(corpo.amount).toBe(1250000)
+    expect(corpo.fiscalYear).toBe(2026)
+    expect(corpo.workProgram).toBe("12.361.0004.2.045")
+    expect(corpo.ledgerCode).toBeNull()
+    expect(declarada.id).toBe(daApi.id)
+  })
+
+  it("a correção manda os mesmos campos — é o mesmo crédito", async () => {
+    const corpo = capturarDotacao("put")
+    const { atualizarDotacao } = await carregarClienteLimpo()
+
+    await atualizarDotacao(PROCESSO_DA_DOTACAO, daApi.id, { ...dados, ficha: "1245" })
+
+    expect(corpo.workProgram).toBe("12.361.0004.2.045")
+    expect(corpo.ledgerCode).toBe("1245")
+  })
+
+  it("retirar a dotação chama a rota dela", async () => {
+    let chamada = ""
+    servidor.use(
+      http.delete(
+        `${urlDaApi}/procurement-processes/:id/budget-appropriations/:dotacaoId`,
+        ({ params }) => {
+          chamada = String(params.dotacaoId)
+          return new HttpResponse(null, { status: 204 })
+        },
+      ),
+    )
+    const { removerDotacao } = await carregarClienteLimpo()
+
+    await removerDotacao(PROCESSO_DA_DOTACAO, daApi.id)
+
+    expect(chamada).toBe(daApi.id)
+  })
+})

@@ -608,3 +608,114 @@ export function baixarDfd(processoId: string, dfdId: string) {
     `/procurement-processes/${encodeURIComponent(processoId)}/dfds/${encodeURIComponent(dfdId)}/file`,
   );
 }
+
+/**
+ * Uma dotação orçamentária do processo.
+ *
+ * <p>Os valores vêm no formato do formulário — "1.250.000,00" —, como os do
+ * DFD: é lá que eles vão ser editados, e converter duas vezes é como o número
+ * perde uma casa pelo caminho.
+ */
+export interface DotacaoOrcamentaria {
+  id: string;
+  unidadeOrcamentaria: string;
+  /** A classificação funcional programática do Art. 92, VIII. */
+  programaDeTrabalho: string;
+  /** A natureza da despesa, de onde sai a categoria econômica do Art. 92, VIII. */
+  naturezaDaDespesa: string;
+  fonteDeRecurso: string;
+  /** Nulo quando o ente não usa ficha. */
+  ficha?: string;
+  exercicio: number;
+  valor: string;
+  declaradaEm: string;
+}
+
+/** Os campos que a declaração e a correção enviam — os mesmos, porque é o mesmo crédito. */
+export type DadosDaDotacao = Omit<DotacaoOrcamentaria, "id" | "declaradaEm">;
+
+interface DotacaoDaApi {
+  id: string;
+  budgetUnit: string;
+  workProgram: string;
+  expenseNature: string;
+  resourceSource: string;
+  ledgerCode?: string | null;
+  fiscalYear: number;
+  amount: number;
+  registeredAt: string;
+}
+
+function dotacaoDaApi(dotacao: DotacaoDaApi): DotacaoOrcamentaria {
+  return {
+    id: dotacao.id,
+    unidadeOrcamentaria: dotacao.budgetUnit,
+    programaDeTrabalho: dotacao.workProgram,
+    naturezaDaDespesa: dotacao.expenseNature,
+    fonteDeRecurso: dotacao.resourceSource,
+    ficha: dotacao.ledgerCode ?? undefined,
+    exercicio: dotacao.fiscalYear,
+    // Formato do formulário, e não do texto: o campo de dinheiro recebe
+    // "1.250.000,00" — com o símbolo ele leria outro número.
+    valor: formatNumeroBR(dotacao.amount),
+    declaradaEm: dotacao.registeredAt,
+  };
+}
+
+function corpoDaDotacao(dados: DadosDaDotacao) {
+  return JSON.stringify({
+    budgetUnit: dados.unidadeOrcamentaria.trim(),
+    workProgram: dados.programaDeTrabalho.trim(),
+    expenseNature: dados.naturezaDaDespesa.trim(),
+    resourceSource: dados.fonteDeRecurso.trim(),
+    ledgerCode: dados.ficha?.trim() || null,
+    fiscalYear: dados.exercicio,
+    amount: parseValorBR(dados.valor),
+  });
+}
+
+/** As dotações do processo, por exercício. */
+export async function listarDotacoes(processoId: string): Promise<DotacaoOrcamentaria[]> {
+  const dotacoes = await requisicaoProtegida<DotacaoDaApi[]>(
+    `/procurement-processes/${encodeURIComponent(processoId)}/budget-appropriations`,
+  );
+  return dotacoes.map(dotacaoDaApi);
+}
+
+/**
+ * Declara uma dotação no processo.
+ *
+ * <p>Uma vez aqui, três seções: TR 'j', Edital (Art. 150) e a cláusula do
+ * contrato (Art. 92, VIII).
+ */
+export async function declararDotacao(
+  processoId: string,
+  dados: DadosDaDotacao,
+): Promise<DotacaoOrcamentaria> {
+  return dotacaoDaApi(
+    await requisicaoProtegida<DotacaoDaApi>(
+      `/procurement-processes/${encodeURIComponent(processoId)}/budget-appropriations`,
+      { method: "POST", body: corpoDaDotacao(dados) },
+    ),
+  );
+}
+
+/** Corrige uma dotação já declarada — o mesmo registro, com o crédito certo. */
+export async function atualizarDotacao(
+  processoId: string,
+  dotacaoId: string,
+  dados: DadosDaDotacao,
+): Promise<void> {
+  await requisicaoProtegida<unknown>(
+    `/procurement-processes/${encodeURIComponent(processoId)}/budget-appropriations/${encodeURIComponent(dotacaoId)}`,
+    { method: "PUT", body: corpoDaDotacao(dados) },
+  );
+}
+
+/** Retira uma dotação do processo. */
+export async function removerDotacao(processoId: string, dotacaoId: string): Promise<void> {
+  await requisicaoProtegida<unknown>(
+    `/procurement-processes/${encodeURIComponent(processoId)}/budget-appropriations/${encodeURIComponent(dotacaoId)}`,
+    { method: "DELETE" },
+  );
+}

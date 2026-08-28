@@ -140,7 +140,13 @@ export interface NovoProcessoInput {
 }
 
 /** Painel especial do editor acionado por uma seção (ver components/documentos/paineis.tsx). */
-export type PainelSecao = "ata" | "necessidade" | "pca" | "quantidades" | "valor"
+export type PainelSecao =
+  | "ata"
+  | "dotacao"
+  | "necessidade"
+  | "pca"
+  | "quantidades"
+  | "valor"
 
 /**
  * Seção de um documento gerável (ETP, TR, Cotação, Mapa, Edital, Contrato).

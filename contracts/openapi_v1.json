@@ -189,6 +189,83 @@
         "required" : [ "dispensed", "sectionCode", "text", "title" ],
         "type" : "object"
       },
+      "BudgetAppropriationRequest" : {
+        "properties" : {
+          "amount" : {
+            "minimum" : 0.01,
+            "type" : "number"
+          },
+          "budgetUnit" : {
+            "maxLength" : 255,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "expenseNature" : {
+            "maxLength" : 255,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "fiscalYear" : {
+            "format" : "int32",
+            "maximum" : 2100,
+            "minimum" : 2000,
+            "type" : "integer"
+          },
+          "ledgerCode" : {
+            "maxLength" : 60,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "resourceSource" : {
+            "maxLength" : 255,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "workProgram" : {
+            "maxLength" : 255,
+            "minLength" : 0,
+            "type" : "string"
+          }
+        },
+        "required" : [ "amount", "budgetUnit", "expenseNature", "fiscalYear", "resourceSource", "workProgram" ],
+        "type" : "object"
+      },
+      "BudgetAppropriationResponse" : {
+        "properties" : {
+          "amount" : {
+            "type" : "number"
+          },
+          "budgetUnit" : {
+            "type" : "string"
+          },
+          "expenseNature" : {
+            "type" : "string"
+          },
+          "fiscalYear" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "ledgerCode" : {
+            "type" : "string"
+          },
+          "registeredAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "resourceSource" : {
+            "type" : "string"
+          },
+          "workProgram" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "amount", "budgetUnit", "expenseNature", "fiscalYear", "id", "registeredAt", "resourceSource", "workProgram" ],
+        "type" : "object"
+      },
       "ChangePasswordRequest" : {
         "properties" : {
           "currentPassword" : {
@@ -2768,6 +2845,142 @@
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProcurementProcessResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "procurement-process-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{id}/budget-appropriations" : {
+      "get" : {
+        "operationId" : "appropriations",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/BudgetAppropriationResponse"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "procurement-process-controller" ]
+      },
+      "post" : {
+        "operationId" : "declareAppropriation",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/BudgetAppropriationRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BudgetAppropriationResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "procurement-process-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{id}/budget-appropriations/{appropriationId}" : {
+      "delete" : {
+        "operationId" : "removeAppropriation",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "appropriationId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "procurement-process-controller" ]
+      },
+      "put" : {
+        "operationId" : "updateAppropriation",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "appropriationId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/BudgetAppropriationRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BudgetAppropriationResponse"
                 }
               }
             },

@@ -988,3 +988,17 @@ Os painéis já se rotulavam pela seção que os hospeda, então cada documento 
 **PCA e ATA continuam só no ETP:** são os incisos II e V, sem correspondente nos demais.
 
 **O que ficou de fora, de propósito.** A Cotação tem duas seções sobre fontes — "Fornecedores e Fontes Consultadas" (Art. 23, § 1º) e "Preços Coletados" (§ 2º) — que pedem **várias** fontes, cada uma com data de coleta, validade da proposta e fornecedor identificado. O campo do §70 escolhe **uma**. Portar não resolveria: é um cadastro de coletas, não um campo, e inventá-lo aqui seria desenhar por analogia. Fica registrado como lacuna conhecida. Pelo mesmo motivo, "Adequação Orçamentária" do TR ('j') não recebeu o painel de PCA: a seção é sobre dotação orçamentária — que a plataforma não conhece —, e um painel que preenche metade dela faria a seção parecer pronta sem estar.
+
+## 73. A dotação orçamentária deixa de ser texto e vira cadastro do processo
+
+Três seções, em três documentos, pediam o **mesmo crédito** e não tinham de onde tirá-lo: a Adequação Orçamentária do TR (Art. 6º, XXIII, `j`), a Dotação Orçamentária do Edital (Art. 150) e a cláusula do contrato (Art. 92, VIII). Escritas à mão, três vezes, as três divergem — e aqui a divergência custa caro: o **Art. 150 torna a ausência da indicação dos créditos causa de nulidade do ato**, e o Art. 92, VIII exige o crédito "com a indicação da classificação funcional programática e da categoria econômica", nome por nome.
+
+**Agora o crédito é declarado uma vez, no processo.** Unidade orçamentária, programa de trabalho, natureza da despesa, fonte de recurso, ficha (opcional — nem todo ente a usa), exercício e valor. Várias por processo, como os DFDs: a despesa de uma contratação compartilhada corre por mais de um programa de trabalho, e a de um contrato plurianual por mais de um exercício.
+
+**O painel confronta o total com o valor estimado.** É isso que faz a palavra "adequação" significar alguma coisa: declarar o crédito e não confrontá-lo com a despesa deixaria a seção afirmar uma adequação que ninguém verificou. Quando os créditos não cobrem, o rascunho deixa a diferença **em colchetes** em vez de afirmar suficiência que os números não sustentam.
+
+**No TR a seção tem duas metades, e agora tem as duas.** A alínea `j` pede a dotação *e* a previsão no PCA vigente; o Art. 150 e o Art. 92, VIII pedem só o crédito. Por isso a verificação do PCA aparece no TR e não no Edital nem no Contrato — foi exatamente por isso que, na §72, o painel de PCA não foi plugado ali sozinho: preencheria metade e a seção pareceria pronta.
+
+**Três ações de auditoria e não uma**, pela mesma razão do DFD (§68): declarar, corrigir e retirar mudam a cobertura da despesa de formas diferentes. A trilha nomeia o programa de trabalho que saiu — quando um crédito deixou de constar, e por ordem de quem, é pergunta que alguém vai fazer.
+
+Cobertura: 807 testes de unidade (100% em `lib/**`), 53 e2e — incluindo a travessia que teste de componente não alcança: declarar no processo e ver o crédito aparecer na cláusula do contrato. No backend, 860 testes com JaCoCo 100% em `domain` e `application`.

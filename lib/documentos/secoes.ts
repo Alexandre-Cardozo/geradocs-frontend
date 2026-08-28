@@ -238,6 +238,7 @@ const secoesTR: SecaoDocumento[] = secoes([
     titulo: "Adequação Orçamentária",
     fundamentoLegal: "Art. 6º, XXIII, 'j', Lei 14.133/21",
     hint: "Informe a dotação orçamentária que suportará a despesa e a previsão no PCA vigente.",
+    painel: "dotacao",
   },
 ])
 
@@ -302,6 +303,7 @@ const secoesEdital: SecaoDocumento[] = secoes([
     titulo: "Da Dotação Orçamentária",
     fundamentoLegal: "Art. 150, Lei 14.133/21",
     hint: "Indique a dotação orçamentária que suportará a despesa no exercício e, se plurianual, a previsão nos exercícios seguintes.",
+    painel: "dotacao",
   },
   {
     titulo: "Das Disposições Finais e dos Anexos",
@@ -362,6 +364,7 @@ const secoesContrato: SecaoDocumento[] = secoes([
     titulo: "Da Dotação Orçamentária",
     fundamentoLegal: "Art. 92, VIII, Lei 14.133/21",
     hint: "Indique o crédito orçamentário que suportará a despesa, com programa de trabalho e elemento de despesa.",
+    painel: "dotacao",
   },
   {
     titulo: "Da Garantia de Execução",

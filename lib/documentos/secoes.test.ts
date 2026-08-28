@@ -116,15 +116,22 @@ describe("painéis especiais", () => {
       de cálculo. Deixá-los sem painel obrigava a redigitar à mão o que a
       plataforma já tem — que era exatamente a lacuna corrigida no ETP.
 
+      A dotação é o caso mais forte: o mesmo crédito é pedido por três seções
+      em três documentos — TR 'j', Edital (Art. 150) e a cláusula do contrato
+      (Art. 92, VIII) —, e escrevê-lo à mão nas três é como duas divergem.
+
       PCA e ATA continuam só no ETP: são incisos sem correspondente nos demais.
     */
     expect(comPainel.sort()).toEqual([
+      "Contrato:dotacao",
       "Cotação:valor",
       "ETP:ata",
       "ETP:necessidade",
       "ETP:pca",
       "ETP:quantidades",
       "ETP:valor",
+      "Edital:dotacao",
+      "TR:dotacao",
       "TR:necessidade",
       "TR:quantidades",
       "TR:valor",

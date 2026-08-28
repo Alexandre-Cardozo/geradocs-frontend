@@ -28,6 +28,7 @@ import {
 } from "@/lib/api/hooks"
 import { ConsolidacaoDaDemanda } from "@/components/processos/consolidacao-da-demanda"
 import { DfdsDoProcesso } from "@/components/processos/dfds-do-processo"
+import { DotacoesDoProcesso } from "@/components/processos/dotacoes-do-processo"
 import { ItensDaDemanda } from "@/components/processos/itens-da-demanda"
 import { TrilhaDoProcesso } from "@/components/processos/trilha-do-processo"
 import { PainelRetificacao } from "@/components/processos/painel-retificacao"
@@ -411,6 +412,13 @@ export default function HubProcesso() {
           */}
           <DfdsDoProcesso processoId={processoId} />
           <ItensDaDemanda processoId={processoId} />
+          {/*
+            O crédito que suporta a despesa. Fica aqui, no processo, e não em
+            cada documento: ele serve a Adequação Orçamentária do TR, a Dotação
+            do Edital e a cláusula do contrato — escrito à mão nas três, ele
+            diverge em duas.
+          */}
+          <DotacoesDoProcesso processoId={processoId} valorEstimado={proc.valorEstimado} />
         </div>
       </div>
 

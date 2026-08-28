@@ -21,6 +21,7 @@ import { CATALOGO, porSlug } from "@/lib/documentos"
 import { CaminhosDaSecao } from "@/components/documentos/caminhos-da-secao"
 import { DispensaDeSecao } from "@/components/documentos/dispensa-de-secao"
 import { EtapaFinal } from "@/components/documentos/etapa-final"
+import { PainelDotacao } from "@/components/documentos/painel-dotacao"
 import { PainelPca } from "@/components/documentos/painel-pca"
 import {
   foiDispensada,
@@ -433,6 +434,25 @@ export default function EditorDocumento() {
 
           {/* Painel de Adesão de ATA — acompanha o Levantamento de Mercado. */}
           {active?.painel === "ata" && <PainelATA />}
+
+          {/*
+            A dotação orçamentária — TR 'j', Edital (Art. 150) e a cláusula do
+            contrato (Art. 92, VIII). O crédito é declarado uma vez, no processo;
+            aqui ele é mostrado, confrontado com o valor estimado e escrito.
+          */}
+          {active?.painel === "dotacao" && (
+            <PainelDotacao
+              secao={active}
+              processoId={processoId}
+              rascunho={rascunho}
+              setRascunho={setRascunho}
+              gerando={gerar.isPending}
+              onGerarComIa={handleGerarIA}
+              // A alínea 'j' do TR pede a dotação **e** a previsão no PCA; o
+              // Art. 150 e o Art. 92, VIII pedem só o crédito.
+              comPrevisaoNoPca={tipo === "TR"}
+            />
+          )}
 
           {/* Previsão no PCA — acompanha o inciso II. Precisa do processo, e
               por isso não passa pelo despachante genérico de painéis. */}

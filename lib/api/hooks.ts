@@ -26,10 +26,15 @@ import {
 import { iaDisponivel } from "@/lib/api/ai-client"
 import {
   anexarArquivoAoDfd,
+  atualizarDotacao,
   atualizarItensDoDfd,
+  declararDotacao,
   listarDfds,
+  listarDotacoes,
   registrarDfd,
   removerDfd,
+  removerDotacao,
+  type DadosDaDotacao,
   type ItemDoDfd,
 } from "@/lib/api/procurement-client"
 import * as api from "@/lib/api/client"
@@ -48,6 +53,7 @@ export const chaves = {
   processo: (id: string) => ["processo", id] as const,
   parecerDFD: (id: string) => ["parecer-dfd", id] as const,
   dfds: (id: string) => ["dfds", id] as const,
+  dotacoes: (id: string) => ["dotacoes", id] as const,
   iaDisponivel: ["ia-disponivel"] as const,
   secoes: (id: string, tipo: TipoDocumento) => ["secoes", id, tipo] as const,
   documentos: ["documentos"] as const,
@@ -788,6 +794,50 @@ export function useDfdsDoProcesso(processoId: string) {
   return useQuery({
     queryKey: chaves.dfds(processoId),
     queryFn: () => listarDfds(processoId),
+  })
+}
+
+/**
+ * As dotações orçamentárias do processo.
+ *
+ * <p>Uma vez declaradas, servem três seções em três documentos: a Adequação
+ * Orçamentária do TR, a Dotação do Edital e a cláusula do contrato. Por isso a
+ * consulta é do processo, e não do documento.
+ */
+export function useDotacoesDoProcesso(processoId: string) {
+  return useQuery({
+    queryKey: chaves.dotacoes(processoId),
+    queryFn: () => listarDotacoes(processoId),
+  })
+}
+
+export function useDeclararDotacao(processoId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (dados: DadosDaDotacao) => declararDotacao(processoId, dados),
+    onSuccess: () =>
+      void queryClient.invalidateQueries({ queryKey: chaves.dotacoes(processoId) }),
+  })
+}
+
+/** Corrige uma dotação já declarada — o mesmo registro, com o crédito certo. */
+export function useAtualizarDotacao(processoId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { dotacaoId: string; dados: DadosDaDotacao }) =>
+      atualizarDotacao(processoId, input.dotacaoId, input.dados),
+    onSuccess: () =>
+      void queryClient.invalidateQueries({ queryKey: chaves.dotacoes(processoId) }),
+  })
+}
+
+/** Retira uma dotação do processo. */
+export function useRemoverDotacao(processoId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (dotacaoId: string) => removerDotacao(processoId, dotacaoId),
+    onSuccess: () =>
+      void queryClient.invalidateQueries({ queryKey: chaves.dotacoes(processoId) }),
   })
 }
 

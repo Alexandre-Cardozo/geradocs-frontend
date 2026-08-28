@@ -420,6 +420,38 @@ export interface paths {
         patch: operations["update_1"];
         trace?: never;
     };
+    "/api/v1/procurement-processes/{id}/budget-appropriations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["appropriations"];
+        put?: never;
+        post: operations["declareAppropriation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/procurement-processes/{id}/budget-appropriations/{appropriationId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updateAppropriation"];
+        post?: never;
+        delete: operations["removeAppropriation"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/procurement-processes/{id}/closure": {
         parameters: {
             query?: never;
@@ -906,6 +938,30 @@ export interface components {
             sectionCode: string;
             text: string;
             title: string;
+        };
+        BudgetAppropriationRequest: {
+            amount: number;
+            budgetUnit: string;
+            expenseNature: string;
+            /** Format: int32 */
+            fiscalYear: number;
+            ledgerCode?: string;
+            resourceSource: string;
+            workProgram: string;
+        };
+        BudgetAppropriationResponse: {
+            amount: number;
+            budgetUnit: string;
+            expenseNature: string;
+            /** Format: int32 */
+            fiscalYear: number;
+            /** Format: uuid */
+            id: string;
+            ledgerCode?: string;
+            /** Format: date-time */
+            registeredAt: string;
+            resourceSource: string;
+            workProgram: string;
         };
         ChangePasswordRequest: {
             currentPassword: string;
@@ -2285,6 +2341,102 @@ export interface operations {
                 content: {
                     "*/*": components["schemas"]["ProcurementProcessResponse"];
                 };
+            };
+        };
+    };
+    appropriations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BudgetAppropriationResponse"][];
+                };
+            };
+        };
+    };
+    declareAppropriation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BudgetAppropriationRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BudgetAppropriationResponse"];
+                };
+            };
+        };
+    };
+    updateAppropriation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                appropriationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BudgetAppropriationRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BudgetAppropriationResponse"];
+                };
+            };
+        };
+    };
+    removeAppropriation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                appropriationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
