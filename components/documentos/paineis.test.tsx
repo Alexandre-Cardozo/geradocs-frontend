@@ -394,3 +394,103 @@ describe("o mesmo painel em outros documentos", () => {
     expect(await screen.findByText("Definição do Objeto")).toBeInTheDocument()
   })
 })
+
+/**
+ * A estimativa de valor passa a sair da pesquisa de preços.
+ *
+ * <p>Antes somava sempre o `unitPrice` do DFD — que o Decreto 10.947/2022,
+ * Art. 8º, IV chama de preliminar e obtido por procedimento simplificado, e que
+ * serve ao PCA. O valor da contratação é o do Art. 23 e vem da pesquisa (§74).
+ */
+describe("o valor apurado na pesquisa", () => {
+  const papelPesquisado = {
+    description: "Papel A4",
+    unit: "RESMA",
+    quantity: 100,
+    specification: null,
+    unitPrice: 25,
+  }
+
+  const coletaDe = (preco: number) => ({
+    id: `c-${preco}`,
+    item: "Papel A4",
+    source: "Painel de Preços",
+    unitPrice: preco,
+    collectedAt: "2026-08-20T14:30:00Z",
+    registeredAt: "2026-08-28T12:00:00Z",
+  })
+
+  function comColetas(coletas: unknown[]) {
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id/price-quotes`, () =>
+        HttpResponse.json(coletas),
+      ),
+    )
+  }
+
+  it("prefere o preço da pesquisa ao preliminar do DFD", async () => {
+    comDfds([dfd("DFD 003/2026", "Secretaria de Educação", [papelPesquisado])])
+    comColetas([coletaDe(20), coletaDe(30), coletaDe(40)])
+    renderizar(
+      <PainelDaSecao
+        secao={secao(TITULOS.valor, "valor")}
+        processoId={PROCESSO}
+        rascunho=""
+        setRascunho={vi.fn()}
+        gerando={false}
+        onGerarComIa={vi.fn()}
+      />,
+    )
+
+    // Média de 20, 30 e 40 = 30; × 100 resmas = 3.000,00 — e não os 2.500,00 do
+    // preço preliminar.
+    expect(await screen.findByText("R$ 3.000,00")).toBeInTheDocument()
+    expect(screen.getByText(/com preço apurado na pesquisa/)).toBeInTheDocument()
+  })
+
+  it("sem pesquisa, usa a preliminar e diz que ela é preliminar", async () => {
+    comDfds([dfd("DFD 003/2026", "Secretaria de Educação", [papelPesquisado])])
+    comColetas([])
+    renderizar(
+      <PainelDaSecao
+        secao={secao(TITULOS.valor, "valor")}
+        processoId={PROCESSO}
+        rascunho=""
+        setRascunho={vi.fn()}
+        gerando={false}
+        onGerarComIa={vi.fn()}
+      />,
+    )
+
+    expect(await screen.findByText("R$ 2.500,00")).toBeInTheDocument()
+    expect(screen.getByText(/Decreto 10.947\/2022, Art. 8º, IV/)).toBeInTheDocument()
+  })
+
+  it("a memória diz de onde veio cada preço", async () => {
+    comDfds([dfd("DFD 003/2026", "Secretaria de Educação", [papelPesquisado])])
+    comColetas([coletaDe(20), coletaDe(30), coletaDe(40)])
+    const setRascunho = vi.fn()
+    renderizar(
+      <PainelDaSecao
+        secao={secao(TITULOS.valor, "valor")}
+        processoId={PROCESSO}
+        rascunho=""
+        setRascunho={setRascunho}
+        gerando={false}
+        onGerarComIa={vi.fn()}
+      />,
+    )
+
+    await userEvent.click(
+      await screen.findByRole("button", { name: /Fonte de pesquisa de preços/ }),
+    )
+    await userEvent.click(await screen.findByRole("option", { name: /Painel de Preços/ }))
+    await userEvent.click(screen.getByRole("button", { name: /a partir dos itens/ }))
+
+    const texto = setRascunho.mock.calls[0]?.[0] as string
+    // Apresentar preço pesquisado e preço preliminar como a mesma coisa faria a
+    // memória afirmar uma pesquisa que não houve.
+    expect(texto).toContain("média dos preços obtidos de 3 preço(s) coletado(s)")
+    expect(texto).toContain("preços unitários apurados na pesquisa de preços")
+  })
+})

@@ -301,6 +301,25 @@ describe("atualizarProcessoReal", () => {
     expect(corpo.estimatedValue).toBe(485000)
   })
 
+  it("a conciliação adota o valor da demanda, no formato do formulário", async () => {
+    let corpo: Record<string, unknown> = {}
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id`, () => HttpResponse.json(processoApi)),
+      http.patch(`${urlDaApi}/procurement-processes/:id`, async ({ request }) => {
+        corpo = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json(processoApi)
+      }),
+    )
+    const { atualizarProcessoReal, obterProcesso } = await carregarClienteLimpo()
+    const atual = await obterProcesso(processoApi.id)
+
+    await atualizarProcessoReal(atual, { valorEstimado: "1.250.000,00" })
+
+    // "1.250.000,00" precisa chegar como 1250000: mandar a string faria o
+    // processo declarar outro valor.
+    expect(corpo.estimatedValue).toBe(1250000)
+  })
+
   it("processo sem urgência declarada e sem versão não inventa valores", async () => {
     let corpo: Record<string, unknown> = {}
     const semOpcionais = { ...processoApi, urgency: false, version: undefined }

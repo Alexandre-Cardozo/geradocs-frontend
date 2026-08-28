@@ -186,6 +186,14 @@ export async function atualizarProcessoReal(
     objetoDemanda?: string;
     modalidade?: Modalidade;
     documentos?: TipoDocumento[];
+    /**
+     * O valor estimado, no formato do formulário.
+     *
+     * <p>Passou a ser editável com a conciliação (§75): ele era digitado na
+     * abertura e nunca mais conversava com a demanda, e adotar o valor que os
+     * DFDs ou a pesquisa sustentam exigia abrir o processo de novo.
+     */
+    valorEstimado?: string;
     /** Por que mudou; vai literal para a trilha do servidor (ADR-024). */
     motivo?: string;
   },
@@ -201,7 +209,10 @@ export async function atualizarProcessoReal(
         objectDescription: mudancas.objeto ?? atual.objeto,
         demandObject: mudancas.objetoDemanda ?? atual.objetoDemanda,
         modality: modalidades[mudancas.modalidade ?? atual.modalidade],
-        estimatedValue: atual.valorEstimado,
+        estimatedValue:
+          mudancas.valorEstimado === undefined
+            ? atual.valorEstimado
+            : parseValorBR(mudancas.valorEstimado),
         legalBasis: atual.fundamentoLegal,
         // `Boolean` e não `?? false`: o campo é opcional no tipo, mas o
         // mapeador sempre o define — o fallback seria um caminho sem entrada.

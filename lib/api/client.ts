@@ -212,6 +212,8 @@ export interface AtualizarProcessoInput {
   objetoDemanda?: string
   documentos?: Array<TipoDocumento>
   modalidade?: Modalidade
+  /** O valor estimado, no formato do formulário — a conciliação o adota (§75). */
+  valorEstimado?: string
   /**
    * Preenchida quando a lista de documentos é mantida divergindo da
    * recomendação. Vai literal para a trilha — é ela que responde ao controle.
@@ -251,6 +253,7 @@ export async function atualizarProcesso(input: AtualizarProcessoInput): Promise<
     objetoDemanda: input.objetoDemanda,
     modalidade: input.modalidade,
     documentos: input.documentos,
+    valorEstimado: input.valorEstimado,
     motivo,
   })
 }

@@ -26,6 +26,7 @@ import {
   useProcesso,
   useSecoes,
 } from "@/lib/api/hooks"
+import { ConciliacaoDeValores } from "@/components/processos/conciliacao-de-valores"
 import { ConsolidacaoDaDemanda } from "@/components/processos/consolidacao-da-demanda"
 import { DfdsDoProcesso } from "@/components/processos/dfds-do-processo"
 import { DotacoesDoProcesso } from "@/components/processos/dotacoes-do-processo"
@@ -360,6 +361,13 @@ export default function HubProcesso() {
           </div>
 
         </dl>
+
+        {/*
+          Os três valores do processo têm estatutos diferentes — preliminar do
+          DFD (Decreto 10.947/2022, Art. 8º, IV), declarado na abertura e apurado
+          na pesquisa (Art. 23) — e eram três números soltos (§75).
+        */}
+        <ConciliacaoDeValores processoId={processoId} valorDeclarado={proc.valorEstimado} />
       </div>
 
       {/* Fase de verificação do DFD (quando configurada) */}

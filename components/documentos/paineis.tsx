@@ -17,9 +17,23 @@ import { InlineSpinner } from "@/components/shared/estados"
 import { useToast } from "@/components/shared/providers"
 import { CampoDeFonteDePreco } from "@/components/shared/campo-de-fonte-de-preco"
 import { Th } from "@/components/shared/tabela"
-import { useConsolidacaoDaDemanda, useDfdsDoProcesso, useProcesso } from "@/lib/api/hooks"
+import {
+  useColetasDoProcesso,
+  useConsolidacaoDaDemanda,
+  useDfdsDoProcesso,
+  useProcesso,
+  useSecoes,
+} from "@/lib/api/hooks"
 import type { DfdAnexado, ItemConsolidado } from "@/lib/api/procurement-client"
 import { fonteDeclarada, fundamentoDaFonte, PREFIXO_DA_FONTE } from "@/lib/dominio/fontes-de-preco"
+import {
+  apurar,
+  chaveDoItem,
+  metodoDeclarado,
+  porItem,
+  ROTULO_DO_METODO,
+  type MetodoDeApuracao,
+} from "@/lib/dominio/pesquisa-de-precos"
 import { rotuloDaUnidade } from "@/lib/dominio/unidades"
 import { formatBRL, formatNumeroBR, parseValorBR } from "@/lib/format"
 import type { ModoATA, PainelSecao, Processo, SecaoDocumento } from "@/lib/types"
@@ -355,6 +369,20 @@ function PainelValor({
 }: PainelProps) {
   const dfds = useDfdsDoProcesso(processoId)
   const processo = useProcesso(processoId)
+  const coletas = useColetasDoProcesso(processoId)
+  /*
+    O método de apuração é o que a **Cotação** declarou, e não um padrão desta
+    tela: se o ETP somasse pela média enquanto a Cotação adotou a mediana, as
+    duas peças do mesmo processo apresentariam valores diferentes para a mesma
+    contratação. Só se consulta quando a Cotação é um dos documentos escolhidos.
+  */
+  const temCotacao = processo.data?.documentos.includes("Cotação") ?? false
+  const secoesDaCotacao = useSecoes(temCotacao ? processoId : "", "Cotação")
+  const metodo =
+    metodoDeclarado(
+      (secoesDaCotacao.data ?? []).find((secao) => secao.painel === "referencia")?.conteudo
+        ?? "",
+    ) ?? "media"
   const showToast = useToast()
   /*
     A fonte vive na memória de cálculo, e é de lá que ela volta. Antes era só
@@ -369,13 +397,41 @@ function PainelValor({
     if (declarada) setFonte(declarada)
   }
 
+  /*
+    O preço vem da pesquisa quando ela existe.
+
+    Antes vinha sempre do `unitPrice` que a secretaria digitou no DFD. Esse
+    número é exigido — Decreto 10.947/2022, Art. 8º, IV —, mas a própria norma o
+    chama de estimativa **preliminar**, obtida por **procedimento simplificado**,
+    e ele serve ao PCA. O valor da contratação é o do Art. 23 e sai da pesquisa
+    de preços (§74). Enquanto não houver coleta, a preliminar segue valendo — e a
+    tela diz qual das duas está usando, em vez de apresentar as duas como a mesma
+    coisa.
+  */
+  const pesquisados = porItem(coletas.data ?? [])
+  const apuradoDe = (descricao: string) =>
+    pesquisados.find((i) => chaveDoItem(i.item) === chaveDoItem(descricao))
+
   const itens = (dfds.data ?? []).flatMap((dfd) =>
-    dfd.itens.map((item) => ({ ...item, dfd: dfd.nomeDoArquivo, secretaria: dfd.secretaria })),
+    dfd.itens.map((item) => {
+      const pesquisa = apuradoDe(item.descricao)
+      return {
+        ...item,
+        dfd: dfd.nomeDoArquivo,
+        secretaria: dfd.secretaria,
+        /** O preço que vale para este item, e de onde ele veio. */
+        precoApurado: pesquisa ? apurar(pesquisa, metodo) : null,
+        precosColetados: pesquisa?.precos.length ?? 0,
+      }
+    }),
   )
-  const precificados = itens.filter((item) => item.valorUnitario)
-  const semPreco = itens.filter((item) => !item.valorUnitario)
+  const precoDe = (item: (typeof itens)[number]) =>
+    item.precoApurado ?? parseValorBR(item.valorUnitario ?? "0")
+  const precificados = itens.filter((item) => item.precoApurado != null || item.valorUnitario)
+  const semPreco = itens.filter((item) => item.precoApurado == null && !item.valorUnitario)
+  const daPesquisa = itens.filter((item) => item.precoApurado != null)
   const total = precificados.reduce(
-    (soma, item) => soma + parseValorBR(item.quantidade) * parseValorBR(item.valorUnitario ?? "0"),
+    (soma, item) => soma + parseValorBR(item.quantidade) * precoDe(item),
     0,
   )
   const valorDeclarado = processo.data?.valorEstimado ?? 0
@@ -395,7 +451,11 @@ function PainelValor({
             <ValorApurado
               rotulo="Total dos itens precificados"
               valor={total}
-              detalhe={`${precificados.length} de ${itens.length} ${itens.length === 1 ? "item" : "itens"} com preço informado`}
+              detalhe={
+                daPesquisa.length > 0
+                  ? `${daPesquisa.length} de ${itens.length} ${itens.length === 1 ? "item" : "itens"} com preço apurado na pesquisa (${ROTULO_DO_METODO[metodo].toLowerCase()})`
+                  : `${precificados.length} de ${itens.length} ${itens.length === 1 ? "item" : "itens"} com preço informado`
+              }
             />
             <ValorApurado
               rotulo="Valor declarado na abertura"
@@ -407,6 +467,18 @@ function PainelValor({
               }
             />
           </div>
+
+          {daPesquisa.length < precificados.length && (
+            <InfoBanner tone="info">
+              {daPesquisa.length === 0
+                ? "Nenhum item tem preço apurado na pesquisa: o total abaixo usa a estimativa preliminar dos DFDs"
+                : `${precificados.length - daPesquisa.length} item(ns) ainda usam a estimativa preliminar dos DFDs`}{" "}
+              — que o <strong>Decreto 10.947/2022, Art. 8º, IV</strong> define como obtida por
+              procedimento simplificado, para o PCA. O valor da contratação é o do{" "}
+              <strong>Art. 23 da Lei 14.133/21</strong> e sai da pesquisa de preços: registre as
+              coletas na Cotação do processo.
+            </InfoBanner>
+          )}
 
           {semPreco.length > 0 && (
             <InfoBanner tone="warning">
@@ -469,7 +541,20 @@ function PainelValor({
                       : "Refazer a partir dos itens",
                   onEscrever: () => {
                     setRascunho(
-                      memoriaDoValor(precificados, total, valorDeclarado, fonte),
+                      memoriaDoValor(
+                        precificados.map((item) => ({
+                          descricao: item.descricao,
+                          unidade: item.unidade,
+                          quantidade: item.quantidade,
+                          valorUnitario: item.valorUnitario,
+                          precoApurado: item.precoApurado,
+                          precosColetados: item.precosColetados,
+                        })),
+                        total,
+                        valorDeclarado,
+                        fonte,
+                        metodo,
+                      ),
                     )
                     showToast(
                       "Memória de cálculo preenchida a partir dos itens. Revise antes de salvar.",
@@ -504,22 +589,56 @@ function ValorApurado({
   )
 }
 
-/** O rascunho da memória de cálculo a partir dos itens precificados. */
+/**
+ * O rascunho da memória de cálculo a partir dos itens precificados.
+ *
+ * <p>Cada linha diz **de onde veio o preço**: da pesquisa, com quantos preços e
+ * por qual método (Art. 6º da IN SEGES/ME nº 65/2021), ou da estimativa
+ * preliminar do DFD, que o Decreto 10.947/2022, Art. 8º, IV obtém por
+ * procedimento simplificado. Apresentá-las como a mesma coisa faria a memória
+ * afirmar uma pesquisa que não houve.
+ */
 export function memoriaDoValor(
-  itens: Array<{ descricao: string; unidade: string; quantidade: string; valorUnitario?: string }>,
+  itens: Array<{
+    descricao: string
+    unidade: string
+    quantidade: string
+    valorUnitario?: string
+    precoApurado?: number | null
+    precosColetados?: number
+  }>,
   total: number,
   declarado: number,
   fonte: string,
+  metodo: MetodoDeApuracao = "media",
 ): string {
   const linhas = itens.map((item) => {
-    const subtotal = parseValorBR(item.quantidade) * parseValorBR(item.valorUnitario ?? "0")
-    return `- ${item.descricao}: ${item.quantidade} ${item.unidade} × R$ ${item.valorUnitario} = ${formatBRL(subtotal)}.`
+    const unitario = item.precoApurado ?? parseValorBR(item.valorUnitario ?? "0")
+    const subtotal = parseValorBR(item.quantidade) * unitario
+    const origem =
+      item.precoApurado != null
+        ? ` (${ROTULO_DO_METODO[metodo].toLowerCase()} de ${item.precosColetados} preço(s) coletado(s))`
+        : " (estimativa preliminar do DFD)"
+    return `- ${item.descricao}: ${item.quantidade} ${item.unidade} × ${formatBRL(unitario)}${origem} = ${formatBRL(subtotal)}.`
   })
+  const daPesquisa = itens.filter((item) => item.precoApurado != null).length
   const partes = [
-    "O valor estimado da contratação resulta dos preços unitários referenciais aplicados às "
-      + "quantidades consolidadas dos Documentos de Formalização de Demanda:",
+    daPesquisa === itens.length
+      ? "O valor estimado da contratação resulta dos preços unitários apurados na pesquisa de"
+        + " preços, aplicados às quantidades consolidadas dos Documentos de Formalização de"
+        + " Demanda:"
+      : "O valor estimado da contratação resulta dos preços unitários referenciais aplicados às "
+        + "quantidades consolidadas dos Documentos de Formalização de Demanda:",
     ...linhas,
     `Valor total estimado: ${formatBRL(total)}.`,
+    ...(daPesquisa < itens.length
+      ? [
+          "[Concluir a pesquisa de preços dos itens ainda apoiados na estimativa preliminar do"
+            + " DFD: o Art. 8º, IV do Decreto 10.947/2022 a obtém por procedimento simplificado,"
+            + " para o plano de contratações, e o valor da contratação é o do Art. 23 da"
+            + " Lei 14.133/21.]",
+        ]
+      : []),
   ]
   // O fundamento vai junto quando a fonte é um dos parâmetros da lei: é o que o
   // controle procura, e citá-lo por extenso é o padrão do documento.

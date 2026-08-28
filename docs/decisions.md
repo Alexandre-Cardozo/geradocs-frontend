@@ -1023,3 +1023,25 @@ As cinco seções da Cotação eram escritas inteiramente à mão, e a estimativ
 **O método escolhido não tem armazenamento próprio:** ele é a linha da memória de cálculo, como a fonte de pesquisa do §70. Guardá-lo em outro lugar criaria um segundo registro da mesma decisão, e os dois divergiriam.
 
 **No DS**, o `Input` passou a aceitar `date` e `datetime-local`. Campo de texto com máscara própria seria reimplementar calendário — e a máscara divergiria do que o servidor grava.
+
+## 75. Os três valores do processo param de ser três números soltos
+
+A pergunta era direta: o preço do DFD é necessário, ou informação desnecessária? E o valor total digitado na abertura?
+
+**Os dois ficam — porque são coisas diferentes**, e o defeito era tratá-los como a mesma:
+
+| Valor | Quem declara | Fundamento | O que é |
+|---|---|---|---|
+| Preço unitário do item, no DFD | secretaria requisitante | **Decreto 10.947/2022, Art. 8º, IV** | estimativa **preliminar**, "por meio de procedimento simplificado" |
+| Valor total, na abertura | quem abre o processo | valor do PCA / soma dos DFDs | referência de planejamento |
+| Valor estimado da contratação | a pesquisa de preços | **Art. 23, Lei 14.133/21** | o que vai ao ETP VI, ao TR `i`, ao edital e ao contrato |
+
+Retirar o preço do DFD quebraria a peça que alimenta o PCA — a norma o exige. O que estava errado era o **papel** que ele ganhou: o painel de valor do ETP somava o palpite da secretaria e o apresentava como o valor estimado da contratação.
+
+**Agora a estimativa prefere o preço apurado na pesquisa** e cai para a preliminar só enquanto a coleta não existe — dizendo qual das duas está usando, na tela e no texto da seção. Cada linha da memória de cálculo diz de onde veio o preço: da pesquisa, com quantos preços e por qual método, ou da estimativa preliminar do DFD. E, enquanto houver item sem pesquisa, o rascunho deixa a pendência em colchetes.
+
+**O método é o que a Cotação declarou**, e não um padrão da tela do ETP: se o ETP somasse pela média enquanto a Cotação adotou a mediana, duas peças do mesmo processo apresentariam valores diferentes para a mesma contratação. Ele é lido da seção de metodologia da Cotação, e só quando ela é um dos documentos escolhidos.
+
+**O valor da abertura deixou de ser inerte.** Ele era digitado uma vez e nunca mais conversava com nada — verifiquei: nenhuma regra o consultava. Agora o processo mostra os três lado a lado, aponta a divergência e oferece **adotar** o que a demanda sustenta. Oferece, e não troca: quem responde pelo processo é quem decide qual valor ele declara.
+
+**Fica anotado, e fora desta entrega:** o valor do processo também deveria conferir a modalidade contra os limites do Art. 75 (dispensa por valor), alertando sem bloquear. Hoje ninguém confere.
