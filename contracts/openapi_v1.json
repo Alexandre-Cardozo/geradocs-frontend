@@ -1170,6 +1170,89 @@
         "required" : [ "citable", "exerciseYear", "findings", "foreseen" ],
         "type" : "object"
       },
+      "PriceQuoteRequest" : {
+        "properties" : {
+          "collectedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "item" : {
+            "maxLength" : 500,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "note" : {
+            "maxLength" : 2000,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "proposalValidUntil" : {
+            "format" : "date",
+            "type" : "string"
+          },
+          "source" : {
+            "maxLength" : 255,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "supplier" : {
+            "maxLength" : 255,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "supplierDocument" : {
+            "maxLength" : 40,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "unitPrice" : {
+            "minimum" : 0.01,
+            "type" : "number"
+          }
+        },
+        "required" : [ "collectedAt", "item", "source", "unitPrice" ],
+        "type" : "object"
+      },
+      "PriceQuoteResponse" : {
+        "properties" : {
+          "collectedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "item" : {
+            "type" : "string"
+          },
+          "note" : {
+            "type" : "string"
+          },
+          "proposalValidUntil" : {
+            "format" : "date",
+            "type" : "string"
+          },
+          "registeredAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "source" : {
+            "type" : "string"
+          },
+          "supplier" : {
+            "type" : "string"
+          },
+          "supplierDocument" : {
+            "type" : "string"
+          },
+          "unitPrice" : {
+            "type" : "number"
+          }
+        },
+        "required" : [ "collectedAt", "id", "item", "registeredAt", "source", "unitPrice" ],
+        "type" : "object"
+      },
       "ProcessDfdResponse" : {
         "properties" : {
           "departmentId" : {
@@ -3277,6 +3360,142 @@
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProcessDfdResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "procurement-process-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{id}/price-quotes" : {
+      "get" : {
+        "operationId" : "quotes",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/PriceQuoteResponse"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "procurement-process-controller" ]
+      },
+      "post" : {
+        "operationId" : "recordQuote",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PriceQuoteRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PriceQuoteResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "procurement-process-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{id}/price-quotes/{quoteId}" : {
+      "delete" : {
+        "operationId" : "removeQuote",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "quoteId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "procurement-process-controller" ]
+      },
+      "put" : {
+        "operationId" : "updateQuote",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "quoteId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PriceQuoteRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PriceQuoteResponse"
                 }
               }
             },

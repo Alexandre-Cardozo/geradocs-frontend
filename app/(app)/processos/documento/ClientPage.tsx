@@ -21,6 +21,12 @@ import { CATALOGO, porSlug } from "@/lib/documentos"
 import { CaminhosDaSecao } from "@/components/documentos/caminhos-da-secao"
 import { DispensaDeSecao } from "@/components/documentos/dispensa-de-secao"
 import { EtapaFinal } from "@/components/documentos/etapa-final"
+import {
+  PainelDaAnaliseCritica,
+  PainelDasColetas,
+  PainelDasFontes,
+  PainelDoPrecoDeReferencia,
+} from "@/components/documentos/paineis-da-cotacao"
 import { PainelDotacao } from "@/components/documentos/painel-dotacao"
 import { PainelPca } from "@/components/documentos/painel-pca"
 import {
@@ -434,6 +440,52 @@ export default function EditorDocumento() {
 
           {/* Painel de Adesão de ATA — acompanha o Levantamento de Mercado. */}
           {active?.painel === "ata" && <PainelATA />}
+
+          {/*
+            As seções da Cotação. A pesquisa de preços é uma só — a série
+            coletada —, e as quatro seções leem dela em vez de pedir que alguém
+            redigite o mesmo número quatro vezes (IN SEGES/ME nº 65/2021, Art. 3º).
+          */}
+          {active?.painel === "fontes" && (
+            <PainelDasFontes
+              secao={active}
+              processoId={processoId}
+              rascunho={rascunho}
+              setRascunho={setRascunho}
+              gerando={gerar.isPending}
+              onGerarComIa={handleGerarIA}
+            />
+          )}
+          {active?.painel === "coletas" && (
+            <PainelDasColetas
+              secao={active}
+              processoId={processoId}
+              rascunho={rascunho}
+              setRascunho={setRascunho}
+              gerando={gerar.isPending}
+              onGerarComIa={handleGerarIA}
+            />
+          )}
+          {active?.painel === "analise" && (
+            <PainelDaAnaliseCritica
+              secao={active}
+              processoId={processoId}
+              rascunho={rascunho}
+              setRascunho={setRascunho}
+              gerando={gerar.isPending}
+              onGerarComIa={handleGerarIA}
+            />
+          )}
+          {active?.painel === "referencia" && (
+            <PainelDoPrecoDeReferencia
+              secao={active}
+              processoId={processoId}
+              rascunho={rascunho}
+              setRascunho={setRascunho}
+              gerando={gerar.isPending}
+              onGerarComIa={handleGerarIA}
+            />
+          )}
 
           {/*
             A dotação orçamentária — TR 'j', Edital (Art. 150) e a cláusula do

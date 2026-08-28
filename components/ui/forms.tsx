@@ -67,7 +67,14 @@ export function Input({
   onChange?: (e: ChangeEvent<HTMLInputElement>) => void
   placeholder?: string
   prefix?: string
-  type?: "text" | "password" | "email"
+  /**
+   * `date` e `datetime-local` entraram com a pesquisa de preços: o Art. 5º, III
+   * da IN SEGES/ME nº 65/2021 exige a **hora** de acesso quando o preço vem de
+   * mídia ou de sítio eletrônico, e a validade da proposta é uma data. Campo de
+   * texto com máscara própria seria reimplementar calendário — e a máscara
+   * divergiria do que o servidor grava.
+   */
+  type?: "text" | "password" | "email" | "date" | "datetime-local"
   autoComplete?: string
   /** Teclado do celular: `numeric` para CPF, `email` para e-mail. */
   inputMode?: "text" | "numeric" | "email"

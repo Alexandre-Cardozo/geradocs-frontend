@@ -342,7 +342,7 @@ describe("o mesmo painel em outros documentos", () => {
     unitPrice: 25,
   }
 
-  const secaoDe = (tipo: "TR" | "Cotação", titulo: string) => {
+  const secaoDe = (tipo: "TR", titulo: string) => {
     const encontrada = secoesPorTipoBase[tipo].find((s) => s.titulo === titulo)
     if (!encontrada) throw new Error(`${tipo} não tem a seção ${titulo}`)
     return encontrada
@@ -350,7 +350,6 @@ describe("o mesmo painel em outros documentos", () => {
 
   it.each([
     ["TR" as const, "Estimativa do Valor da Contratação", "Art. 6º, XXIII, 'i', Lei 14.133/21"],
-    ["Cotação" as const, "Metodologia e Preço de Referência", "Art. 23, caput, Lei 14.133/21"],
   ])("%s: o valor sai dos itens do processo, com a fonte da lei", async (tipo, titulo, fundamento) => {
     comDfds([dfd("DFD 003/2026", "Secretaria de Educação", [papel])])
     const alvo = secaoDe(tipo, titulo)

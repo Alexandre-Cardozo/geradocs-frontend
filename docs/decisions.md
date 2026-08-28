@@ -1002,3 +1002,24 @@ Três seções, em três documentos, pediam o **mesmo crédito** e não tinham d
 **Três ações de auditoria e não uma**, pela mesma razão do DFD (§68): declarar, corrigir e retirar mudam a cobertura da despesa de formas diferentes. A trilha nomeia o programa de trabalho que saiu — quando um crédito deixou de constar, e por ordem de quem, é pergunta que alguém vai fazer.
 
 Cobertura: 807 testes de unidade (100% em `lib/**`), 53 e2e — incluindo a travessia que teste de componente não alcança: declarar no processo e ver o crédito aparecer na cláusula do contrato. No backend, 860 testes com JaCoCo 100% em `domain` e `application`.
+
+## 74. A pesquisa de preços passa a existir — e a Cotação deixa de ser folha em branco
+
+As cinco seções da Cotação eram escritas inteiramente à mão, e a estimativa de valor do ETP somava o `unitPrice` que a secretaria digitou no DFD. Esse número é exigido — **Decreto 10.947/2022, Art. 8º, IV** —, mas a própria norma o chama de estimativa **preliminar**, obtida por **procedimento simplificado**, e ele serve ao PCA. O valor da contratação vem do **Art. 23 da Lei 14.133/21** e da pesquisa de preços, que a plataforma não tinha onde guardar. Era a maior lacuna de conformidade do fluxo, não uma falta de conforto.
+
+**A série de preços coletados.** Uma linha por preço obtido — que é o que a **IN SEGES/ME nº 65/2021, Art. 3º** chama de "série de preços coletados": item, fonte, preço, data **e hora** da coleta (a hora é exigida para mídia e sítio eletrônico pelo Art. 5º, III), fornecedor com CNPJ e validade da proposta (Art. 5º, § 2º). Fornecedor, documento e validade ficam opcionais porque dependem da fonte: o Painel de Preços não tem CNPJ de fornecedor, e exigi-los de todas obrigaria a inventar dado para registrar um preço legítimo.
+
+**Quatro seções leem da mesma série**, em vez de pedir o mesmo número quatro vezes:
+
+| Seção | O que o painel entrega |
+|---|---|
+| Fornecedores e Fontes Consultadas (Art. 23, § 1º) | as fontes efetivamente usadas, com quantos preços vieram de cada, e o aviso quando nenhuma é parâmetro prioritário — o Art. 5º, § 1º manda priorizar os incisos I e II e justificar quando não for possível |
+| Preços Coletados (§ 2º) | o cadastro da série, agrupada por item |
+| Análise Crítica | menor, média, mediana e maior por item; aviso de série curta (Art. 6º, § 5º) e marcação do que destoa |
+| Metodologia e Preço de Referência | os três métodos que o Art. 6º admite — média, mediana, menor — e o total apurado |
+
+**A plataforma não descarta preço.** O Art. 6º, § 2º admite desconsiderar valores inexequíveis, inconsistentes ou excessivamente elevados, mas o § 3º exige critério "fundamentado e descrito no processo". Então ela **aponta** o que destoa da mediana e deixa o critério em colchetes, para quem responde pelos autos escrever. O percentual de triagem não é critério legal — a IN não fixa nenhum —, e a tela diz isso.
+
+**O método escolhido não tem armazenamento próprio:** ele é a linha da memória de cálculo, como a fonte de pesquisa do §70. Guardá-lo em outro lugar criaria um segundo registro da mesma decisão, e os dois divergiriam.
+
+**No DS**, o `Input` passou a aceitar `date` e `datetime-local`. Campo de texto com máscara própria seria reimplementar calendário — e a máscara divergiria do que o servidor grava.

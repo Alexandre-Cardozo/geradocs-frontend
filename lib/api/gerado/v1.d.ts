@@ -548,6 +548,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/procurement-processes/{id}/price-quotes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["quotes"];
+        put?: never;
+        post: operations["recordQuote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/procurement-processes/{id}/price-quotes/{quoteId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updateQuote"];
+        post?: never;
+        delete: operations["removeQuote"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/procurement-processes/{id}/reopening": {
         parameters: {
             query?: never;
@@ -1273,6 +1305,34 @@ export interface components {
             findings: components["schemas"]["FindingResponse"][];
             foreseen: boolean;
             plan?: components["schemas"]["PcaPlanResponse"];
+        };
+        PriceQuoteRequest: {
+            /** Format: date-time */
+            collectedAt: string;
+            item: string;
+            note?: string;
+            /** Format: date */
+            proposalValidUntil?: string;
+            source: string;
+            supplier?: string;
+            supplierDocument?: string;
+            unitPrice: number;
+        };
+        PriceQuoteResponse: {
+            /** Format: date-time */
+            collectedAt: string;
+            /** Format: uuid */
+            id: string;
+            item: string;
+            note?: string;
+            /** Format: date */
+            proposalValidUntil?: string;
+            /** Format: date-time */
+            registeredAt: string;
+            source: string;
+            supplier?: string;
+            supplierDocument?: string;
+            unitPrice: number;
         };
         ProcessDfdResponse: {
             /** Format: uuid */
@@ -2638,6 +2698,102 @@ export interface operations {
                 content: {
                     "*/*": components["schemas"]["ProcessDfdResponse"];
                 };
+            };
+        };
+    };
+    quotes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PriceQuoteResponse"][];
+                };
+            };
+        };
+    };
+    recordQuote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PriceQuoteRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PriceQuoteResponse"];
+                };
+            };
+        };
+    };
+    updateQuote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                quoteId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PriceQuoteRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PriceQuoteResponse"];
+                };
+            };
+        };
+    };
+    removeQuote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                quoteId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

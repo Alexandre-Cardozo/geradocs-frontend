@@ -26,14 +26,19 @@ import {
 import { iaDisponivel } from "@/lib/api/ai-client"
 import {
   anexarArquivoAoDfd,
+  atualizarColeta,
   atualizarDotacao,
   atualizarItensDoDfd,
   declararDotacao,
+  listarColetas,
   listarDfds,
   listarDotacoes,
+  registrarColeta,
   registrarDfd,
+  removerColeta,
   removerDfd,
   removerDotacao,
+  type DadosDaColeta,
   type DadosDaDotacao,
   type ItemDoDfd,
 } from "@/lib/api/procurement-client"
@@ -54,6 +59,7 @@ export const chaves = {
   parecerDFD: (id: string) => ["parecer-dfd", id] as const,
   dfds: (id: string) => ["dfds", id] as const,
   dotacoes: (id: string) => ["dotacoes", id] as const,
+  coletas: (id: string) => ["coletas", id] as const,
   iaDisponivel: ["ia-disponivel"] as const,
   secoes: (id: string, tipo: TipoDocumento) => ["secoes", id, tipo] as const,
   documentos: ["documentos"] as const,
@@ -838,6 +844,52 @@ export function useRemoverDotacao(processoId: string) {
     mutationFn: (dotacaoId: string) => removerDotacao(processoId, dotacaoId),
     onSuccess: () =>
       void queryClient.invalidateQueries({ queryKey: chaves.dotacoes(processoId) }),
+  })
+}
+
+/**
+ * Os preços coletados na pesquisa do processo.
+ *
+ * <p>São a série do Art. 3º da IN SEGES 65/2021: dela saem as seções da Cotação
+ * e, adiante, o preço de referência que embasa a estimativa do ETP e do TR. Por
+ * isso a consulta é do processo — a pesquisa é uma só, e vários documentos a
+ * leem.
+ */
+export function useColetasDoProcesso(processoId: string) {
+  return useQuery({
+    queryKey: chaves.coletas(processoId),
+    queryFn: () => listarColetas(processoId),
+  })
+}
+
+function recarregarColetas(queryClient: QueryClient, processoId: string) {
+  void queryClient.invalidateQueries({ queryKey: chaves.coletas(processoId) })
+}
+
+export function useRegistrarColeta(processoId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (dados: DadosDaColeta) => registrarColeta(processoId, dados),
+    onSuccess: () => recarregarColetas(queryClient, processoId),
+  })
+}
+
+/** Corrige uma coleta já registrada — a mesma coleta, com o dado certo. */
+export function useAtualizarColeta(processoId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { coletaId: string; dados: DadosDaColeta }) =>
+      atualizarColeta(processoId, input.coletaId, input.dados),
+    onSuccess: () => recarregarColetas(queryClient, processoId),
+  })
+}
+
+/** Retira uma coleta da pesquisa. */
+export function useRemoverColeta(processoId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (coletaId: string) => removerColeta(processoId, coletaId),
+    onSuccess: () => recarregarColetas(queryClient, processoId),
   })
 }
 

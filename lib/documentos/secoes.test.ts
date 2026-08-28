@@ -116,6 +116,11 @@ describe("painéis especiais", () => {
       de cálculo. Deixá-los sem painel obrigava a redigitar à mão o que a
       plataforma já tem — que era exatamente a lacuna corrigida no ETP.
 
+      A Cotação tem painel em todas as quatro seções que dependem da pesquisa:
+      as fontes consultadas (Art. 23, § 1º), a série de preços (§ 2º), a análise
+      crítica e o preço de referência (Art. 6º da IN SEGES/ME nº 65/2021). A
+      pesquisa é uma só, e as quatro leem dela.
+
       A dotação é o caso mais forte: o mesmo crédito é pedido por três seções
       em três documentos — TR 'j', Edital (Art. 150) e a cláusula do contrato
       (Art. 92, VIII) —, e escrevê-lo à mão nas três é como duas divergem.
@@ -124,7 +129,10 @@ describe("painéis especiais", () => {
     */
     expect(comPainel.sort()).toEqual([
       "Contrato:dotacao",
-      "Cotação:valor",
+      "Cotação:analise",
+      "Cotação:coletas",
+      "Cotação:fontes",
+      "Cotação:referencia",
       "ETP:ata",
       "ETP:necessidade",
       "ETP:pca",

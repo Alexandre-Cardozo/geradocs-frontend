@@ -141,11 +141,15 @@ export interface NovoProcessoInput {
 
 /** Painel especial do editor acionado por uma seção (ver components/documentos/paineis.tsx). */
 export type PainelSecao =
+  | "analise"
   | "ata"
+  | "coletas"
   | "dotacao"
+  | "fontes"
   | "necessidade"
   | "pca"
   | "quantidades"
+  | "referencia"
   | "valor"
 
 /**

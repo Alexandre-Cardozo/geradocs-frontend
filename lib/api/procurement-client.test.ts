@@ -669,3 +669,131 @@ describe("dotação orçamentária", () => {
     expect(chamada).toBe(daApi.id)
   })
 })
+
+/**
+ * A série de preços coletados (IN SEGES/ME nº 65/2021, Art. 3º).
+ *
+ * <p>O preço viaja no formato do formulário e precisa chegar como número; o
+ * instante da coleta viaja em ISO, porque a hora é exigida para mídia e sítio
+ * eletrônico (Art. 5º, III) e um formato local perderia o fuso.
+ */
+describe("coletas de preço", () => {
+  const PROCESSO_DA_COLETA = "3f2b1a00-1111-4222-8333-444455556666"
+
+  const daApi = {
+    id: "c1c2d3e4-0000-4111-8222-333344445555",
+    item: "Papel A4",
+    source: "Painel de Preços do Governo Federal (Compras.gov.br)",
+    unitPrice: 24.9,
+    collectedAt: "2026-08-20T14:30:00Z",
+    supplier: "Papelaria Central",
+    supplierDocument: "12.345.678/0001-90",
+    proposalValidUntil: "2026-10-20",
+    note: "Frete incluído",
+    registeredAt: "2026-08-28T12:00:00Z",
+  }
+
+  it("traz a coleta no formato do formulário, que é onde ela será editada", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id/price-quotes`, () =>
+        HttpResponse.json([
+          daApi,
+          {
+            ...daApi,
+            id: "outra",
+            supplier: null,
+            supplierDocument: null,
+            proposalValidUntil: null,
+            note: null,
+          },
+        ]),
+      ),
+    )
+    const { listarColetas } = await carregarClienteLimpo()
+
+    const coletas = await listarColetas(PROCESSO_DA_COLETA)
+
+    expect(coletas[0]?.valorUnitario).toBe("24,90")
+    expect(coletas[0]?.validaAte).toBe("2026-10-20")
+    // Campo ausente é o que a fonte não tinha, e não um fornecedor "null".
+    expect(coletas[1]?.fornecedor).toBeUndefined()
+    expect(coletas[1]?.documentoDoFornecedor).toBeUndefined()
+    expect(coletas[1]?.validaAte).toBeUndefined()
+    expect(coletas[1]?.observacao).toBeUndefined()
+  })
+
+  const dados = {
+    item: "  Papel A4  ",
+    fonte: " Painel de Preços ",
+    valorUnitario: "24,90",
+    coletadoEm: "2026-08-20T14:30:00Z",
+    fornecedor: "  ",
+    documentoDoFornecedor: "  ",
+    validaAte: "",
+    observacao: "  ",
+  }
+
+  function capturarColeta(metodo: "post" | "put") {
+    const corpo: Record<string, unknown> = {}
+    const rota = metodo === "post"
+      ? `${urlDaApi}/procurement-processes/:id/price-quotes`
+      : `${urlDaApi}/procurement-processes/:id/price-quotes/:coletaId`
+    servidor.use(
+      http[metodo](rota, async ({ request }) => {
+        Object.assign(corpo, await request.json())
+        return HttpResponse.json(daApi)
+      }),
+    )
+    return corpo
+  }
+
+  it("manda o preço como número e os campos em branco como nulos", async () => {
+    const corpo = capturarColeta("post")
+    const { registrarColeta } = await carregarClienteLimpo()
+
+    const registrada = await registrarColeta(PROCESSO_DA_COLETA, dados)
+
+    expect(corpo.unitPrice).toBe(24.9)
+    expect(corpo.item).toBe("Papel A4")
+    expect(corpo.supplier).toBeNull()
+    expect(corpo.supplierDocument).toBeNull()
+    expect(corpo.proposalValidUntil).toBeNull()
+    expect(corpo.note).toBeNull()
+    expect(registrada.id).toBe(daApi.id)
+  })
+
+  it("a correção manda os mesmos campos — é a mesma coleta", async () => {
+    const corpo = capturarColeta("put")
+    const { atualizarColeta } = await carregarClienteLimpo()
+
+    await atualizarColeta(PROCESSO_DA_COLETA, daApi.id, {
+      ...dados,
+      fornecedor: "Papelaria Central",
+      documentoDoFornecedor: "12.345.678/0001-90",
+      validaAte: "2026-10-20",
+      observacao: "Frete incluído",
+    })
+
+    expect(corpo.supplier).toBe("Papelaria Central")
+    expect(corpo.proposalValidUntil).toBe("2026-10-20")
+    expect(corpo.collectedAt).toBe("2026-08-20T14:30:00Z")
+  })
+
+  it("retirar a coleta chama a rota dela", async () => {
+    let chamada = ""
+    servidor.use(
+      http.delete(
+        `${urlDaApi}/procurement-processes/:id/price-quotes/:coletaId`,
+        ({ params }) => {
+          chamada = String(params.coletaId)
+          return new HttpResponse(null, { status: 204 })
+        },
+      ),
+    )
+    const { removerColeta } = await carregarClienteLimpo()
+
+    await removerColeta(PROCESSO_DA_COLETA, daApi.id)
+
+    expect(chamada).toBe(daApi.id)
+  })
+})

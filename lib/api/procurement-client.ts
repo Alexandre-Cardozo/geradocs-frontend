@@ -719,3 +719,112 @@ export async function removerDotacao(processoId: string, dotacaoId: string): Pro
     { method: "DELETE" },
   );
 }
+
+/**
+ * Um preço coletado na pesquisa (IN SEGES/ME nº 65/2021, Art. 3º).
+ *
+ * <p>O preço viaja no formato do formulário, como os do DFD e da dotação: é lá
+ * que ele será editado.
+ */
+export interface ColetaDePreco {
+  id: string;
+  /** O item pesquisado — liga a coleta à consolidação da demanda. */
+  item: string;
+  /** A fonte consultada, entre os parâmetros do Art. 23, § 1º. */
+  fonte: string;
+  valorUnitario: string;
+  /** Data e hora: a hora é exigida para mídia e sítio eletrônico (Art. 5º, III). */
+  coletadoEm: string;
+  fornecedor?: string;
+  /** CNPJ ou CPF, na pesquisa direta (Art. 5º, § 2º). */
+  documentoDoFornecedor?: string;
+  /** Validade da proposta, na pesquisa direta (Art. 5º, § 2º). */
+  validaAte?: string;
+  observacao?: string;
+  registradaEm: string;
+}
+
+/** Os campos que o registro e a correção enviam — é a mesma coleta. */
+export type DadosDaColeta = Omit<ColetaDePreco, "id" | "registradaEm">;
+
+interface ColetaDaApi {
+  id: string;
+  item: string;
+  source: string;
+  unitPrice: number;
+  collectedAt: string;
+  supplier?: string | null;
+  supplierDocument?: string | null;
+  proposalValidUntil?: string | null;
+  note?: string | null;
+  registeredAt: string;
+}
+
+function coletaDaApi(coleta: ColetaDaApi): ColetaDePreco {
+  return {
+    id: coleta.id,
+    item: coleta.item,
+    fonte: coleta.source,
+    valorUnitario: formatNumeroBR(coleta.unitPrice),
+    coletadoEm: coleta.collectedAt,
+    fornecedor: coleta.supplier ?? undefined,
+    documentoDoFornecedor: coleta.supplierDocument ?? undefined,
+    validaAte: coleta.proposalValidUntil ?? undefined,
+    observacao: coleta.note ?? undefined,
+    registradaEm: coleta.registeredAt,
+  };
+}
+
+function corpoDaColeta(dados: DadosDaColeta) {
+  return JSON.stringify({
+    item: dados.item.trim(),
+    source: dados.fonte.trim(),
+    unitPrice: parseValorBR(dados.valorUnitario),
+    collectedAt: dados.coletadoEm,
+    supplier: dados.fornecedor?.trim() || null,
+    supplierDocument: dados.documentoDoFornecedor?.trim() || null,
+    proposalValidUntil: dados.validaAte || null,
+    note: dados.observacao?.trim() || null,
+  });
+}
+
+/** Os preços coletados do processo, por item. */
+export async function listarColetas(processoId: string): Promise<ColetaDePreco[]> {
+  const coletas = await requisicaoProtegida<ColetaDaApi[]>(
+    `/procurement-processes/${encodeURIComponent(processoId)}/price-quotes`,
+  );
+  return coletas.map(coletaDaApi);
+}
+
+/** Registra um preço obtido — uma linha da série do Art. 3º. */
+export async function registrarColeta(
+  processoId: string,
+  dados: DadosDaColeta,
+): Promise<ColetaDePreco> {
+  return coletaDaApi(
+    await requisicaoProtegida<ColetaDaApi>(
+      `/procurement-processes/${encodeURIComponent(processoId)}/price-quotes`,
+      { method: "POST", body: corpoDaColeta(dados) },
+    ),
+  );
+}
+
+/** Corrige uma coleta já registrada. */
+export async function atualizarColeta(
+  processoId: string,
+  coletaId: string,
+  dados: DadosDaColeta,
+): Promise<void> {
+  await requisicaoProtegida<unknown>(
+    `/procurement-processes/${encodeURIComponent(processoId)}/price-quotes/${encodeURIComponent(coletaId)}`,
+    { method: "PUT", body: corpoDaColeta(dados) },
+  );
+}
+
+/** Retira uma coleta da pesquisa. */
+export async function removerColeta(processoId: string, coletaId: string): Promise<void> {
+  await requisicaoProtegida<unknown>(
+    `/procurement-processes/${encodeURIComponent(processoId)}/price-quotes/${encodeURIComponent(coletaId)}`,
+    { method: "DELETE" },
+  );
+}

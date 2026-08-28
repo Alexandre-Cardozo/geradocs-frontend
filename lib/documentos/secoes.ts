@@ -48,22 +48,25 @@ const secoesCotacao: SecaoDocumento[] = secoes([
     titulo: "Fornecedores e Fontes Consultadas",
     fundamentoLegal: "Art. 23, § 1º, Lei 14.133/21",
     hint: "Liste as fontes na ordem de preferência da IN SEGES 65/2021, Art. 5º: PNCP, contratações similares de outros entes, painel de preços, mídia especializada e, por último, pesquisa direta com fornecedores.",
+    painel: "fontes",
   },
   {
     titulo: "Preços Coletados",
     fundamentoLegal: "Art. 23, § 2º, Lei 14.133/21",
     hint: "Registre os preços obtidos por fonte, com data da coleta, prazo de validade das propostas e identificação do fornecedor.",
+    painel: "coletas",
   },
   {
     titulo: "Análise Crítica dos Preços Obtidos",
     fundamentoLegal: "Art. 6º, IN SEGES 65/2021",
     hint: "Justifique o descarte de preços inexequíveis ou excessivamente elevados; a média não pode ser aplicada sem análise crítica do conjunto.",
+    painel: "analise",
   },
   {
     titulo: "Metodologia e Preço de Referência",
     fundamentoLegal: "Art. 23, caput, Lei 14.133/21",
     hint: "Explicite a metodologia adotada (média, mediana ou menor preço) e o valor de referência apurado, com a memória de cálculo.",
-    painel: "valor",
+    painel: "referencia",
   },
 ])
 
