@@ -957,3 +957,34 @@ Ele existe por um motivo só: o GitHub Pages serve projeto sob o nome do reposit
 **De quebra, a caixa estava errada.** O prefixo era `/GeraDocsFrontend` e o repositório é `geradocs-frontend`; o endereço publicado é `alexandre-cardozo.github.io/geradocs-frontend/`. Funcionava porque o Pages é tolerante com a caixa do segmento do repositório — não porque estivesse certo. Agora o prefixo é o nome do repositório, literal.
 
 O `playwright.config.ts` e o `e2e/api.ts` leem o mesmo env var, de modo que a suíte roda igual com prefixo ou sem. E o link de redefinição de senha do backend (`PASSWORD_RESET_FRONTEND_URL`) passou a apontar para `http://localhost:3000/redefinir-senha` no ambiente local.
+
+## 72. As correções do ETP valem para os seis documentos — o que já valia e o que faltava
+
+Pergunta legítima depois de várias rodadas de ajuste no ETP: o que foi corrigido ali chegou ao TR, ao Edital, ao Contrato, ao Mapa de Riscos e à Cotação? A resposta se divide em duas metades.
+
+**O que já valia, porque mora no editor.** O editor (`/processos/documento`) é **um só** para os seis tipos: muda o catálogo de seções, não a tela. Então estas correções nunca foram do ETP —
+
+- a dispensa que sobrevive ao salvamento (§68) e a dispensa oferecida em **toda** seção dispensável, tenha painel ou não — o Contrato tem três (matriz de riscos, subcontratação, proteção de dados), o Edital e o Mapa uma cada;
+- a etapa final separada da última seção (§69);
+- o número do processo no lugar do UUID, o "Salvar Rascunho" e a troca de seção que não descarta o texto (§70);
+- o botão de IA que nunca some e parte do texto já escrito (§66);
+- paleta, largura e rolagem.
+
+Isso era conclusão de **leitura de código**, e a suíte inteira exercitava só o ETP. Agora o e2e roda a dispensa e a troca de seção também no **Contrato** — três seções dispensáveis e nenhum painel, que é justamente o caminho genérico.
+
+**O que faltava: os painéis.** Painel só existia no ETP, e painel é onde vive o pré-preenchimento a partir do que o processo já tem. Havia seções, em outros documentos, pedindo **exatamente a mesma coisa** que um inciso do ETP — e obrigando a redigitar à mão número que a plataforma já tinha. Número digitado duas vezes diverge, e aí duas peças do mesmo processo se contradizem.
+
+O painel passou a acompanhar a **matéria** da seção, e não o documento:
+
+| Documento | Seção | Painel | Por quê |
+|---|---|---|---|
+| TR | Definição do Objeto (Art. 6º, XXIII, 'a') | quantidades | a alínea define o objeto "com natureza, quantitativos e unidades de medida" |
+| TR | Fundamentação da Contratação ('b') | necessidade | referencia o ETP e demonstra a mesma necessidade pública |
+| TR | Estimativa do Valor ('i') | valor | os mesmos preços unitários e a mesma memória de cálculo do inciso VI |
+| Cotação | Metodologia e Preço de Referência (Art. 23, caput) | valor | o preço de referência sai da mesma apuração — e agora com a fonte da lei (§70) |
+
+Os painéis já se rotulavam pela seção que os hospeda, então cada documento cita o **seu** fundamento. E os dados que eles leem são do **processo** (DFDs, itens, valor declarado), não do documento — por isso serviram sem adaptação.
+
+**PCA e ATA continuam só no ETP:** são os incisos II e V, sem correspondente nos demais.
+
+**O que ficou de fora, de propósito.** A Cotação tem duas seções sobre fontes — "Fornecedores e Fontes Consultadas" (Art. 23, § 1º) e "Preços Coletados" (§ 2º) — que pedem **várias** fontes, cada uma com data de coleta, validade da proposta e fornecedor identificado. O campo do §70 escolhe **uma**. Portar não resolveria: é um cadastro de coletas, não um campo, e inventá-lo aqui seria desenhar por analogia. Fica registrado como lacuna conhecida. Pelo mesmo motivo, "Adequação Orçamentária" do TR ('j') não recebeu o painel de PCA: a seção é sobre dotação orçamentária — que a plataforma não conhece —, e um painel que preenche metade dela faria a seção parecer pronta sem estar.

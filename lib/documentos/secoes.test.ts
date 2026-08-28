@@ -97,21 +97,37 @@ describe("painéis especiais", () => {
     expect(painelDaSecao("ETP", "2")).toBe("pca")
     expect(painelDaSecao("ETP", "4")).toBe("quantidades")
     expect(painelDaSecao("ETP", "3")).toBeUndefined()
-    expect(painelDaSecao("TR", "2")).toBeUndefined()
+    // O TR não é exceção: a fundamentação dele é a mesma necessidade pública
+    // do inciso I do ETP, e por isso recebe o mesmo painel.
+    expect(painelDaSecao("TR", "2")).toBe("necessidade")
+    expect(painelDaSecao("TR", "5")).toBeUndefined()
   })
 
   it("estão só onde a seção exige entrada estruturada", () => {
     const comPainel = ORDEM_FLUXO.flatMap((tipo) =>
       secoesPorTipoBase[tipo].filter((s) => s.painel).map((s) => `${tipo}:${s.painel}`),
     )
-    // Necessidade (inciso I), PCA (II), quantidades (IV), ATA (V) e valor (VI)
-    // — todos no ETP, e todos onde já existe dado anterior a aproveitar.
+    /*
+      O painel acompanha a **matéria** da seção, e não o documento. Onde outro
+      documento pede a mesma coisa que um inciso do ETP, ele recebe o mesmo
+      painel: o TR define o objeto com quantitativos e unidades ('a'), funda-se
+      na mesma necessidade pública ('b') e estima o valor pelos mesmos preços
+      unitários ('i'); a Cotação apura o preço de referência com a mesma memória
+      de cálculo. Deixá-los sem painel obrigava a redigitar à mão o que a
+      plataforma já tem — que era exatamente a lacuna corrigida no ETP.
+
+      PCA e ATA continuam só no ETP: são incisos sem correspondente nos demais.
+    */
     expect(comPainel.sort()).toEqual([
+      "Cotação:valor",
       "ETP:ata",
       "ETP:necessidade",
       "ETP:pca",
       "ETP:quantidades",
       "ETP:valor",
+      "TR:necessidade",
+      "TR:quantidades",
+      "TR:valor",
     ])
   })
 })

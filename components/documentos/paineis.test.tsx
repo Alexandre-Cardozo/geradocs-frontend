@@ -2,6 +2,7 @@ import { HttpResponse, http } from "msw"
 import { describe, expect, it, vi } from "vitest"
 
 import { PainelDaSecao } from "@/components/documentos/paineis"
+import { secoesPorTipoBase } from "@/lib/documentos"
 import { urlDaApi } from "@/lib/teste/handlers"
 import { renderizar, screen, userEvent } from "@/lib/teste/renderizar"
 import { servidor } from "@/lib/teste/servidor-msw"
@@ -321,5 +322,76 @@ describe("rascunho e IA convivem", () => {
 
     expect(screen.getByRole("button", { name: /a partir dos itens/ })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /Gerar com IA/ })).toBeInTheDocument()
+  })
+})
+
+/**
+ * O painel acompanha a matéria da seção, e não o documento.
+ *
+ * <p>O TR estima o valor pelos mesmos preços unitários do inciso VI do ETP, e a
+ * Cotação apura o preço de referência com a mesma memória de cálculo. Enquanto
+ * o painel existia só no ETP, essas seções obrigavam a redigitar à mão número
+ * que a plataforma já tinha — e número digitado duas vezes diverge.
+ */
+describe("o mesmo painel em outros documentos", () => {
+  const papel = {
+    description: "Papel A4",
+    unit: "RESMA",
+    quantity: 100,
+    specification: null,
+    unitPrice: 25,
+  }
+
+  const secaoDe = (tipo: "TR" | "Cotação", titulo: string) => {
+    const encontrada = secoesPorTipoBase[tipo].find((s) => s.titulo === titulo)
+    if (!encontrada) throw new Error(`${tipo} não tem a seção ${titulo}`)
+    return encontrada
+  }
+
+  it.each([
+    ["TR" as const, "Estimativa do Valor da Contratação", "Art. 6º, XXIII, 'i', Lei 14.133/21"],
+    ["Cotação" as const, "Metodologia e Preço de Referência", "Art. 23, caput, Lei 14.133/21"],
+  ])("%s: o valor sai dos itens do processo, com a fonte da lei", async (tipo, titulo, fundamento) => {
+    comDfds([dfd("DFD 003/2026", "Secretaria de Educação", [papel])])
+    const alvo = secaoDe(tipo, titulo)
+    expect(alvo.painel).toBe("valor")
+    expect(alvo.fundamentoLegal).toBe(fundamento)
+
+    renderizar(
+      <PainelDaSecao
+        secao={alvo}
+        processoId={PROCESSO}
+        rascunho=""
+        setRascunho={vi.fn()}
+        gerando={false}
+        onGerarComIa={vi.fn()}
+      />,
+    )
+
+    // O painel se rotula pela seção que o hospeda: no TR e na Cotação ele não
+    // pode anunciar o inciso do ETP.
+    expect(await screen.findByText(titulo)).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: "Fonte de pesquisa de preços" }),
+    ).toBeInTheDocument()
+  })
+
+  it("o TR define o objeto com as quantidades consolidadas dos DFDs", async () => {
+    comDfds([dfd("DFD 003/2026", "Secretaria de Educação", [papel])])
+    const alvo = secaoDe("TR", "Definição do Objeto")
+    expect(alvo.painel).toBe("quantidades")
+
+    renderizar(
+      <PainelDaSecao
+        secao={alvo}
+        processoId={PROCESSO}
+        rascunho=""
+        setRascunho={vi.fn()}
+        gerando={false}
+        onGerarComIa={vi.fn()}
+      />,
+    )
+
+    expect(await screen.findByText("Definição do Objeto")).toBeInTheDocument()
   })
 })

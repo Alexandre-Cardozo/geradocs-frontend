@@ -63,6 +63,7 @@ const secoesCotacao: SecaoDocumento[] = secoes([
     titulo: "Metodologia e Preço de Referência",
     fundamentoLegal: "Art. 23, caput, Lei 14.133/21",
     hint: "Explicite a metodologia adotada (média, mediana ou menor preço) e o valor de referência apurado, com a memória de cálculo.",
+    painel: "valor",
   },
 ])
 
@@ -189,11 +190,13 @@ const secoesTR: SecaoDocumento[] = secoes([
     titulo: "Definição do Objeto",
     fundamentoLegal: "Art. 6º, XXIII, 'a', Lei 14.133/21",
     hint: "Defina o objeto de forma precisa, suficiente e clara, com natureza, quantitativos, prazo do contrato e unidades de medida.",
+    painel: "quantidades",
   },
   {
     titulo: "Fundamentação da Contratação",
     fundamentoLegal: "Art. 6º, XXIII, 'b', Lei 14.133/21",
     hint: "Referencie o ETP do processo e demonstre a necessidade pública que motiva a contratação.",
+    painel: "necessidade",
   },
   {
     titulo: "Descrição da Solução",
@@ -229,6 +232,7 @@ const secoesTR: SecaoDocumento[] = secoes([
     titulo: "Estimativa do Valor da Contratação",
     fundamentoLegal: "Art. 6º, XXIII, 'i', Lei 14.133/21",
     hint: "Apresente o valor estimado acompanhado dos preços unitários referenciais e da memória de cálculo, remetendo à pesquisa de preços do processo.",
+    painel: "valor",
   },
   {
     titulo: "Adequação Orçamentária",

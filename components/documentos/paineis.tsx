@@ -60,9 +60,13 @@ export function PainelDaSecao(props: PainelProps) {
 }
 
 /**
- * Descrição da Necessidade — Art. 18, § 1º, I, Lei 14.133/21.
+ * A necessidade pública — ETP, Art. 18, § 1º, I; TR, Art. 6º, XXIII, 'b'.
  *
- * <p>O inciso pede o <b>problema</b> sob a perspectiva do interesse público, e
+ * <p>Serve os dois: a fundamentação do TR referencia o ETP e demonstra a mesma
+ * necessidade. O painel se rotula pela seção que o hospeda, e por isso cita o
+ * fundamento certo em cada documento.
+ *
+ * <p>A seção pede o <b>problema</b> sob a perspectiva do interesse público, e
  * não a solução pretendida. Nada disso a plataforma sabe: ela sabe o objeto que
  * o processo declarou, quais secretarias formalizaram a demanda e o que cada
  * uma pediu — e é com isso que monta o parágrafo de abertura, deixando entre
@@ -169,7 +173,10 @@ export function rascunhoDaNecessidade(processo: Processo, dfds: DfdAnexado[]): s
 }
 
 /**
- * Estimativa das Quantidades — Art. 18, § 1º, IV, Lei 14.133/21.
+ * As quantidades — ETP, Art. 18, § 1º, IV; TR, Art. 6º, XXIII, 'a'.
+ *
+ * <p>Serve os dois: o objeto do TR se define "com natureza, quantitativos e
+ * unidades de medida", que é a mesma consolidação dos DFDs.
  *
  * <p>Os números vêm dos itens que as secretarias pediram nos DFDs, somados pelo
  * servidor. Antes eram três campos com valores fixos do protótipo — 150,00,
@@ -320,7 +327,13 @@ export function memoriaDasQuantidades(itens: ItemConsolidado[]): string {
 }
 
 /**
- * Estimativa do Valor da Contratação — Art. 18, § 1º, VI, Lei 14.133/21.
+ * O valor estimado — ETP, Art. 18, § 1º, VI; TR, Art. 6º, XXIII, 'i'; e o
+ * preço de referência da Cotação, Art. 23, caput.
+ *
+ * <p>Serve os três: é sempre o mesmo total, apurado dos mesmos itens, com a
+ * mesma memória de cálculo e a mesma fonte de pesquisa de preços. Ter o painel
+ * só no ETP obrigava a redigitar à mão, no TR e na Cotação, número que a
+ * plataforma já tinha — e dois números digitados duas vezes divergem.
  *
  * <p>Antes eram três campos fixos do protótipo — 150,00 × R$ 3.233,33 =
  * R$ 484.999,50 — que não vinham do processo, não iam para lugar nenhum e
