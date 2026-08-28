@@ -4,8 +4,8 @@ import Link from "next/link"
 import { notFound, useRouter, useSearchParams } from "next/navigation"
 import { useRef, useState } from "react"
 
-import { Button, InfoBanner, ProgressBar, SectionBlock, Tag, Textarea, ValidationMsg } from "@/components/ui"
-import { IconArrowRight, IconCheckCircle, IconCheck, IconDownload, IconEye, IconHelp, IconSave } from "@/components/ui/icons"
+import { Button, ProgressBar, SectionBlock, Textarea, ValidationMsg } from "@/components/ui"
+import { IconArrowRight, IconCheckCircle, IconCheck, IconHelp, IconSave } from "@/components/ui/icons"
 import { PainelATA, PainelDaSecao } from "@/components/documentos/paineis"
 import { ErrorState, InlineSpinner, LoadingState } from "@/components/shared/estados"
 import { useToast } from "@/components/shared/providers"
@@ -20,17 +20,14 @@ import {
 import { CATALOGO, porSlug } from "@/lib/documentos"
 import { CaminhosDaSecao } from "@/components/documentos/caminhos-da-secao"
 import { DispensaDeSecao } from "@/components/documentos/dispensa-de-secao"
-import { EstruturaDoDocumento } from "@/components/documentos/estrutura-do-documento"
+import { EtapaFinal } from "@/components/documentos/etapa-final"
 import { PainelPca } from "@/components/documentos/painel-pca"
-import { PreviaDoDocumento } from "@/components/documentos/previa-do-documento"
 import {
-  corpoDoDocumento,
-  dispensadasSemJustificativa,
   foiDispensada,
   foiRetificado,
   rotuloDaVersao,
 } from "@/lib/dominio"
-import { concluidas, obrigatoriasPendentes, podeGerar, progresso } from "@/lib/dominio"
+import { concluidas, progresso } from "@/lib/dominio"
 import { type SecaoDocumento, type StatusDocumento } from "@/lib/types"
 
 const statusRail: Record<StatusDocumento, { dot: string; chip: string }> = {
@@ -40,6 +37,15 @@ const statusRail: Record<StatusDocumento, { dot: string; chip: string }> = {
   "Rejeitado": { dot: "bg-danger", chip: "bg-tint-danger-bg text-tint-danger-fg" },
   "Não iniciado": { dot: "bg-text-muted", chip: "bg-border-soft text-slate-strong" },
 }
+
+/**
+ * A etapa final na trilha das seções.
+ *
+ * <p>Não é seção: não tem número, fundamento legal nem entra no progresso. É o
+ * lugar do que é do documento inteiro — acrescentar seção, prévia, pendências e
+ * a geração —, e que antes morava dentro da última seção da lei (§69).
+ */
+const ETAPA_FINAL = "__revisao__"
 
 export default function EditorDocumento() {
   const searchParams = useSearchParams()
@@ -66,7 +72,6 @@ export default function EditorDocumento() {
   const [activeSection, setActiveSection] = useState("1")
   const [rascunho, setRascunho] = useState("")
   const [saved, setSaved] = useState(false)
-  const [confirmarRegerar, setConfirmarRegerar] = useState(false)
   const secaoAtivaRef = useRef("1")
   /** Para o caminho manual levar o cursor ao campo, em vez de só apontá-lo. */
   const campoDoTexto = useRef<HTMLTextAreaElement>(null)
@@ -76,6 +81,7 @@ export default function EditorDocumento() {
   }
 
   const lista = secoes.data ?? []
+  const naEtapaFinal = activeSection === ETAPA_FINAL
   const active: SecaoDocumento | undefined = lista.find((s) => s.id === activeSection)
 
   const [secaoSincronizada, setSecaoSincronizada] = useState<string | null>(null)
@@ -87,15 +93,14 @@ export default function EditorDocumento() {
   const completedCount = concluidas(lista).length
   const progress = progresso(lista)
 
-  // Só as seções indispensáveis prendem a geração: as demais são dispensáveis
-  // mediante justificativa (no ETP, Art. 18, § 2º). A regra vive em lib/dominio.
-  const secoesPendentes = obrigatoriasPendentes(lista)
-  const documentoPodeSerGerado = podeGerar(lista)
-  // Dispensáveis em branco sem justificativa: somem do documento sem que nada
-  // registre que sumiram.
-  const lacunasSilenciosas = dispensadasSemJustificativa(lista)
 
-  const handleSave = (avancar = false) => {
+  /**
+   * Grava a seção; `proxima` diz para onde ir depois.
+   *
+   * <p>Da última seção o destino é a etapa final, e não outra seção: revisar o
+   * documento e gerá-lo é o passo seguinte a escrever a última (§69).
+   */
+  const handleSave = (avancar = false, proxima?: string) => {
     if (!active) return
     /*
       Salvar não pode desfazer a dispensa. O `PUT` da seção troca o par
@@ -120,11 +125,7 @@ export default function EditorDocumento() {
         onSuccess: () => {
           setSaved(true)
           setTimeout(() => setSaved(false), 2500)
-          if (avancar) {
-            const idx = lista.findIndex((s) => s.id === activeSection)
-            const proxima = lista[idx + 1]
-            if (proxima) trocarSecao(proxima.id)
-          }
+          if (avancar && proxima) trocarSecao(proxima)
         },
       }
     )
@@ -241,6 +242,35 @@ export default function EditorDocumento() {
               </button>
             )
           })}
+
+          {/*
+            A etapa final fecha a trilha. Fica sempre alcançável: revisar o
+            documento inteiro não deveria depender de chegar à última seção.
+          */}
+          {lista.length > 0 && (
+            <button
+              type="button"
+              onClick={() => trocarSecao(ETAPA_FINAL)}
+              className={`mb-0.5 mt-1.5 flex w-60 shrink-0 cursor-pointer items-center gap-2.5 rounded-md border-t border-border-soft p-2.5 pt-3 text-left transition-colors lg:w-full ${
+                naEtapaFinal
+                  ? "border border-tint-royal-border bg-tint-royal-bg"
+                  : "border-x border-b border-x-transparent border-b-transparent bg-transparent"
+              }`}
+            >
+              <span className="flex size-5.5 shrink-0 items-center justify-center rounded-sm bg-border-soft text-slate-strong">
+                <IconCheckCircle size={12} strokeWidth={2.5} />
+              </span>
+              <span className="block min-w-0 flex-1">
+                <span
+                  className={`block text-sm leading-snug ${naEtapaFinal ? "font-semibold text-royal-hover" : "font-medium text-text-2"}`}
+                >
+                  Revisão e Geração
+                  {/* "Etapa" e não um número: ela não é um inciso do documento. */}
+                  <span className="ml-1.25 text-2xs text-text-muted">Etapa</span>
+                </span>
+              </span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -249,34 +279,69 @@ export default function EditorDocumento() {
         <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-border bg-surface px-4 py-3.5">
           <div className="min-w-0 flex-[1_1_220px]">
             <div className="mb-0.5 text-xs text-text-muted">
-              Seção {active?.id} de {lista.length} · {active?.fundamentoLegal}
+              {naEtapaFinal
+                ? `Etapa final · ${meta.titulo}`
+                : `Seção ${active?.id} de ${lista.length} · ${active?.fundamentoLegal}`}
             </div>
-            <h2 className="m-0 font-display text-panel font-bold text-text-1">{active?.titulo}</h2>
+            <h2 className="m-0 font-display text-panel font-bold text-text-1">
+              {naEtapaFinal ? "Revisão e Geração" : active?.titulo}
+            </h2>
           </div>
-          <div className="flex gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              icon={<IconHelp size={13} />}
-              onClick={() => showToast(active?.hint ?? "Preencha a seção conforme as orientações metodológicas.")}
-            >
-              Orientações
-            </Button>
-            <Button
-              variant={saved ? "success" : "primary"}
-              size="sm"
-              icon={saved ? <IconCheck size={13} strokeWidth={3} /> : <IconSave size={13} />}
-              disabled={salvar.isPending}
-              onClick={() => handleSave()}
-            >
-              {saved ? "Salvo!" : salvar.isPending ? "Salvando..." : "Salvar"}
-            </Button>
-          </div>
+          {/*
+            Salvar e Orientações são da seção. Na etapa final não há seção a
+            salvar — o que há ali é o documento inteiro, e as ações dele estão
+            no próprio bloco.
+          */}
+          {!naEtapaFinal && (
+            <div className="flex gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={<IconHelp size={13} />}
+                onClick={() => showToast(active?.hint ?? "Preencha a seção conforme as orientações metodológicas.")}
+              >
+                Orientações
+              </Button>
+              <Button
+                variant={saved ? "success" : "primary"}
+                size="sm"
+                icon={saved ? <IconCheck size={13} strokeWidth={3} /> : <IconSave size={13} />}
+                disabled={salvar.isPending}
+                onClick={() => handleSave()}
+              >
+                {saved ? "Salvo!" : salvar.isPending ? "Salvando..." : "Salvar"}
+              </Button>
+            </div>
+          )}
         </div>
 
         <div className="relative flex-1 overflow-y-auto p-4 lg:p-6">
 
-          {active?.painel && active.painel !== "ata" ? (
+          {naEtapaFinal && (
+            <EtapaFinal
+              processoId={processoId}
+              tipo={tipo}
+              secoes={lista}
+              jaGerado={jaGerado}
+              pendente={gerarDocumento.isPending}
+              onGerar={(regerar) =>
+                gerarDocumento.mutate(
+                  { processoId, tipo },
+                  {
+                    onSuccess: () => {
+                      showToast(
+                        `${tipo} ${regerar ? "regerado" : "gerado"} e disponível em Documentos.`,
+                      )
+                      router.push(`/processos/detalhe?id=${encodeURIComponent(processoId)}`)
+                    },
+                  },
+                )
+              }
+              onVisualizar={() => router.push("/documentos")}
+            />
+          )}
+
+          {!naEtapaFinal && active?.painel && active.painel !== "ata" ? (
             /*
               O painel recebe a geração: ele é quem sabe montar o rascunho a
               partir do processo, e os dois botões ficam lado a lado lá dentro.
@@ -289,7 +354,7 @@ export default function EditorDocumento() {
               gerando={gerar.isPending}
               onGerarComIa={handleGerarIA}
             />
-          ) : active ? (
+          ) : !naEtapaFinal && active ? (
             <SectionBlock title={active.titulo} hint={active.hint ?? ""}>
               {active.status === "Completo" && rascunho === active.conteudo && active.conteudo !== "" ? (
                 <div className="flex flex-col gap-3.5">
@@ -374,121 +439,46 @@ export default function EditorDocumento() {
           )}
 
 
-          {(() => {
-            const isLast = activeSection === lista[lista.length - 1]?.id
-            const finalizar = (regerar: boolean) =>
-              gerarDocumento.mutate(
-                { processoId, tipo },
-                {
-                  onSuccess: () => {
-                    showToast(`${tipo} ${regerar ? "regerado" : "gerado"} e disponível em Documentos.`)
-                    router.push(`/processos/detalhe?id=${encodeURIComponent(processoId)}`)
-                  },
+          {/*
+            A navegação entre seções. Gerar o documento não está mais aqui: ele
+            se gera na etapa final, depois de a pessoa ver o todo (§69).
+          */}
+          <div className="mt-6 flex flex-wrap justify-between gap-2.5">
+            <p id="motivo-secao-anterior" className="sr-only">
+              Esta é a primeira seção do documento.
+            </p>
+            <Button
+              variant="secondary"
+              disabled={activeSection === lista[0]?.id}
+              ariaDescribedBy={activeSection === lista[0]?.id ? "motivo-secao-anterior" : undefined}
+              onClick={() => {
+                if (naEtapaFinal) {
+                  const ultima = lista[lista.length - 1]
+                  if (ultima) trocarSecao(ultima.id)
+                  return
                 }
-              )
-            return (
-              <div className="mt-6 flex flex-col gap-3">
-                {isLast && jaGerado && confirmarRegerar && (
-                  <InfoBanner tone="warning">
-                    Ao regerar o {tipo}, o documento gerado anteriormente será <strong>substituído</strong> por esta nova versão.
-                  </InfoBanner>
-                )}
-                {isLast && !jaGerado && !documentoPodeSerGerado && (
-                  <InfoBanner tone="warning">
-                    Conclua as seções obrigatórias para gerar o {meta.titulo}. Faltam:{" "}
-                    <strong>{secoesPendentes.map((s) => s.titulo).join(", ")}</strong>.
-                  </InfoBanner>
-                )}
-                {isLast && (
-                  <>
-                    {/*
-                      Estrutura e prévia ficam na última seção: é o momento em que
-                      olhar o documento inteiro ainda muda alguma coisa.
-                    */}
-                    <EstruturaDoDocumento processoId={processoId} tipo={tipo} secoes={lista} />
-                    <PreviaDoDocumento blocos={corpoDoDocumento(lista)} />
-                  </>
-                )}
-                {isLast && lacunasSilenciosas.length > 0 && (
-                  <InfoBanner tone="info">
-                    Estas seções ficarão de fora do documento sem qualquer registro:{" "}
-                    <strong>{lacunasSilenciosas.map((s) => s.titulo).join(", ")}</strong>. Dispense-as
-                    com justificativa para que o documento diga que foram dispensadas — é o que o
-                    Art. 18, § 2º pede.
-                  </InfoBanner>
-                )}
-                <div className="flex flex-wrap justify-between gap-2.5">
-                  <p id="motivo-secao-anterior" className="sr-only">
-                    Esta é a primeira seção do documento.
-                  </p>
-                  <Button
-                    variant="secondary"
-                    disabled={activeSection === "1"}
-                    ariaDescribedBy={activeSection === "1" ? "motivo-secao-anterior" : undefined}
-                    onClick={() => {
-                      const idx = lista.findIndex((s) => s.id === activeSection)
-                      const anterior = lista[idx - 1]
-                      if (anterior) trocarSecao(anterior.id)
-                    }}
-                    className={activeSection === "1" ? "opacity-40" : ""}
-                  >
-                    ← Seção Anterior
-                  </Button>
-                  <div className="flex flex-wrap items-center gap-2.5">
-                    {!isLast && documentoPodeSerGerado && !jaGerado && (
-                      <Button
-                        variant="success"
-                        icon={<IconDownload size={14} strokeWidth={2.5} />}
-                        disabled={gerarDocumento.isPending}
-                        onClick={() => finalizar(false)}
-                      >
-                        {gerarDocumento.isPending ? `Gerando ${tipo}...` : `Finalizar e Gerar ${tipo}`}
-                      </Button>
-                    )}
-                    {!isLast ? (
-                      <Button disabled={salvar.isPending} onClick={() => handleSave(true)}>
-                        Salvar e Avançar →
-                      </Button>
-                    ) : jaGerado ? (
-                      confirmarRegerar ? (
-                        <>
-                          <Button variant="secondary" disabled={gerarDocumento.isPending} onClick={() => setConfirmarRegerar(false)}>
-                            Cancelar
-                          </Button>
-                          <Button variant="dark" disabled={gerarDocumento.isPending} onClick={() => finalizar(true)}>
-                            {gerarDocumento.isPending ? "Regerando..." : "Confirmar e Regerar"}
-                          </Button>
-                        </>
-                      ) : (
-                        <>
-                          <Button variant="secondary" icon={<IconEye size={14} />} onClick={() => router.push("/documentos")}>
-                            Visualizar Documento
-                          </Button>
-                          <Button variant="dark" onClick={() => setConfirmarRegerar(true)}>
-                            Regerar {tipo}
-                          </Button>
-                        </>
-                      )
-                    ) : (
-                      <Button
-                        variant="success"
-                        icon={<IconDownload size={14} strokeWidth={2.5} />}
-                        disabled={gerarDocumento.isPending || !documentoPodeSerGerado}
-                        onClick={() => finalizar(false)}
-                      >
-                        {gerarDocumento.isPending ? `Gerando ${tipo}...` : `Finalizar e Gerar ${tipo}`}
-                      </Button>
-                    )}
-                  </div>
-                </div>
-                {isLast && !jaGerado && lista.some((s) => !s.obrigatoria && s.status !== "Completo") && documentoPodeSerGerado && (
-                  <div className="flex justify-end">
-                    <Tag tone="info">Seções opcionais em branco serão omitidas do documento</Tag>
-                  </div>
-                )}
-              </div>
-            )
-          })()}
+                const idx = lista.findIndex((s) => s.id === activeSection)
+                const anterior = lista[idx - 1]
+                if (anterior) trocarSecao(anterior.id)
+              }}
+              className={activeSection === lista[0]?.id ? "opacity-40" : ""}
+            >
+              ← Seção Anterior
+            </Button>
+            {!naEtapaFinal && (
+              <Button
+                disabled={salvar.isPending}
+                onClick={() => {
+                  const idx = lista.findIndex((s) => s.id === activeSection)
+                  // Da última seção o avanço leva à etapa final: é o passo
+                  // seguinte, e antes ele simplesmente não existia.
+                  handleSave(true, lista[idx + 1]?.id ?? ETAPA_FINAL)
+                }}
+              >
+                Salvar e Avançar →
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </div>

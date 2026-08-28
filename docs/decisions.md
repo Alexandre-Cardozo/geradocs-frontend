@@ -915,3 +915,17 @@ Agora, enquanto o texto continua em branco, o salvamento reenvia a justificativa
 **A dispensa também passou a valer onde não valia.** Ela só era oferecida no editor genérico; a seção do inciso II (Demonstração da Previsão no PCA) é dispensável pelo Art. 18, § 2º e tem painel próprio — ficava sem o caminho. Agora o bloco é renderizado uma vez, abaixo do conteúdo, para **toda** seção dispensável, tenha painel ou não.
 
 Vai coberto por e2e com um servidor que guarda o que recebe: em teste de componente o `PUT` some no mock, e o defeito — que era exatamente o servidor receber o campo errado — passaria batido.
+
+## 69. A revisão e a geração viram uma etapa, e não a última seção
+
+O Posicionamento Conclusivo — inciso XIII do ETP — carregava seis coisas que não são dele: o aviso de obrigatórias faltando, o "Acrescentar seção", a prévia do documento, o aviso de lacunas silenciosas, o "Finalizar e Gerar" e, por consequência, a perda do "Salvar e Avançar" que todas as outras seções têm. A seção da lei estava fazendo o papel de tela de fechamento.
+
+Três efeitos, todos ruins: para olhar o documento inteiro era preciso **abrir um inciso**; escrever a conclusão competia com revisar o todo na mesma tela; e a última seção era a única que não se comportava como seção.
+
+**Agora é uma etapa.** "Revisão e Geração" fecha a trilha, sem número, sem fundamento legal e fora da contagem de progresso — porque não é um inciso do documento. Ela é **alcançável a qualquer momento**: revisar o documento inteiro não deveria depender de chegar ao fim dele. O cabeçalho dela não tem "Salvar" nem "Orientações", que são ações de seção.
+
+**A geração saiu das seções.** Havia um atalho de "Finalizar e Gerar" que aparecia em qualquer seção assim que as obrigatórias estivessem resolvidas — gerar sem passar pela prévia. Agora o documento se gera de um lugar só, depois de a pessoa poder ver o que vai sair.
+
+A última seção voltou a ser seção: "Salvar e Avançar" leva à etapa final, que é o passo seguinte e antes não existia. Vale para todos os documentos — a trilha é a mesma para ETP, TR, Edital, Contrato, Mapa de Riscos e Cotação.
+
+**No DS**, os variants `success` e `dark` ganharam estado desabilitado, que só o `primary` tinha: o "Finalizar e Gerar" travado continuava verde, convidando um clique que não acontecia.

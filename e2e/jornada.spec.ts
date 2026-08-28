@@ -212,4 +212,27 @@ test.describe("elaboração do ETP", () => {
     // E depois de salvo, está no documento.
     await expect(page.getByLabel("O que vai para a seção")).toHaveValue(/Item 2026-0142/)
   })
+
+  test("a etapa final fecha a trilha, e é dela que o documento se gera", async ({ page }) => {
+    await comSessao(page)
+    await comProcessoEDocumento(page)
+    await page.goto(rota(`/processos/documento?id=${encodeURIComponent(processo.id)}&tipo=etp`))
+
+    // Alcançável a qualquer momento: revisar o documento inteiro não depende de
+    // chegar à última seção (§69).
+    await page.getByRole("button", { name: /Revisão e Geração/ }).click()
+    await expect(page.getByRole("heading", { name: "Revisão e Geração" })).toBeVisible()
+
+    // O que é do documento inteiro mora aqui — e não dentro de um inciso.
+    await expect(page.getByText(/Acrescentar seção/)).toBeVisible()
+    await expect(page.getByRole("button", { name: /Finalizar e Gerar/ })).toBeVisible()
+
+    // E a etapa não é seção: não tem campo para escrever nem botão de salvar.
+    await expect(page.getByRole("button", { name: /^Salvar$/ })).toHaveCount(0)
+
+    // Da última seção, avançar leva até ela.
+    await page.getByRole("button", { name: /Seção 2 do ETP/ }).first().click()
+    await page.getByRole("button", { name: /Salvar e Avançar/ }).click()
+    await expect(page.getByRole("heading", { name: "Revisão e Geração" })).toBeVisible()
+  })
 })
