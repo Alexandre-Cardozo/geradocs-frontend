@@ -35,6 +35,7 @@ const coleta = (
   fonte,
   valorUnitario,
   coletadoEm: "2026-08-20T14:30:00Z",
+  documento: null,
   registradaEm: "2026-08-28T12:00:00Z",
   ...extras,
 })

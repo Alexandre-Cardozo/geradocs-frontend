@@ -26,6 +26,7 @@ import {
 import { iaDisponivel } from "@/lib/api/ai-client"
 import {
   anexarArquivoAoDfd,
+  anexarDocumentoDaColeta,
   atualizarColeta,
   atualizarDotacao,
   atualizarItensDoDfd,
@@ -880,6 +881,16 @@ export function useAtualizarColeta(processoId: string) {
   return useMutation({
     mutationFn: (input: { coletaId: string; dados: DadosDaColeta }) =>
       atualizarColeta(processoId, input.coletaId, input.dados),
+    onSuccess: () => recarregarColetas(queryClient, processoId),
+  })
+}
+
+/** Guarda o documento de suporte de uma coleta — ele chega no tempo dele. */
+export function useAnexarDocumentoDaColeta(processoId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { coletaId: string; arquivo: File }) =>
+      anexarDocumentoDaColeta(processoId, input.coletaId, input.arquivo),
     onSuccess: () => recarregarColetas(queryClient, processoId),
   })
 }

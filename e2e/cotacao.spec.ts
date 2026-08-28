@@ -24,6 +24,7 @@ const coleta = (item: string, fonte: string, preco: number) => ({
   supplierDocument: "12.345.678/0001-90",
   proposalValidUntil: "2026-10-20",
   note: null,
+  file: null,
   registeredAt: "2026-08-28T12:00:00Z",
 })
 
@@ -144,5 +145,33 @@ test.describe("pesquisa de preços", () => {
     await expect(
       page.getByRole("button", { name: /Escrever a partir das fontes/ }),
     ).toHaveCount(0)
+  })
+
+  test("o preço sem lastro é apontado, e o comprovante pode ser anexado", async ({ page }) => {
+    await comSessao(page)
+    await comProcessoEDocumento(page)
+    await comColetas(page, [coleta("Papel A4", PAINEL, 24)])
+    await comCotacao(page)
+    let recebido = ""
+    await page.route(`${API}/procurement-processes/*/price-quotes/*/file`, async (rota) => {
+      recebido = rota.request().method()
+      await rota.fulfill({ json: { ...coleta("Papel A4", PAINEL, 24), id: "c-1" } })
+    })
+
+    await abrir(page, "Preços Coletados")
+
+    // O Art. 3º da IN exige os "documentos que lhe dão suporte": preço sem
+    // lastro é pendência à vista, e não algo que a tela esconde.
+    await expect(page.getByText("Sem documento de suporte")).toBeVisible()
+
+    await page
+      .getByLabel(/Documento de suporte de Papel A4/)
+      .setInputFiles({
+        name: "painel-de-precos.png",
+        mimeType: "image/png",
+        buffer: Buffer.from("captura da tela"),
+      })
+
+    await expect.poll(() => recebido).toBe("PUT")
   })
 })

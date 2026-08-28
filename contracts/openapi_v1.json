@@ -110,6 +110,25 @@
         "required" : [ "documentType", "documentVersion", "files", "generatedAt", "processId", "processNumber", "processObject" ],
         "type" : "object"
       },
+      "ArquivoDoPreco" : {
+        "properties" : {
+          "byteSize" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "fileName" : {
+            "type" : "string"
+          },
+          "mediaType" : {
+            "type" : "string"
+          },
+          "sha256" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "byteSize", "fileName", "mediaType", "sha256" ],
+        "type" : "object"
+      },
       "AttachDfdRequest" : {
         "properties" : {
           "departmentId" : {
@@ -1218,6 +1237,9 @@
           "collectedAt" : {
             "format" : "date-time",
             "type" : "string"
+          },
+          "file" : {
+            "$ref" : "#/components/schemas/ArquivoDoPreco"
           },
           "id" : {
             "format" : "uuid",
@@ -3489,6 +3511,91 @@
             }
           },
           "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PriceQuoteResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "procurement-process-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{id}/price-quotes/{quoteId}/file" : {
+      "get" : {
+        "operationId" : "quoteFile",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "quoteId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "format" : "byte",
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "procurement-process-controller" ]
+      },
+      "put" : {
+        "operationId" : "attachQuoteFile",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "quoteId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "multipart/form-data" : {
+              "schema" : {
+                "properties" : {
+                  "file" : {
+                    "format" : "binary",
+                    "type" : "string"
+                  }
+                },
+                "required" : [ "file" ],
+                "type" : "object"
+              }
+            }
+          }
         },
         "responses" : {
           "200" : {

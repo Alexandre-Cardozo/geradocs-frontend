@@ -739,6 +739,35 @@ describe("coletas de preço", () => {
     expect(coletas[1]?.documentoDoFornecedor).toBeUndefined()
     expect(coletas[1]?.validaAte).toBeUndefined()
     expect(coletas[1]?.observacao).toBeUndefined()
+    // Sem documento anexado a coleta volta sem lastro — e não com um documento
+    // chamado "null", que a tela ofereceria para baixar.
+    expect(coletas[1]?.documento).toBeNull()
+  })
+
+  it("traz o documento de suporte quando a coleta já o tem", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id/price-quotes`, () =>
+        HttpResponse.json([
+          {
+            ...daApi,
+            file: {
+              fileName: "painel-de-precos.png",
+              mediaType: "image/png",
+              byteSize: 2048,
+              sha256: "a".repeat(64),
+            },
+          },
+        ]),
+      ),
+    )
+    const { listarColetas } = await carregarClienteLimpo()
+
+    const coletas = await listarColetas(PROCESSO_DA_COLETA)
+
+    // O Art. 3º da IN exige os "documentos que lhe dão suporte": sem o resumo
+    // aqui, a tela não teria como oferecer o download nem dizer que há lastro.
+    expect(coletas[0]?.documento?.nome).toBe("painel-de-precos.png")
+    expect(coletas[0]?.documento?.bytes).toBe(2048)
   })
 
   const dados = {

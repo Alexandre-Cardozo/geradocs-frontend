@@ -752,11 +752,19 @@ export interface ColetaDePreco {
   /** Validade da proposta, na pesquisa direta (Art. 5º, § 2º). */
   validaAte?: string;
   observacao?: string;
+  /**
+   * O documento que dá suporte a este preço.
+   *
+   * <p>O Art. 3º da IN SEGES/ME nº 65/2021 exige os "documentos que lhe dão
+   * suporte". Nulo é caso legítimo: o preço é anotado na hora da consulta e o
+   * comprovante às vezes chega depois.
+   */
+  documento: { nome: string; tipo: string; bytes: number; resumo: string } | null;
   registradaEm: string;
 }
 
 /** Os campos que o registro e a correção enviam — é a mesma coleta. */
-export type DadosDaColeta = Omit<ColetaDePreco, "id" | "registradaEm">;
+export type DadosDaColeta = Omit<ColetaDePreco, "id" | "registradaEm" | "documento">;
 
 interface ColetaDaApi {
   id: string;
@@ -768,6 +776,7 @@ interface ColetaDaApi {
   supplierDocument?: string | null;
   proposalValidUntil?: string | null;
   note?: string | null;
+  file?: { fileName: string; mediaType: string; byteSize: number; sha256: string } | null;
   registeredAt: string;
 }
 
@@ -782,6 +791,14 @@ function coletaDaApi(coleta: ColetaDaApi): ColetaDePreco {
     documentoDoFornecedor: coleta.supplierDocument ?? undefined,
     validaAte: coleta.proposalValidUntil ?? undefined,
     observacao: coleta.note ?? undefined,
+    documento: coleta.file
+      ? {
+          nome: coleta.file.fileName,
+          tipo: coleta.file.mediaType,
+          bytes: coleta.file.byteSize,
+          resumo: coleta.file.sha256,
+        }
+      : null,
     registradaEm: coleta.registeredAt,
   };
 }
@@ -837,5 +854,31 @@ export async function removerColeta(processoId: string, coletaId: string): Promi
   await requisicaoProtegida<unknown>(
     `/procurement-processes/${encodeURIComponent(processoId)}/price-quotes/${encodeURIComponent(coletaId)}`,
     { method: "DELETE" },
+  );
+}
+
+/**
+ * Guarda o documento de suporte de um preço já registrado.
+ *
+ * <p>Substituir é permitido e a trilha nomeia o documento trocado: sobrescrever
+ * o lastro de um preço em silêncio é o que não pode acontecer.
+ */
+export async function anexarDocumentoDaColeta(
+  processoId: string,
+  coletaId: string,
+  arquivo: File,
+): Promise<void> {
+  const corpo = new FormData();
+  corpo.append("file", arquivo);
+  await requisicaoProtegida<unknown>(
+    `/procurement-processes/${encodeURIComponent(processoId)}/price-quotes/${encodeURIComponent(coletaId)}/file`,
+    { method: "PUT", body: corpo },
+  );
+}
+
+/** Os bytes do documento de suporte, autenticados. */
+export function baixarDocumentoDaColeta(processoId: string, coletaId: string) {
+  return baixarProtegido(
+    `/procurement-processes/${encodeURIComponent(processoId)}/price-quotes/${encodeURIComponent(coletaId)}/file`,
   );
 }

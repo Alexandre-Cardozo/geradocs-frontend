@@ -5,6 +5,7 @@ import { useState } from "react"
 import { Button, Dropdown, FormField, InfoBanner, Input, MoneyInput, SectionBlock, Tag, Textarea } from "@/components/ui"
 import { IconPlus, IconTrash } from "@/components/ui/icons"
 import { CaminhosDaSecao } from "@/components/documentos/caminhos-da-secao"
+import { DocumentoDaColeta } from "@/components/documentos/documento-da-coleta"
 import { CampoDeFonteDePreco } from "@/components/shared/campo-de-fonte-de-preco"
 import { InlineSpinner } from "@/components/shared/estados"
 import { useToast } from "@/components/shared/providers"
@@ -305,6 +306,14 @@ function LinhaDaColeta({
             ? ` · válida até ${coleta.validaAte.split("-").reverse().join("/")}`
             : ""}
         </p>
+        {/*
+          O lastro do preço: o Art. 3º da IN exige os "documentos que lhe dão
+          suporte", e o preço de sítio eletrônico só se comprova pela captura da
+          página com data e hora visíveis (Art. 5º, III).
+        */}
+        <div className="mt-2">
+          <DocumentoDaColeta processoId={processoId} coleta={coleta} />
+        </div>
       </div>
       <div className="flex shrink-0 items-center gap-2">
         {confirmando ? (

@@ -580,6 +580,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/procurement-processes/{id}/price-quotes/{quoteId}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["quoteFile"];
+        put: operations["attachQuoteFile"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/procurement-processes/{id}/reopening": {
         parameters: {
             query?: never;
@@ -942,6 +958,13 @@ export interface components {
             processId: string;
             processNumber: string;
             processObject: string;
+        };
+        ArquivoDoPreco: {
+            /** Format: int32 */
+            byteSize: number;
+            fileName: string;
+            mediaType: string;
+            sha256: string;
         };
         AttachDfdRequest: {
             /** Format: uuid */
@@ -1321,6 +1344,7 @@ export interface components {
         PriceQuoteResponse: {
             /** Format: date-time */
             collectedAt: string;
+            file?: components["schemas"]["ArquivoDoPreco"];
             /** Format: uuid */
             id: string;
             item: string;
@@ -2794,6 +2818,59 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    quoteFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                quoteId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string;
+                };
+            };
+        };
+    };
+    attachQuoteFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                quoteId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PriceQuoteResponse"];
+                };
             };
         };
     };

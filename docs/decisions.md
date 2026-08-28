@@ -1045,3 +1045,15 @@ Retirar o preço do DFD quebraria a peça que alimenta o PCA — a norma o exige
 **O valor da abertura deixou de ser inerte.** Ele era digitado uma vez e nunca mais conversava com nada — verifiquei: nenhuma regra o consultava. Agora o processo mostra os três lado a lado, aponta a divergência e oferece **adotar** o que a demanda sustenta. Oferece, e não troca: quem responde pelo processo é quem decide qual valor ele declara.
 
 **Fica anotado, e fora desta entrega:** o valor do processo também deveria conferir a modalidade contra os limites do Art. 75 (dispensa por valor), alertando sem bloquear. Hoje ninguém confere.
+
+## 76. O preço coletado ganha o documento que o comprova
+
+O **Art. 3º da IN SEGES/ME nº 65/2021** exige que a pesquisa contenha a memória de cálculo "e os **documentos que lhe dão suporte**". A série existia desde a §74, mas o lastro de cada preço não: quem fosse conferir a contratação tinha o número e não tinha de onde ele saiu.
+
+**Imagem entra aqui e não entra no DFD.** O preço obtido em sítio eletrônico, que o Art. 5º, III admite, só se comprova pela **captura da página com data e hora visíveis** — é a evidência típica de uma coleta. Proposta formal chega em PDF, contratação similar em planilha. Por isso os tipos aceitos aqui são PDF, DOCX, XLSX/XLS, CSV, PNG e JPEG, e não os três do DFD.
+
+**A coleta nasce sem documento, de propósito.** O preço é anotado na hora da consulta e o comprovante às vezes chega depois — exigi-lo no registro transformaria orientação em obstáculo, e a pessoa acabaria não registrando o preço. A tela mostra a pendência (`Sem documento de suporte`) sem bloquear nada.
+
+**Substituir é permitido, e a trilha nomeia o documento trocado** — como no DFD (ADR-028). Sobrescrever o lastro de um preço em silêncio é o que não pode acontecer.
+
+Tabela separada de `price_quotes`, pela mesma razão do DFD: a série é lida inteira a cada abertura das seções da Cotação, e coluna `bytea` em entidade JPA entra no `select` por padrão — seriam dezenas de MB para desenhar uma tabela de preços.
