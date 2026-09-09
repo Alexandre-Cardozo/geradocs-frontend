@@ -54,7 +54,6 @@ export interface PlanoPca {
    */
   arquivoGuardado: boolean;
 }
-
 export interface AchadoDoPca {
   demanda: string;
   previsto: boolean;
@@ -231,4 +230,3 @@ export async function declararPrevisao(
     ),
   );
 }
-
