@@ -1,0 +1,148 @@
+import { describe, expect, it } from "vitest"
+
+import { ORDEM_FLUXO } from "@/lib/documentos"
+import { painelDaSecao, secoesPorTipoBase } from "@/lib/documentos/secoes"
+import type { TipoDocumento } from "@/lib/types"
+
+/**
+ * A lei vira teste.
+ *
+ * A estrutura seccional dos documentos não é escolha de produto: cada seção
+ * corresponde a um inciso, uma alínea ou uma cláusula da Lei 14.133/21. Alterar
+ * a contagem ou a obrigatoriedade sem alterar a lei é defeito, e é isto que
+ * estes testes travam.
+ */
+
+const obrigatoriasEsperadas: Record<TipoDocumento, number> = {
+  "Cotação": 5,
+  ETP: 5,
+  Mapa: 5,
+  TR: 10,
+  Edital: 13,
+  Contrato: 16,
+}
+
+const totalEsperado: Record<TipoDocumento, number> = {
+  "Cotação": 5,
+  ETP: 13,
+  Mapa: 6,
+  TR: 10,
+  Edital: 14,
+  Contrato: 19,
+}
+
+describe("estrutura seccional por documento", () => {
+  it.each(ORDEM_FLUXO)("%s tem a quantidade de seções que a lei prevê", (tipo) => {
+    expect(secoesPorTipoBase[tipo]).toHaveLength(totalEsperado[tipo])
+  })
+
+  it.each(ORDEM_FLUXO)("%s tem a quantidade certa de seções indispensáveis", (tipo) => {
+    const obrigatorias = secoesPorTipoBase[tipo].filter((secao) => secao.obrigatoria)
+    expect(obrigatorias).toHaveLength(obrigatoriasEsperadas[tipo])
+  })
+
+  it("no ETP, só cinco dos treze incisos são indispensáveis", () => {
+    // Art. 18, § 2º: os demais podem ser dispensados mediante justificativa.
+    // Tornar todos obrigatórios travaria contratação que a lei permite instruir
+    // sem eles — é a diferença entre orientar e impedir.
+    const etp = secoesPorTipoBase.ETP
+    expect(etp.filter((s) => s.obrigatoria).map((s) => s.titulo)).toEqual([
+      "Descrição da Necessidade",
+      "Estimativa das Quantidades",
+      "Estimativa do Valor da Contratação",
+      "Justificativas para o Parcelamento",
+      "Posicionamento Conclusivo",
+    ])
+  })
+
+  it("no TR, toda alínea do Art. 6º, XXIII é indispensável", () => {
+    expect(secoesPorTipoBase.TR.every((secao) => secao.obrigatoria)).toBe(true)
+  })
+})
+
+describe("toda seção orienta quem escreve", () => {
+  it.each(ORDEM_FLUXO)("%s cita fundamento legal literal em cada seção", (tipo) => {
+    for (const secao of secoesPorTipoBase[tipo]) {
+      expect(secao.fundamentoLegal!.trim(), `${tipo} — ${secao.titulo}`).not.toBe("")
+    }
+  })
+
+  it.each(ORDEM_FLUXO)("%s traz orientação em cada seção", (tipo) => {
+    // O par fundamento + hint é o que orienta o servidor na tela e o que
+    // instruirá o modelo de IA a redigir a seção. Seção sem hint deixa os dois
+    // sem contexto.
+    for (const secao of secoesPorTipoBase[tipo]) {
+      expect(secao.hint!.trim(), `${tipo} — ${secao.titulo}`).not.toBe("")
+    }
+  })
+
+  it.each(ORDEM_FLUXO)("%s numera as seções em sequência, sem repetir", (tipo) => {
+    const ids = secoesPorTipoBase[tipo].map((secao) => secao.id)
+    expect(ids).toEqual(ids.map((_, indice) => String(indice + 1)))
+  })
+
+  it.each(ORDEM_FLUXO)("%s não repete título de seção", (tipo) => {
+    const titulos = secoesPorTipoBase[tipo].map((secao) => secao.titulo)
+    expect(new Set(titulos).size).toBe(titulos.length)
+  })
+})
+
+describe("painéis especiais", () => {
+  it("sobrevivem à volta pelo servidor, que não conhece painel", () => {
+    // O painel é declarado aqui e as seções chegam da API. Sem a junção por
+    // código, `painel` morria no mapeamento e os painéis do editor
+    // simplesmente não apareciam — que foi o que aconteceu quando o front
+    // deixou o mock, e nenhum teste percebeu.
+    expect(painelDaSecao("ETP", "1")).toBe("necessidade")
+    expect(painelDaSecao("ETP", "2")).toBe("pca")
+    expect(painelDaSecao("ETP", "4")).toBe("quantidades")
+    expect(painelDaSecao("ETP", "3")).toBeUndefined()
+    // O TR não é exceção: a fundamentação dele é a mesma necessidade pública
+    // do inciso I do ETP, e por isso recebe o mesmo painel.
+    expect(painelDaSecao("TR", "2")).toBe("necessidade")
+    expect(painelDaSecao("TR", "5")).toBeUndefined()
+  })
+
+  it("estão só onde a seção exige entrada estruturada", () => {
+    const comPainel = ORDEM_FLUXO.flatMap((tipo) =>
+      secoesPorTipoBase[tipo].filter((s) => s.painel).map((s) => `${tipo}:${s.painel}`),
+    )
+    /*
+      O painel acompanha a **matéria** da seção, e não o documento. Onde outro
+      documento pede a mesma coisa que um inciso do ETP, ele recebe o mesmo
+      painel: o TR define o objeto com quantitativos e unidades ('a'), funda-se
+      na mesma necessidade pública ('b') e estima o valor pelos mesmos preços
+      unitários ('i'); a Cotação apura o preço de referência com a mesma memória
+      de cálculo. Deixá-los sem painel obrigava a redigitar à mão o que a
+      plataforma já tem — que era exatamente a lacuna corrigida no ETP.
+
+      A Cotação tem painel em todas as quatro seções que dependem da pesquisa:
+      as fontes consultadas (Art. 23, § 1º), a série de preços (§ 2º), a análise
+      crítica e o preço de referência (Art. 6º da IN SEGES/ME nº 65/2021). A
+      pesquisa é uma só, e as quatro leem dela.
+
+      A dotação é o caso mais forte: o mesmo crédito é pedido por três seções
+      em três documentos — TR 'j', Edital (Art. 150) e a cláusula do contrato
+      (Art. 92, VIII) —, e escrevê-lo à mão nas três é como duas divergem.
+
+      PCA e ATA continuam só no ETP: são incisos sem correspondente nos demais.
+    */
+    expect(comPainel.sort()).toEqual([
+      "Contrato:dotacao",
+      "Cotação:analise",
+      "Cotação:coletas",
+      "Cotação:fontes",
+      "Cotação:referencia",
+      "ETP:ata",
+      "ETP:necessidade",
+      "ETP:pca",
+      "ETP:quantidades",
+      "ETP:valor",
+      "Edital:dotacao",
+      "TR:dotacao",
+      "TR:necessidade",
+      "TR:quantidades",
+      "TR:valor",
+    ])
+  })
+})

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -33,6 +34,7 @@ import {
 import {
   useConfigTenant,
   useCriarProcesso,
+  usePerfil,
 } from "@/lib/api/hooks";
 import {
   CATALOGO,
@@ -43,7 +45,9 @@ import {
 } from "@/lib/documentos";
 import { formatBRL, parseValorBR } from "@/lib/format";
 import {
+  FUNDAMENTO_DA_DISPENSA,
   MODALIDADE_LABEL,
+  type FundamentoDaDispensa,
   type Modalidade,
   type ModoATA,
   type TipoDocumento,
@@ -171,13 +175,25 @@ const labelClasses = "text-base font-semibold text-text-2";
 
 export default function NovoProcesso() {
   const router = useRouter();
-  const { data: tenant } = useConfigTenant();
+  const { data: tenant, isSuccess: tenantCarregado } = useConfigTenant();
   const criarProcesso = useCriarProcesso();
+  const perfil = usePerfil();
+
+  // Só depois da resposta: enquanto carrega, a lista vazia é ausência de dado,
+  // e não ausência de secretaria.
+  const semSecretariaCadastrada =
+    tenantCarregado && (tenant?.secretarias.length ?? 0) === 0;
 
   const [step, setStep] = useState(1);
 
   // Passo 1 — modalidade e opções de ATA
   const [modalidade, setModalidade] = useState("");
+  /*
+    O inciso do Art. 75. Só a dispensa o tem, e o artigo tem dezoito incisos —
+    só dois com limite de valor. Sem esta declaração, ou a plataforma alerta
+    sobre valor numa dispensa por emergência, ou cala onde precisa falar (§77).
+  */
+  const [fundamentoDaDispensa, setFundamentoDaDispensa] = useState<FundamentoDaDispensa | "">("");
   const [isAdesaoATA, setIsAdesaoATA] = useState(false);
   const [ataMode, setATAMode] = useState<ModoATA | "">("");
   const [ataFile, setATAFile] = useState<string | null>(null);
@@ -188,6 +204,8 @@ export default function NovoProcesso() {
   const [objeto, setObjeto] = useState("");
   const [objetoDemanda, setObjetoDemanda] = useState("");
   const [dfdFile, setDFDFile] = useState<string | null>(null);
+  // O arquivo, e não só o nome: é ele que sobe e vira o primeiro DFD anexado.
+  const [dfdConteudo, setDfdConteudo] = useState<File | null>(null);
   const [valorRef, setValorRef] = useState("");
   const [fundamento, setFundamento] = useState("");
 
@@ -242,7 +260,9 @@ export default function NovoProcesso() {
 
   // A numeração é atribuída de forma atômica pelo back-end na criação.
   // Não antecipamos um número no cliente para evitar colisões entre usuários.
-  const numeroProcesso = "Será definido pelo servidor";
+  // "pelo servidor" era ambíguo justamente aqui: nesta plataforma "servidor" é
+  // a pessoa que usa o sistema, não a máquina que responde.
+  const numeroProcesso = "Gerado na criação";
   const secretariaNome = tenant?.secretarias.find((item) => item.id === secretaria)?.nome ?? "";
 
   const handleCreate = () => {
@@ -253,10 +273,11 @@ export default function NovoProcesso() {
         objeto: objeto.trim(),
         objetoDemanda: objetoDemanda.trim() || undefined,
         modalidade: modalidadeSel.valor,
+        ...(fundamentoDaDispensa === "" ? {} : { fundamentoDaDispensa }),
         secretaria,
         valorEstimado: valorNumerico,
         fundamentoLegal: fundamento.trim() || undefined,
-        dfdArquivo: dfdFile,
+        dfdConteudo,
         ata:
           isAdesaoATA && ataMode !== ""
             ? { modo: ataMode, motivo: ataMotivo.trim(), arquivo: ataFile }
@@ -280,11 +301,10 @@ export default function NovoProcesso() {
     );
   };
 
-  const primeiroDocumento = documentosEscolhidos[0];
   const destinoAposCriar = "à lista de processos como rascunho";
 
   return (
-    <div className="max-w-content p-4 sm:p-5 lg:p-7">
+    <div className="w-full p-4 sm:p-5 lg:p-7">
       <div className="mb-8">
         <StepIndicator
           steps={["Modalidade", "Identificação", "Documentos"]}
@@ -315,6 +335,38 @@ export default function NovoProcesso() {
                   />
                 ))}
               </div>
+
+              {/*
+                O inciso só aparece na dispensa, e não é obrigatório: declarar o
+                fundamento é ato de quem conduz o processo e pode acontecer
+                depois — exigi-lo aqui faria inventar fundamento para poder
+                seguir.
+              */}
+              {modalidadeSel?.valor === "Dispensa Art. 75" && (
+                <div className="mb-6 max-w-2xl">
+                  <FormField
+                    label="Fundamento da Dispensa"
+                    hint="Só os incisos I e II têm limite de valor. Pode ser declarado depois."
+                  >
+                    <Dropdown
+                      value={fundamentoDaDispensa}
+                      onChange={(escolha) =>
+                        setFundamentoDaDispensa(escolha as FundamentoDaDispensa | "")
+                      }
+                      ariaLabel="Fundamento da Dispensa"
+                      options={[
+                        { value: "", label: "Declarar depois..." },
+                        ...(
+                          Object.keys(FUNDAMENTO_DA_DISPENSA) as FundamentoDaDispensa[]
+                        ).map((chave) => ({
+                          value: chave,
+                          label: FUNDAMENTO_DA_DISPENSA[chave],
+                        })),
+                      ]}
+                    />
+                  </FormField>
+                </div>
+              )}
 
               {/* Adesão de ATA antecipada */}
               <div className="rounded-card border border-border bg-surface px-5 py-4.5">
@@ -420,13 +472,40 @@ export default function NovoProcesso() {
                       })),
                     ]}
                   />
-                  {secretaria === "" && (
+                  {/*
+                    Sem secretaria cadastrada, o seletor só tem o texto de
+                    instrução — e a tela virava um beco: exigia uma escolha que
+                    não existia e não dizia por quê. O servidor exige a
+                    secretaria (é dela que sai a lotação do processo), então a
+                    saída não é liberar: é dizer quem resolve.
+                  */}
+                  {semSecretariaCadastrada ? (
                     <div className="mt-2">
-                      <ValidationMsg
-                        type="error"
-                        msg="Selecione a secretaria requisitante para continuar."
-                      />
+                      <InfoBanner tone="warning">
+                        Este órgão ainda não tem secretaria cadastrada, e todo processo
+                        pertence a uma.{" "}
+                        {perfil === "coordenador" ? (
+                          <>
+                            Cadastre a primeira em{" "}
+                            <Link href="/configuracoes/secretarias" className="font-semibold underline">
+                              Configurações
+                            </Link>
+                            .
+                          </>
+                        ) : (
+                          "Peça ao coordenador do órgão para cadastrá-la em Configurações."
+                        )}
+                      </InfoBanner>
                     </div>
+                  ) : (
+                    secretaria === "" && (
+                      <div className="mt-2">
+                        <ValidationMsg
+                          type="error"
+                          msg="Selecione a secretaria requisitante para continuar."
+                        />
+                      </div>
+                    )
                   )}
                 </FormField>
 
@@ -466,6 +545,7 @@ export default function NovoProcesso() {
                   <FileUpload
                     file={dfdFile}
                     onChange={setDFDFile}
+                    onArquivo={setDfdConteudo}
                     placeholder="Clique para selecionar o DFD ou arraste o arquivo aqui"
                     accept=".pdf,.docx,.doc"
                   />
@@ -659,9 +739,8 @@ export default function NovoProcesso() {
               </div>
 
               <InfoBanner tone="warning">
-                O processo será criado com o número{" "}
-                <strong className="font-mono">{numeroProcesso}</strong>. Após a
-                criação você será direcionado {destinoAposCriar}.
+                O número do processo é gerado na criação. Depois dela você será
+                direcionado {destinoAposCriar}.
               </InfoBanner>
             </div>
           )}
@@ -677,9 +756,13 @@ export default function NovoProcesso() {
                 Voltar
               </Button>
             )}
+            <p id="motivo-avancar" className="sr-only">
+              Preencha os campos obrigatórios desta etapa para avançar.
+            </p>
             <Button
               size="lg"
               disabled={!canProceed || criarProcesso.isPending}
+              ariaDescribedBy="motivo-avancar"
               onClick={() => {
                 if (step < 3) setStep((s) => s + 1);
                 else handleCreate();
@@ -688,11 +771,10 @@ export default function NovoProcesso() {
               {criarProcesso.isPending
                 ? "Criando processo..."
                 : step === 3
-                  ? includeDFDVerification
-                    ? "Criar Processo e Verificar DFD →"
-                    : primeiroDocumento
-                      ? `Criar Processo e Iniciar ${primeiroDocumento} →`
-                      : "Criar Processo →"
+                  ? // O rótulo prometia levar ao ETP (ou ao DFD) e levava à
+                    // lista. Promessa de navegação que não se cumpre é pior que
+                    // rótulo genérico: a pessoa procura a tela que não abriu.
+                    "Criar Processo →"
                   : "Continuar →"}
             </Button>
           </div>
@@ -705,10 +787,10 @@ export default function NovoProcesso() {
               Resumo do Processo
             </h3>
             <p className="m-0 mb-4 text-sm text-text-3">
-              Número{" "}
-              <span className="font-mono font-semibold text-royal">
-                {numeroProcesso}
-              </span>
+              {/* Sem monoespaçada nem destaque: monoespaçada é para
+                  identificador de verdade (PROC-2026-000007), e esta é uma
+                  frase — destacá-la faz parecer que já existe um número. */}
+              Número <span className="text-text-muted">{numeroProcesso}</span>
             </p>
             <dl className="flex flex-col gap-3">
               {[
@@ -739,7 +821,7 @@ export default function NovoProcesso() {
                   <dt className="text-2xs font-semibold tracking-caps text-text-muted uppercase">
                     {item.rotulo}
                   </dt>
-                  <dd className="m-0 mt-0.5 text-base text-text-1">
+                  <dd className="m-0 mt-0.5 text-base break-words text-text-1">
                     {item.valor ? (
                       item.valor
                     ) : (

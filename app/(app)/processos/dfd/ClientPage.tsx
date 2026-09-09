@@ -18,7 +18,8 @@ import {
 } from "@/components/ui/icons"
 import { ErrorState, LoadingState } from "@/components/shared/estados"
 import { useToast } from "@/components/shared/providers"
-import { useAnalisarDFD, useParecerDFD, useProcesso } from "@/lib/api/hooks"
+import { useAnalisarDFD, useDfdsDoProcesso, useParecerDFD, useProcesso } from "@/lib/api/hooks"
+import { MarcaSintetica } from "@/components/shared/marca-sintetica";
 import { CATALOGO, ordenar, totalSecoes } from "@/lib/documentos"
 import { formatDataHora } from "@/lib/format"
 import type { AchadoDFD } from "@/lib/types"
@@ -51,9 +52,15 @@ export default function VerificacaoDFD() {
   const parecer = useParecerDFD(processoId)
   const analisar = useAnalisarDFD(processoId)
 
-  // undefined = usuário ainda não mexeu → herda o DFD anexado na criação do processo.
+  // undefined = usuário ainda não mexeu → herda o primeiro DFD registrado no
+  // processo. O processo não guarda mais um DFD próprio: eles são um cadastro,
+  // um por secretaria requisitante (ADR-037).
+  const dfds = useDfdsDoProcesso(processoId)
   const [dfdFileEscolhido, setDfdFile] = useState<string | null | undefined>(undefined)
-  const dfdFile = dfdFileEscolhido === undefined ? (processo.data?.dfdArquivo ?? null) : dfdFileEscolhido
+  const dfdFile =
+    dfdFileEscolhido === undefined
+      ? (dfds.data?.[0]?.nomeDoArquivo ?? null)
+      : dfdFileEscolhido
   const [progress, setProgress] = useState(0)
   const [analisando, setAnalisando] = useState(false)
   const [reenviando, setReenviando] = useState(false)
@@ -132,7 +139,7 @@ export default function VerificacaoDFD() {
   ]
 
   return (
-    <div className="max-w-content p-4 sm:p-5 lg:p-7">
+    <div className="w-full p-4 sm:p-5 lg:p-7">
       {/* Breadcrumb */}
       <div className="mb-6 flex items-center gap-2">
         <Link href="/processos" className="text-base text-text-3 no-underline">
@@ -280,6 +287,11 @@ export default function VerificacaoDFD() {
                 <p className="m-0 text-base text-text-3">
                   {parecer.data.arquivo} · Analisado em {formatDataHora(parecer.data.analisadoEm).replace(" — ", " às ")}
                 </p>
+                {/*
+                  O parecer é o dado fabricado que mais engana: nota, achados e
+                  fundamentação têm exatamente a forma de uma análise real.
+                */}
+                <MarcaSintetica campo="parecerDfd" />
               </div>
               <div className="shrink-0 rounded-xl border border-tint-warning-border bg-tint-warning-bg px-4.5 py-2.5 text-center">
                 <div className="font-display text-score font-extrabold tracking-stat text-tint-warning-fg">

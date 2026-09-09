@@ -1,10 +1,10 @@
 # GeraDocs — Frontend
 
-Aplicação web do **GeraDocs**, SaaS GovTech da **LAHHM** que automatiza, com IA, os documentos da fase preparatória da contratação pública sob a **Lei 14.133/2021**: o DFD é anexado e verificado, e a plataforma gera **Cotação de Mercado → ETP → Mapa de Riscos → TR → Edital → Contrato**, na ordem do fluxo real, até a aprovação e a exportação DOCX/PDF com timbre do município.
+Aplicação web do **GeraDocs**, SaaS GovTech da **LAHHM** que automatiza, com IA, os documentos da fase preparatória da contratação pública sob a **Lei 14.133/2021**: o DFD é anexado e verificado, e a plataforma gera **Cotação de Mercado → ETP → Mapa de Riscos → TR → Edital → Contrato**, na ordem do fluxo real, até a exportação DOCX/PDF com o timbre da entidade. O protocolo e a aprovação acontecem no sistema de processo administrativo da entidade, não aqui.
 
 > Que documentos existem, em que ordem, com que fundamento legal e quais são as lacunas conhecidas: **[docs/fluxo-contratacao.md](docs/fluxo-contratacao.md)** — leia antes de mexer em documentos, wizard ou hub do processo.
 
-O projeto está em integração progressiva com o backend Spring Boot. Autenticação, sessão, refresh, logout, recuperação/redefinição de senha, prefeituras, secretarias, usuários e a criação/listagem de processos usam a API real. Detalhe e edição de processo, DFD, documentos, aprovações, identidade visual e PCA continuam sobre a camada mockada até seus módulos existirem no backend.
+O projeto está em integração progressiva com o backend Spring Boot. Autenticação, sessão, refresh, logout, recuperação/redefinição de senha, entidades, secretarias, usuários e a criação/listagem de processos usam a API real. Detalhe e edição de processo, DFD, documentos, identidade visual e PCA continuam sobre a camada mockada até seus módulos existirem no backend.
 
 ## Stack
 
@@ -17,15 +17,32 @@ O projeto está em integração progressiva com o backend Spring Boot. Autentica
 ## Comandos
 
 ```bash
-npm install
-npm run dev        # desenvolvimento (http://localhost:3000/GeraDocsFrontend)
+npm ci             # instala a partir do lock (não o reescreve)
+npm run dev        # desenvolvimento (http://localhost:3000)
 npm run build      # build de produção
 npm start          # servir o build
 npm run lint       # eslint-config-next + regras de aderência ao DS (hex/px/fonte)
 npm run lint:ds    # oxlint com o config de aderência do DS
 npm run typecheck  # tsc --noEmit
 npm run check      # tudo acima
+npm run deps:sync  # reresolve o lock no linux, que é onde o CI instala
 ```
+
+### Subir e encerrar
+
+```bash
+./scripts/dev/subir_front.sh          # primeiro plano; Ctrl+C para parar
+./scripts/dev/subir_front.sh fundo    # segundo plano; sobrevive ao terminal fechar
+./scripts/dev/subir_front.sh parar
+./scripts/dev/subir_front.sh status
+./scripts/dev/subir_front.sh logs
+```
+
+O nome e os verbos são os mesmos do back-end (`subir_api.sh`) e os mesmos dos
+dois repositórios do Resgate Certo: alternar de projeto não muda o comando.
+
+`parar` derruba **quem escuta a porta**, e não o PID anotado na subida: `npm run
+dev` é um lançador, e matar o pai deixaria o servidor de pé segurando a 3000.
 
 ## Estrutura
 
@@ -42,11 +59,11 @@ app/                    # ROTAS (App Router) — cada pasta = um segmento de URL
     processos/          # Lista, wizard (novo/), hub (detalhe/), DFD (dfd/) e
                         #   editor de documentos (documento/). O id do processo é
                         #   query param (?id=), não segmento — static export, §22 decisions.md
-    aprovacoes/         # Fila + trilha de auditoria      /aprovacoes
     documentos/         # Repositório de documentos       /documentos
-    configuracoes/      # Prefeitura, secretarias, PCA, servidores  /configuracoes
+    configuracoes/      # Um menu por assunto: timbre/, secretarias/, pca/, usuarios/
+                        #   (/configuracoes redireciona para o primeiro)
     perfil/             # Meu Perfil                      /perfil
-    admin/              # Admin geral: prefeituras e servidores  /admin/*
+    admin/              # Admin geral: entidades e servidores  /admin/*
 components/             # INTERFACE REUTILIZÁVEL
   ui/                   # Design System em TSX — importe SEMPRE de "@/components/ui"
   layout/               # Moldura: AppShell, Sidebar, Header, GuardaSessao
@@ -55,7 +72,7 @@ components/             # INTERFACE REUTILIZÁVEL
 lib/                    # DADOS E DOMÍNIO (TypeScript puro)
   types.ts              # modelo de domínio congelado (Processo, Usuario, Sessao, ...)
   documentos/           # CATÁLOGO: ordem, dependências, regras por modalidade e seções
-  processos/            # máquina de estados do fluxo de aprovação (fluxo.ts)
+  processos/            # máquina de estados do processo (fluxo.ts)
   auth/                 # cpf.ts (validação) + acesso.ts (RBAC — fonte única)
   format.ts             # formatBRL ("R$ 485.000,00"), formatData, formatDataHora
   mocks/fixtures.ts     # dados — nunca importar em componentes
@@ -79,9 +96,9 @@ docs/                   # estrutura.md · decisions.md · fluxo-contratacao.md (
 
 ## Integração local com o backend
 
-1. Inicie o PostgreSQL/Mailpit e o Spring Boot conforme o README do backend.
+1. Inicie o PostgreSQL/Mailpit e o Spring Boot: no repositório do backend, `./scripts/dev/subir_api.sh fundo`.
 2. Copie `.env.example` para `.env.local` somente se a API não estiver em `http://localhost:8080/api/v1`.
-3. Execute `npm run dev` e acesse `http://localhost:3000/GeraDocsFrontend/login`.
+3. Execute `./scripts/dev/subir_front.sh fundo` e acesse `http://localhost:3000/login`.
 
 O access token JWT fica somente em memória. O refresh token é rotativo e permanece em cookie `HttpOnly`; ao recarregar a página, o frontend renova a sessão e consulta `GET /api/v1/me`. Não armazene tokens no `localStorage`.
 
@@ -91,10 +108,12 @@ As áreas administrativas também usam a API protegida: `GET`/`POST` de organiza
 
 ## Login e perfis de acesso
 
-O app exige uma conta ativa cadastrada no backend e login por CPF + senha. Três perfis: **Administrador Geral** (LAHHM — gere prefeituras e servidores), **Coordenador** (gere a sua prefeitura + faz o fluxo de servidor) e **Servidor** (processos e documentos). A API define o perfil, a organização ativa, os papéis de workflow e as permissões da sessão. Detalhe e matriz RBAC: [docs/perfis-acesso.md](docs/perfis-acesso.md).
+O app exige uma conta ativa cadastrada no backend e login por CPF + senha. Três perfis: **Administrador Geral** (LAHHM — gere entidades e servidores), **Coordenador** (gere a sua entidade + faz o fluxo de servidor) e **Servidor** (processos e documentos). A API define o perfil, a organização ativa, os papéis de workflow e as permissões da sessão. Detalhe e matriz RBAC: [docs/perfis-acesso.md](docs/perfis-acesso.md).
 
 ## Fluxo completo simulável com mocks
 
-Fazer login → criar processo no wizard (os documentos oferecidos dependem da modalidade — contratação direta não tem Edital) → anexar DFD → checklist da IA (parecer persistido) → elaborar os documentos na ordem do fluxo, preenchendo ou gerando cada seção com IA simulada, com as dependências travando o que ainda não pode começar (o TR espera o ETP; o Edital espera o TR) → finalizar cada documento (exige só as seções obrigatórias) → **enviar para aprovação** (travado até os obrigatórios estarem gerados) → **registrar parecer jurídico (Art. 53) e encaminhar** → o gestor **Aprova / Rejeita / Solicita Retificação** (apontamentos por seção, que o elaborador resolve no editor, gerando nova versão do documento) → **concluir** o processo aprovado. Toda transição fica na trilha de auditoria.
+Fazer login → criar processo no wizard (os documentos oferecidos dependem da modalidade — contratação direta não tem Edital) → anexar DFD → checklist da IA (parecer persistido) → elaborar os documentos na ordem do fluxo, preenchendo ou gerando cada seção com IA simulada, com as dependências travando o que ainda não pode começar (o TR espera o ETP; o Edital espera o TR) → finalizar cada documento (exige só as seções obrigatórias) → **encerrar o processo**, que pede justificativa se ainda faltar documento, mas não impede. Todo evento fica na trilha.
 
-Ordem canônica, fundamento legal de cada documento e a **máquina de estados do fluxo de aprovação**: [docs/fluxo-contratacao.md](docs/fluxo-contratacao.md).
+Daqui em diante é fora da plataforma: o servidor protocola os documentos no sistema administrativo da entidade, onde acontecem a assinatura, o parecer jurídico e a aprovação.
+
+Ordem canônica, fundamento legal de cada documento e **onde a plataforma termina**: [docs/fluxo-contratacao.md](docs/fluxo-contratacao.md).

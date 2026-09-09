@@ -1,7 +1,9 @@
 import "client-only"
 
 import type { components } from "@/lib/api/gerado/v1"
-import type { PapelUsuario, PerfilAcesso, Sessao, Tenant, Usuario } from "@/lib/types"
+import { IDENTIFICADOR, mensagemCredencialRecusada } from "@/lib/auth/identificador"
+import { iniciaisDe, primeiroNome, tipoDaEntidade } from "@/lib/dominio"
+import type { PerfilAcesso, Sessao, Tenant, Usuario } from "@/lib/types"
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1").replace(/\/$/, "")
 
@@ -62,7 +64,11 @@ async function requisicaoPublica<T>(path: string, init: RequestInit): Promise<T>
       credentials: "include",
       headers: {
         Accept: "application/json",
-        ...(init.body ? { "Content-Type": "application/json" } : {}),
+        // FormData não leva Content-Type nosso: quem escreve o `boundary` é o
+        // navegador, e fixar "application/json" aqui quebraria todo envio de arquivo.
+        ...(init.body && !(init.body instanceof FormData)
+          ? { "Content-Type": "application/json" }
+          : {}),
         ...init.headers,
       },
     })
@@ -97,7 +103,11 @@ async function requisicaoAutenticada<T>(path: string, init: RequestInit = {}, pe
       credentials: "include",
       headers: {
         Accept: "application/json",
-        ...(init.body ? { "Content-Type": "application/json" } : {}),
+        // FormData não leva Content-Type nosso: quem escreve o `boundary` é o
+        // navegador, e fixar "application/json" aqui quebraria todo envio de arquivo.
+        ...(init.body && !(init.body instanceof FormData)
+          ? { "Content-Type": "application/json" }
+          : {}),
         ...init.headers,
         Authorization: `Bearer ${accessToken}`,
       },
@@ -120,6 +130,82 @@ export async function requisicaoProtegida<T>(path: string, init: RequestInit = {
   return requisicaoAutenticada<T>(path, init)
 }
 
+/**
+ * Baixa bytes autenticado.
+ *
+ * Existe porque uma âncora comum não leva o cabeçalho de autorização: apontar o
+ * `href` para a rota do arquivo daria 401 e a pessoa veria um download quebrado
+ * sem nenhuma explicação. Aqui a resposta vem pela mesma porta das demais, com a
+ * mesma renovação de token, e só então é entregue ao navegador.
+ */
+export async function baixarProtegido(
+  path: string,
+  permiteRenovar = true,
+): Promise<{ conteudo: Blob; nomeSugerido: string | null }> {
+  if (!accessToken) await renovarToken()
+  let response: Response
+  try {
+    response = await fetch(`${API_URL}${path}`, {
+      credentials: "include",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+  } catch {
+    throw new ApiError("Não foi possível conectar ao servidor. Verifique se o backend está em execução.", 0)
+  }
+  if (response.status === 401 && permiteRenovar) {
+    accessToken = null
+    await renovarToken()
+    return baixarProtegido(path, false)
+  }
+  if (!response.ok) throw await erroDa(response, "Não foi possível baixar o arquivo.")
+  return {
+    conteudo: await response.blob(),
+    // O nome vem do servidor: ele conhece o número do processo e a versão, e é
+    // isso que torna o arquivo recuperável numa pasta de downloads.
+    nomeSugerido: nomeNoCabecalho(response.headers.get("Content-Disposition")),
+  }
+}
+
+/**
+ * Busca uma imagem autenticada.
+ *
+ * Separado de `baixarProtegido` por causa do 404: aqui ele não é erro, é "esta
+ * pessoa não pôs foto" — o caso mais comum. Tratá-lo como falha encheria a tela
+ * de aviso para um estado normal.
+ */
+export async function imagemProtegida(
+  path: string,
+  permiteRenovar = true,
+): Promise<Blob | null> {
+  if (!accessToken) await renovarToken()
+  let response: Response
+  try {
+    response = await fetch(`${API_URL}${path}`, {
+      credentials: "include",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+  } catch {
+    throw new ApiError("Não foi possível conectar ao servidor. Verifique se o backend está em execução.", 0)
+  }
+  if (response.status === 401 && permiteRenovar) {
+    accessToken = null
+    await renovarToken()
+    return imagemProtegida(path, false)
+  }
+  // 403 junto com 404: quem não pode ver a foto de outra pessoa vê as iniciais,
+  // e não uma mensagem de erro no meio de uma listagem.
+  if (response.status === 404 || response.status === 403) return null
+  if (!response.ok) throw await erroDa(response, "Não foi possível carregar a foto de perfil.")
+  return response.blob()
+}
+
+/** O `filename` do `Content-Disposition`, quando o servidor o envia. */
+function nomeNoCabecalho(cabecalho: string | null): string | null {
+  if (!cabecalho) return null
+  const achado = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(cabecalho)
+  return achado?.[1] ? decodeURIComponent(achado[1]) : null
+}
+
 type PerfilBackend = NonNullable<NonNullable<BackendSession["user"]>["profileAccess"]>
 
 const perfis: Record<PerfilBackend, PerfilAcesso> = {
@@ -128,88 +214,99 @@ const perfis: Record<PerfilBackend, PerfilAcesso> = {
   SERVIDOR: "servidor",
 }
 
-const papeis: Partial<Record<string, PapelUsuario>> = {
-  SERVIDOR_COMPRAS: "servidor_compras",
-  SECRETARIA_DEMANDANTE: "secretaria_demandante",
-  COMISSAO: "comissao",
-  JURIDICO: "juridico",
-  GESTOR_APROVADOR: "gestor_aprovador",
-}
-
-function iniciaisDe(nome: string): string {
-  const partes = nome.trim().split(/\s+/).filter(Boolean)
-  return `${partes[0]?.[0] ?? ""}${partes.at(-1)?.[0] ?? ""}`.toUpperCase() || "?"
-}
-
-function papelDa(session: BackendSession): PapelUsuario {
-  if (session.user?.profileAccess === "ADMIN_GERAL") return "admin_lahhm"
-  const role = session.activeMembership?.workflowRoles?.find((item) => papeis[item])
-  return role ? (papeis[role] ?? "servidor_compras") : "servidor_compras"
-}
-
 function tenantDa(organization: BackendOrganization | null | undefined): Tenant | null {
   if (!organization?.id) return null
   return {
     id: organization.id,
-    orgao: organization.name ?? "",
-    unidade: organization.unit ?? "",
+    nome: organization.name ?? "",
+    tipo: tipoDaEntidade(organization.entityType),
     secretarias: [],
-    logoArquivo: null,
-    logoDataUrl: null,
     timbrado: true,
-    cabecalho: `${(organization.name ?? "").toUpperCase()}\n${organization.unit ?? ""}`,
+    cabecalho: (organization.name ?? "").toUpperCase(),
     rodape: "Documento gerado eletronicamente pela plataforma GeraDocs · {data} · Processo nº {numero}",
-    pca: { ano: String(new Date().getFullYear()), arquivo: null, itensIndexados: 0 },
   }
 }
 
 /**
- * O contrato gerado declara **todo** campo como opcional, porque os DTOs de
- * resposta do backend não anunciam obrigatoriedade na especificação. Enquanto
- * for assim, o mapeamento decide explicitamente o que fazer com a ausência em
- * vez de fingir que ela não existe.
+ * Desde 21/08/2026 o contrato declara `required`: o que o servidor sempre envia
+ * chega tipado como presente, e os `??` que existiam só para satisfazer o
+ * compilador foram embora. Os que sobraram correspondem a campos de fato
+ * opcionais — CPF de cadastro pendente, cargo, matrícula, último acesso e a
+ * organização do administrador global.
  *
- * A correção está registrada como pendência do contrato: quando a spec passar a
- * declarar `required`, estes `??` viram type error e somem — que é o sinal certo.
+ * A checagem de `user` continua, e não é redundância: um proxy no caminho pode
+ * devolver corpo que não corresponde ao contrato, e sessão sem usuário
+ * identificado precisa virar erro em vez de seguir com campos vazios.
  */
-function mapearSessao(session: BackendSession): Sessao {
-  const user = session.user
-  if (!user?.id || !user.name) {
+function mapearSessao(session: BackendSession | undefined): Sessao {
+  const user = session?.user
+  if (!user?.id || !user.name || !user.email || !user.profileAccess || !user.status) {
+    // Faltando qualquer um destes, quem respondeu não foi o servidor do
+    // contrato — foi um proxy, uma página de erro ou uma versão incompatível.
+    // Preencher com vazio montaria uma sessão que parece válida e não é.
     throw new ApiError("Resposta de sessão incompleta: o servidor não identificou o usuário.", 502)
   }
   const nome = user.name
   const usuario: Usuario = {
     id: user.id,
     nome,
-    primeiroNome: nome.trim().split(/\s+/)[0] ?? nome,
+    primeiroNome: primeiroNome(nome),
     iniciais: iniciaisDe(nome),
     cpf: user.cpf ?? "",
-    email: user.email ?? "",
+    email: user.email,
     cargo: user.jobTitle ?? "",
-    perfilAcesso: perfis[user.profileAccess ?? "SERVIDOR"] ?? "servidor",
-    papel: papelDa(session),
-    prefeituraId: session.organization?.id ?? null,
-    avatarDataUrl: null,
+    // Vinham no contrato e eram descartados aqui: a tela de perfil mostrava "—"
+    // para dois campos que o servidor conhece.
+    matricula: user.registrationNumber ?? undefined,
+    decretoNomeacao: user.appointmentDecree ?? undefined,
+    perfilAcesso: perfis[user.profileAccess],
+    entidadeId: session?.organization?.id ?? null,
     ultimoAcesso: user.lastAccessAt ?? "",
+    precisaTrocarSenha: user.passwordChangeRequired ?? false,
     ativo: user.status === "ACTIVE",
   }
-  return { usuario, prefeitura: tenantDa(session.organization ?? null) }
+  return { usuario, entidade: tenantDa(session?.organization ?? null) }
 }
 
-export async function autenticar(cpf: string, password: string): Promise<Sessao> {
+/**
+ * @param identifier o que a pessoa digitou na chave configurada — CPF, e-mail ou
+ *                   matrícula, conforme `IDENTIFICADOR` (ADR-015)
+ */
+export async function autenticar(identifier: string, password: string): Promise<Sessao> {
   try {
     const authentication = await requisicaoPublica<AuthenticationResponse>("/auth/login", {
       method: "POST",
-      body: JSON.stringify({ cpf, password, organizationId: null }),
+      body: JSON.stringify({
+        identifier: IDENTIFICADOR.normaliza(identifier),
+        password,
+        organizationId: null,
+      }),
     })
-    accessToken = authentication.accessToken ?? null
-    return mapearSessao(authentication.session ?? {})
+    accessToken = authentication.accessToken
+    return mapearSessao(authentication.session)
   } catch (error) {
+    // 0 é rede fora do ar e 429 é bloqueio por tentativas: chamar os dois de
+    // credencial inválida mandaria a pessoa conferir uma senha que está certa.
     if (error instanceof ApiError && error.status !== 0 && error.status !== 429) {
-      throw new ApiError("CPF ou senha inválidos.", error.status, error.code)
+      throw new ApiError(mensagemCredencialRecusada(), error.status, error.code)
     }
     throw error
   }
+}
+
+/**
+ * Troca a própria senha e devolve a sessão já liberada.
+ *
+ * <p>É o caminho do primeiro acesso: a senha sorteada no cadastro é conhecida
+ * por quem a entregou, e enquanto ela valer a sessão não faz mais nada.
+ */
+export async function trocarPropriaSenha(senhaAtual: string, novaSenha: string): Promise<Sessao> {
+  return mapearSessao(
+    await requisicaoAutenticada<BackendSession>("/auth/password-change", {
+      method: "POST",
+      body: JSON.stringify({ currentPassword: senhaAtual, newPassword: novaSenha }),
+    }),
+  )
 }
 
 export async function obterSessao(): Promise<Sessao | null> {

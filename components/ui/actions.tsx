@@ -11,8 +11,10 @@ const buttonSizes = {
 const buttonVariants = {
   primary: "bg-royal text-surface hover:bg-royal-hover disabled:bg-border disabled:text-text-muted",
   secondary: "bg-surface border border-border text-text-3 hover:bg-ice",
-  dark: "bg-navy text-surface",
-  success: "bg-success text-surface",
+  // O estado desabilitado é o mesmo do `primary`: botão travado que continua
+  // com a cor de ação convida o clique que não acontece.
+  dark: "bg-navy text-surface disabled:bg-border disabled:text-text-muted",
+  success: "bg-success text-surface disabled:bg-border disabled:text-text-muted",
   ghost: "bg-transparent text-royal hover:bg-tint-royal-bg",
   "danger-soft": "bg-tint-danger-bg border-2 border-tint-danger-border-strong text-danger",
 } as const
@@ -29,6 +31,7 @@ export function Button({
   onClick,
   type = "button",
   title,
+  ariaDescribedBy,
 }: {
   variant?: keyof typeof buttonVariants
   size?: keyof typeof buttonSizes
@@ -40,12 +43,21 @@ export function Button({
   onClick?: () => void
   type?: "button" | "submit"
   title?: string
+  /**
+   * Id do texto que explica por que o botão está desabilitado.
+   *
+   * Botão desabilitado por regra de negócio sem isto é um beco: o leitor de tela
+   * anuncia "desabilitado" e não diz o que falta fazer. `title` não serve —
+   * tooltip não é lida em navegação por teclado.
+   */
+  ariaDescribedBy?: string
 }) {
   return (
     <button
       type={type}
       disabled={disabled}
       title={title}
+      aria-describedby={ariaDescribedBy}
       onClick={onClick}
       style={style}
       className={`inline-flex cursor-pointer items-center justify-center gap-1.75 rounded-md font-body font-semibold whitespace-nowrap transition-colors disabled:cursor-not-allowed ${buttonSizes[size]} ${buttonVariants[variant]} ${className}`}

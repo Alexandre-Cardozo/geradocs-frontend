@@ -37,6 +37,14 @@ jobs:
         
       - name: Build with Next.js
         run: npm run build
+        env:
+          # O Pages serve o projeto sob o nome do repositório, e não na raiz do
+          # domínio. Quem publica é que declara o prefixo: fixá-lo no
+          # next.config.ts o fazia valer também em desenvolvimento, onde ele só
+          # sujava a URL de quem desenvolve. O caminho é o do repositório,
+          # minúsculo — o antigo "/GeraDocsFrontend" só resolvia porque o Pages
+          # é tolerante com a caixa do segmento do repositório.
+          NEXT_PUBLIC_BASE_PATH: /geradocs-frontend
         
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

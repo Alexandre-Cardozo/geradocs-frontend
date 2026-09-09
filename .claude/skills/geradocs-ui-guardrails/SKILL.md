@@ -77,6 +77,14 @@ PCA é contexto do órgão.
   camada anticorrupção.
 - Erro de API vira mensagem em PT-BR sem revelar se um usuário existe.
 
+## Ao mexer em dependência
+
+Use `npm run deps:sync`, nunca `npm install <pacote>` sozinho. Ele resolve o
+lock dentro de um contêiner linux: no macOS o npm não busca o manifesto das
+dependências opcionais do `sharp` para linux, o `npm ci` passa aqui e reprova no
+runner dizendo que o lock está dessincronizado. Apagar o lock e reinstalar no
+macOS não resolve.
+
 ## Anti-padrões proibidos
 
 - Cor hex, cor arbitrária do Tailwind ou tamanho de fonte arbitrário.

@@ -4,22 +4,26 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 import { Button, DocPill, FilterTabs, SearchInput, StatusBadge, Tag } from "@/components/ui"
-import { IconChevronRight, IconDownload, IconFilter } from "@/components/ui/icons"
+import { IconDownload, IconFilter } from "@/components/ui/icons"
 import { EmptyState, ErrorState, SkeletonRows } from "@/components/shared/estados"
 import { Th } from "@/components/shared/tabela"
 import { useToast } from "@/components/shared/providers"
 import { useProcessos } from "@/lib/api/hooks"
 import { formatBRL } from "@/lib/format"
-import { MODALIDADE_LABEL, type StatusProcesso } from "@/lib/types"
+import { MODALIDADE_LABEL, STATUS_PROCESSO_LABEL, type StatusProcesso } from "@/lib/types"
 
+/**
+ * Os rótulos saem de `STATUS_PROCESSO_LABEL`, não de uma lista paralela: o
+ * vocabulário de status é normativo e vai encolher quando o fluxo de aprovação
+ * sair do produto. Uma cópia local continuaria oferecendo filtro para status que
+ * deixou de existir, sem quebrar nada.
+ */
 const statusFilters = [
   { key: "todos", label: "Todos" },
-  { key: "rascunho", label: "Rascunho" },
-  { key: "em_revisao", label: "Em Revisão" },
-  { key: "aguardando", label: "Aguardando" },
-  { key: "aprovado", label: "Aprovado" },
-  { key: "concluido", label: "Concluído" },
-  { key: "rejeitado", label: "Rejeitado" },
+  ...(Object.keys(STATUS_PROCESSO_LABEL) as StatusProcesso[]).map((key) => ({
+    key,
+    label: STATUS_PROCESSO_LABEL[key],
+  })),
 ]
 
 export default function Processos() {
@@ -87,11 +91,14 @@ export default function Processos() {
 
         {processos.isSuccess && itens.length > 0 && (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[880px] border-collapse">
+            {/* 780px: a largura mínima caiu com a coluna do ícone e o
+                identificador que saíram. Manter 880 forçaria rolagem horizontal
+                por causa de espaço que já não é ocupado. */}
+            <table className="w-full min-w-[780px] border-collapse">
               <thead>
                 <tr className="border-b border-border bg-ice">
-                  {["Processo / Objeto", "Secretaria", "Modalidade", "Valor Est.", "ETP", "TR", "Responsável", "Status", ""].map((h, i) => (
-                    <Th key={h === "" ? `vazio-${i}` : h}>{h}</Th>
+                  {["Processo / Objeto", "Secretaria", "Modalidade", "Valor Est.", "ETP", "TR", "Responsável", "Status"].map((h) => (
+                    <Th key={h}>{h}</Th>
                   ))}
                 </tr>
               </thead>
@@ -103,8 +110,22 @@ export default function Processos() {
                     className={`cursor-pointer transition-colors hover:bg-ice ${i < itens.length - 1 ? "border-b border-ice" : ""}`}
                   >
                     <td className="px-4 py-3.5">
-                      <div className="max-w-65 text-base font-semibold text-text-1">{p.objeto}</div>
-                      <div className="mt-0.75 font-mono text-xs text-text-muted">{p.id}</div>
+                      {/*
+                        A linha inteira abre o processo, e o objeto é um botão de
+                        verdade: sem ele, quem navega por teclado não teria como
+                        chegar aqui — `<tr>` não recebe foco. Sem `onClick`
+                        próprio, porque o clique (inclusive o do Enter) sobe para
+                        a linha, que trata; um handler aqui navegaria duas vezes.
+                      */}
+                      <button
+                        type="button"
+                        className="max-w-65 cursor-pointer border-0 bg-transparent p-0 text-left text-base font-semibold break-words text-text-1"
+                      >
+                        {p.objeto}
+                      </button>
+                      {/* O número do processo administrativo, que é como o
+                          servidor se refere a ele fora da plataforma. */}
+                      <div className="mt-0.75 font-mono text-xs text-text-muted">{p.numero}</div>
                     </td>
                     <td className="max-w-40 px-4 py-3.5 text-sm text-text-3">{p.secretaria}</td>
                     <td className="px-4 py-3.5">
@@ -122,19 +143,6 @@ export default function Processos() {
                     <td className="px-4 py-3.5 text-sm text-text-3">{p.responsavel}</td>
                     <td className="px-4 py-3.5">
                       <StatusBadge status={p.status} size="sm" />
-                    </td>
-                    <td className="px-4 py-3.5">
-                      <button
-                        type="button"
-                        aria-label={`Abrir processo ${p.id}`}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          router.push(`/processos/detalhe?id=${encodeURIComponent(p.id)}`)
-                        }}
-                        className="flex size-7 cursor-pointer items-center justify-center rounded-sm border border-border bg-ice text-text-3"
-                      >
-                        <IconChevronRight size={13} strokeWidth={2.5} />
-                      </button>
                     </td>
                   </tr>
                 ))}

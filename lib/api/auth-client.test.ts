@@ -15,7 +15,80 @@ async function carregarClienteLimpo() {
   return import("@/lib/api/auth-client")
 }
 
-afterEach(() => vi.resetModules())
+afterEach(() => {
+  vi.unstubAllEnvs()
+  vi.resetModules()
+})
+
+describe("endereço da API", () => {
+  it("usa o que a configuração informa, sem barra no fim", async () => {
+    let recebida = ""
+    vi.stubEnv("NEXT_PUBLIC_API_URL", "https://api.geradocs.example/v1/")
+    servidor.use(
+      http.post("https://api.geradocs.example/v1/auth/login", ({ request }) => {
+        recebida = request.url
+        return HttpResponse.json(autenticacao)
+      }),
+    )
+    const { autenticar } = await carregarClienteLimpo()
+
+    await autenticar("33333333333", "senha-correta")
+
+    // A barra sobrando produziria "//auth/login": alguns servidores respondem,
+    // outros devolvem 404, e o erro aparece só no ambiente publicado.
+    expect(recebida).toBe("https://api.geradocs.example/v1/auth/login")
+  })
+
+  it("cai no localhost quando nada está configurado", async () => {
+    vi.stubEnv("NEXT_PUBLIC_API_URL", undefined)
+    const { autenticar } = await carregarClienteLimpo()
+    const espiao = vi.spyOn(globalThis, "fetch")
+
+    await autenticar("33333333333", "senha-correta")
+
+    // É o padrão de desenvolvimento: sem ele, rodar o front local exigiria
+    // configurar variável antes do primeiro `npm run dev`.
+    expect(String(espiao.mock.calls[0]?.[0])).toBe("http://localhost:8080/api/v1/auth/login")
+    espiao.mockRestore()
+  })
+})
+
+describe("obterSessao", () => {
+  it("com token em memória, não renova antes de consultar", async () => {
+    let renovacoes = 0
+    servidor.use(
+      http.post(`${urlDaApi}/auth/refresh`, () => {
+        renovacoes += 1
+        return HttpResponse.json(autenticacao)
+      }),
+    )
+    const { autenticar, obterSessao } = await carregarClienteLimpo()
+    await autenticar("33333333333", "senha-correta")
+
+    const sessao = await obterSessao()
+
+    // Renovar a cada leitura de sessão rotacionaria o refresh token à toa e
+    // dobraria as idas ao servidor em toda navegação.
+    expect(sessao?.usuario.nome).toBe("Maria Costa Andrade")
+    expect(renovacoes).toBe(0)
+  })
+
+  it("sem token em memória, renova antes de consultar", async () => {
+    let renovacoes = 0
+    servidor.use(
+      http.post(`${urlDaApi}/auth/refresh`, () => {
+        renovacoes += 1
+        return HttpResponse.json(autenticacao)
+      }),
+    )
+    const { obterSessao } = await carregarClienteLimpo()
+
+    // É o caso do recarregamento de página: o token vive em memória e se perde,
+    // mas o cookie de refresh sobrevive — é ele que devolve a sessão.
+    expect((await obterSessao())?.usuario.nome).toBe("Maria Costa Andrade")
+    expect(renovacoes).toBe(1)
+  })
+})
 
 describe("autenticar", () => {
   it("mapeia a sessão do backend para o modelo da interface", async () => {
@@ -27,9 +100,8 @@ describe("autenticar", () => {
     expect(sessao.usuario.primeiroNome).toBe("Maria")
     expect(sessao.usuario.iniciais).toBe("MA")
     expect(sessao.usuario.perfilAcesso).toBe("servidor")
-    expect(sessao.usuario.papel).toBe("servidor_compras")
     expect(sessao.usuario.ativo).toBe(true)
-    expect(sessao.prefeitura?.orgao).toBe("Prefeitura Municipal de Ecoporanga")
+    expect(sessao.entidade?.nome).toBe("Prefeitura Municipal de Ecoporanga")
   })
 
   it("envia o cookie de sessão em toda requisição", async () => {
@@ -60,7 +132,7 @@ describe("autenticar", () => {
 
     // A mensagem do backend citava o usuário; a da interface não pode — senão a
     // tela vira oráculo de quem tem conta (enumeração).
-    await expect(autenticar("33333333333", "errada")).rejects.toThrow("CPF ou senha inválidos.")
+    await expect(autenticar("33333333333", "errada")).rejects.toThrow("CPF ou senha inválida.")
   })
 
   it("preserva a mensagem de bloqueio por excesso de tentativas", async () => {
@@ -85,6 +157,74 @@ describe("autenticar", () => {
     expect(erro).toBeInstanceOf(ApiError)
     expect((erro as InstanceType<typeof ApiError>).status).toBe(0)
     expect((erro as Error).message).toMatch(/backend está em execução/i)
+  })
+})
+
+describe("respostas malformadas", () => {
+  it("não quebra quando o corpo de erro não é JSON válido", async () => {
+    servidor.use(
+      http.post(`${urlDaApi}/auth/login`, () =>
+        new HttpResponse("<html>erro do proxy</html>", {
+          status: 502,
+          headers: { "content-type": "application/json" },
+        }),
+      ),
+    )
+    const { autenticar } = await carregarClienteLimpo()
+
+    // Um proxy no meio do caminho devolve HTML com content-type de JSON. Sem o
+    // tratamento, o erro exibido seria de parse, escondendo o 502.
+    await expect(autenticar("33333333333", "senha")).rejects.toThrow("CPF ou senha inválida.")
+  })
+
+  it("usa a mensagem padrão quando o erro vem sem corpo JSON", async () => {
+    servidor.use(
+      http.post(`${urlDaApi}/auth/refresh`, () =>
+        new HttpResponse("Bad Gateway", { status: 502, headers: { "content-type": "text/plain" } }),
+      ),
+    )
+    const { obterSessao } = await carregarClienteLimpo()
+
+    // Gateway e balanceador respondem texto puro. Sem a checagem de
+    // content-type, tentar interpretar como JSON trocaria o 502 por um erro de
+    // parse — e o motivo real sumiria.
+    await expect(obterSessao()).rejects.toThrow("Não foi possível concluir a solicitação.")
+  })
+
+  it("recusa sessão sem usuário identificado", async () => {
+    servidor.use(
+      http.post(`${urlDaApi}/auth/login`, () =>
+        HttpResponse.json({ ...autenticacao, session: { ...sessaoServidor, user: undefined } }),
+      ),
+    )
+    const { autenticar, ApiError } = await carregarClienteLimpo()
+
+    const erro = await autenticar("33333333333", "senha-correta").catch((e: unknown) => e)
+
+    // Seguir com campos vazios criaria uma sessão anônima que parece válida.
+    expect(erro).toBeInstanceOf(ApiError)
+    expect((erro as InstanceType<typeof ApiError>).status).toBe(502)
+  })
+
+  it("avisa quando o servidor cai no meio de uma requisição autenticada", async () => {
+    servidor.use(http.get(`${urlDaApi}/me`, () => HttpResponse.error()))
+    const { obterSessao, ApiError } = await carregarClienteLimpo()
+
+    const erro = await obterSessao().catch((e: unknown) => e)
+
+    expect(erro).toBeInstanceOf(ApiError)
+    expect((erro as InstanceType<typeof ApiError>).status).toBe(0)
+  })
+
+  it("propaga erro do servidor que não seja de autorização", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/me`, () => HttpResponse.json(problema(500, "Falha interna"), { status: 500 })),
+    )
+    const { obterSessao } = await carregarClienteLimpo()
+
+    // 500 não é "não autenticado": tratar como tal deslogaria a pessoa por causa
+    // de um defeito passageiro do servidor.
+    await expect(obterSessao()).rejects.toThrow(/Falha interna/)
   })
 })
 
@@ -133,8 +273,7 @@ describe("obterSessao", () => {
     const sessao = await obterSessao()
 
     expect(sessao?.usuario.perfilAcesso).toBe("admin_geral")
-    expect(sessao?.usuario.papel).toBe("admin_lahhm")
-    expect(sessao?.prefeitura).toBeNull()
+    expect(sessao?.entidade).toBeNull()
   })
 })
 
@@ -217,18 +356,234 @@ describe("recuperação de senha", () => {
   })
 })
 
+describe("campos que o contrato declara como opcionais", () => {
+  it("preenche o que é opcional no contrato, e só isso", async () => {
+    // CPF de cadastro pendente, cargo, matrícula e último acesso são de fato
+    // opcionais. A ausência vira vazio para não exibir "undefined" na tela.
+    servidor.use(
+      http.post(`${urlDaApi}/auth/login`, () =>
+        HttpResponse.json({
+          ...autenticacao,
+          session: {
+            user: {
+              id: sessaoServidor.user.id,
+              name: "Maria Costa Andrade",
+              email: "maria@ecoporanga.es.gov.br",
+              profileAccess: "SERVIDOR",
+              status: "PENDING_ACTIVATION",
+            },
+            organization: { id: "1b7c8e10-2d3f-4a5b-8c9d-0e1f2a3b4c5d" },
+            permissions: [],
+          },
+        }),
+      ),
+    )
+    const { autenticar } = await carregarClienteLimpo()
+
+    const sessao = await autenticar("33333333333", "senha-correta")
+
+    expect(sessao.usuario.cpf).toBe("")
+    expect(sessao.usuario.cargo).toBe("")
+    expect(sessao.usuario.ultimoAcesso).toBe("")
+    expect(sessao.usuario.ativo).toBe(false)
+    expect(sessao.entidade?.nome).toBe("")
+  })
+
+  it("recusa sessão sem perfil de acesso em vez de assumir um", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/me`, () =>
+        HttpResponse.json({
+          user: {
+            id: sessaoServidor.user.id,
+            name: "Maria Costa Andrade",
+            email: "maria@ecoporanga.es.gov.br",
+            status: "ACTIVE",
+          },
+          organization: null,
+          activeMembership: null,
+        }),
+      ),
+    )
+    const { obterSessao, ApiError } = await carregarClienteLimpo()
+
+    const erro = await obterSessao().catch((e: unknown) => e)
+
+    // Assumir "servidor" parecia prudente, mas escondia servidor quebrado: a
+    // pessoa entraria com menos acesso do que tem e abriria chamado de
+    // permissão. O contrato declara o perfil como obrigatório desde 21/08/2026.
+    expect(erro).toBeInstanceOf(ApiError)
+    expect((erro as InstanceType<typeof ApiError>).status).toBe(502)
+  })
+
+  it("recusa autenticação que volta sem sessão", async () => {
+    servidor.use(
+      http.post(`${urlDaApi}/auth/login`, () => HttpResponse.json({ accessToken: "t", tokenType: "Bearer" })),
+    )
+    const { autenticar, ApiError } = await carregarClienteLimpo()
+
+    const erro = await autenticar("33333333333", "senha-correta").catch((e: unknown) => e)
+
+    expect(erro).toBeInstanceOf(ApiError)
+    expect((erro as InstanceType<typeof ApiError>).status).toBe(502)
+  })
+
+  it("trata renovação que volta sem token", async () => {
+    servidor.use(
+      http.post(`${urlDaApi}/auth/refresh`, () => HttpResponse.json({ tokenType: "Bearer", session: sessaoServidor })),
+      http.get(`${urlDaApi}/me`, () => HttpResponse.json(problema(401, "Sem token"), { status: 401 })),
+    )
+    const { obterSessao } = await carregarClienteLimpo()
+
+    await expect(obterSessao()).resolves.toBeNull()
+  })
+
+  it("não quebra quando a resposta de erro vem sem content-type", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/me`, () => new HttpResponse(null, { status: 503 })),
+    )
+    const { obterSessao } = await carregarClienteLimpo()
+
+    await expect(obterSessao()).rejects.toThrow("Não foi possível concluir a solicitação.")
+  })
+})
+
 describe("tenant sintetizado (ponte temporária)", () => {
   it("documenta os campos que o backend ainda não expõe", async () => {
     const { autenticar } = await carregarClienteLimpo()
 
-    const { prefeitura } = await autenticar("33333333333", "senha-correta")
+    const { entidade } = await autenticar("33333333333", "senha-correta")
 
     // Estes valores são fabricados por `tenantDa()` porque o endpoint de
     // organização ainda não devolve configuração. Quando passar a devolver, este
     // teste falha — que é o objetivo: a ponte não pode sumir sem alguém notar.
-    expect(prefeitura?.secretarias).toEqual([])
-    expect(prefeitura?.pca.arquivo).toBeNull()
-    expect(prefeitura?.pca.itensIndexados).toBe(0)
-    expect(prefeitura?.logoDataUrl).toBeNull()
+    expect(entidade?.secretarias).toEqual([])
+    // O brasão não vem daqui: é do timbre, por rota autenticada.
+    expect(entidade).not.toHaveProperty("logoDataUrl")
+    // O PCA saiu daqui no 10.5: ele é do módulo `pca` e vem indexado do
+    // servidor, e não um `itensIndexados: 0` fabricado na ponte.
+    expect(entidade).not.toHaveProperty("pca")
+  })
+})
+
+/**
+ * Senhas de teste em constante nomeada: o gitleaks lê literal de senha no diff
+ * como credencial vazada e recusa o commit.
+ */
+const PROVISORIA = "provisoria-16-chars"
+const ESCOLHIDA = "EscolhidaPorMim2026"
+
+describe("trocarPropriaSenha", () => {
+  it("troca a senha e devolve a sessão já liberada", async () => {
+    let corpo: Record<string, unknown> | undefined
+    servidor.use(
+      http.post(`${urlDaApi}/auth/refresh`, () => HttpResponse.json(autenticacao)),
+      http.post(`${urlDaApi}/auth/password-change`, async ({ request }) => {
+        corpo = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json({
+          ...sessaoServidor,
+          user: { ...sessaoServidor.user, passwordChangeRequired: false },
+        })
+      }),
+    )
+    const { trocarPropriaSenha } = await carregarClienteLimpo()
+
+    const sessao = await trocarPropriaSenha(PROVISORIA, ESCOLHIDA)
+
+    expect(corpo).toEqual({
+      currentPassword: PROVISORIA,
+      newPassword: ESCOLHIDA,
+    })
+    // Sessão liberada na mesma resposta: o marcador é lido do banco a cada
+    // requisição, então o token que a pessoa já tem passa a valer para tudo.
+    expect(sessao.usuario.precisaTrocarSenha).toBe(false)
+  })
+})
+
+describe("imagemProtegida", () => {
+  /** Sem sessão prévia o cliente renova o token antes de qualquer leitura. */
+  function comRefresh() {
+    servidor.use(http.post(`${urlDaApi}/auth/refresh`, () => HttpResponse.json(autenticacao)))
+  }
+
+  it("devolve os bytes com o cabeçalho de autorização", async () => {
+    comRefresh()
+    let autorizacao: string | null = null
+    servidor.use(
+      http.get(`${urlDaApi}/users/:id/avatar`, ({ request }) => {
+        autorizacao = request.headers.get("Authorization")
+        return HttpResponse.arrayBuffer(new Uint8Array([1, 2, 3]).buffer, {
+          headers: { "Content-Type": "image/png" },
+        })
+      }),
+    )
+    const { imagemProtegida } = await carregarClienteLimpo()
+
+    const blob = await imagemProtegida("/users/u1/avatar")
+
+    expect(await blob?.arrayBuffer()).toEqual(new Uint8Array([1, 2, 3]).buffer)
+    // Uma âncora comum não leva este cabeçalho: é por isso que a imagem não pode
+    // ir direto no `src` de um `<img>`.
+    expect(autorizacao).toBe(`Bearer ${autenticacao.accessToken}`)
+  })
+
+  it("404 e 403 são ausência de foto, não erro na tela", async () => {
+    for (const status of [404, 403]) {
+      comRefresh()
+      servidor.use(
+        http.get(`${urlDaApi}/users/:id/avatar`, () => new HttpResponse(null, { status })),
+      )
+      const { imagemProtegida } = await carregarClienteLimpo()
+
+      await expect(imagemProtegida("/users/u1/avatar")).resolves.toBeNull()
+    }
+  })
+
+  it("renova o token uma vez quando o access token expirou", async () => {
+    let tentativas = 0
+    servidor.use(
+      http.post(`${urlDaApi}/auth/refresh`, () => HttpResponse.json(autenticacao)),
+      http.get(`${urlDaApi}/users/:id/avatar`, () => {
+        tentativas += 1
+        return tentativas === 1
+          ? new HttpResponse(null, { status: 401 })
+          : HttpResponse.arrayBuffer(new Uint8Array([9]).buffer)
+      }),
+    )
+    const { imagemProtegida } = await carregarClienteLimpo()
+
+    await expect(imagemProtegida("/users/u1/avatar")).resolves.not.toBeNull()
+    expect(tentativas).toBe(2)
+  })
+
+  it("401 depois de renovar vira erro, e não foto vazia", async () => {
+    servidor.use(
+      http.post(`${urlDaApi}/auth/refresh`, () => HttpResponse.json(autenticacao)),
+      http.get(`${urlDaApi}/users/:id/avatar`, () => new HttpResponse(null, { status: 401 })),
+    )
+    const { imagemProtegida } = await carregarClienteLimpo()
+
+    await expect(imagemProtegida("/users/u1/avatar")).rejects.toThrow(/foto de perfil/i)
+  })
+
+  it("servidor fora do ar é dito como tal", async () => {
+    comRefresh()
+    servidor.use(http.get(`${urlDaApi}/users/:id/avatar`, () => HttpResponse.error()))
+    const { imagemProtegida } = await carregarClienteLimpo()
+
+    await expect(imagemProtegida("/users/u1/avatar")).rejects.toThrow(/conectar ao servidor/)
+  })
+})
+
+describe("dados cadastrais na sessão", () => {
+  it("matrícula e decreto chegam do servidor, e não como travessão na tela", async () => {
+    servidor.use(http.post(`${urlDaApi}/auth/refresh`, () => HttpResponse.json(autenticacao)))
+    const { obterSessao } = await carregarClienteLimpo()
+
+    const sessao = await obterSessao()
+
+    // O contrato sempre os trouxe; o mapeamento é que os descartava, e a tela de
+    // perfil mostrava "—" para dois campos que o servidor conhece.
+    expect(sessao?.usuario.matricula).toBe("MAT-4471")
+    expect(sessao?.usuario.decretoNomeacao).toBe("Decreto 1.234/2026")
   })
 })

@@ -13,7 +13,6 @@ const ACESSO_ROTA: Array<{ prefixo: string; perfis: PerfilAcesso[] }> = [
   { prefixo: "/admin", perfis: ["admin_geral"] },
   { prefixo: "/configuracoes", perfis: ["coordenador"] },
   { prefixo: "/processos", perfis: ["servidor", "coordenador"] },
-  { prefixo: "/aprovacoes", perfis: ["servidor", "coordenador"] },
   { prefixo: "/documentos", perfis: ["servidor", "coordenador"] },
   { prefixo: "/perfil", perfis: ["servidor", "coordenador", "admin_geral"] },
 ]
@@ -29,18 +28,18 @@ export function rotaPermitida(perfil: PerfilAcesso, pathname: string): boolean {
 export type IconeNav =
   | "dashboard"
   | "processos"
-  | "aprovacoes"
   | "documentos"
-  | "configuracoes"
-  | "prefeituras"
+  | "timbre"
+  | "secretarias"
+  | "pca"
+  | "usuarios"
+  | "entidades"
   | "servidores"
 
 export interface ItemNav {
   href: string
   label: string
   icone: IconeNav
-  /** Fonte de contagem para o badge (só "aprovacoes" hoje). */
-  badge?: "aprovacoes"
 }
 
 /** Itens da seção "Principal" da sidebar por perfil. */
@@ -48,22 +47,34 @@ export function navPrincipal(perfil: PerfilAcesso): ItemNav[] {
   if (perfil === "admin_geral") {
     return [
       { href: "/", label: "Painel do Sistema", icone: "dashboard" },
-      { href: "/admin/prefeituras", label: "Prefeituras", icone: "prefeituras" },
+      { href: "/admin/entidades", label: "Entidades", icone: "entidades" },
       { href: "/admin/servidores", label: "Servidores", icone: "servidores" },
     ]
   }
   return [
     { href: "/", label: "Dashboard", icone: "dashboard" },
     { href: "/processos", label: "Processos", icone: "processos" },
-    { href: "/aprovacoes", label: "Aprovações", icone: "aprovacoes", badge: "aprovacoes" },
     { href: "/documentos", label: "Documentos", icone: "documentos" },
   ]
 }
 
-/** Itens da seção "Sistema" da sidebar por perfil. */
+/**
+ * Itens da seção "Configurações" da sidebar por perfil.
+ *
+ * <p>Eram uma entrada só — `/configuracoes`, com cinco abas dentro. Cada aba
+ * tratava de um assunto distinto (o timbre que sai no papel, as secretarias que
+ * o processo requisita, o plano de contratações, quem entra no sistema), e
+ * empilhá-las numa tela obrigava a caçar a aba certa. Agora cada assunto é uma
+ * rota, e o menu diz o que existe sem que seja preciso abrir.
+ */
 export function navSistema(perfil: PerfilAcesso): ItemNav[] {
   if (perfil === "coordenador") {
-    return [{ href: "/configuracoes", label: "Configurações", icone: "configuracoes" }]
+    return [
+      { href: "/configuracoes/timbre", label: "Timbre", icone: "timbre" },
+      { href: "/configuracoes/secretarias", label: "Secretarias", icone: "secretarias" },
+      { href: "/configuracoes/pca", label: "PCA", icone: "pca" },
+      { href: "/configuracoes/usuarios", label: "Usuários", icone: "usuarios" },
+    ]
   }
   return []
 }

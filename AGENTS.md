@@ -17,3 +17,13 @@ Aplicação Next.js 16 (App Router) + React 19 + TypeScript strict + TanStack Qu
 - **Conteúdo pt-BR**: Title Case em títulos, imperativos em ações, referências legais literais ("Art. 75, II, Lei 14.133/21"), IDs e valores monetários em monospace (`PROC-2024-089`, `R$ 485.000,00`), vocabulário de status fixo (Rascunho, Em Revisão, Aguardando, Aprovado, Rejeitado, Concluído).
 - **Valores nunca aparecem crus**: todo valor monetário e quantidade leva separador de milhar e duas casas (`500.000,00`, nunca `500000`). Para exibir, use `formatBRL`/`formatNumeroBR` de `lib/format.ts`; para digitar, use `MoneyInput`/`QuantityInput` (mascaram sozinhos — o `onChange` devolve a string já formatada). Nunca reimplemente máscara ou parse de valor na tela.
 - O protótipo Vite original que serviu de referência visual foi removido do repositório após a migração; a especificação visual vigente é o design system em `design_system/`.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

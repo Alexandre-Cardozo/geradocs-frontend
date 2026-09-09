@@ -28,13 +28,33 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Acesse <http://localhost:3000/GeraDocsFrontend>. O `basePath` existe porque o app
-é publicado no GitHub Pages sob esse caminho — a raiz sem ele devolve 404.
+Acesse <http://localhost:3000>. O `basePath` `/GeraDocsFrontend` só existe na
+publicação — o GitHub Pages serve o projeto sob esse caminho, e quem o declara é
+o `deploy.yml` (`NEXT_PUBLIC_BASE_PATH`). Localmente a aplicação abre na raiz.
 
 Você precisa de uma conta ativa cadastrada no back-end. Não há usuário de
 demonstração desde a integração real.
 
-## 4. Verificar antes de commitar
+## 4. Ao mudar dependência
+
+Use **sempre**:
+
+```bash
+npm run deps:sync
+```
+
+Ele resolve o lock **dentro de um contêiner linux** e depois instala aqui. Não é
+exagero: o `npm install` no macOS não busca o manifesto das dependências
+opcionais do `sharp` para linux, então `@emnapi/runtime` e companhia ficam de
+fora do lock. O resultado passa no `npm ci` local e **reprova no runner**, com a
+mensagem enganosa de que `package.json` e lock estão dessincronizados —
+apagar o lock e reinstalar no macOS **não** resolve, porque o problema é a
+plataforma que resolve a árvore, não o lock estar velho.
+
+Precisa do Docker rodando (`colima start`, se for o caso). Derrubou o CI duas
+vezes em 21/08/2026 antes de a causa ficar clara.
+
+## 5. Verificar antes de commitar
 
 ```bash
 npm run check     # lint + aderência ao DS + type-check + testes
@@ -42,7 +62,7 @@ npm run coverage  # testes com a catraca de cobertura
 npm run build     # export estático, como no deploy
 ```
 
-## 5. Onde continuar
+## 6. Onde continuar
 
 [`../../geradocs-backend/docs/ordem-de-implementacao.md`](../../geradocs-backend/docs/ordem-de-implementacao.md)
 — o próximo passo está marcado na tabela de estado da execução.

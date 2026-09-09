@@ -1,13 +1,17 @@
 "use client"
 
 import {
+  createContext,
+  useContext,
   useEffect,
+  useId,
   useRef,
   useState,
   type ChangeEvent,
   type FocusEvent,
   type KeyboardEvent,
   type ReactNode,
+  type Ref,
   type SelectHTMLAttributes,
 } from "react"
 
@@ -17,6 +21,32 @@ import { mascaraValorBR, normalizaValorBR } from "@/lib/format"
 /** Base compartilhada dos controles de formulário (input 14px, raio 8, borda). */
 const controleBase = "w-full rounded-md border border-border bg-surface px-3.25 py-2.5 font-body text-md text-text-1"
 
+/**
+ * O `id` do rótulo do `FormField` que envolve o controle.
+ *
+ * O rótulo não envolve o campo — ele vem antes, como irmão —, então sem alguma
+ * ligação explícita não há associação nenhuma: quem usa leitor de tela ouve
+ * "caixa de edição" e nada mais, em quarenta e sete campos do produto.
+ *
+ * A ligação é por `aria-labelledby`, e não por `htmlFor`, porque um `FormField`
+ * pode envolver mais de um controle (uma linha de dois campos, um input com
+ * sufixo). Vários elementos podem apontar para o mesmo rótulo; dois elementos
+ * com o mesmo `id` seriam DOM inválido, e o segundo ficaria sem nome de novo.
+ */
+const RotuloDoCampo = createContext<string | undefined>(undefined)
+
+/**
+ * O rótulo a que este controle se liga.
+ *
+ * `aria-label` explícito vence: quem o escreveu sabia de algo que o rótulo
+ * visível não dizia — e `aria-labelledby` sobrepõe `aria-label`, então deixar
+ * os dois faria o texto escrito à mão ser ignorado em silêncio.
+ */
+function useRotuloDoCampo(ariaLabel?: string) {
+  const rotulo = useContext(RotuloDoCampo)
+  return ariaLabel ? undefined : rotulo
+}
+
 export function Input({
   value,
   onChange,
@@ -24,25 +54,48 @@ export function Input({
   prefix,
   type = "text",
   autoComplete,
+  inputMode,
   onKeyDown,
   disabled,
   title,
   className = "",
   id,
+  ariaLabel,
+  autoFocus,
 }: {
   value?: string
   onChange?: (e: ChangeEvent<HTMLInputElement>) => void
   placeholder?: string
   prefix?: string
-  type?: "text" | "password" | "email"
+  /**
+   * `date` e `datetime-local` entraram com a pesquisa de preços: o Art. 5º, III
+   * da IN SEGES/ME nº 65/2021 exige a **hora** de acesso quando o preço vem de
+   * mídia ou de sítio eletrônico, e a validade da proposta é uma data. Campo de
+   * texto com máscara própria seria reimplementar calendário — e a máscara
+   * divergiria do que o servidor grava.
+   */
+  type?: "text" | "password" | "email" | "date" | "datetime-local"
   autoComplete?: string
+  /** Teclado do celular: `numeric` para CPF, `email` para e-mail. */
+  inputMode?: "text" | "numeric" | "email"
   onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void
   /** Campo somente leitura e não focável (ex.: CPF no perfil). */
   disabled?: boolean
   title?: string
   className?: string
   id?: string
+  /**
+   * Nome acessível de um campo que não vive dentro de um `FormField`.
+   *
+   * <p>É o caso da edição em linha: o rótulo ali é a própria linha que está
+   * sendo editada, e sem isto o campo chegaria sem nome ao leitor de tela —
+   * `placeholder` não é nome acessível.
+   */
+  ariaLabel?: string
+  /** Foco ao montar. Para campo que aparece **em resposta a um clique**. */
+  autoFocus?: boolean
 }) {
+  const rotulo = useRotuloDoCampo(ariaLabel)
   const disabledCls = disabled ? "cursor-not-allowed bg-ice text-text-3" : ""
   if (prefix) {
     return (
@@ -52,12 +105,16 @@ export function Input({
         </span>
         <input
           id={id}
+          aria-labelledby={rotulo}
+          aria-label={ariaLabel}
+          autoFocus={autoFocus}
           value={value}
           onChange={onChange}
           onKeyDown={onKeyDown}
           placeholder={placeholder}
           type={type}
           autoComplete={autoComplete}
+          inputMode={inputMode}
           disabled={disabled}
           title={title}
           className={`${controleBase} pl-8 ${disabledCls} ${className}`}
@@ -68,12 +125,16 @@ export function Input({
   return (
     <input
       id={id}
+      aria-labelledby={rotulo}
+      aria-label={ariaLabel}
+      autoFocus={autoFocus}
       value={value}
       onChange={onChange}
       onKeyDown={onKeyDown}
       placeholder={placeholder}
       type={type}
       autoComplete={autoComplete}
+      inputMode={inputMode}
       disabled={disabled}
       title={title}
       className={`${controleBase} ${disabledCls} ${className}`}
@@ -103,11 +164,13 @@ export function MoneyInput({
   className?: string
   id?: string
 }) {
+  const rotulo = useRotuloDoCampo()
   return (
     <div className="relative">
       <span className="absolute top-1/2 left-3 -translate-y-1/2 text-base font-semibold text-text-3">R$</span>
       <input
         id={id}
+        aria-labelledby={rotulo}
         value={value}
         onChange={(e) => onChange?.(mascaraValorBR(e.target.value))}
         onBlur={(e) => onChange?.(normalizaValorBR(e.target.value))}
@@ -141,10 +204,12 @@ export function QuantityInput({
   className?: string
   id?: string
 }) {
+  const rotulo = useRotuloDoCampo()
   return (
     <div className="relative">
       <input
         id={id}
+        aria-labelledby={rotulo}
         value={value}
         onChange={(e) => onChange?.(mascaraValorBR(e.target.value))}
         onBlur={(e) => onChange?.(normalizaValorBR(e.target.value))}
@@ -166,6 +231,7 @@ export function Textarea({
   rows = 4,
   className = "",
   id,
+  ref,
 }: {
   value?: string
   onChange?: (e: ChangeEvent<HTMLTextAreaElement>) => void
@@ -173,10 +239,15 @@ export function Textarea({
   rows?: number
   className?: string
   id?: string
+  /** Para quem precisa levar o cursor até aqui — o editor de seção faz isso. */
+  ref?: Ref<HTMLTextAreaElement>
 }) {
+  const rotulo = useRotuloDoCampo()
   return (
     <textarea
+      ref={ref}
       id={id}
+      aria-labelledby={rotulo}
       value={value}
       onChange={onChange}
       placeholder={placeholder}
@@ -191,8 +262,9 @@ export function Select({
   children,
   ...rest
 }: SelectHTMLAttributes<HTMLSelectElement> & { children: ReactNode }) {
+  const rotulo = useRotuloDoCampo(rest["aria-label"])
   return (
-    <select className={`${controleBase} ${className}`} {...rest}>
+    <select aria-labelledby={rotulo} className={`${controleBase} ${className}`} {...rest}>
       {children}
     </select>
   )
@@ -221,6 +293,7 @@ export function Dropdown({
   ariaLabel?: string
   className?: string
 }) {
+  const rotulo = useRotuloDoCampo(ariaLabel)
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const selecionada = options.find((o) => o.value === value)
@@ -241,6 +314,7 @@ export function Dropdown({
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={ariaLabel}
+        aria-labelledby={rotulo}
         onClick={() => setOpen((o) => !o)}
         onKeyDown={(e) => {
           if (e.key === "Escape") setOpen(false)
@@ -292,6 +366,7 @@ export function FormField({
   required,
   hint,
   tip,
+  htmlFor,
   children,
 }: {
   label: string
@@ -299,11 +374,24 @@ export function FormField({
   hint?: string
   /** Dica curta em tooltip (ícone de info ao lado do rótulo). */
   tip?: string
+  /**
+   * `id` do controle que este rótulo nomeia.
+   *
+   * O rótulo não envolve o controle — ele vem antes, como irmão —, então sem
+   * isto não há associação nenhuma: quem usa leitor de tela ouve um campo sem
+   * nome, e quem clica no texto não recebe o foco.
+   */
+  htmlFor?: string
   children: ReactNode
 }) {
+  const rotuloId = useId()
   return (
     <div>
-      <label className="mb-1.5 flex items-center gap-1.5 text-base font-semibold text-text-2">
+      <label
+        id={rotuloId}
+        htmlFor={htmlFor}
+        className="mb-1.5 flex items-center gap-1.5 text-base font-semibold text-text-2"
+      >
         <span>
           {label}
           {required && <span className="ml-1 text-danger">*</span>}
@@ -315,7 +403,7 @@ export function FormField({
         )}
       </label>
       {hint && <p className="mb-2 text-sm text-text-muted">{hint}</p>}
-      {children}
+      <RotuloDoCampo.Provider value={rotuloId}>{children}</RotuloDoCampo.Provider>
     </div>
   )
 }
@@ -324,11 +412,20 @@ export function FormField({
 export function FileUpload({
   file,
   onChange,
+  onArquivo,
   placeholder = "Clique para selecionar ou arraste o arquivo",
   accept = ".pdf,.docx",
 }: {
   file: string | null
   onChange: (v: string | null) => void
+  /**
+   * O arquivo escolhido, e não só o nome dele.
+   *
+   * <p>Quem guarda o arquivo precisa dos bytes: sem isto, a tela pedia o PDF
+   * assinado, o navegador o entregava e o nome era a única coisa que subia —
+   * o processo nascia dizendo ter um DFD que ninguém baixava (ADR-035).
+   */
+  onArquivo?: (arquivo: File | null) => void
   placeholder?: string
   accept?: string
 }) {
@@ -342,7 +439,10 @@ export function FileUpload({
         <button
           type="button"
           aria-label="Remover arquivo"
-          onClick={() => onChange(null)}
+          onClick={() => {
+            onChange(null)
+            onArquivo?.(null)
+          }}
           className="flex cursor-pointer border-0 bg-transparent p-0.5 text-text-muted"
         >
           <IconX size={14} strokeWidth={2.5} />
@@ -358,7 +458,10 @@ export function FileUpload({
         className="hidden"
         onChange={(e) => {
           const f = e.target.files?.[0]
-          if (f) onChange(f.name)
+          if (f) {
+            onChange(f.name)
+            onArquivo?.(f)
+          }
         }}
       />
       <div className="rounded-md border-2 border-dashed border-text-faint bg-surface-upload px-5 py-4.5 text-center transition-colors">

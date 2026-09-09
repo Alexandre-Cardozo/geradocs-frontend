@@ -4,6 +4,22 @@
  */
 
 export interface paths {
+    "/api/v1/ai/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["status"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/activate": {
         parameters: {
             query?: never;
@@ -52,6 +68,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/password-change": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["changePassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/password-recovery": {
         parameters: {
             query?: never;
@@ -77,7 +109,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["resetPassword"];
+        post: operations["resetPassword_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -100,6 +132,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/generated-documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["archive"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/generated-documents/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["summary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me": {
         parameters: {
             query?: never;
@@ -111,6 +175,22 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/avatar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["upload"];
+        post?: never;
+        delete: operations["remove"];
         options?: never;
         head?: never;
         patch?: never;
@@ -212,6 +292,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/organizations/{organizationId}/letterhead": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["read"];
+        put: operations["updateTexts"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/organizations/{organizationId}/letterhead/logo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["logo"];
+        put: operations["uploadLogo"];
+        post?: never;
+        delete: operations["removeLogo"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pca-plan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["currentPlan"];
+        put?: never;
+        post: operations["importPlan"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pca-plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["plans"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pca-plans/{year}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["planFile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/procurement-processes": {
         parameters: {
             query?: never;
@@ -222,6 +382,22 @@ export interface paths {
         get: operations["list_1"];
         put?: never;
         post: operations["create_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/procurement-processes/statistics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["statistics"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -242,6 +418,422 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["update_1"];
+        trace?: never;
+    };
+    "/api/v1/procurement-processes/{id}/budget-appropriations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["appropriations"];
+        put?: never;
+        post: operations["declareAppropriation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/procurement-processes/{id}/budget-appropriations/{appropriationId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updateAppropriation"];
+        post?: never;
+        delete: operations["removeAppropriation"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/procurement-processes/{id}/closure": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["close"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/procurement-processes/{id}/demand-consolidation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["consolidation"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/procurement-processes/{id}/dfds": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["dfds"];
+        put?: never;
+        post: operations["attachDfd"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/procurement-processes/{id}/dfds/{dfdId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["removeDfd"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/procurement-processes/{id}/dfds/{dfdId}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["dfdFile"];
+        put: operations["attachDfdFile"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/procurement-processes/{id}/dfds/{dfdId}/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updateDfdItems"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/procurement-processes/{id}/dispensation-check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["dispensationCheck"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/procurement-processes/{id}/price-quotes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["quotes"];
+        put?: never;
+        post: operations["recordQuote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/procurement-processes/{id}/price-quotes/{quoteId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updateQuote"];
+        post?: never;
+        delete: operations["removeQuote"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/procurement-processes/{id}/price-quotes/{quoteId}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["quoteFile"];
+        put: operations["attachQuoteFile"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/procurement-processes/{id}/reopening": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["reopen"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/procurement-processes/{id}/trail": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["trail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["open"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/finalize": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["finalizeDocument"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/generations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["history"];
+        put?: never;
+        post: operations["generate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/generations/files/{fileId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["download"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/sections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["addSection"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/sections-order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["reorderSections"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/sections/{sectionCode}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["saveSection"];
+        post?: never;
+        delete: operations["removeSection"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/sections/{sectionCode}/generate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["generateSection"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["versions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/versions/comparison": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["comparison"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/procurement-processes/{processId}/pca": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["verify"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/procurement-processes/{processId}/pca/declaration": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["declare"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/users": {
@@ -276,6 +868,38 @@ export interface paths {
         patch: operations["update"];
         trace?: never;
     };
+    "/api/v1/users/{userId}/avatar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["avatar"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{userId}/cpf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["cpf"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/users/{userId}/deactivate": {
         parameters: {
             query?: never;
@@ -292,7 +916,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/users/{userId}/transfer-organization": {
+    "/api/v1/users/{userId}/password-reset": {
         parameters: {
             query?: never;
             header?: never;
@@ -301,7 +925,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["transferOrganization"];
+        post: operations["resetPassword"];
         delete?: never;
         options?: never;
         head?: never;
@@ -318,20 +942,123 @@ export interface components {
             email: string;
             password: string;
         };
-        AuthenticationResponse: {
-            accessToken?: string;
-            /** Format: date-time */
-            expiresAt?: string;
+        AddSectionRequest: {
+            anchorSectionCode: string;
+            nested: boolean;
+            title: string;
+        };
+        AiStatusResponse: {
+            available: boolean;
+        };
+        ArchiveSummaryResponse: {
             /** Format: int64 */
-            expiresIn?: number;
-            session?: components["schemas"]["SessionResponse"];
-            tokenType?: string;
+            finishedEtps: number;
+            /** Format: int64 */
+            lastSevenDays: number;
+            /** Format: int64 */
+            storageBytes: number;
+            /** Format: int64 */
+            thisMonth: number;
+            /** Format: int64 */
+            total: number;
+        };
+        ArchivedDocumentResponse: {
+            /** @enum {string} */
+            documentType: "COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO";
+            /** Format: int32 */
+            documentVersion: number;
+            files: components["schemas"]["GeneratedFileResponse"][];
+            /** Format: date-time */
+            generatedAt: string;
+            /** Format: uuid */
+            processId: string;
+            processNumber: string;
+            processObject: string;
+        };
+        ArquivoDoPreco: {
+            /** Format: int32 */
+            byteSize: number;
+            fileName: string;
+            mediaType: string;
+            sha256: string;
+        };
+        AttachDfdRequest: {
+            /** Format: uuid */
+            departmentId: string;
+            fileName: string;
+            items: components["schemas"]["DemandItemRequest"][];
+        };
+        AuthenticationResponse: {
+            accessToken: string;
+            /** Format: date-time */
+            expiresAt: string;
+            /** Format: int64 */
+            expiresIn: number;
+            session: components["schemas"]["SessionResponse"];
+            tokenType: string;
+        };
+        AvatarResponse: {
+            /** Format: int32 */
+            byteSize: number;
+            mediaType: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        BlockView: {
+            dispensed: boolean;
+            sectionCode: string;
+            text: string;
+            title: string;
+        };
+        BudgetAppropriationRequest: {
+            amount: number;
+            budgetUnit: string;
+            expenseNature: string;
+            /** Format: int32 */
+            fiscalYear: number;
+            ledgerCode?: string;
+            resourceSource: string;
+            workProgram: string;
+        };
+        BudgetAppropriationResponse: {
+            amount: number;
+            budgetUnit: string;
+            expenseNature: string;
+            /** Format: int32 */
+            fiscalYear: number;
+            /** Format: uuid */
+            id: string;
+            ledgerCode?: string;
+            /** Format: date-time */
+            registeredAt: string;
+            resourceSource: string;
+            workProgram: string;
+        };
+        ChangePasswordRequest: {
+            currentPassword: string;
+            newPassword: string;
+        };
+        CloseProcurementProcessRequest: {
+            justification?: string;
+        };
+        ConsolidatedItemView: {
+            byDepartment: components["schemas"]["DepartmentDemandView"][];
+            description: string;
+            summable: boolean;
+            total: number;
+            unit: string;
+        };
+        CpfResponse: {
+            cpf: string;
         };
         CreateDepartmentRequest: {
             acronym?: string;
             name: string;
         };
         CreateOrganizationRequest: {
+            /** @enum {string} */
+            entityType?: "PREFEITURA" | "CAMARA" | "AUTARQUIA" | "FUNDACAO" | "CONSORCIO" | "OUTRO";
+            executiveAgency?: boolean;
             name: string;
             unit?: string;
         };
@@ -339,14 +1066,18 @@ export interface components {
             demandObject?: string;
             /** Format: uuid */
             departmentId: string;
+            /** @enum {string} */
+            dispensationGround?: "VALUE_ENGINEERING" | "VALUE_GENERAL" | "OTHER";
+            documents?: ("COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO")[];
             estimatedValue: number;
             legalBasis?: string;
             /** @enum {string} */
             modality: "ELECTRONIC_AUCTION" | "COMPETITION" | "CONTEST" | "AUCTION" | "COMPETITIVE_DIALOGUE" | "DIRECT_AWARD_ARTICLE_75" | "SOLE_SOURCE" | "ACCREDITATION";
             objectDescription: string;
-            urgency?: boolean;
+            urgency: boolean;
         };
         CreateUserRequest: {
+            appointmentDecree?: string;
             cpf: string;
             /** Format: uuid */
             departmentId?: string;
@@ -356,58 +1087,229 @@ export interface components {
             name: string;
             /** Format: uuid */
             organizationId?: string;
-            password: string;
             /** @enum {string} */
             profileAccess: "ADMIN_GERAL" | "COORDENADOR" | "SERVIDOR";
-            workflowRoles: ("SERVIDOR_COMPRAS" | "SECRETARIA_DEMANDANTE" | "COMISSAO" | "JURIDICO" | "GESTOR_APROVADOR")[];
+            registrationNumber?: string;
         };
         DeactivationRequest: {
             reason: string;
         };
+        DeclarePcaForesightRequest: {
+            demand: string;
+            itemCode: string;
+            note?: string;
+        };
+        DemandConsolidationResponse: {
+            incongruences: components["schemas"]["IncongruenceView"][];
+            items: components["schemas"]["ConsolidatedItemView"][];
+        };
+        DemandItemRequest: {
+            /** Format: int32 */
+            deliveryDays?: number;
+            description: string;
+            quantity: number;
+            specification?: string;
+            unit: string;
+            unitPrice?: number;
+        };
+        DemandItemView: {
+            /** Format: int32 */
+            deliveryDays?: number;
+            description: string;
+            quantity: number;
+            specification?: string;
+            unit: string;
+            unitPrice?: number;
+        };
+        DepartmentDemandView: {
+            departmentName: string;
+            quantity: number;
+            unit: string;
+        };
         DepartmentResponse: {
             acronym?: string;
-            active?: boolean;
+            active: boolean;
             /** Format: date-time */
-            createdAt?: string;
+            createdAt: string;
             /** Format: uuid */
-            id?: string;
-            name?: string;
+            id: string;
+            name: string;
             /** Format: uuid */
-            organizationId?: string;
+            organizationId: string;
             /** Format: date-time */
-            updatedAt?: string;
+            updatedAt: string;
             /** Format: int64 */
-            version?: number;
+            version: number;
+        };
+        DfdFileView: {
+            /** Format: int32 */
+            byteSize: number;
+            mediaType: string;
+            sha256: string;
+        };
+        DispensationCheckResponse: {
+            applicable: boolean;
+            dispensation: boolean;
+            doubledLimit: boolean;
+            estimatedValue: number;
+            exceeds: boolean;
+            /** Format: int32 */
+            fiscalYear: number;
+            /** @enum {string} */
+            ground?: "VALUE_ENGINEERING" | "VALUE_GENERAL" | "OTHER";
+            legalBasis?: string;
+            limitAmount?: number;
+            limitSource?: string;
+            pendingGround: boolean;
+            pendingLimit: boolean;
+            yearTotal: number;
+            yearTotalExceeds: boolean;
+        };
+        DivergentValueView: {
+            departmentName: string;
+            value: string;
+        };
+        DocumentResponse: {
+            body: components["schemas"]["BlockView"][];
+            canGenerate: boolean;
+            changedSinceVersion: boolean;
+            /** Format: int32 */
+            currentVersion: number;
+            /** @enum {string} */
+            documentType: "COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO";
+            finalized: boolean;
+            /** Format: uuid */
+            id: string;
+            pendingRequiredSections: string[];
+            /** Format: uuid */
+            processId: string;
+            /** Format: int32 */
+            progress: number;
+            sections: components["schemas"]["SectionResponseView"][];
+            silentGaps: string[];
+        };
+        DocumentVersionResponse: {
+            body: components["schemas"]["BlockView"][];
+            contentHash: string;
+            /** Format: date-time */
+            generatedAt: string;
+            note: string;
+            /** Format: int32 */
+            version: number;
+        };
+        ErrataEntryView: {
+            leiaSe?: string;
+            ondeSeLe?: string;
+            sectionCode: string;
+            title: string;
+        };
+        FinalizeDocumentRequest: {
+            rectificationDescribed?: boolean;
+            rectificationDetail?: string;
+            /** @enum {string} */
+            rectificationKind?: "MATERIAL_ERROR" | "SUBSTANTIAL_CHANGE";
+        };
+        FindingResponse: {
+            code?: string;
+            declaredNote?: string;
+            demand: string;
+            description?: string;
+            estimatedValue?: number;
+            foreseen: boolean;
+            /** @enum {string} */
+            kind?: "EXACT" | "TERMS" | "WIDENED" | "DECLARED";
+            quantity?: number;
+            unit?: string;
+        };
+        GenerateDocumentRequest: {
+            formats: ("DOCX" | "PDF")[];
+        };
+        GenerateSectionRequest: {
+            draft?: string;
+        };
+        GeneratedFileResponse: {
+            /** Format: int64 */
+            byteSize: number;
+            /** Format: int32 */
+            documentVersion: number;
+            fileName: string;
+            /** @enum {string} */
+            format: "DOCX" | "PDF";
+            /** Format: date-time */
+            generatedAt: string;
+            /** Format: uuid */
+            id: string;
+            sha256: string;
+            /** Format: int32 */
+            templateVersion: number;
+        };
+        GeneratedSectionResponse: {
+            text: string;
+        };
+        GenerationJobResponse: {
+            /** Format: int32 */
+            attempts: number;
+            /** Format: int32 */
+            documentVersion: number;
+            error?: string;
+            files: components["schemas"]["GeneratedFileResponse"][];
+            /** Format: date-time */
+            finishedAt?: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            requestedAt: string;
+            succeeded: boolean;
+        };
+        IncongruenceView: {
+            itemDescription: string;
+            /** @enum {string} */
+            kind: "UNIT" | "SPECIFICATION" | "UNIT_PRICE" | "DELIVERY_DEADLINE";
+            values: components["schemas"]["DivergentValueView"][];
+        };
+        LetterheadResponse: {
+            footerText: string;
+            hasLogo: boolean;
+            headerText: string;
+            /** Format: int32 */
+            version: number;
         };
         LoginRequest: {
-            cpf: string;
+            /**
+             * @deprecated
+             * @description Obsoleto desde 21/08/2026 (ADR-015): use identifier.
+             */
+            cpf?: string;
+            identifier?: string;
             /** Format: uuid */
             organizationId?: string;
             password: string;
         };
         MembershipResponse: {
-            active?: boolean;
+            active: boolean;
             /** Format: uuid */
             departmentId?: string;
             /** Format: uuid */
-            id?: string;
+            id: string;
             /** Format: uuid */
-            organizationId?: string;
-            workflowRoles?: ("SERVIDOR_COMPRAS" | "SECRETARIA_DEMANDANTE" | "COMISSAO" | "JURIDICO" | "GESTOR_APROVADOR")[];
+            organizationId: string;
         };
         OrganizationResponse: {
             /** Format: date-time */
-            createdAt?: string;
-            /** Format: uuid */
-            id?: string;
-            name?: string;
+            createdAt: string;
             /** @enum {string} */
-            status?: "ACTIVE" | "INACTIVE";
+            entityType: "PREFEITURA" | "CAMARA" | "AUTARQUIA" | "FUNDACAO" | "CONSORCIO" | "OUTRO";
+            executiveAgency: boolean;
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** @enum {string} */
+            status: "ACTIVE" | "INACTIVE";
             unit?: string;
             /** Format: date-time */
-            updatedAt?: string;
+            updatedAt: string;
             /** Format: int64 */
-            version?: number;
+            version: number;
         };
         PageProcurementProcessResponse: {
             content?: components["schemas"]["ProcurementProcessResponse"][];
@@ -446,86 +1348,218 @@ export interface components {
             password: string;
             token: string;
         };
+        PcaPlanResponse: {
+            fileStored: boolean;
+            /** Format: date-time */
+            importedAt: string;
+            importedBy: string;
+            /** Format: int32 */
+            indexedItems: number;
+            sourceFileName: string;
+            /** Format: int32 */
+            year: number;
+        };
+        PcaVerificationResponse: {
+            citable: boolean;
+            citation?: string;
+            /** Format: int32 */
+            exerciseYear: number;
+            findings: components["schemas"]["FindingResponse"][];
+            foreseen: boolean;
+            plan?: components["schemas"]["PcaPlanResponse"];
+        };
+        PriceQuoteRequest: {
+            /** Format: date-time */
+            collectedAt: string;
+            item: string;
+            note?: string;
+            /** Format: date */
+            proposalValidUntil?: string;
+            source: string;
+            supplier?: string;
+            supplierDocument?: string;
+            unitPrice: number;
+        };
+        PriceQuoteResponse: {
+            /** Format: date-time */
+            collectedAt: string;
+            file?: components["schemas"]["ArquivoDoPreco"];
+            /** Format: uuid */
+            id: string;
+            item: string;
+            note?: string;
+            /** Format: date */
+            proposalValidUntil?: string;
+            /** Format: date-time */
+            registeredAt: string;
+            source: string;
+            supplier?: string;
+            supplierDocument?: string;
+            unitPrice: number;
+        };
+        ProcessDfdResponse: {
+            /** Format: uuid */
+            departmentId: string;
+            departmentName: string;
+            file?: components["schemas"]["DfdFileView"];
+            fileName: string;
+            /** Format: uuid */
+            id: string;
+            items: components["schemas"]["DemandItemView"][];
+            /** Format: date-time */
+            submittedAt: string;
+        };
+        ProcessStatisticsResponse: {
+            /** Format: int64 */
+            active: number;
+            /** Format: int64 */
+            closed: number;
+            /** Format: double */
+            completionRate: number;
+            /** Format: int64 */
+            createdThisMonth: number;
+            /** Format: int64 */
+            pendingDocuments: number;
+            /** Format: int64 */
+            started: number;
+        };
+        ProcessTrailEntryResponse: {
+            actorName?: string;
+            event: string;
+            /** Format: date-time */
+            occurredAt: string;
+            reason?: string;
+        };
         ProcurementProcessResponse: {
             /** Format: date-time */
-            createdAt?: string;
+            closedAt?: string;
+            closureNote?: string;
+            /** Format: date-time */
+            createdAt: string;
             demandObject?: string;
             /** Format: uuid */
             departmentId?: string;
             departmentName?: string;
+            /** @enum {string} */
+            dispensationGround?: "VALUE_ENGINEERING" | "VALUE_GENERAL" | "OTHER";
+            documents: ("COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO")[];
             estimatedValue?: number;
             /** Format: uuid */
-            id?: string;
+            id: string;
             legalBasis?: string;
             /** @enum {string} */
-            modality?: "ELECTRONIC_AUCTION" | "COMPETITION" | "CONTEST" | "AUCTION" | "COMPETITIVE_DIALOGUE" | "DIRECT_AWARD_ARTICLE_75" | "SOLE_SOURCE" | "ACCREDITATION";
-            objectDescription?: string;
+            modality: "ELECTRONIC_AUCTION" | "COMPETITION" | "CONTEST" | "AUCTION" | "COMPETITIVE_DIALOGUE" | "DIRECT_AWARD_ARTICLE_75" | "SOLE_SOURCE" | "ACCREDITATION";
+            objectDescription: string;
             /** Format: uuid */
-            organizationId?: string;
-            processNumber?: string;
+            organizationId: string;
+            processNumber: string;
             /** Format: uuid */
             responsibleUserId?: string;
             responsibleUserName?: string;
             /** @enum {string} */
-            status?: "DRAFT";
+            status: "DRAFT" | "CLOSED";
             /** Format: date-time */
-            updatedAt?: string;
-            urgency?: boolean;
+            updatedAt: string;
+            urgency: boolean;
             /** Format: int64 */
-            version?: number;
+            version: number;
+        };
+        ProvisionalPasswordResponse: {
+            provisionalPassword: string;
+        };
+        ReopenProcurementProcessRequest: {
+            reason: string;
+        };
+        ReorderSectionsRequest: {
+            sectionCodesInOrder: string[];
+        };
+        SaveSectionRequest: {
+            content?: string;
+            dispensationJustification?: string;
+        };
+        SectionDiffView: {
+            /** @enum {string} */
+            change: "ADDED" | "REMOVED" | "CHANGED" | "UNCHANGED";
+            currentText?: string;
+            previousText?: string;
+            sectionCode: string;
+            title: string;
+        };
+        SectionResponseView: {
+            content: string;
+            dispensationJustification?: string;
+            hint?: string;
+            legalBasis?: string;
+            /** @enum {string} */
+            origin: "CATALOG" | "AD_HOC";
+            /** Format: int32 */
+            position: number;
+            required: boolean;
+            resolved: boolean;
+            sectionCode: string;
+            title: string;
         };
         SessionResponse: {
             activeMembership?: components["schemas"]["MembershipResponse"];
             organization?: components["schemas"]["OrganizationResponse"];
-            permissions?: ("PROFILE_READ" | "USER_READ" | "USER_MANAGE" | "ORGANIZATION_READ" | "ORGANIZATION_MANAGE" | "PLATFORM_ADMIN")[];
-            user?: components["schemas"]["SessionUserResponse"];
+            permissions: ("PROFILE_READ" | "USER_READ" | "USER_MANAGE" | "ORGANIZATION_READ" | "ORGANIZATION_MANAGE" | "PLATFORM_ADMIN")[];
+            user: components["schemas"]["SessionUserResponse"];
         };
         SessionUserResponse: {
+            appointmentDecree?: string;
             cpf?: string;
-            email?: string;
+            email: string;
             /** Format: uuid */
-            id?: string;
+            id: string;
             jobTitle?: string;
             /** Format: date-time */
             lastAccessAt?: string;
-            name?: string;
+            name: string;
+            passwordChangeRequired: boolean;
             /** @enum {string} */
-            profileAccess?: "ADMIN_GERAL" | "COORDENADOR" | "SERVIDOR";
+            profileAccess: "ADMIN_GERAL" | "COORDENADOR" | "SERVIDOR";
+            registrationNumber?: string;
             /** @enum {string} */
-            status?: "ACTIVE" | "INACTIVE" | "PENDING_ACTIVATION";
+            status: "ACTIVE" | "INACTIVE" | "PENDING_ACTIVATION";
         };
         SortObject: {
             empty?: boolean;
             sorted?: boolean;
             unsorted?: boolean;
         };
-        TransferUserOrganizationRequest: {
-            confirmed?: boolean;
-            /** Format: uuid */
-            destinationDepartmentId?: string;
-            /** Format: uuid */
-            destinationOrganizationId: string;
-            reason: string;
-            workflowRoles: ("SERVIDOR_COMPRAS" | "SECRETARIA_DEMANDANTE" | "COMISSAO" | "JURIDICO" | "GESTOR_APROVADOR")[];
-        };
         UpdateDepartmentRequest: {
             acronym?: string;
             name: string;
         };
+        UpdateDfdItemsRequest: {
+            items: components["schemas"]["DemandItemRequest"][];
+        };
+        UpdateLetterheadRequest: {
+            footerText?: string;
+            headerText?: string;
+        };
         UpdateOrganizationRequest: {
+            /** @enum {string} */
+            entityType?: "PREFEITURA" | "CAMARA" | "AUTARQUIA" | "FUNDACAO" | "CONSORCIO" | "OUTRO";
+            executiveAgency?: boolean;
             name: string;
             unit?: string;
         };
         UpdateProcurementProcessRequest: {
+            changeNote?: string;
             demandObject?: string;
+            /** @enum {string} */
+            dispensationGround?: "VALUE_ENGINEERING" | "VALUE_GENERAL" | "OTHER";
+            documents?: ("COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO")[];
             estimatedValue: number;
             legalBasis?: string;
             /** @enum {string} */
             modality: "ELECTRONIC_AUCTION" | "COMPETITION" | "CONTEST" | "AUCTION" | "COMPETITIVE_DIALOGUE" | "DIRECT_AWARD_ARTICLE_75" | "SOLE_SOURCE" | "ACCREDITATION";
             objectDescription: string;
-            urgency?: boolean;
+            urgency: boolean;
         };
         UpdateUserRequest: {
+            appointmentDecree?: string;
             /** Format: uuid */
             departmentId?: string;
             /** Format: email */
@@ -536,43 +1570,56 @@ export interface components {
             organizationId?: string;
             /** @enum {string} */
             profileAccess: "ADMIN_GERAL" | "COORDENADOR" | "SERVIDOR";
-            workflowRoles: ("SERVIDOR_COMPRAS" | "SECRETARIA_DEMANDANTE" | "COMISSAO" | "JURIDICO" | "GESTOR_APROVADOR")[];
+            registrationNumber?: string;
         };
         UserResponse: {
+            appointmentDecree?: string;
             cpf?: string;
             /** Format: date-time */
-            createdAt?: string;
-            email?: string;
+            createdAt: string;
+            email: string;
             /** Format: uuid */
-            id?: string;
+            id: string;
             jobTitle?: string;
             /** Format: date-time */
             lastAccessAt?: string;
-            memberships?: components["schemas"]["MembershipResponse"][];
-            name?: string;
+            memberships: components["schemas"]["MembershipResponse"][];
+            name: string;
+            passwordChangeRequired: boolean;
             /** @enum {string} */
-            profileAccess?: "ADMIN_GERAL" | "COORDENADOR" | "SERVIDOR";
+            profileAccess: "ADMIN_GERAL" | "COORDENADOR" | "SERVIDOR";
+            provisionalPassword?: string;
+            registrationNumber?: string;
             /** @enum {string} */
-            status?: "ACTIVE" | "INACTIVE" | "PENDING_ACTIVATION";
+            status: "ACTIVE" | "INACTIVE" | "PENDING_ACTIVATION";
             /** Format: date-time */
-            updatedAt?: string;
+            updatedAt: string;
             /** Format: int64 */
-            version?: number;
+            version: number;
         };
         UserSummaryResponse: {
             cpf?: string;
-            email?: string;
+            email: string;
             /** Format: uuid */
-            id?: string;
+            id: string;
             jobTitle?: string;
             /** Format: date-time */
             lastAccessAt?: string;
-            memberships?: components["schemas"]["MembershipResponse"][];
-            name?: string;
+            memberships: components["schemas"]["MembershipResponse"][];
+            name: string;
             /** @enum {string} */
-            profileAccess?: "ADMIN_GERAL" | "COORDENADOR" | "SERVIDOR";
+            profileAccess: "ADMIN_GERAL" | "COORDENADOR" | "SERVIDOR";
+            registrationNumber?: string;
             /** @enum {string} */
-            status?: "ACTIVE" | "INACTIVE" | "PENDING_ACTIVATION";
+            status: "ACTIVE" | "INACTIVE" | "PENDING_ACTIVATION";
+        };
+        VersionComparisonResponse: {
+            errata: components["schemas"]["ErrataEntryView"][];
+            /** Format: int32 */
+            from: number;
+            sections: components["schemas"]["SectionDiffView"][];
+            /** Format: int32 */
+            to: number;
         };
     };
     responses: never;
@@ -583,6 +1630,26 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    status: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AiStatusResponse"];
+                };
+            };
+        };
+    };
     activate: {
         parameters: {
             query?: never;
@@ -647,6 +1714,30 @@ export interface operations {
             };
         };
     };
+    changePassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangePasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SessionResponse"];
+                };
+            };
+        };
+    };
     requestPasswordReset: {
         parameters: {
             query?: never;
@@ -669,7 +1760,7 @@ export interface operations {
             };
         };
     };
-    resetPassword: {
+    resetPassword_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -711,6 +1802,46 @@ export interface operations {
             };
         };
     };
+    archive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ArchivedDocumentResponse"][];
+                };
+            };
+        };
+    };
+    summary: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ArchiveSummaryResponse"];
+                };
+            };
+        };
+    };
     me: {
         parameters: {
             query?: never;
@@ -728,6 +1859,51 @@ export interface operations {
                 content: {
                     "*/*": components["schemas"]["SessionResponse"];
                 };
+            };
+        };
+    };
+    upload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AvatarResponse"];
+                };
+            };
+        };
+    };
+    remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -959,10 +2135,224 @@ export interface operations {
             };
         };
     };
+    read: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                organizationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["LetterheadResponse"];
+                };
+            };
+        };
+    };
+    updateTexts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                organizationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateLetterheadRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["LetterheadResponse"];
+                };
+            };
+        };
+    };
+    logo: {
+        parameters: {
+            query?: never;
+            header?: {
+                "If-None-Match"?: string;
+            };
+            path: {
+                organizationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string;
+                };
+            };
+        };
+    };
+    uploadLogo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                organizationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["LetterheadResponse"];
+                };
+            };
+        };
+    };
+    removeLogo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                organizationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["LetterheadResponse"];
+                };
+            };
+        };
+    };
+    currentPlan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PcaPlanResponse"];
+                };
+            };
+        };
+    };
+    importPlan: {
+        parameters: {
+            query: {
+                year: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PcaPlanResponse"];
+                };
+            };
+        };
+    };
+    plans: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PcaPlanResponse"][];
+                };
+            };
+        };
+    };
+    planFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                year: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string;
+                };
+            };
+        };
+    };
     list_1: {
         parameters: {
             query?: {
-                status?: "DRAFT";
+                status?: "DRAFT" | "CLOSED";
                 search?: string;
                 page?: number;
                 size?: number;
@@ -991,9 +2381,13 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody: {
+        requestBody?: {
             content: {
-                "application/json": components["schemas"]["CreateProcurementProcessRequest"];
+                "multipart/form-data": {
+                    dados: components["schemas"]["CreateProcurementProcessRequest"];
+                    /** Format: binary */
+                    file?: string;
+                };
             };
         };
         responses: {
@@ -1004,6 +2398,26 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ProcurementProcessResponse"];
+                };
+            };
+        };
+    };
+    statistics: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ProcessStatisticsResponse"];
                 };
             };
         };
@@ -1058,10 +2472,882 @@ export interface operations {
             };
         };
     };
+    appropriations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BudgetAppropriationResponse"][];
+                };
+            };
+        };
+    };
+    declareAppropriation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BudgetAppropriationRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BudgetAppropriationResponse"];
+                };
+            };
+        };
+    };
+    updateAppropriation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                appropriationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BudgetAppropriationRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BudgetAppropriationResponse"];
+                };
+            };
+        };
+    };
+    removeAppropriation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                appropriationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    close: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CloseProcurementProcessRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ProcurementProcessResponse"];
+                };
+            };
+        };
+    };
+    consolidation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DemandConsolidationResponse"];
+                };
+            };
+        };
+    };
+    dfds: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ProcessDfdResponse"][];
+                };
+            };
+        };
+    };
+    attachDfd: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": {
+                    dados: components["schemas"]["AttachDfdRequest"];
+                    /** Format: binary */
+                    file?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ProcessDfdResponse"];
+                };
+            };
+        };
+    };
+    removeDfd: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                dfdId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    dfdFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                dfdId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string;
+                };
+            };
+        };
+    };
+    attachDfdFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                dfdId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ProcessDfdResponse"];
+                };
+            };
+        };
+    };
+    updateDfdItems: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                dfdId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateDfdItemsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ProcessDfdResponse"];
+                };
+            };
+        };
+    };
+    dispensationCheck: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DispensationCheckResponse"];
+                };
+            };
+        };
+    };
+    quotes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PriceQuoteResponse"][];
+                };
+            };
+        };
+    };
+    recordQuote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PriceQuoteRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PriceQuoteResponse"];
+                };
+            };
+        };
+    };
+    updateQuote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                quoteId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PriceQuoteRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PriceQuoteResponse"];
+                };
+            };
+        };
+    };
+    removeQuote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                quoteId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    quoteFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                quoteId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string;
+                };
+            };
+        };
+    };
+    attachQuoteFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                quoteId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PriceQuoteResponse"];
+                };
+            };
+        };
+    };
+    reopen: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReopenProcurementProcessRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ProcurementProcessResponse"];
+                };
+            };
+        };
+    };
+    trail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ProcessTrailEntryResponse"][];
+                };
+            };
+        };
+    };
+    open: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                processId: string;
+                documentType: "COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DocumentResponse"];
+                };
+            };
+        };
+    };
+    finalizeDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                processId: string;
+                documentType: "COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO";
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["FinalizeDocumentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DocumentResponse"];
+                };
+            };
+        };
+    };
+    history: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                processId: string;
+                documentType: "COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GenerationJobResponse"][];
+                };
+            };
+        };
+    };
+    generate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                processId: string;
+                documentType: "COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GenerateDocumentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GenerationJobResponse"];
+                };
+            };
+        };
+    };
+    download: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                processId: string;
+                documentType: "COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO";
+                fileId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string;
+                };
+            };
+        };
+    };
+    addSection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                processId: string;
+                documentType: "COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddSectionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DocumentResponse"];
+                };
+            };
+        };
+    };
+    reorderSections: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                processId: string;
+                documentType: "COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReorderSectionsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DocumentResponse"];
+                };
+            };
+        };
+    };
+    saveSection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                processId: string;
+                documentType: "COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO";
+                sectionCode: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveSectionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DocumentResponse"];
+                };
+            };
+        };
+    };
+    removeSection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                processId: string;
+                documentType: "COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO";
+                sectionCode: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DocumentResponse"];
+                };
+            };
+        };
+    };
+    generateSection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                processId: string;
+                documentType: "COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO";
+                sectionCode: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["GenerateSectionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GeneratedSectionResponse"];
+                };
+            };
+        };
+    };
+    versions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                processId: string;
+                documentType: "COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DocumentVersionResponse"][];
+                };
+            };
+        };
+    };
+    comparison: {
+        parameters: {
+            query: {
+                from: number;
+                to: number;
+            };
+            header?: never;
+            path: {
+                processId: string;
+                documentType: "COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["VersionComparisonResponse"];
+                };
+            };
+        };
+    };
+    verify: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                processId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PcaVerificationResponse"];
+                };
+            };
+        };
+    };
+    declare: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                processId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeclarePcaForesightRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PcaVerificationResponse"];
+                };
+            };
+        };
+    };
     list: {
         parameters: {
             query?: {
                 organizationId?: string;
+                search?: string;
             };
             header?: never;
             path?: never;
@@ -1154,6 +3440,52 @@ export interface operations {
             };
         };
     };
+    avatar: {
+        parameters: {
+            query?: never;
+            header?: {
+                "If-None-Match"?: string;
+            };
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string;
+                };
+            };
+        };
+    };
+    cpf: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CpfResponse"];
+                };
+            };
+        };
+    };
     deactivate: {
         parameters: {
             query?: never;
@@ -1182,7 +3514,7 @@ export interface operations {
             };
         };
     };
-    transferOrganization: {
+    resetPassword: {
         parameters: {
             query?: never;
             header?: never;
@@ -1191,11 +3523,7 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["TransferUserOrganizationRequest"];
-            };
-        };
+        requestBody?: never;
         responses: {
             /** @description OK */
             200: {
@@ -1203,7 +3531,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["UserResponse"];
+                    "*/*": components["schemas"]["ProvisionalPasswordResponse"];
                 };
             };
         };

@@ -9,33 +9,30 @@ import geradocsLogo from "@/public/geradocs-mark-white.png";
 
 import {
   IconBuilding,
-  IconCamera,
-  IconCheckCircle,
+  IconClipboardList,
   IconDashboard,
   IconDownload,
   IconFileText,
+  IconImage,
   IconLogout,
   IconMoreVertical,
-  IconSettings,
   IconUser,
 } from "@/components/ui/icons";
-import {
-  useAtualizarAvatar,
-  useFilaAprovacoes,
-  useLogout,
-  useSessao,
-} from "@/lib/api/hooks";
+import { FotoDePerfil } from "@/components/shared/foto-de-perfil";
+import { useBrasao, useLogout, useSessao, useTimbre } from "@/lib/api/hooks";
 import { navPrincipal, navSistema, type IconeNav } from "@/lib/auth/acesso";
-import { PERFIL_ACESSO_LABEL } from "@/lib/types";
+import { PERFIL_ACESSO_LABEL, TIPO_ENTIDADE_LABEL } from "@/lib/types";
 
 /** Mapa de chave de ícone (RBAC) → componente. */
 const ICONES: Record<IconeNav, ReactNode> = {
   dashboard: <IconDashboard size={18} />,
   processos: <IconFileText size={18} />,
-  aprovacoes: <IconCheckCircle size={18} />,
   documentos: <IconDownload size={18} />,
-  configuracoes: <IconSettings size={18} />,
-  prefeituras: <IconBuilding size={18} />,
+  timbre: <IconImage size={18} />,
+  secretarias: <IconBuilding size={18} />,
+  pca: <IconClipboardList size={18} />,
+  usuarios: <IconUser size={18} />,
+  entidades: <IconBuilding size={18} />,
   servidores: <IconUser size={18} />,
 };
 
@@ -111,26 +108,22 @@ export default function Sidebar({
   const pathname = usePathname();
   const router = useRouter();
   const { data: sessao } = useSessao();
-  const { data: fila } = useFilaAprovacoes();
-  const atualizarAvatar = useAtualizarAvatar();
   const logout = useLogout();
   const [menuAberto, setMenuAberto] = useState(false);
 
   const usuario = sessao?.usuario;
-  const prefeitura = sessao?.prefeitura;
+  const entidade = sessao?.entidade;
+  // O brasão vem do timbre, que é onde ele é cadastrado. A sessão trazia um
+  // campo `logoDataUrl` que nunca era preenchido: a barra ficava com o ícone
+  // genérico mesmo depois de a entidade subir o brasão.
+  const timbre = useTimbre(entidade?.id);
+  const brasaoUrl = useBrasao(entidade?.id, timbre.data?.temBrasao ?? false);
   const perfil = usuario?.perfilAcesso ?? "servidor";
-  const pendentes = fila?.filter((a) => a.status === "aguardando").length;
 
-  const paraItem = (i: {
-    href: string;
-    label: string;
-    icone: IconeNav;
-    badge?: "aprovacoes";
-  }): NavItem => ({
+  const paraItem = (i: { href: string; label: string; icone: IconeNav }): NavItem => ({
     href: i.href,
     label: i.label,
     icon: ICONES[i.icone],
-    badge: i.badge === "aprovacoes" ? pendentes : undefined,
     match: (p) => (i.href === "/" ? p === "/" : p.startsWith(i.href)),
   });
 
@@ -170,20 +163,24 @@ export default function Sidebar({
         </div>
       </div>
 
-      {/* Órgão atual — a prefeitura da sessão; para o admin geral, o contexto LAHHM */}
+      {/* Entidade atual — a da sessão; para o admin geral, o contexto LAHHM */}
       <div className="border-b border-on-dark-border px-5 py-3.5">
         <div className="mb-1.5 text-2xs font-semibold tracking-caps-wide text-on-dark-35 uppercase">
-          {perfil === "admin_geral" ? "Contexto" : "Órgão Atual"}
+          {perfil === "admin_geral" ? "Contexto" : "Entidade Atual"}
         </div>
         <div className="flex items-center gap-2 rounded-md">
-          {prefeitura?.logoDataUrl ? (
-            <Image
-              src={prefeitura.logoDataUrl}
+          {brasaoUrl ? (
+            /*
+              O brasão que a entidade cadastrou no timbre, e não um segundo
+              lugar para a mesma imagem: é o mesmo que sai no cabeçalho dos
+              documentos. `img` e não `next/image` porque a origem é um object
+              URL de rota autenticada — o otimizador não tem o que buscar.
+            */
+            // eslint-disable-next-line @next/next/no-img-element -- object URL de rota autenticada
+            <img
+              src={brasaoUrl}
               alt=""
-              width={22}
-              height={22}
-              unoptimized
-              className="size-5.5 shrink-0 object-contain"
+              className="size-5.5 shrink-0 rounded-[5px] object-contain"
             />
           ) : (
             <span className="flex size-5.5 shrink-0 items-center justify-center rounded-[5px] bg-on-dark-royal-chip text-electric">
@@ -192,19 +189,24 @@ export default function Sidebar({
           )}
           <span className="block min-w-0 flex-1">
             <span className="block truncate text-sm font-semibold text-on-dark">
-              {prefeitura?.orgao ??
+              {entidade?.nome ??
                 (perfil === "admin_geral" ? "Administração LAHHM" : "—")}
             </span>
             <span className="block text-2xs text-on-dark-40">
-              {prefeitura?.unidade ??
-                (perfil === "admin_geral" ? "Todas as prefeituras" : "")}
+              {/* O tipo, e não a unidade administrativa: aquele campo não
+                  aparecia em lugar nenhum do produto e saiu do modelo. */}
+              {entidade
+                ? TIPO_ENTIDADE_LABEL[entidade.tipo]
+                : perfil === "admin_geral"
+                  ? "Todas as entidades"
+                  : ""}
             </span>
           </span>
         </div>
       </div>
 
       {/* Navegação */}
-      <nav className="flex-1 overflow-y-auto p-3">
+      <nav className="relative flex-1 overflow-y-auto p-3">
         <SectionLabel top>Principal</SectionLabel>
         {navItems.map((item) => (
           <NavLink
@@ -217,7 +219,7 @@ export default function Sidebar({
 
         {bottomItems.length > 0 && (
           <>
-            <SectionLabel>Sistema</SectionLabel>
+            <SectionLabel>Configurações</SectionLabel>
             {bottomItems.map((item) => (
               <NavLink
                 key={item.href}
@@ -232,73 +234,37 @@ export default function Sidebar({
         )}
       </nav>
 
-      {/* Usuário — avatar (troca a foto) + linha clicável que abre o menu (Meu Perfil / Sair) */}
+      {/* Usuário — o cartão inteiro abre o menu (Meu Perfil / Sair) */}
       <div className="relative border-t border-on-dark-border p-2">
-        <div
-          className={`flex items-center gap-2.5 rounded-lg p-1.5 transition-colors ${
-            menuAberto ? "bg-on-dark-fill" : ""
+        <button
+          type="button"
+          onClick={() => setMenuAberto((v) => !v)}
+          aria-label="Abrir menu do usuário"
+          aria-expanded={menuAberto}
+          className={`flex w-full cursor-pointer items-center gap-2.5 rounded-lg border-0 p-1.5 text-left transition-colors ${
+            menuAberto ? "bg-on-dark-fill" : "bg-transparent"
           }`}
         >
-          <label
-            className="group relative size-9 shrink-0 cursor-pointer"
-            title="Alterar foto de perfil"
+          <FotoDePerfil
+            usuarioId={usuario?.id}
+            iniciais={usuario?.iniciais ?? "—"}
+            tamanho={36}
+            className="shrink-0 text-base"
+          />
+          <span className="block min-w-0 flex-1">
+            <span className="block truncate text-base font-semibold text-on-dark">
+              {usuario?.nome ?? "Carregando..."}
+            </span>
+            <span className="block truncate text-xs text-on-dark-40">
+              {usuario ? PERFIL_ACESSO_LABEL[usuario.perfilAcesso] : ""}
+            </span>
+          </span>
+          <span
+            className={`flex shrink-0 transition-colors ${menuAberto ? "text-on-dark" : "text-on-dark-30"}`}
           >
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/webp,image/svg+xml"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (!f) return;
-                const reader = new FileReader();
-                reader.onload = () =>
-                  atualizarAvatar.mutate(
-                    typeof reader.result === "string" ? reader.result : null,
-                  );
-                reader.readAsDataURL(f);
-              }}
-            />
-            {usuario?.avatarDataUrl ? (
-              <Image
-                src={usuario.avatarDataUrl}
-                alt="Foto de perfil"
-                width={36}
-                height={36}
-                unoptimized
-                className="size-9 rounded-full object-cover"
-              />
-            ) : (
-              <span className="flex size-9 items-center justify-center rounded-full text-base font-bold text-on-dark gradient-user">
-                {usuario?.iniciais ?? "—"}
-              </span>
-            )}
-            <span className="absolute inset-0 flex items-center justify-center rounded-full bg-navy/55 text-on-dark opacity-0 transition-opacity group-hover:opacity-100">
-              <IconCamera size={14} />
-            </span>
-          </label>
-
-          <button
-            type="button"
-            onClick={() => setMenuAberto((v) => !v)}
-            aria-label="Abrir menu do usuário"
-            aria-expanded={menuAberto}
-            className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 border-0 bg-transparent p-0 text-left"
-          >
-            <span className="block min-w-0 flex-1">
-              <span className="block truncate text-base font-semibold text-on-dark">
-                {usuario?.nome ?? "Carregando..."}
-              </span>
-              <span className="block truncate text-xs text-on-dark-40">
-                {usuario ? PERFIL_ACESSO_LABEL[usuario.perfilAcesso] : ""}
-              </span>
-            </span>
-            <span
-              className={`flex shrink-0 transition-colors ${menuAberto ? "text-on-dark" : "text-on-dark-30"}`}
-            >
-              <IconMoreVertical size={16} />
-            </span>
-          </button>
-        </div>
+            <IconMoreVertical size={16} />
+          </span>
+        </button>
 
         {menuAberto && (
           <>
@@ -308,28 +274,33 @@ export default function Sidebar({
               onClick={() => setMenuAberto(false)}
             />
             <div className="absolute inset-x-2 bottom-full z-20 mb-2 overflow-hidden rounded-xl border border-border bg-surface shadow-knob">
-              {/* Cabeçalho — nome completo + e-mail (o nome trunca na barra) */}
-              <div className="border-b border-border-soft px-3.5 py-3">
+              {/* Cabeçalho — clicável: é onde a pessoa procura os próprios dados */}
+              <Link
+                href="/perfil"
+                onClick={() => {
+                  setMenuAberto(false);
+                  onNavigate?.();
+                }}
+                className="block border-b border-border-soft px-3.5 py-3 no-underline transition-colors hover:bg-ice"
+              >
                 <div className="truncate text-sm font-bold text-text-1">
                   {usuario?.nome}
                 </div>
                 <div className="truncate text-xs text-text-muted">
                   {usuario?.email}
                 </div>
-              </div>
+              </Link>
               <div className="p-1">
-                {perfil !== "admin_geral" && (
-                  <Link
-                    href="/perfil"
-                    onClick={() => {
-                      setMenuAberto(false);
-                      onNavigate?.();
-                    }}
-                    className="flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm font-medium text-text-2 no-underline transition-colors hover:bg-ice"
-                  >
-                    <IconUser size={15} /> Meu Perfil
-                  </Link>
-                )}
+                <Link
+                  href="/perfil"
+                  onClick={() => {
+                    setMenuAberto(false);
+                    onNavigate?.();
+                  }}
+                  className="flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm font-medium text-text-2 no-underline transition-colors hover:bg-ice"
+                >
+                  <IconUser size={15} /> Meu Perfil
+                </Link>
                 <button
                   type="button"
                   onClick={sair}

@@ -52,6 +52,21 @@ export function normalizaValorBR(texto: string): string {
 }
 
 /** ISO "2024-07-05" → "05/07/2024". */
+/**
+ * Tamanho de arquivo em pt-BR, a partir dos bytes que o servidor mediu.
+ *
+ * Até 23/08/2026 o tamanho era texto fabricado por tipo de documento ("312 KB",
+ * igual para todo processo). Agora entra o número real, e formatar é trabalho da
+ * tela — guardar "312 KB" como texto obrigava a interpretar de volta para somar.
+ */
+export function formatarBytes(bytes: number): string {
+  // Sem casas decimais em byte: "512,00 B" mede meio byte, que não existe.
+  if (bytes < 1024) return `${bytes} B`
+  const kb = bytes / 1024
+  if (kb < 1024) return `${kb.toFixed(kb < 10 ? 1 : 0).replace(".", ",")} KB`
+  return `${(kb / 1024).toFixed(1).replace(".", ",")} MB`
+}
+
 export function formatData(iso: string): string {
   const [ano, mes, dia] = iso.slice(0, 10).split("-")
   return `${dia}/${mes}/${ano}`
@@ -65,15 +80,23 @@ export function formatDataHora(iso: string): string {
 /** Fuso oficial de Brasília — usado nas saudações e na data do Dashboard. */
 const FUSO_BRASILIA = "America/Sao_Paulo"
 
-/** Hora do dia (0–23) no fuso de Brasília. */
+/**
+ * Hora do dia (0–23) no fuso de Brasília.
+ *
+ * Formata direto em vez de procurar a parte "hour" no resultado de
+ * `formatToParts`: a busca devolve `T | undefined`, obrigava a um `?? "0"` que
+ * nenhuma entrada alcança, e "0" seria meia-noite — um fallback que, se um dia
+ * fosse atingido, mudaria a saudação em silêncio.
+ */
 export function horaBrasilia(d: Date = new Date()): number {
-  const partes = new Intl.DateTimeFormat("en-US", {
-    timeZone: FUSO_BRASILIA,
-    hour: "2-digit",
-    hour12: false,
-    hourCycle: "h23",
-  }).formatToParts(d)
-  return Number(partes.find((p) => p.type === "hour")?.value ?? "0")
+  return Number(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: FUSO_BRASILIA,
+      hour: "2-digit",
+      hour12: false,
+      hourCycle: "h23",
+    }).format(d),
+  )
 }
 
 /** Saudação conforme o período do dia em Brasília: Bom dia / Boa tarde / Boa noite. */
@@ -86,8 +109,9 @@ export function saudacao(d: Date = new Date()): string {
 
 /** Ano vigente (4 dígitos) no fuso de Brasília. */
 export function anoBrasilia(d: Date = new Date()): number {
-  const partes = new Intl.DateTimeFormat("en-US", { timeZone: FUSO_BRASILIA, year: "numeric" }).formatToParts(d)
-  return Number(partes.find((p) => p.type === "year")?.value ?? "0")
+  return Number(
+    new Intl.DateTimeFormat("en-US", { timeZone: FUSO_BRASILIA, year: "numeric" }).format(d),
+  )
 }
 
 /** Data atual como ISO "AAAA-MM-DD" no fuso de Brasília (para registrar em fixtures/mocks). */

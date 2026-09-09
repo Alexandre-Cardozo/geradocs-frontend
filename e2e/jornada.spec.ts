@@ -1,0 +1,239 @@
+import { expect, test } from "@playwright/test"
+
+import type { Page } from "@playwright/test"
+
+import {
+  APP,
+  comProcessoEDocumento,
+  comSessao,
+  prestesALogar,
+  processo,
+  rota,
+  semSessao,
+  sessaoAdmin,
+} from "./api"
+
+/**
+ * O menu aparece em mais de um lugar no DOM (barra fixa no desktop, gaveta no
+ * celular, atalhos no painel). Sem escopo, o seletor encontra três elementos e
+ * o teste falha por ambiguidade, não por defeito.
+ */
+const menuLateral = (page: Page) => page.getByRole("navigation").first()
+
+test.describe("guarda de sessão", () => {
+  test("sem sessão, qualquer rota do app leva ao login", async ({ page }) => {
+    await semSessao(page)
+
+    await page.goto(rota("/processos"))
+
+    await expect(page).toHaveURL(/\/login$/)
+    await expect(page.getByPlaceholder("000.000.000-00")).toBeVisible()
+  })
+
+  test("credencial inválida não revela se a conta existe", async ({ page }) => {
+    await semSessao(page)
+    await page.goto(rota("/login"))
+
+    await page.getByPlaceholder("000.000.000-00").fill("333.333.333-33")
+    await page.getByPlaceholder("Sua senha").fill("senha-errada")
+    await page.getByRole("button", { name: "Entrar" }).click()
+
+    // A mensagem é genérica de propósito: dizer "usuário não encontrado"
+    // transformaria a tela em oráculo de quem tem conta.
+    await expect(page.getByText(/CPF ou senha inválida/i)).toBeVisible()
+    await expect(page).toHaveURL(/\/login$/)
+  })
+
+  test("com credencial válida, entra e chega ao painel", async ({ page }) => {
+    await prestesALogar(page)
+    await page.goto(rota("/login"))
+
+    await page.getByPlaceholder("000.000.000-00").fill("333.333.333-33")
+    await page.getByPlaceholder("Sua senha").fill("UmaSenhaSegura!2026")
+    await page.getByRole("button", { name: "Entrar" }).click()
+
+    await expect(page).not.toHaveURL(/\/login$/)
+    await expect(menuLateral(page).getByRole("link", { name: "Processos" })).toBeVisible()
+  })
+
+  test("backend fora do ar mostra o motivo, não uma tela quebrada", async ({ page }) => {
+    await page.route("**/api/v1/**", (rota) => rota.abort("failed"))
+
+    await page.goto(rota("/"))
+
+    await expect(page.getByText(/Servidor Indisponível|CPF/i).first()).toBeVisible()
+  })
+})
+
+test.describe("navegação por perfil", () => {
+  test("o servidor vê processos e documentos", async ({ page }) => {
+    await comSessao(page)
+
+    await page.goto(rota("/"))
+
+    await expect(menuLateral(page).getByRole("link", { name: "Processos" })).toBeVisible()
+    await expect(menuLateral(page).getByRole("link", { name: "Documentos" })).toBeVisible()
+    await expect(menuLateral(page).getByRole("link", { name: "Entidades" })).toHaveCount(0)
+  })
+
+  test("o administrador geral vê a área do sistema, não a de processos", async ({ page }) => {
+    await comSessao(page, sessaoAdmin)
+
+    await page.goto(rota("/"))
+
+    await expect(menuLateral(page).getByRole("link", { name: "Entidades" })).toBeVisible()
+    await expect(menuLateral(page).getByRole("link", { name: "Servidores" })).toBeVisible()
+    await expect(menuLateral(page).getByRole("link", { name: "Processos" })).toHaveCount(0)
+  })
+
+  test("rota fora do perfil devolve para a raiz", async ({ page }) => {
+    await comSessao(page)
+
+    await page.goto(rota("/admin/entidades"))
+
+    // O RBAC de rota é conveniência de interface — quem barra de verdade é o
+    // backend —, mas mostrar a tela e depois falhar seria pior que não mostrar.
+    await expect(page).toHaveURL(new RegExp(`^http://localhost:3000${APP}/?$`))
+  })
+})
+
+test.describe("recarregar a página não perde a sessão", () => {
+  test("a rota profunda continua funcionando depois do reload", async ({ page }) => {
+    await comSessao(page)
+    await page.goto(rota("/processos"))
+
+    await page.reload()
+
+    // É o reload que prova que a renovação de token funcionou: o access token
+    // vive só em memória e some a cada recarga.
+    await expect(page).toHaveURL(/\/processos/)
+    await expect(menuLateral(page).getByRole("link", { name: "Processos" })).toBeVisible()
+  })
+})
+
+test.describe("elaboração do ETP", () => {
+  /**
+   * A jornada que o Bloco 9 destravou: o processo e o documento vivem no
+   * servidor, e o que a pessoa escreve sobrevive ao recarregamento.
+   *
+   * Era a limitação registrada na ADR 22 — criar um processo e perdê-lo ao
+   * recarregar a página. Este teste existe para que ela não volte.
+   */
+  test("o processo aparece na listagem e o ETP abre com o catálogo", async ({ page }) => {
+    await comSessao(page)
+    await comProcessoEDocumento(page)
+
+    await page.goto(rota("/processos"))
+
+    await expect(page.getByText(processo.objectDescription)).toBeVisible()
+  })
+
+  test("o texto escrito no ETP sobrevive ao recarregamento", async ({ page }) => {
+    await comSessao(page)
+    await comProcessoEDocumento(page)
+
+    await page.goto(
+      rota(`/processos/documento?id=${encodeURIComponent(processo.id)}&tipo=etp`),
+    )
+    // Pelo rótulo, e não pelo placeholder: a seção da necessidade tem painel
+    // próprio desde que passou a oferecer o rascunho a partir do processo, e o
+    // texto de exemplo dela é outro.
+    const editor = page.getByLabel("Descrição da Necessidade")
+    await expect(editor).toBeVisible()
+    await editor.fill("Necessidade descrita pela secretaria.")
+    await page.getByRole("button", { name: /Salvar Rascunho/ }).click()
+
+    await page.reload()
+
+    // É o ponto do bloco: o que foi escrito está no servidor, não na memória do
+    // navegador.
+    await expect(page.getByText("Necessidade descrita pela secretaria.")).toBeVisible()
+  })
+
+  test("sem modelo de IA, a tela diz isso antes do clique e o caminho manual segue inteiro", async ({
+    page,
+  }) => {
+    await comSessao(page)
+    await comProcessoEDocumento(page)
+
+    await page.goto(
+      rota(`/processos/documento?id=${encodeURIComponent(processo.id)}&tipo=etp`),
+    )
+
+    // O 503 chegava depois da ação, quando a pessoa já tinha formado a
+    // expectativa. Agora o motivo está escrito antes.
+    const gerar = page.getByRole("button", { name: /Gerar com IA/ })
+    await expect(gerar).toBeDisabled()
+    await expect(page.getByText(/não tem modelo de IA configurado/)).toBeVisible()
+
+    // E o caminho manual continua inteiro — sem cartão nenhum a anunciá-lo: o
+    // campo está aberto na tela, e escrever nele é o que sempre foi.
+    await expect(page.getByRole("button", { name: "Escrever agora" })).toHaveCount(0)
+    await page.getByLabel("Descrição da Necessidade").fill("Necessidade descrita pela secretaria.")
+    await page.getByRole("button", { name: /Salvar Rascunho/ }).click()
+
+    await expect(page.getByText("Necessidade descrita pela secretaria.")).toBeVisible()
+  })
+
+  test("o item previsto no PCA é citado na seção do inciso II, e o não previsto só alerta", async ({
+    page,
+  }) => {
+    await comSessao(page)
+    await comProcessoEDocumento(page)
+
+    await page.goto(
+      rota(`/processos/documento?id=${encodeURIComponent(processo.id)}&tipo=etp`),
+    )
+    await page.getByRole("button", { name: /Seção 2 do ETP/ }).first().click()
+
+    // O que a plataforma encontrou aparece com o item — demonstrar é apontar.
+    await expect(page.getByText(/2026-0142/).first()).toBeVisible()
+    await expect(page.getByText(/247 itens indexados/)).toBeVisible()
+
+    // O que não está no plano orienta e deixa seguir: o botão continua ativo.
+    await expect(page.getByText(/Um item não consta do plano/)).toBeVisible()
+    const citar = page.getByRole("button", { name: "Citar na seção" })
+    await expect(citar).toBeEnabled()
+
+    await citar.click()
+
+    // A citação entra no campo da seção — editável —, e não no documento pelas
+    // costas: quem assina revisa, ajusta e grava (ADR-039). A justificativa do
+    // que ficou de fora vem entre colchetes, em vez de sumir.
+    const secao = page.getByLabel("O que vai para a seção")
+    await expect(secao).toHaveValue(/Item 2026-0142/)
+    await expect(secao).toHaveValue(
+      /\[justificar a contratação não prevista no Plano de Contratações Anual\]/,
+    )
+
+    await page.getByRole("button", { name: /Salvar Rascunho/ }).click()
+    await page.reload()
+    await page.getByRole("button", { name: /Seção 2 do ETP/ }).first().click()
+
+    // E depois de salvo, está no documento.
+    await expect(page.getByLabel("O que vai para a seção")).toHaveValue(/Item 2026-0142/)
+  })
+
+  test("a etapa final fecha a trilha, e é dela que o documento se gera", async ({ page }) => {
+    await comSessao(page)
+    await comProcessoEDocumento(page)
+    await page.goto(rota(`/processos/documento?id=${encodeURIComponent(processo.id)}&tipo=etp`))
+
+    // Alcançável a qualquer momento: revisar o documento inteiro não depende de
+    // chegar à última seção (§69).
+    await page.getByRole("button", { name: /Revisão e Geração/ }).click()
+    await expect(page.getByRole("heading", { name: "Revisão e Geração" })).toBeVisible()
+
+    // O que é do documento inteiro mora aqui — e não dentro de um inciso.
+    await expect(page.getByText(/Acrescentar seção/)).toBeVisible()
+    await expect(page.getByRole("button", { name: /Finalizar e Gerar/ })).toBeVisible()
+
+    // E a etapa não é seção: não tem campo para escrever nem botão de salvar.
+    await expect(page.getByRole("button", { name: /Salvar Rascunho/ })).toHaveCount(0)
+
+    // Da última seção, avançar leva até ela.
+    await page.getByRole("button", { name: /Seção 2 do ETP/ }).first().click()
+    await page.getByRole("button", { name: /Salvar e Avançar/ }).click()
+    await expect(page.getByRole("heading", { name: "Revisão e Geração" })).toBeVisible()
+  })
+})

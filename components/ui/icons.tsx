@@ -166,6 +166,16 @@ export const IconEye = makeIcon("IconEye", (
   </>
 ))
 
+/** O par do IconEye: sem ele, ocultar seria um botão sem estado visível. */
+export const IconEyeOff = makeIcon("IconEyeOff", (
+  <>
+    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+    <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24" />
+    <line x1="1" y1="1" x2="23" y2="23" />
+  </>
+))
+
 export const IconFilter = makeIcon("IconFilter", (
   <>
     <line x1="8" y1="6" x2="21" y2="6" />
@@ -334,4 +344,8 @@ export const IconGavel = makeIcon("IconGavel", (
 
 export const IconMessageCircle = makeIcon("IconMessageCircle", (
   <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+))
+
+export const IconPencil = makeIcon("IconPencil", (
+  <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
 ))

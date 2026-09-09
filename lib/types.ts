@@ -4,21 +4,19 @@
  * exporá; a troca de mocks por HTTP não deve alterar estes tipos.
  */
 
-/** Vocabulário fixo de status de processo. */
-export type StatusProcesso =
-  | "rascunho"
-  | "em_revisao"
-  | "aguardando"
-  | "aprovado"
-  | "rejeitado"
-  | "concluido"
+/**
+ * Vocabulário fixo de status de processo.
+ *
+ * Três, e não seis: o fluxo de aprovação entre setores acontece no sistema de
+ * processo administrativo da entidade, não aqui (ADR §24). A plataforma
+ * termina quando os documentos estão prontos — `em_revisao`, `aguardando`,
+ * `aprovado` e `rejeitado` descreviam etapas que ela não executa mais.
+ */
+export type StatusProcesso = "rascunho" | "em_elaboracao" | "concluido"
 
 export const STATUS_PROCESSO_LABEL: Record<StatusProcesso, string> = {
   rascunho: "Rascunho",
-  em_revisao: "Em Revisão",
-  aguardando: "Aguardando",
-  aprovado: "Aprovado",
-  rejeitado: "Rejeitado",
+  em_elaboracao: "Em Elaboração",
   concluido: "Concluído",
 }
 
@@ -48,6 +46,24 @@ export type Modalidade =
   | "Credenciamento"
 
 /**
+ * O inciso do Art. 75 que fundamenta a dispensa de licitação.
+ *
+ * <p>O artigo tem dezoito incisos e **só dois têm limite de valor**: o I, para
+ * obras e serviços de engenharia, e o II, para as demais compras e serviços —
+ * metade do primeiro. Emergência, fornecedor exclusivo, guerra: nenhum tem teto.
+ * Alertar sobre valor numa dispensa por emergência seria alarme falso, e alarme
+ * falso é como se aprende a ignorar alarme.
+ */
+export type FundamentoDaDispensa = "VALUE_ENGINEERING" | "VALUE_GENERAL" | "OTHER"
+
+/** O que a tela oferece ao declarar o fundamento, com o inciso citado. */
+export const FUNDAMENTO_DA_DISPENSA: Record<FundamentoDaDispensa, string> = {
+  VALUE_ENGINEERING: "Valor — obras e serviços de engenharia (Art. 75, I)",
+  VALUE_GENERAL: "Valor — compras e demais serviços (Art. 75, II)",
+  OTHER: "Outra hipótese do Art. 75 (emergência, fornecedor exclusivo, etc.)",
+}
+
+/**
  * Rótulo de exibição da modalidade — fonte única usada no wizard de Novo
  * Processo e nos filtros. Difere do valor apenas onde o nome usual não é o valor
  * técnico (ex.: "Dispensa Art. 75" é exibida como "Dispensa de Licitação").
@@ -73,17 +89,31 @@ export interface ConfigATA {
 }
 
 export interface Processo {
-  /** Formato PROC-AAAA-NNN. */
+  /** UUID do processo no servidor. Não aparece em tela: ninguém o digita. */
   id: string
-  /** Prefeitura dona do processo (escopo multi-tenant). */
-  prefeituraId: string
+  /**
+   * O número do processo administrativo — `PROC-2026-000007`.
+   *
+   * <p>Sequencial por entidade e por exercício, gerado pelo servidor na
+   * criação. É por ele que o servidor se refere ao processo em ofício, despacho
+   * e e-mail, e é ele que aparece nas telas.
+   */
+  numero: string
+  /** Entidade dona do processo (escopo multi-tenant). */
+  entidadeId: string
   /** Descrição/nomenclatura do processo — identifica-o no painel, listas e documentos. */
   objeto: string
   /** Objeto da demanda (contratação em si) — trabalha junto com o DFD e alimenta o ETP. */
   objetoDemanda?: string
   modalidade: Modalidade
+  /** O inciso do Art. 75; ausente fora da dispensa e enquanto não for declarado. */
+  fundamentoDaDispensa?: FundamentoDaDispensa
   secretaria: string
   status: StatusProcesso
+  /** Quando a plataforma deixou de acompanhar o processo. */
+  encerradoEm?: string
+  /** Por que foi encerrado com documento faltando — responde ao controle depois. */
+  justificativaEncerramento?: string
   /** Valor estimado em centavos não — em reais (number); formatar com formatBRL. */
   valorEstimado: number
   responsavel: string
@@ -100,34 +130,29 @@ export interface Processo {
     verificacaoDFD: boolean
     retificacao: boolean
   }
-  dfdArquivo?: string | null
   urgente?: boolean
   /** Trilha de auditoria das transições de status (fonte única — a fila de aprovações projeta daqui). */
-  trilha: TransicaoAprovacao[]
-  /** Data de envio para análise (rascunho → em_revisao). Ausente enquanto em rascunho. */
-  enviadoEm?: string
-  /** Prazo de análise, quando o processo está no pipeline de aprovação. */
-  prazo?: string
-  /** Parecer jurídico de controle prévio de legalidade (Art. 53). Gate para encaminhar ao gestor. */
-  parecerJuridico?: ParecerJuridico
-}
-
-/** Parecer jurídico de controle prévio de legalidade — Art. 53, Lei 14.133/21. */
-export interface ParecerJuridico {
-  favoravel: boolean
-  autor: string
-  data: string
-  comentario: string
+  /** Versão do recurso no servidor, para concorrência otimista (If-Match). */
+  versao?: number
 }
 
 export interface NovoProcessoInput {
   objeto: string
   objetoDemanda?: string
   modalidade: Modalidade
+  /** O inciso do Art. 75, quando a modalidade é a dispensa. */
+  fundamentoDaDispensa?: FundamentoDaDispensa
   secretaria: string
   valorEstimado?: number
   fundamentoLegal?: string
-  dfdArquivo?: string | null
+  /**
+   * O arquivo do DFD, quando a pessoa o escolheu no assistente.
+   *
+   * <p>Vai junto na criação e vira o **primeiro registro do cadastro de DFDs**
+   * do processo (ADR-035, ADR-037). O processo não guarda um "DFD dele": a
+   * demanda pode vir de várias secretarias, cada uma com o seu documento.
+   */
+  dfdConteudo?: File | null
   ata?: ConfigATA | null
   documentos: Array<TipoDocumento>
   fases: {
@@ -137,7 +162,17 @@ export interface NovoProcessoInput {
 }
 
 /** Painel especial do editor acionado por uma seção (ver components/documentos/paineis.tsx). */
-export type PainelSecao = "ata" | "quantidades" | "valor"
+export type PainelSecao =
+  | "analise"
+  | "ata"
+  | "coletas"
+  | "dotacao"
+  | "fontes"
+  | "necessidade"
+  | "pca"
+  | "quantidades"
+  | "referencia"
+  | "valor"
 
 /**
  * Seção de um documento gerável (ETP, TR, Cotação, Mapa, Edital, Contrato).
@@ -154,10 +189,31 @@ export interface SecaoDocumento {
    */
   obrigatoria: boolean
   conteudo: string
-  /** Frase de orientação — o usuário sempre sabe o que escrever e por quê. */
-  hint: string
-  /** Fundamento citado literalmente (ex.: "Art. 18, § 1º, I, Lei 14.133/21"). */
-  fundamentoLegal: string
+  /** Frase de orientação — ausente em seção criada pelo servidor. */
+  hint?: string
+  /**
+   * De onde a seção veio.
+   *
+   * `catalogo` traduz a lei — não se exclui nem se reordena. `servidor` foi
+   * criada por quem elabora o documento, e nunca é indispensável (ADR-018).
+   */
+  origem: "catalogo" | "servidor"
+  /**
+   * Fundamento citado literalmente (ex.: "Art. 18, § 1º, I, Lei 14.133/21").
+   *
+   * Ausente em seção criada pelo servidor: a lei não a conhece, e inventar um
+   * fundamento seria mentir sobre o que a norma diz.
+   */
+  fundamentoLegal?: string
+  /**
+   * Por que a seção foi dispensada.
+   *
+   * Só existe em seção dispensável deixada em branco. O Art. 18, § 2º admite
+   * dispensar incisos **mediante justificativa** — sem ela, a seção
+   * simplesmente sumiria do documento, e quem lê depois não distingue "não se
+   * aplica" de "esqueceram".
+   */
+  justificativaDispensa?: string
   /** Painel especial do editor, quando a seção tem um. */
   painel?: PainelSecao
 }
@@ -181,85 +237,48 @@ export interface ParecerDFD {
   achados: AchadoDFD[]
 }
 
-/** Papéis do fluxo de aprovação. */
-export type PapelUsuario =
-  | "servidor_compras"
-  | "secretaria_demandante"
-  | "comissao"
-  | "juridico"
-  | "gestor_aprovador"
-  | "admin_lahhm"
-
-export const PAPEL_LABEL: Record<PapelUsuario, string> = {
-  servidor_compras: "Servidor de Compras",
-  secretaria_demandante: "Secretaria Demandante",
-  comissao: "Comissão de Contratação",
-  juridico: "Jurídico",
-  gestor_aprovador: "Gestor Aprovador",
-  admin_lahhm: "Admin LAHHM",
-}
+/**
+ * Eventos que compõem a trilha do processo.
+ *
+ * A trilha sobrevive à remoção do fluxo de aprovação (ADR §24) porque é o único
+ * registro do que aconteceu **dentro** da plataforma — o sistema de protocolo da
+ * entidade só registra o que vem depois.
+ */
+export type EventoProcesso =
+  | "criacao"
+  | "troca_modalidade"
+  | "geracao_documento"
+  | "retificacao"
+  | "edicao"
+  | "encerramento"
+  | "reabertura"
+  // A elaboração entrou na trilha no 13.3 (ADR-027): sem ela, o registro
+  // respondia quem abriu o processo e não quem redigiu o documento.
+  | "secao_escrita"
+  | "secao_dispensada"
+  | "documento_concluido"
+  | "documento_baixado"
+  | "dfd_anexado"
 
 /**
- * Máquina de estados:
- * Rascunho → Em Revisão → (Retificação → Em Revisão) → Aprovado | Rejeitado → Concluído.
+ * Um evento da trilha, como o servidor o registrou.
+ *
+ * O `de`/`para` saíram: o servidor grava a ação, não a transição de status, e
+ * derivá-la na leitura seria reconstruir o passado por dedução.
  */
-export type EventoAprovacao = "envio" | "aprovacao" | "rejeicao" | "retificacao" | "conclusao"
-
-export interface TransicaoAprovacao {
-  evento: EventoAprovacao
-  de: StatusProcesso
-  para: StatusProcesso
-  autor: string
-  papel: PapelUsuario
+export interface EventoDoProcesso {
+  evento: EventoProcesso
+  /**
+   * Quem agiu, com o nome que valia no ato.
+   *
+   * `null` nos eventos anteriores à gravação do nome (ADR-024): a tela diz que
+   * não foi registrado, em vez de atribuir a ação a alguém.
+   */
+  autor: string | null
+  /** ISO-8601, como o servidor devolveu. */
   data: string
-  comentario: string
-}
-
-/** Item de conformidade do checklist de aprovação (derivado do estado do processo). */
-export interface ItemChecklist {
-  ok: boolean
-  texto: string
-}
-
-/**
- * Projeção de um processo na fila de aprovação. Montada a partir do `Processo`
- * (não é mais uma fixture própria) — ver `getFilaAprovacoes`.
- */
-export interface ItemAprovacao {
-  processoId: string
-  objeto: string
-  /** Documentos do processo, na ordem do fluxo. Substitui a taxonomia antiga "ETP + TR". */
-  documentos: TipoDocumento[]
-  secretaria: string
-  responsavel: string
-  valorEstimado: number
-  modalidade: Modalidade
-  enviadoEm: string
-  status: StatusProcesso
-  parecerJuridico?: ParecerJuridico
-  checklist: ItemChecklist[]
-  trilha: TransicaoAprovacao[]
-}
-
-export type DecisaoAprovacao = "aprovar" | "rejeitar" | "retificar"
-
-/**
- * Apontamento de retificação — a comissão/gestor marca uma seção específica de
- * um documento como pendente de correção. O elaborador o vê no editor e resolve.
- * Substitui o "parecer em texto livre único" por rastreabilidade por seção (TCU).
- */
-export interface ApontamentoRetificacao {
-  id: string
-  processoId: string
-  tipo: TipoDocumento
-  /** Seção apontada; ausente = apontamento do documento como um todo. */
-  secaoId?: string
-  secaoTitulo?: string
-  texto: string
-  autor: string
-  papel: PapelUsuario
-  data: string
-  resolvido: boolean
+  /** A justificativa informada por quem agiu, quando houve. */
+  comentario: string | null
 }
 
 /**
@@ -269,26 +288,37 @@ export interface ApontamentoRetificacao {
  */
 export type TipoDocumento = "Cotação" | "ETP" | "Mapa" | "TR" | "Edital" | "Contrato"
 
-export interface DocumentoGerado {
-  /** Formato DOC-AAAA-NNNN. */
+/** Um arquivo que o servidor imprimiu, com o que ele mediu. */
+export interface ArquivoDoDocumento {
   id: string
-  prefeituraId: string
+  formato: "DOCX" | "PDF"
+  nomeDoArquivo: string
+  bytes: number
+  /** SHA-256 do arquivo, para conferir o que foi baixado. */
+  checksum: string
+}
+
+export interface DocumentoGerado {
+  /** Identificador da geração no servidor. */
+  id: string
+  entidadeId: string
   processoId: string
   titulo: string
   tipo: TipoDocumento
-  formato: string
   geradoEm: string
-  tamanho: string
   status: "final" | "rascunho"
   /** Versão vigente (1 na primeira geração; incrementa a cada regeração/retificação). */
   versao: number
+  /** Os arquivos impressos desta geração. Vazio só em documento ainda não gerado. */
+  arquivos: ArquivoDoDocumento[]
 }
 
 /** Entrada do histórico de versões de um documento (rastreabilidade — não sobrescreve). */
 export interface VersaoDocumento {
   versao: number
   geradoEm: string
-  tamanho: string
+  /** Tamanho do arquivo daquela versão; ausente quando não há arquivo guardado. */
+  tamanho?: string
   /** Motivo da versão: "Geração inicial", "Regeração", "Retificação: <apontamento>". */
   nota: string
 }
@@ -301,8 +331,12 @@ export interface Secretaria {
 
 /**
  * Perfil de acesso — controla o que o usuário pode ver e fazer no sistema.
- * Distinto de `PapelUsuario` (papel no fluxo de aprovação): um mesmo usuário
- * tem um perfil de acesso e atua com papéis de workflow conforme a etapa.
+ *
+ * Fonte única desde 21/08/2026: o antigo `PapelUsuario` (comissão, jurídico,
+ * gestor aprovador) descrevia posições do fluxo de aprovação entre setores, que
+ * saiu do produto. Sem esse fluxo, ele duplicava o perfil de acesso com outro
+ * vocabulário — e dois vocabulários para a mesma coisa é como um deles fica
+ * errado sem ninguém perceber.
  */
 export type PerfilAcesso = "admin_geral" | "coordenador" | "servidor"
 
@@ -312,33 +346,56 @@ export const PERFIL_ACESSO_LABEL: Record<PerfilAcesso, string> = {
   servidor: "Servidor",
 }
 
-/** Dados institucionais de uma prefeitura (tenant). Um tenant = uma prefeitura. */
+/**
+ * O que a entidade é. O servidor guarda o campo e **assume `prefeitura` quando
+ * ele não é informado** — por isso a tela pergunta: cadastrar uma câmara sem
+ * dizer o tipo a gravaria como prefeitura, que é justamente a confusão que o
+ * vocabulário "entidade" veio desfazer.
+ */
+export type TipoEntidade =
+  | "prefeitura"
+  | "camara"
+  | "autarquia"
+  | "fundacao"
+  | "consorcio"
+  | "outro"
+
+export const TIPO_ENTIDADE_LABEL: Record<TipoEntidade, string> = {
+  prefeitura: "Prefeitura",
+  camara: "Câmara",
+  autarquia: "Autarquia",
+  fundacao: "Fundação",
+  consorcio: "Consórcio",
+  outro: "Outro",
+}
+
+/** Dados institucionais de uma entidade (tenant). Um tenant = uma entidade. */
 export interface Tenant {
-  /** Formato PREF-NNN. */
+  /** UUID da organização no servidor. */
   id: string
-  orgao: string
-  unidade: string
+  nome: string
+  tipo: TipoEntidade
+  /** Qualificada como agência executiva: dobra os limites de dispensa (Art. 75, § 2º). */
+  agenciaExecutiva?: boolean
   secretarias: Secretaria[]
-  /** Nome do arquivo do logotipo/brasão configurado (metadado exibido). */
-  logoArquivo: string | null
-  /** Imagem do logotipo/brasão em data URL, para exibição (sidebar, timbre). Null = sem logo. */
-  logoDataUrl: string | null
+  /*
+    O brasão não mora aqui. Ele é do timbre, e quem o quer o pede por
+    `useTimbre`/`useBrasao` — a rota é autenticada e devolve bytes. Os campos
+    `logoArquivo` e `logoDataUrl` existiam nesta interface e eram sempre nulos:
+    a barra lateral lia daqui e ficava com o ícone genérico mesmo depois de a
+    entidade ter cadastrado o brasão.
+  */
   timbrado: boolean
   cabecalho: string
   rodape: string
-  pca: {
-    ano: string
-    arquivo: string | null
-    itensIndexados: number
-  }
 }
 
-/** Alias documental — o Tenant é a Prefeitura no domínio multi-tenant. */
-export type Prefeitura = Tenant
+/** Alias documental — o Tenant é a Entidade no domínio multi-tenant. */
+export type Entidade = Tenant
 
 /**
  * Usuário do sistema. A senha nunca trafega aqui — fica só no mapa de
- * credenciais do mock. `prefeituraId` é null apenas para o admin geral (LAHHM).
+ * credenciais do mock. `entidadeId` é null apenas para o admin geral (LAHHM).
  */
 export interface Usuario {
   /** Formato USR-NNN. */
@@ -350,32 +407,41 @@ export interface Usuario {
   cpf: string
   email: string
   cargo: string
+  /** Matrícula funcional; pode ser a chave de login (ADR-015). Ausente quando não informada. */
+  matricula?: string
+  /** Número do decreto de nomeação — o comissionado costuma lembrar dele, não da matrícula. */
+  decretoNomeacao?: string
   perfilAcesso: PerfilAcesso
-  /** Papel primário no fluxo de aprovação (autoria/exibição). */
-  papel: PapelUsuario
-  /** Prefeitura a que pertence. null = admin geral (LAHHM, sem prefeitura). */
-  prefeituraId: string | null
+  /** Entidade a que pertence. null = admin geral (LAHHM, sem entidade). */
+  entidadeId: string | null
   /** Secretaria em que atua (nome). */
   secretaria?: string
-  /** Foto de perfil em data URL; null = usa o avatar padrão (iniciais). */
-  avatarDataUrl: string | null
   /** Último acesso em ISO; atualizado no login. */
   ultimoAcesso: string
+  /**
+   * A senha ainda é a que o sistema sorteou.
+   *
+   * Enquanto for verdade a tela avisa, sem travar: a senha é conhecida por quem
+   * a entregou, e trocá-la é do interesse de quem recebeu (ADR-022).
+   */
+  precisaTrocarSenha?: boolean
   ativo: boolean
 }
 
 /** Sessão do usuário logado — o que a interface consome. */
 export interface Sessao {
   usuario: Usuario
-  /** Config da prefeitura do usuário; null para o admin geral. */
-  prefeitura: Tenant | null
+  /** Config da entidade do usuário; null para o admin geral. */
+  entidade: Tenant | null
 }
 
 export interface EstatisticasDashboard {
   processosAtivos: number
   processosNovosMes: number
-  aguardandoAprovacao: number
-  aguardandoUrgentes: number
+  /** Processos que já têm documento em elaboração. */
+  processosEmElaboracao: number
+  /** Documentos escolhidos no processo que ainda não foram gerados. */
+  documentosPendentes: number
   documentosGerados: number
   documentosSemana: number
   etpsConcluidos: number

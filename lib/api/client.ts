@@ -3,51 +3,84 @@
 // o build falha em vez de vazar estado entre requests/usuários.
 import "client-only"
 
+import { parecerDFDBase } from "@/lib/mocks/fixtures"
 import {
-  conteudoDemoETP,
-  documentos as documentosFixture,
-  estatisticas as estatisticasFixture,
-  parecerDFDBase,
-  prefeituras as prefeiturasFixture,
-  processos as processosFixture,
-  resumoDocumentos as resumoDocumentosFixture,
-  usuarios as usuariosFixture,
-} from "@/lib/mocks/fixtures"
-import { CATALOGO, REGRA_MODALIDADE, ordenar, secoesPorTipoBase } from "@/lib/documentos"
-import { proximoStatus, transicaoDe } from "@/lib/processos/fluxo"
-import { limpaCPF } from "@/lib/auth/cpf"
+  impactoTrocaModalidade,
+  motivoDaTrocaDeModalidade,
+  statusAposEditar,
+  tituloComRotuloDeVersao,
+  tituloDoDocumento,
+} from "@/lib/dominio"
+import type { BlocoDoDocumento, Retificacao } from "@/lib/dominio"
 import {
   autenticar,
   encerrarSessao,
   obterSessao,
   redefinirSenha,
   solicitarRedefinicao,
+  trocarPropriaSenha as trocarSenhaNaApi,
 } from "@/lib/api/auth-client"
 import {
   criarDepartamento as criarDepartamentoNaApi,
-  criarPrefeitura as criarPrefeituraNaApi,
+  atualizarEntidade as atualizarEntidadeNaApi,
+  criarEntidade as criarEntidadeNaApi,
+  atualizarUsuario as atualizarUsuarioNaApi,
   criarUsuario as criarUsuarioNaApi,
   desativarDepartamento as desativarDepartamentoNaApi,
-  desativarPrefeitura as desativarPrefeituraNaApi,
+  renomearDepartamento as renomearDepartamentoNaApi,
+  desativarEntidade as desativarEntidadeNaApi,
   desativarUsuario as desativarUsuarioNaApi,
-  listarPrefeituras as listarPrefeiturasNaApi,
+  listarEntidades as listarEntidadesNaApi,
   listarUsuarios as listarUsuariosNaApi,
   obterTenant as obterTenantNaApi,
 } from "@/lib/api/access-client"
-import { criarProcessoReal, listarProcessos } from "@/lib/api/procurement-client"
-import { dataBrasiliaISO, dataHoraBrasiliaISO } from "@/lib/format"
+import {
+  acervoDoNome,
+  resumoDoAcervo,
+} from "@/lib/api/generation-client"
+import {
+  abrirDocumento,
+  type DocumentoEmElaboracao,
+  acrescentarSecao,
+  compararVersoes as compararVersoesNaApi,
+  concluirDocumento,
+  corpoDaVersaoVigente,
+  gerarTextoDaSecao,
+  excluirSecao,
+  historicoDeVersoes,
+  reordenarSecoes,
+  salvarSecao,
+  versoesComTexto,
+} from "@/lib/api/authoring-client"
+import {
+  atualizarProcessoReal,
+  consolidacaoDaDemanda,
+  criarProcessoReal,
+  encerrarProcessoReal,
+  listarProcessos,
+  obterProcesso,
+  reabrirProcessoReal,
+  estatisticasDeProcesso,
+  trilhaDoProcesso,
+} from "@/lib/api/procurement-client"
+import {
+  declararPrevisao,
+  importarPlano,
+  baixarPlano,
+  planoVigente,
+  planosDoOrgao,
+  verificacaoDoProcesso,
+} from "@/lib/api/pca-client"
+import { baixarArquivo, gerarArquivos } from "@/lib/api/generation-client"
+import { dataHoraBrasiliaISO } from "@/lib/format"
 import type {
-  ApontamentoRetificacao,
-  DecisaoAprovacao,
+  FundamentoDaDispensa,
   DocumentoGerado,
   EstatisticasDashboard,
-  EventoAprovacao,
-  ItemAprovacao,
-  ItemChecklist,
+  EventoDoProcesso,
+  Modalidade,
   NovoProcessoInput,
   ParecerDFD,
-  ParecerJuridico,
-  PapelUsuario,
   PerfilAcesso,
   Processo,
   ResumoDocumentos,
@@ -57,7 +90,7 @@ import type {
   StatusProcesso,
   Tenant,
   TipoDocumento,
-  TransicaoAprovacao,
+  TipoEntidade,
   Usuario,
   VersaoDocumento,
 } from "@/lib/types"
@@ -70,111 +103,42 @@ import type {
 
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T
 
-/** Ano-série dos identificadores do órgão (PROC-/DOC-). Mantém a numeração coerente com o acervo. */
-const ANO_SERIE = "2024"
 
 function delay(ms = 350 + Math.random() * 350): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-/* ── Estado em memória (persiste durante a sessão) ─────────────────────────── */
-const db = {
-  usuarios: clone(usuariosFixture),
-  prefeituras: clone(prefeiturasFixture),
-  /** Sessão real usada como identidade pelos módulos ainda mockados. */
-  sessao: null as Sessao | null,
-  processos: clone(processosFixture),
-  /** Seções por documento — chave `${processoId}:${tipo}`. */
-  secoes: new Map<string, SecaoDocumento[]>(),
-  pareceresDFD: new Map<string, ParecerDFD>(),
-  documentos: clone(documentosFixture),
-  /** Histórico de versões por documento — chave `${processoId}:${tipo}`. */
-  versoes: new Map<string, VersaoDocumento[]>(),
-  /** Apontamentos de retificação (por seção) abertos e resolvidos. */
-  apontamentos: [] as ApontamentoRetificacao[],
-  estatisticas: clone(estatisticasFixture),
-  resumoDocumentos: clone(resumoDocumentosFixture),
-  seqProcesso: 90,
-  // Acima do maior id gerado pelas fixtures (evita colisão com novos documentos).
-  seqDocumento: 200,
-  seqApontamento: 0,
-  seqUsuario: usuariosFixture.length,
-  seqPrefeitura: prefeiturasFixture.length,
-}
-
-/** Usuário logado, ou null. */
-function usuarioLogado(): Usuario | null {
-  return db.sessao?.usuario ?? null
-}
-
-/** Usuário logado ou erro (para operações que exigem sessão). */
-function exigeSessao(): Usuario {
-  const u = usuarioLogado()
-  if (!u) throw new Error("Sessão expirada. Faça login novamente.")
-  return u
-}
-
-/** Prefeitura de um usuário (null para admin geral). */
-function prefeituraDo(usuario: Usuario): Tenant | null {
-  if (db.sessao?.usuario.id === usuario.id) return db.sessao.prefeitura
-  return usuario.prefeituraId ? db.prefeituras.find((p) => p.id === usuario.prefeituraId) ?? null : null
-}
-
-// Semeia o histórico de versões (v1) dos documentos já existentes nas fixtures,
-// para que getHistoricoVersoes seja coerente desde o início.
-for (const doc of db.documentos) {
-  db.versoes.set(`${doc.processoId}:${doc.tipo}`, [
-    { versao: doc.versao, geradoEm: doc.geradoEm, tamanho: doc.tamanho, nota: "Geração inicial" },
-  ])
-}
-
-function secoesDoDocumento(processoId: string, tipo: TipoDocumento): SecaoDocumento[] {
-  const chave = `${processoId}:${tipo}`
-  let secoes = db.secoes.get(chave)
-  if (!secoes) {
-    // As seções nascem em branco a partir do catálogo de domínio.
-    secoes = clone(secoesPorTipoBase[tipo])
-    const jaGerado = db.documentos.some((d) => d.processoId === processoId && d.tipo === tipo)
-    if (jaGerado) {
-      // Documento já gerado → todas as seções contam como concluídas (progresso 100%).
-      secoes = secoes.map((s) => ({ ...s, status: "Completo" }))
-    } else if (tipo === "ETP" && processoId === "PROC-2024-089") {
-      // Só o ETP do processo de referência já chega com seções redigidas.
-      secoes = secoes.map((s) => {
-        const conteudo = conteudoDemoETP[s.id]
-        return conteudo ? { ...s, conteudo, status: "Completo" as const } : s
-      })
-    }
-    db.secoes.set(chave, secoes)
-  }
-  return secoes
-}
-
-/* ── Autenticação / sessão ─────────────────────────────────────────────────── */
-
-function montarSessao(usuario: Usuario): Sessao {
-  return { usuario: clone(usuario), prefeitura: clone(prefeituraDo(usuario)) }
-}
+/* ── Estado em memória ─────────────────────────────────────────────────────── */
 
 /**
- * Login real por CPF + senha. O access token fica somente em memória e o
- * refresh token permanece no cookie HttpOnly emitido pelo backend.
+ * O que sobrou do "banco" do protótipo: o parecer do DFD, e mais nada.
+ *
+ * Até 26/08/2026 este objeto ainda guardava processos, documentos, versões,
+ * corpos, estatísticas, resumo do acervo e a sessão. **Nada disso era lido**: as
+ * telas passaram a perguntar ao servidor entre os Blocos 9 e 12, e as escritas
+ * continuaram aqui, alimentando um estado que ninguém consultava. Estado morto
+ * não é inofensivo — o próximo a ler este arquivo acredita nele.
+ *
+ * O parecer fica porque é o único ainda declarado como sintético
+ * (`DADOS_SINTETICOS.parecerDfd`), e sai quando o modelo entrar (12.2). A tela
+ * diz isso a quem lê.
  */
-export async function login(cpf: string, senha: string): Promise<Sessao> {
-  const sessao = await autenticar(limpaCPF(cpf), senha)
-  db.sessao = clone(sessao)
+const db = {
+  pareceresDFD: new Map<string, ParecerDFD>(),
+}
+
+export async function login(identificador: string, senha: string): Promise<Sessao> {
+  const sessao = await autenticar(identificador, senha)
   return clone(sessao)
 }
 
 export async function logout(): Promise<void> {
   await encerrarSessao()
-  db.sessao = null
 }
 
 /** Sessão atual, ou null se ninguém está logado. */
 export async function getSessao(): Promise<Sessao | null> {
   const sessao = await obterSessao()
-  db.sessao = sessao ? clone(sessao) : null
   return sessao ? clone(sessao) : null
 }
 
@@ -190,62 +154,27 @@ export async function resetarSenha(token: string, senha: string): Promise<void> 
   await redefinirSenha(token, senha)
 }
 
-/** Atualiza a foto de perfil do usuário logado (data URL ou null para o padrão). */
-export async function atualizarAvatar(avatarDataUrl: string | null): Promise<Sessao> {
-  await delay(200)
-  const usuario = exigeSessao()
-  usuario.avatarDataUrl = avatarDataUrl
-  return montarSessao(usuario)
-}
-
-/** Edição dos próprios dados (Meu Perfil). CPF e perfil de acesso não mudam aqui. */
-export interface MeuPerfilInput {
-  nome?: string
-  email?: string
-  cargo?: string
-  secretaria?: string
-  avatarDataUrl?: string | null
-}
-
-export async function atualizarMeuPerfil(input: MeuPerfilInput): Promise<Sessao> {
-  await delay(400)
-  const usuario = exigeSessao()
-  if (input.nome != null && input.nome.trim() !== "") {
-    usuario.nome = input.nome.trim()
-    usuario.primeiroNome = usuario.nome.split(" ")[0] ?? usuario.nome
-    usuario.iniciais = iniciaisDe(usuario.nome)
-  }
-  if (input.email != null) usuario.email = input.email.trim()
-  if (input.cargo != null) usuario.cargo = input.cargo.trim()
-  if (input.secretaria !== undefined) usuario.secretaria = input.secretaria
-  if (input.avatarDataUrl !== undefined) usuario.avatarDataUrl = input.avatarDataUrl
-  return montarSessao(usuario)
-}
-
-/** Iniciais a partir do nome (2 primeiras palavras). */
-function iniciaisDe(nome: string): string {
-  const partes = nome.trim().split(/\s+/).filter(Boolean)
-  const primeira = partes[0]?.[0] ?? ""
-  const ultima = partes.length > 1 ? (partes[partes.length - 1]?.[0] ?? "") : ""
-  return (primeira + ultima).toUpperCase() || "?"
-}
-
-/** Estatísticas do dashboard, escopadas à prefeitura do usuário logado. */
+/**
+ * Os indicadores do painel.
+ *
+ * Duas chamadas porque são dois assuntos: quantos processos existem e em que
+ * estado (contratação), e quantos arquivos foram impressos e quando (acervo).
+ * Nenhum módulo do servidor conta pelo outro — a soma é da tela (ADR-025).
+ */
 export async function getEstatisticas(): Promise<EstatisticasDashboard> {
-  await delay()
-  const usuario = usuarioLogado()
-  const escopo = usuario?.prefeituraId ?? null
-  const meus = escopo ? db.processos.filter((p) => p.prefeituraId === escopo) : db.processos
-  const docs = escopo ? db.documentos.filter((d) => d.prefeituraId === escopo) : db.documentos
-  const ativos = meus.filter((p) => !["concluido", "rejeitado"].includes(p.status)).length
-  const aguardando = meus.filter((p) => p.status === "aguardando").length
-  const etps = docs.filter((d) => d.tipo === "ETP").length
+  const [processos, acervo] = await Promise.all([
+    estatisticasDeProcesso(),
+    resumoDoAcervo(),
+  ])
   return {
-    ...clone(db.estatisticas),
-    processosAtivos: ativos,
-    aguardandoAprovacao: aguardando,
-    documentosGerados: docs.length,
-    etpsConcluidos: etps,
+    processosAtivos: processos.ativos,
+    processosNovosMes: processos.criadosNoMes,
+    processosEmElaboracao: processos.iniciados,
+    documentosPendentes: processos.documentosPendentes,
+    documentosGerados: acervo.total,
+    documentosSemana: acervo.ultimosSeteDias,
+    etpsConcluidos: acervo.etpsConcluidos,
+    taxaConclusao: processos.taxaConclusao,
   }
 }
 
@@ -265,26 +194,13 @@ export interface Paginado<T> {
   totalPaginas: number
 }
 
-/** Ids de prefeitura visíveis ao usuário logado (admin vê todas). */
-function escopoPrefeituras(): string[] | null {
-  const usuario = usuarioLogado()
-  return usuario?.prefeituraId ? [usuario.prefeituraId] : null
-}
 
 export async function getProcessos(params: ListaProcessosParams = {}): Promise<Paginado<Processo>> {
   return listarProcessos(params)
 }
 
 export async function getProcesso(id: string): Promise<Processo> {
-  await delay()
-  const proc = db.processos.find((p) => p.id === id)
-  if (!proc) throw new Error(`Processo ${id} não encontrado`)
-  return clone(proc)
-}
-
-export async function getProximoNumeroProcesso(): Promise<string> {
-  await delay(150)
-  return `PROC-${ANO_SERIE}-${String(db.seqProcesso).padStart(3, "0")}`
+  return obterProcesso(id)
 }
 
 export async function criarProcesso(input: NovoProcessoInput): Promise<Processo> {
@@ -296,23 +212,62 @@ export interface AtualizarProcessoInput {
   secretaria?: string
   objeto?: string
   objetoDemanda?: string
-  dfdArquivo?: string | null
   documentos?: Array<TipoDocumento>
+  modalidade?: Modalidade
+  /** O valor estimado, no formato do formulário — a conciliação o adota (§75). */
+  valorEstimado?: string
+  /** O inciso do Art. 75, declarado depois da abertura (§77). */
+  fundamentoDaDispensa?: FundamentoDaDispensa
+  /**
+   * Preenchida quando a lista de documentos é mantida divergindo da
+   * recomendação. Vai literal para a trilha — é ela que responde ao controle.
+   */
+  justificativaModalidade?: string
 }
 
-/** Edições feitas no hub do processo (secretaria, descrição, objeto da demanda, DFD, documentos). */
+/**
+ * Edições feitas no hub do processo.
+ *
+ * O motivo da troca de modalidade vai **com** a edição, e não para um registro
+ * paralelo: até o 12.1 ele era guardado na memória do navegador, e a trilha do
+ * servidor registrava que o processo mudou sem registrar por quê.
+ */
 export async function atualizarProcesso(input: AtualizarProcessoInput): Promise<Processo> {
-  await delay(400)
-  const proc = db.processos.find((p) => p.id === input.id)
-  if (!proc) throw new Error(`Processo ${input.id} não encontrado`)
-  if (input.secretaria !== undefined) proc.secretaria = input.secretaria
-  if (input.objeto !== undefined) proc.objeto = input.objeto
-  if (input.objetoDemanda !== undefined) proc.objetoDemanda = input.objetoDemanda
-  if (input.dfdArquivo !== undefined) proc.dfdArquivo = input.dfdArquivo
-  if (input.documentos !== undefined) proc.documentos = input.documentos
-  proc.atualizadoEm = dataBrasiliaISO()
-  return clone(proc)
+  const atual = await obterProcesso(input.id)
+  let motivo: string | undefined
+  if (input.modalidade !== undefined && input.modalidade !== atual.modalidade) {
+    // Contra a lista que o processo tinha, e não contra a que está sendo salva:
+    // com a lista nova, o que a tela acabou de remover já não estaria lá, e a
+    // trilha registraria "nada removido" exatamente quando algo foi.
+    const impacto = impactoTrocaModalidade(
+      atual.modalidade,
+      input.modalidade,
+      atual.documentos,
+      await docsGeradosDo(atual.id),
+    )
+    motivo = motivoDaTrocaDeModalidade(
+      atual.modalidade,
+      input.modalidade,
+      impacto,
+      input.justificativaModalidade ?? "",
+    )
+  }
+  return atualizarProcessoReal(atual, {
+    objeto: input.objeto,
+    objetoDemanda: input.objetoDemanda,
+    modalidade: input.modalidade,
+    documentos: input.documentos,
+    valorEstimado: input.valorEstimado,
+    fundamentoDaDispensa: input.fundamentoDaDispensa,
+    motivo,
+  })
 }
+
+/** A trilha do processo, como o servidor a registrou (ADR-024). */
+export async function getTrilha(processoId: string): Promise<EventoDoProcesso[]> {
+  return trilhaDoProcesso(processoId)
+}
+
 
 /* ── Verificação do DFD ────────────────────────────────────────────────────── */
 
@@ -335,8 +290,22 @@ export async function getParecerDFD(processoId: string): Promise<ParecerDFD | nu
 /* ── Seções de documento (todos os tipos do catálogo) ──────────────────────── */
 
 export async function getSecoes(processoId: string, tipo: TipoDocumento): Promise<SecaoDocumento[]> {
-  await delay()
-  return clone(secoesDoDocumento(processoId, tipo))
+  return (await abrirDocumento(processoId, tipo)).secoes
+}
+
+/**
+ * O documento em elaboração inteiro.
+ *
+ * <p>`getSecoes` devolve só as seções e joga fora o resto da mesma resposta. O
+ * editor precisa do estado do documento — se o rascunho já não é o que a versão
+ * gerada guardou (§80) —, e pedir o mesmo documento duas vezes seriam duas
+ * viagens pela mesma resposta.
+ */
+export async function getDocumento(
+  processoId: string,
+  tipo: TipoDocumento,
+): Promise<DocumentoEmElaboracao> {
+  return abrirDocumento(processoId, tipo)
 }
 
 export interface AtualizarSecaoInput {
@@ -345,287 +314,229 @@ export interface AtualizarSecaoInput {
   secaoId: string
   conteudo: string
   status?: SecaoDocumento["status"]
+  /**
+   * Por que a seção dispensável fica em branco (Art. 18, § 2º).
+   *
+   * `undefined` não mexe no que já está gravado; string vazia retira a dispensa
+   * — é assim que a tela desfaz sem precisar de uma operação própria.
+   */
+  justificativaDispensa?: string
 }
 
 export async function atualizarSecao(input: AtualizarSecaoInput): Promise<SecaoDocumento> {
-  await delay(400)
-  const secoes = secoesDoDocumento(input.processoId, input.tipo)
-  const secao = secoes.find((s) => s.id === input.secaoId)
+  const documento = await salvarSecao(
+    input.processoId,
+    input.tipo,
+    input.secaoId,
+    input.conteudo,
+    input.justificativaDispensa,
+  )
+  const secao = documento.secoes.find((s) => s.id === input.secaoId)
   if (!secao) throw new Error(`Seção ${input.secaoId} não encontrada`)
-  secao.conteudo = input.conteudo
-  // Esvaziar uma seção antes concluída volta o status para "Não iniciado" —
-  // senão o rail e o percentual do documento contariam seção vazia como completa.
-  secao.status = input.status ?? (input.conteudo.trim() ? "Completo" : "Não iniciado")
-  return clone(secao)
-}
-
-/** Geração de conteúdo por IA — simulada com delay maior. */
-export async function gerarSecao(processoId: string, tipo: TipoDocumento, secaoId: string): Promise<SecaoDocumento> {
-  await delay(1800)
-  const secoes = secoesDoDocumento(processoId, tipo)
-  const secao = secoes.find((s) => s.id === secaoId)
-  if (!secao) throw new Error(`Seção ${secaoId} não encontrada`)
-  const processo = db.processos.find((p) => p.id === processoId)
-  const objeto = processo?.objetoDemanda || processo?.objeto || "objeto da contratação"
-  secao.conteudo =
-    `[Conteúdo gerado pela IA] ${secao.titulo} referente ao processo ${processoId} — ` +
-    `${objeto}. Elaborado em conformidade com o ` +
-    `${secao.fundamentoLegal}, considerando o DFD anexado, o PCA vigente e as informações prestadas pela ${processo?.secretaria ?? "secretaria demandante"}.`
-  secao.status = "Completo"
-  return clone(secao)
-}
-
-/* ── Fluxo de status: envio, encaminhamento, decisão, conclusão ────────────── */
-
-const PIPELINE: StatusProcesso[] = ["em_revisao", "aguardando", "aprovado", "rejeitado"]
-
-function processoOuErro(processoId: string): Processo {
-  const processo = db.processos.find((p) => p.id === processoId)
-  if (!processo) throw new Error(`Processo ${processoId} não encontrado`)
-  return processo
-}
-
-function docsGeradosDo(processoId: string): TipoDocumento[] {
-  return db.documentos.filter((d) => d.processoId === processoId).map((d) => d.tipo)
-}
-
-/** Documentos obrigatórios da modalidade ainda não gerados — trava o envio. */
-function obrigatoriosPendentes(processo: Processo): TipoDocumento[] {
-  const gerados = docsGeradosDo(processo.id)
-  return REGRA_MODALIDADE[processo.modalidade].obrigatorios
-    .filter((t) => processo.documentos.includes(t) && !gerados.includes(t))
+  return secao
 }
 
 /**
- * Checklist de conformidade — derivado do estado do processo (não é mais uma
- * fixture). Cada obrigatório gerado, o parecer jurídico (Art. 53) e a
- * verificação do DFD viram itens verificáveis.
+ * Pede ao servidor a redação da seção.
+ *
+ * O texto volta para o rascunho e **não** é gravado: quem decide se aquilo entra
+ * no documento é quem assina. A seção devolvida traz o texto proposto com o
+ * status que ela teria se fosse aceito — e é a tela que decide aceitar.
  */
-function montarChecklist(processo: Processo): ItemChecklist[] {
-  const gerados = docsGeradosDo(processo.id)
-  const itens: ItemChecklist[] = ordenar(
-    REGRA_MODALIDADE[processo.modalidade].obrigatorios.filter((t) => processo.documentos.includes(t))
-  ).map((tipo) => ({
-    ok: gerados.includes(tipo),
-    texto: `${CATALOGO[tipo].titulo} gerado e finalizado`,
-  }))
-  itens.push({
-    ok: processo.parecerJuridico?.favoravel === true,
-    texto: "Parecer jurídico favorável (Art. 53, Lei 14.133/21)",
-  })
-  const semApontamentos = !db.apontamentos.some((a) => a.processoId === processo.id && !a.resolvido)
-  itens.push({ ok: semApontamentos, texto: "Nenhum apontamento de retificação pendente" })
-  return itens
-}
-
-function empurrarTransicao(processo: Processo, evento: EventoAprovacao, papel: PapelUsuario, comentario: string): void {
-  const para = proximoStatus(processo.status, evento)
-  if (!para) throw new Error(`Transição inválida: ${evento} a partir de ${processo.status}`)
-  const transicao: TransicaoAprovacao = {
-    evento,
-    de: processo.status,
-    para,
-    autor: usuarioLogado()?.nome ?? "Sistema",
-    papel,
-    data: dataBrasiliaISO(),
-    comentario,
-  }
-  processo.trilha.push(transicao)
-  processo.status = para
-  processo.atualizadoEm = dataBrasiliaISO()
-}
-
-/** Prazo de análise: 7 dias a partir de hoje (fuso de Brasília). */
-function prazoAnalise(): string {
-  const d = new Date()
-  d.setDate(d.getDate() + 7)
-  return dataBrasiliaISO(d)
-}
-
-/** Envia o processo para análise: rascunho → em_revisao. Exige os obrigatórios gerados. */
-export async function enviarParaAprovacao(processoId: string, comentario: string): Promise<Processo> {
-  await delay(500)
-  const processo = processoOuErro(processoId)
-  if (!transicaoDe(processo.status, "envio")) {
-    throw new Error(`O processo não pode ser enviado a partir de "${processo.status}".`)
-  }
-  const pendentes = obrigatoriosPendentes(processo)
-  if (processo.status === "rascunho" && pendentes.length > 0) {
-    throw new Error(`Gere os documentos obrigatórios antes de enviar: ${pendentes.join(", ")}.`)
-  }
-  processo.enviadoEm = dataBrasiliaISO()
-  processo.prazo = prazoAnalise()
-  empurrarTransicao(processo, "envio", "servidor_compras", comentario || "Documentos concluídos; enviado para análise.")
-  return clone(processo)
-}
-
-/** Registra o parecer jurídico de controle prévio de legalidade (Art. 53). */
-export async function registrarParecerJuridico(
+export async function gerarSecao(
   processoId: string,
-  favoravel: boolean,
-  comentario: string
-): Promise<Processo> {
-  await delay(450)
-  const processo = processoOuErro(processoId)
-  const parecer: ParecerJuridico = { favoravel, autor: usuarioLogado()?.nome ?? "Jurídico", data: dataBrasiliaISO(), comentario }
-  processo.parecerJuridico = parecer
-  processo.atualizadoEm = dataBrasiliaISO()
-  return clone(processo)
+  tipo: TipoDocumento,
+  secaoId: string,
+  rascunho?: string,
+): Promise<SecaoDocumento> {
+  const documento = await abrirDocumento(processoId, tipo)
+  const secao = documento.secoes.find((s) => s.id === secaoId)
+  if (!secao) throw new Error(`Seção ${secaoId} não encontrada`)
+  const texto = await gerarTextoDaSecao(processoId, tipo, secaoId, rascunho)
+  return { ...secao, conteudo: texto, status: statusAposEditar(texto) }
 }
 
-/** Encaminha ao gestor aprovador: em_revisao → aguardando. Exige parecer jurídico favorável. */
-export async function encaminharParaAprovacao(processoId: string, comentario: string): Promise<Processo> {
-  await delay(500)
-  const processo = processoOuErro(processoId)
-  if (proximoStatus(processo.status, "envio") !== "aguardando") {
-    throw new Error(`O processo não pode ser encaminhado a partir de "${processo.status}".`)
-  }
-  if (processo.parecerJuridico?.favoravel !== true) {
-    throw new Error("Registre um parecer jurídico favorável (Art. 53) antes de encaminhar ao gestor.")
-  }
-  empurrarTransicao(processo, "envio", "comissao", comentario || "Documentação conferida; segue para decisão do gestor.")
-  return clone(processo)
-}
+/* ── Ciclo do processo ─────────────────────────────────────────────────────── */
 
-/** Conclui o processo aprovado: aprovado → concluido. */
-export async function concluirProcesso(processoId: string, comentario: string): Promise<Processo> {
-  await delay(450)
-  const processo = processoOuErro(processoId)
-  if (proximoStatus(processo.status, "conclusao") !== "concluido") {
-    throw new Error(`Só é possível concluir um processo aprovado (atual: "${processo.status}").`)
-  }
-  empurrarTransicao(processo, "conclusao", "gestor_aprovador", comentario || "Processo homologado e concluído.")
-  return clone(processo)
-}
-
-/* ── Aprovações ────────────────────────────────────────────────────────────── */
-
-/** Projeta um processo do pipeline em item da fila de aprovação. */
-function projetarAprovacao(processo: Processo): ItemAprovacao {
-  return {
-    processoId: processo.id,
-    objeto: processo.objeto,
-    documentos: ordenar(processo.documentos),
-    secretaria: processo.secretaria,
-    responsavel: processo.responsavel,
-    valorEstimado: processo.valorEstimado,
-    modalidade: processo.modalidade,
-    enviadoEm: processo.enviadoEm ?? processo.criadoEm,
-    status: processo.status,
-    parecerJuridico: processo.parecerJuridico,
-    checklist: montarChecklist(processo),
-    trilha: processo.trilha,
-  }
+/**
+ * Os documentos que este processo já gerou.
+ *
+ * <p>Do servidor, e não da memória da aba. Até 26/08/2026 esta função lia o
+ * acervo em memória do protótipo: recarregada a página, ela devolvia lista
+ * vazia para todo processo real — e a troca de modalidade avisava "nenhum
+ * documento gerado é afetado" justamente quando havia documento gerado.
+ */
+async function docsGeradosDo(processoId: string): Promise<TipoDocumento[]> {
+  const acervo = await acervoDoNome()
+  return acervo.filter((d) => d.processoId === processoId).map((d) => d.tipo)
 }
 
 /**
- * Fila de aprovação — derivada dos processos no pipeline. Ordena pelo estágio do
- * fluxo (Aguardando primeiro) e, dentro do estágio, pelo envio mais antigo — quem
- * espera há mais tempo aparece no topo.
+ * Encerra o processo. A plataforma termina aqui: protocolo, assinatura e
+ * aprovação acontecem no sistema de processo administrativo da entidade.
+ *
+ * Documento pendente **não impede** o encerramento — apenas exige justificativa.
+ * A plataforma orienta; quem decide é o servidor.
  */
-export async function getFilaAprovacoes(): Promise<ItemAprovacao[]> {
-  await delay()
-  const escopo = escopoPrefeituras()
-  const ordemStatus: Record<string, number> = { aguardando: 0, em_revisao: 1, aprovado: 2, rejeitado: 3 }
-  const itens = db.processos
-    .filter((p) => PIPELINE.includes(p.status) && (!escopo || escopo.includes(p.prefeituraId)))
-    .map(projetarAprovacao)
-    .sort((a, b) => {
-      const estagio = (ordemStatus[a.status] ?? 9) - (ordemStatus[b.status] ?? 9)
-      if (estagio !== 0) return estagio
-      return a.enviadoEm < b.enviadoEm ? -1 : a.enviadoEm > b.enviadoEm ? 1 : 0
-    })
-  return clone(itens)
+/**
+ * Encerra o processo. A plataforma termina aqui: protocolo, assinatura e
+ * aprovação acontecem no sistema de processo administrativo da entidade.
+ *
+ * Documento pendente **não impede** o encerramento — apenas exige justificativa,
+ * e quem cobra isso é o servidor, que sabe o que já foi concluído. Até 22/08/2026
+ * esta função procurava o processo nas fixtures: todo processo real caía em
+ * "não encontrado", e o botão da tela de detalhe estourava.
+ */
+export async function encerrarProcesso(processoId: string, justificativa = ""): Promise<Processo> {
+  // Sem registro paralelo: o servidor grava o encerramento com a justificativa,
+  // e a trilha da tela lê de lá (ADR-024).
+  return encerrarProcessoReal(processoId, justificativa)
 }
 
-export interface ApontamentoInput {
-  tipo: TipoDocumento
-  secaoId?: string
-  secaoTitulo?: string
-  texto: string
+/** Reabre um processo encerrado para retificar documento. */
+export async function reabrirProcesso(processoId: string, motivo: string): Promise<Processo> {
+  return reabrirProcessoReal(processoId, motivo)
 }
 
-export interface DecisaoInput {
-  processoId: string
-  decisao: DecisaoAprovacao
-  comentario: string
-  /** Apontamentos por seção — obrigatórios quando a decisão é "retificar". */
-  apontamentos?: ApontamentoInput[]
-}
-
-export async function decidirAprovacao(input: DecisaoInput): Promise<ItemAprovacao> {
-  await delay(500)
-  const processo = processoOuErro(input.processoId)
-  const evento: EventoAprovacao =
-    input.decisao === "aprovar" ? "aprovacao" : input.decisao === "rejeitar" ? "rejeicao" : "retificacao"
-  if (!transicaoDe(processo.status, evento)) {
-    throw new Error(`Decisão "${input.decisao}" inválida a partir de "${processo.status}".`)
-  }
-  if (input.decisao === "aprovar" && montarChecklist(processo).some((i) => !i.ok)) {
-    throw new Error("O checklist de conformidade precisa estar integralmente atendido para aprovar.")
-  }
-  // Retificação abre apontamentos por seção — a trilha por seção que o TCU espera.
-  if (input.decisao === "retificar") {
-    for (const ap of input.apontamentos ?? []) {
-      db.apontamentos.unshift({
-        id: `APT-${String(++db.seqApontamento).padStart(4, "0")}`,
-        processoId: processo.id,
-        tipo: ap.tipo,
-        secaoId: ap.secaoId,
-        secaoTitulo: ap.secaoTitulo,
-        texto: ap.texto,
-        autor: usuarioLogado()?.nome ?? "Gestor",
-        papel: "gestor_aprovador",
-        data: dataBrasiliaISO(),
-        resolvido: false,
-      })
-    }
-  }
-  empurrarTransicao(processo, evento, "gestor_aprovador", input.comentario)
-  return clone(projetarAprovacao(processo))
-}
-
-/* ── Apontamentos de retificação ───────────────────────────────────────────── */
-
-export async function getApontamentos(processoId: string): Promise<ApontamentoRetificacao[]> {
-  await delay()
-  return clone(db.apontamentos.filter((a) => a.processoId === processoId))
-}
-
-export async function resolverApontamento(id: string): Promise<ApontamentoRetificacao> {
-  await delay(350)
-  const ap = db.apontamentos.find((a) => a.id === id)
-  if (!ap) throw new Error(`Apontamento ${id} não encontrado`)
-  ap.resolvido = true
-  return clone(ap)
-}
 
 /* ── Documentos ────────────────────────────────────────────────────────────── */
 
+/** O acervo do órgão, como o servidor o guarda. */
 export async function getDocumentos(): Promise<DocumentoGerado[]> {
-  await delay()
-  const escopo = escopoPrefeituras()
-  const docs = escopo ? db.documentos.filter((d) => escopo.includes(d.prefeituraId)) : db.documentos
-  return clone(docs)
+  return acervoDoNome()
 }
 
+/**
+ * Os números acima da lista de Documentos.
+ *
+ * Contados no banco, e não deduzidos da lista: a lista é o que cabe mostrar, e
+ * o acervo é o que existe.
+ */
 export async function getResumoDocumentos(): Promise<ResumoDocumentos> {
-  await delay()
-  const escopo = escopoPrefeituras()
-  if (!escopo) return clone(db.resumoDocumentos)
-  const docs = db.documentos.filter((d) => escopo.includes(d.prefeituraId))
-  const totalKB = docs.reduce((s, d) => s + (Number.parseInt(d.tamanho, 10) || 0), 0)
-  return { total: docs.length, esteMes: docs.length, armazenamentoMB: Math.round((totalKB / 1024) * 10) / 10 }
+  const resumo = await resumoDoAcervo()
+  return {
+    total: resumo.total,
+    esteMes: resumo.esteMes,
+    // O servidor mede em bytes; converter é decisão de apresentação.
+    armazenamentoMB: Math.round(resumo.bytesArmazenados / 1024 / 1024),
+  }
+}
+
+/**
+ * O texto do documento como ele saiu na geração.
+ *
+ * Vazio quando o documento ainda não foi gerado — não há retrato de algo que
+ * não aconteceu.
+ */
+export async function getCorpoDocumento(
+  processoId: string,
+  tipo: TipoDocumento,
+): Promise<BlocoDoDocumento[]> {
+  return corpoDaVersaoVigente(processoId, tipo)
 }
 
 export async function getHistoricoVersoes(processoId: string, tipo: TipoDocumento): Promise<VersaoDocumento[]> {
-  await delay()
-  return clone(db.versoes.get(`${processoId}:${tipo}`) ?? [])
+  return historicoDeVersoes(processoId, tipo)
+}
+
+/**
+ * As versões com o texto de cada uma.
+ *
+ * Separada de `getHistoricoVersoes` porque carrega o corpo inteiro: a listagem
+ * do histórico não precisa dele, e trazê-lo ali faria toda abertura de painel
+ * baixar todas as versões do documento.
+ */
+export async function getVersoesComTexto(processoId: string, tipo: TipoDocumento) {
+  return versoesComTexto(processoId, tipo)
+}
+
+/** Acrescenta uma seção criada pelo servidor, ancorada em uma do catálogo. */
+export async function acrescentarSecaoDoDocumento(
+  processoId: string,
+  tipo: TipoDocumento,
+  titulo: string,
+  ancora: string,
+  subtopico: boolean,
+) {
+  return acrescentarSecao(processoId, tipo, titulo, ancora, subtopico)
+}
+
+/** Exclui uma seção criada pelo servidor. As do catálogo têm a dispensa. */
+export async function excluirSecaoDoDocumento(
+  processoId: string,
+  tipo: TipoDocumento,
+  secaoId: string,
+) {
+  return excluirSecao(processoId, tipo, secaoId)
+}
+
+/** Reordena as seções criadas pelo servidor. As do catálogo seguem a lei. */
+export async function reordenarSecoesDoDocumento(
+  processoId: string,
+  tipo: TipoDocumento,
+  secoesNaOrdem: string[],
+) {
+  return reordenarSecoes(processoId, tipo, secoesNaOrdem)
+}
+
+/** A demanda consolidada dos DFDs do processo. */
+export async function getConsolidacaoDaDemanda(processoId: string) {
+  return consolidacaoDaDemanda(processoId)
+}
+
+/** A verificação de previsão no PCA para o processo. */
+export async function getVerificacaoPca(processoId: string) {
+  return verificacaoDoProcesso(processoId)
+}
+
+/** O servidor informa o item do PCA de uma demanda que a busca não encontrou. */
+export async function declararPrevisaoNoPca(
+  processoId: string,
+  entrada: { demanda: string; codigo: string; nota?: string },
+) {
+  return declararPrevisao(processoId, entrada)
+}
+
+/** O plano do exercício corrente; `null` enquanto não houver um. */
+export async function getPlanoPca() {
+  return planoVigente()
+}
+
+/** Todos os planos do órgão, do exercício mais recente para o mais antigo. */
+export async function getPlanosPca() {
+  return planosDoOrgao()
+}
+
+export async function importarPlanoPca(entrada: { ano: number; arquivo: File }) {
+  return importarPlano(entrada)
+}
+
+/** Os bytes da planilha importada naquele exercício. */
+export async function baixarPlanoPca(ano: number) {
+  return baixarPlano(ano)
+}
+
+/** Compara duas versões geradas e traz a errata. */
+export async function compararVersoes(
+  processoId: string,
+  tipo: TipoDocumento,
+  de: number,
+  para: number,
+) {
+  return compararVersoesNaApi(processoId, tipo, de, para)
 }
 
 export interface GerarDocumentoInput {
   processoId: string
   tipo: TipoDocumento
+  /**
+   * Presente quando a regeração é uma retificação declarada.
+   *
+   * Ausente, a regeração é apenas isso: o servidor mexeu numa seção e gerou de
+   * novo antes de o documento sair da plataforma. Marcar tudo como retificação
+   * esvaziaria a palavra justamente onde ela tem peso.
+   */
+  retificacao?: Retificacao
 }
 
 /**
@@ -633,130 +544,120 @@ export interface GerarDocumentoInput {
  * regeração **incrementa a versão** e guarda a versão anterior no histórico —
  * nunca sobrescreve sem deixar rastro (rastreabilidade exigida pelo controle).
  */
+/**
+ * Conclui o documento.
+ *
+ * A conclusão em si e o corpo são do servidor — é ele que valida as seções
+ * indispensáveis e congela o texto. O que ainda vive aqui é o **acervo**:
+ * identificador `DOC-`, formato e tamanho do arquivo, que só passam a existir de
+ * verdade quando o Bloco 11 produzir o arquivo.
+ */
+
 export async function gerarDocumento(input: GerarDocumentoInput): Promise<DocumentoGerado> {
-  await delay(700)
-  const processo = db.processos.find((p) => p.id === input.processoId)
-  const objeto = processo?.objeto ?? "Processo de Contratação"
-  const meta = CATALOGO[input.tipo]
-  const tamanhoKB = meta.tamanhoKB
-  const chaveVersao = `${input.processoId}:${input.tipo}`
+  const concluido = await concluirDocumento(input.processoId, input.tipo, input.retificacao)
+  const processo = await obterProcesso(input.processoId)
 
-  // Documento finalizado → todas as suas seções ficam concluídas (inclui a última).
-  for (const secao of secoesDoDocumento(input.processoId, input.tipo)) secao.status = "Completo"
-
-  const existente = db.documentos.find((d) => d.processoId === input.processoId && d.tipo === input.tipo)
-  const geradoEm = dataHoraBrasiliaISO()
-
-  if (existente) {
-    // Regeração — nova versão. A anterior fica registrada no histórico.
-    const apontamentosAbertos = db.apontamentos.filter(
-      (a) => a.processoId === input.processoId && a.tipo === input.tipo && !a.resolvido
-    )
-    existente.versao += 1
-    existente.titulo = `${input.tipo} — ${objeto}`
-    existente.geradoEm = geradoEm
-    existente.tamanho = `${tamanhoKB} KB`
-    existente.status = "final"
-    const historico = db.versoes.get(chaveVersao) ?? []
-    historico.unshift({
-      versao: existente.versao,
-      geradoEm,
-      tamanho: `${tamanhoKB} KB`,
-      nota:
-        apontamentosAbertos.length > 0
-          ? `Retificação: ${apontamentosAbertos.length} apontamento(s) atendido(s)`
-          : "Regeração",
-    })
-    db.versoes.set(chaveVersao, historico)
-    // Regeração após retificação resolve os apontamentos abertos daquele documento.
-    for (const ap of apontamentosAbertos) ap.resolvido = true
-    if (processo) processo.atualizadoEm = dataBrasiliaISO()
-    return clone(existente)
-  }
+  // O arquivo é impresso pelo servidor, a partir da versão que acabou de ser
+  // congelada. Até 23/08/2026 o formato e o tamanho eram constantes por tipo de
+  // documento — iguais para todo processo, e sem arquivo nenhum por trás.
+  const geracao = await gerarArquivos(input.processoId, input.tipo)
+  const geradoEm = geracao.arquivos[0]?.geradoEm ?? dataHoraBrasiliaISO()
+  const arquivos = geracao.arquivos.map((arquivo) => ({
+    id: arquivo.id,
+    formato: arquivo.formato,
+    nomeDoArquivo: arquivo.nomeDoArquivo,
+    bytes: arquivo.bytes,
+    checksum: arquivo.checksum,
+  }))
 
   const doc: DocumentoGerado = {
-    id: `DOC-${ANO_SERIE}-${String(++db.seqDocumento).padStart(4, "0")}`,
-    prefeituraId: processo?.prefeituraId ?? escopoPrefeituras()?.[0] ?? "PREF-001",
+    // O identificador é o da geração no servidor, e não um contador local: é por
+    // ele que se pede o arquivo de volta.
+    id: geracao.id,
+    entidadeId: processo.entidadeId,
     processoId: input.processoId,
-    titulo: `${input.tipo} — ${objeto}`,
+    titulo: tituloComRotuloDeVersao(
+      tituloDoDocumento(input.tipo, processo.objeto),
+      concluido.versao,
+    ),
     tipo: input.tipo,
-    formato: meta.formato,
     geradoEm,
-    tamanho: `${tamanhoKB} KB`,
     status: "final",
-    versao: 1,
+    versao: concluido.versao,
+    arquivos,
   }
-  db.documentos.unshift(doc)
-  db.versoes.set(chaveVersao, [{ versao: 1, geradoEm, tamanho: `${tamanhoKB} KB`, nota: "Geração inicial" }])
 
-  // Indicadores da tela de Documentos e do dashboard acompanham a nova geração.
-  db.resumoDocumentos.total += 1
-  db.resumoDocumentos.esteMes += 1
-  db.resumoDocumentos.armazenamentoMB = Math.round((db.resumoDocumentos.armazenamentoMB + tamanhoKB / 1024) * 10) / 10
-  db.estatisticas.documentosGerados += 1
-  db.estatisticas.documentosSemana += 1
-  if (input.tipo === "ETP") db.estatisticas.etpsConcluidos += 1
-
-  // Reflete a conclusão no processo de origem.
-  if (processo) {
-    if (input.tipo === "ETP") processo.etpStatus = "Completo"
-    if (input.tipo === "TR") processo.trStatus = "Completo"
-    processo.atualizadoEm = dataBrasiliaISO()
-  }
+  // Nada é gravado aqui. O acervo, o histórico de versões e o corpo congelado
+  // são do servidor desde os Blocos 9 e 11, e a tela os recarrega — manter uma
+  // cópia local seria um segundo lugar onde a mesma verdade mora, que envelhece
+  // na primeira aba que não passar por este caminho.
   return clone(doc)
 }
 
-/* ── Configurações da prefeitura ───────────────────────────────────────────── */
-
-/** Prefeitura em foco: a indicada, senão a do usuário logado, senão a primeira. */
-function prefeituraFoco(prefeituraId?: string): Tenant {
-  if (prefeituraId) {
-    const p = db.prefeituras.find((x) => x.id === prefeituraId)
-    if (!p) throw new Error(`Prefeitura ${prefeituraId} não encontrada`)
-    return p
-  }
-  const usuario = usuarioLogado()
-  const p = usuario?.prefeituraId ? db.prefeituras.find((x) => x.id === usuario.prefeituraId) : db.prefeituras[0]
-  if (!p) throw new Error("Nenhuma prefeitura no contexto")
-  return p
+/** Baixa um arquivo gerado, autenticado, e entrega ao navegador. */
+export async function baixarArquivoGerado(
+  processoId: string,
+  tipo: TipoDocumento,
+  arquivoId: string,
+) {
+  return baixarArquivo(processoId, tipo, arquivoId)
 }
 
-export async function getConfigTenant(prefeituraId?: string): Promise<Tenant> {
-  const id = prefeituraId ?? exigeSessao().prefeituraId
-  if (!id) throw new Error("Selecione uma prefeitura para consultar as configurações.")
-  return obterTenantNaApi(id)
+/* ── Configurações da entidade ───────────────────────────────────────────── */
+
+export async function getConfigTenant(entidadeId: string): Promise<Tenant> {
+  return obterTenantNaApi(entidadeId)
 }
 
-export async function atualizarConfigTenant(patch: Partial<Tenant>, prefeituraId?: string): Promise<Tenant> {
-  await delay(450)
-  const alvo = prefeituraFoco(prefeituraId)
-  Object.assign(alvo, clone({ ...patch, id: alvo.id })) // o id nunca é sobrescrito
-  return clone(alvo)
+/**
+ * Salva a configuração da entidade.
+ *
+ * O nome vai para o servidor; o resto — timbre, cabeçalho, rodapé — ainda é
+ * fabricado por `tenantDa()` e está marcado como sintético na tela
+ * (`lib/dominio/sintetico.ts`). Até 22/08/2026 **tudo** ia para uma fixture: a
+ * tela dizia "salvo" e o recarregamento desfazia.
+ */
+export async function atualizarConfigTenant(patch: Partial<Tenant>, entidadeId: string): Promise<Tenant> {
+  const salvo = await atualizarEntidadeNaApi(entidadeId, { nome: patch.nome })
+  // Os campos que o servidor não guarda seguem no que a tela mandou, para que a
+  // prévia continue mostrando o que a pessoa acabou de escolher nesta sessão.
+  return { ...salvo, ...clone(patch), id: salvo.id }
 }
 
-/* ── Cadastro de prefeituras (admin geral) ─────────────────────────────────── */
+/* ── Cadastro de entidades (admin geral) ─────────────────────────────────── */
 
-export async function getPrefeituras(): Promise<Tenant[]> {
-  return listarPrefeiturasNaApi()
+export async function getEntidades(): Promise<Tenant[]> {
+  return listarEntidadesNaApi()
 }
 
-export interface NovaPrefeituraInput {
-  orgao: string
-  unidade: string
+export interface NovaEntidadeInput {
+  /**
+   * Autarquia ou fundação qualificada como agência executiva.
+   *
+   * <p>Dobra os limites de dispensa (Art. 75, § 2º). Declarada e não deduzida do
+   * tipo: nem toda autarquia é agência executiva.
+   */
+  agenciaExecutiva?: boolean
+  nome: string
+  /** O servidor assume `prefeitura` sem este campo — ver `lib/types.ts`. */
+  tipo: TipoEntidade
 }
 
-export async function criarPrefeitura(input: NovaPrefeituraInput): Promise<Tenant> {
-  return criarPrefeituraNaApi(input)
+export async function criarEntidade(input: NovaEntidadeInput): Promise<Tenant> {
+  return criarEntidadeNaApi(input)
 }
 
-export async function removerPrefeitura(id: string): Promise<void> {
-  await desativarPrefeituraNaApi(id)
+export async function removerEntidade(id: string): Promise<void> {
+  await desativarEntidadeNaApi(id)
 }
 
-/* ── Cadastro de usuários (admin geral e coordenador da própria prefeitura) ── */
+/* ── Cadastro de usuários (admin geral e coordenador da própria entidade) ── */
 
-export async function getUsuarios(prefeituraId?: string): Promise<Usuario[]> {
-  return listarUsuariosNaApi(prefeituraId)
+/**
+ * @param busca trecho de nome ou matrícula; quem filtra é o servidor
+ */
+export async function getUsuarios(entidadeId?: string, busca?: string): Promise<Usuario[]> {
+  return listarUsuariosNaApi(entidadeId, busca)
 }
 
 export interface NovoUsuarioInput {
@@ -764,17 +665,30 @@ export interface NovoUsuarioInput {
   cpf: string
   email: string
   cargo: string
-  senha: string
+  matricula?: string
+  decretoNomeacao?: string
   perfilAcesso: PerfilAcesso
-  prefeituraId: string | null
+  entidadeId: string | null
   secretaria?: string
 }
 
-export async function criarUsuario(input: NovoUsuarioInput): Promise<Usuario> {
+/**
+ * Cadastra o servidor. A senha vem sorteada do servidor, uma única vez.
+ *
+ * <p>Até 23/08/2026 quem cadastrava digitava a senha de quem era cadastrado —
+ * e ela valia para sempre. Escolher significa saber, e saber a senha de outra
+ * pessoa é poder agir como ela.
+ */
+export async function criarUsuario(input: NovoUsuarioInput) {
   return criarUsuarioNaApi({
     ...input,
     departamentoId: input.secretaria,
   })
+}
+
+/** Troca a própria senha — o que libera a sessão no primeiro acesso. */
+export async function trocarPropriaSenha(senhaAtual: string, novaSenha: string) {
+  return trocarSenhaNaApi(senhaAtual, novaSenha)
 }
 
 export interface AtualizarUsuarioInput {
@@ -782,38 +696,42 @@ export interface AtualizarUsuarioInput {
   nome?: string
   email?: string
   cargo?: string
+  matricula?: string
+  decretoNomeacao?: string
   perfilAcesso?: PerfilAcesso
-  prefeituraId?: string | null
+  entidadeId?: string | null
   secretaria?: string
   ativo?: boolean
 }
 
+/**
+ * Edita o servidor no cadastro.
+ *
+ * Até 22/08/2026 esta função procurava o usuário nas fixtures: a lista já vinha
+ * do servidor, então editar qualquer pessoa real caía em "não encontrado".
+ * `ativo` não entra aqui — desativar tem caminho próprio, com o motivo que a
+ * trilha registra.
+ */
 export async function atualizarUsuario(input: AtualizarUsuarioInput): Promise<Usuario> {
-  await delay(450)
-  const usuario = db.usuarios.find((u) => u.id === input.id)
-  if (!usuario) throw new Error(`Usuário ${input.id} não encontrado`)
-  if (input.nome != null && input.nome.trim() !== "") {
-    usuario.nome = input.nome.trim()
-    usuario.primeiroNome = usuario.nome.split(" ")[0] ?? usuario.nome
-    usuario.iniciais = iniciaisDe(usuario.nome)
-  }
-  if (input.email != null) usuario.email = input.email.trim()
-  if (input.cargo != null) usuario.cargo = input.cargo.trim()
-  if (input.perfilAcesso != null) usuario.perfilAcesso = input.perfilAcesso
-  if (input.prefeituraId !== undefined) usuario.prefeituraId = input.prefeituraId
-  if (input.secretaria !== undefined) usuario.secretaria = input.secretaria
-  if (input.ativo != null) usuario.ativo = input.ativo
-  return clone(usuario)
+  return atualizarUsuarioNaApi(input)
 }
 
 export async function removerUsuario(id: string): Promise<void> {
   await desativarUsuarioNaApi(id)
 }
 
-export async function criarSecretaria(prefeituraId: string, nome: string): Promise<Secretaria> {
-  return criarDepartamentoNaApi(prefeituraId, nome)
+export async function criarSecretaria(entidadeId: string, nome: string): Promise<Secretaria> {
+  return criarDepartamentoNaApi(entidadeId, nome)
 }
 
-export async function removerSecretaria(prefeituraId: string, secretariaId: string): Promise<void> {
-  await desativarDepartamentoNaApi(prefeituraId, secretariaId)
+export async function renomearSecretaria(
+  entidadeId: string,
+  secretariaId: string,
+  nome: string,
+): Promise<Secretaria> {
+  return renomearDepartamentoNaApi(entidadeId, secretariaId, nome)
+}
+
+export async function removerSecretaria(entidadeId: string, secretariaId: string): Promise<void> {
+  await desativarDepartamentoNaApi(entidadeId, secretariaId)
 }

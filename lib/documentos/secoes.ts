@@ -26,6 +26,7 @@ function secoes(defs: DefSecao[]): SecaoDocumento[] {
     titulo: def.titulo,
     status: "Não iniciado",
     obrigatoria: !def.opcional,
+    origem: "catalogo",
     conteudo: "",
     hint: def.hint,
     fundamentoLegal: def.fundamentoLegal,
@@ -47,21 +48,25 @@ const secoesCotacao: SecaoDocumento[] = secoes([
     titulo: "Fornecedores e Fontes Consultadas",
     fundamentoLegal: "Art. 23, § 1º, Lei 14.133/21",
     hint: "Liste as fontes na ordem de preferência da IN SEGES 65/2021, Art. 5º: PNCP, contratações similares de outros entes, painel de preços, mídia especializada e, por último, pesquisa direta com fornecedores.",
+    painel: "fontes",
   },
   {
     titulo: "Preços Coletados",
     fundamentoLegal: "Art. 23, § 2º, Lei 14.133/21",
     hint: "Registre os preços obtidos por fonte, com data da coleta, prazo de validade das propostas e identificação do fornecedor.",
+    painel: "coletas",
   },
   {
     titulo: "Análise Crítica dos Preços Obtidos",
     fundamentoLegal: "Art. 6º, IN SEGES 65/2021",
     hint: "Justifique o descarte de preços inexequíveis ou excessivamente elevados; a média não pode ser aplicada sem análise crítica do conjunto.",
+    painel: "analise",
   },
   {
     titulo: "Metodologia e Preço de Referência",
     fundamentoLegal: "Art. 23, caput, Lei 14.133/21",
     hint: "Explicite a metodologia adotada (média, mediana ou menor preço) e o valor de referência apurado, com a memória de cálculo.",
+    painel: "referencia",
   },
 ])
 
@@ -71,12 +76,14 @@ const secoesETP: SecaoDocumento[] = secoes([
     titulo: "Descrição da Necessidade",
     fundamentoLegal: "Art. 18, § 1º, I, Lei 14.133/21",
     hint: "Descreva o problema a ser resolvido sob a perspectiva do interesse público, e não a solução pretendida. Fundamente-se no DFD e no planejamento da unidade.",
+    painel: "necessidade",
   },
   {
     titulo: "Demonstração da Previsão no PCA",
     fundamentoLegal: "Art. 18, § 1º, II, Lei 14.133/21",
     hint: "Demonstre que a contratação está prevista no Plano de Contratações Anual vigente, indicando o item correspondente. Se não estiver, justifique.",
     opcional: true,
+    painel: "pca",
   },
   {
     titulo: "Requisitos da Contratação",
@@ -186,11 +193,13 @@ const secoesTR: SecaoDocumento[] = secoes([
     titulo: "Definição do Objeto",
     fundamentoLegal: "Art. 6º, XXIII, 'a', Lei 14.133/21",
     hint: "Defina o objeto de forma precisa, suficiente e clara, com natureza, quantitativos, prazo do contrato e unidades de medida.",
+    painel: "quantidades",
   },
   {
     titulo: "Fundamentação da Contratação",
     fundamentoLegal: "Art. 6º, XXIII, 'b', Lei 14.133/21",
     hint: "Referencie o ETP do processo e demonstre a necessidade pública que motiva a contratação.",
+    painel: "necessidade",
   },
   {
     titulo: "Descrição da Solução",
@@ -226,11 +235,13 @@ const secoesTR: SecaoDocumento[] = secoes([
     titulo: "Estimativa do Valor da Contratação",
     fundamentoLegal: "Art. 6º, XXIII, 'i', Lei 14.133/21",
     hint: "Apresente o valor estimado acompanhado dos preços unitários referenciais e da memória de cálculo, remetendo à pesquisa de preços do processo.",
+    painel: "valor",
   },
   {
     titulo: "Adequação Orçamentária",
     fundamentoLegal: "Art. 6º, XXIII, 'j', Lei 14.133/21",
     hint: "Informe a dotação orçamentária que suportará a despesa e a previsão no PCA vigente.",
+    painel: "dotacao",
   },
 ])
 
@@ -295,6 +306,7 @@ const secoesEdital: SecaoDocumento[] = secoes([
     titulo: "Da Dotação Orçamentária",
     fundamentoLegal: "Art. 150, Lei 14.133/21",
     hint: "Indique a dotação orçamentária que suportará a despesa no exercício e, se plurianual, a previsão nos exercícios seguintes.",
+    painel: "dotacao",
   },
   {
     titulo: "Das Disposições Finais e dos Anexos",
@@ -355,6 +367,7 @@ const secoesContrato: SecaoDocumento[] = secoes([
     titulo: "Da Dotação Orçamentária",
     fundamentoLegal: "Art. 92, VIII, Lei 14.133/21",
     hint: "Indique o crédito orçamentário que suportará a despesa, com programa de trabalho e elemento de despesa.",
+    painel: "dotacao",
   },
   {
     titulo: "Da Garantia de Execução",
@@ -419,4 +432,19 @@ export const secoesPorTipoBase: Record<TipoDocumento, SecaoDocumento[]> = {
   TR: secoesTR,
   Edital: secoesEdital,
   Contrato: secoesContrato,
+}
+
+/**
+ * O painel do editor que assiste uma seção do catálogo.
+ *
+ * Existe como consulta por código porque as seções chegam do servidor, e o
+ * servidor não conhece painel — ele é assunto da tela. Sem esta junção, o
+ * `painel` declarado acima morria no mapeamento e os painéis de quantidades,
+ * valor, ATA e PCA simplesmente não apareciam.
+ */
+export function painelDaSecao(
+  tipo: TipoDocumento,
+  codigo: string,
+): SecaoDocumento["painel"] {
+  return secoesPorTipoBase[tipo].find((secao) => secao.id === codigo)?.painel
 }
