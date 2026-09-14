@@ -4,6 +4,13 @@ Documento de trabalho. Confronta cada ponto discutido com o que o GeraDocs **já
 faz hoje**, o que **precisa de ajuste** e o que **não existe**, e propõe a ordem
 de implementação.
 
+> **Atualização de 09/09/2026:** referências a `workflowRoles`, `WorkflowRole`
+> e `papelDa()` nas seções históricas abaixo foram superadas pela ADR-014 do
+> backend. O modelo vigente usa perfil de acesso e membership
+> usuário-organização-departamento. Consulte o
+> [rebaseline pós-integração](../../geradocs-backend/docs/rebaseline-pos-integracao.md)
+> antes de iniciar qualquer item deste plano.
+
 > **Companheiro obrigatório:** este documento trata do **produto**. A engenharia
 > (arquitetura, testes, CI, chave de login plugável, camada de IA) está em
 > [`plano-consolidacao.md`](../../geradocs-backend/docs/plano-consolidacao.md).

@@ -30,6 +30,7 @@ import {
   renomearDepartamento as renomearDepartamentoNaApi,
   desativarEntidade as desativarEntidadeNaApi,
   desativarUsuario as desativarUsuarioNaApi,
+  transferirUsuario as transferirUsuarioNaApi,
   listarEntidades as listarEntidadesNaApi,
   listarUsuarios as listarUsuariosNaApi,
   obterTenant as obterTenantNaApi,
@@ -718,6 +719,18 @@ export async function atualizarUsuario(input: AtualizarUsuarioInput): Promise<Us
 
 export async function removerUsuario(id: string): Promise<void> {
   await desativarUsuarioNaApi(id)
+}
+
+export interface TransferirUsuarioInput {
+  userId: string
+  sourceOrganizationId: string
+  destinationOrganizationId: string
+  destinationDepartmentId?: string | null
+  reason: string
+}
+
+export async function transferirUsuario(input: TransferirUsuarioInput): Promise<Usuario> {
+  return transferirUsuarioNaApi(input)
 }
 
 export async function criarSecretaria(entidadeId: string, nome: string): Promise<Secretaria> {

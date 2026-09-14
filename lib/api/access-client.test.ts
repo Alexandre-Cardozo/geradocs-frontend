@@ -553,6 +553,35 @@ describe("criarUsuario", () => {
   })
 })
 
+describe("transferirUsuario", () => {
+  it("envia o comando confirmado e mapeia o servidor retornado", async () => {
+    let corpo: Record<string, unknown> = {}
+    servidor.use(
+      http.post(`${urlDaApi}/users/:id/organization-transfer`, async ({ request }) => {
+        corpo = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json(usuarioApi)
+      }),
+    )
+    const { transferirUsuario } = await carregarClienteLimpo()
+
+    const usuario = await transferirUsuario({
+      userId: usuarioApi.id,
+      sourceOrganizationId: organizacao.id,
+      destinationOrganizationId: "2b7c8e10-2d3f-4a5b-8c9d-0e1f2a3b4c5d",
+      reason: "  Movimentação funcional  ",
+    })
+
+    expect(corpo).toEqual({
+      sourceOrganizationId: organizacao.id,
+      destinationOrganizationId: "2b7c8e10-2d3f-4a5b-8c9d-0e1f2a3b4c5d",
+      destinationDepartmentId: null,
+      reason: "Movimentação funcional",
+      confirmed: true,
+    })
+    expect(usuario.id).toBe(usuarioApi.id)
+  })
+})
+
 describe("desativarUsuario", () => {
   it("lê a versão atual e a envia em If-Match", async () => {
     let ifMatch: string | null = null

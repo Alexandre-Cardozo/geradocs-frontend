@@ -278,7 +278,17 @@ Com o fluxo de aprovação fora do produto (§24 e §25.1), `PapelUsuario` — s
 - **Por quê:** sem o workflow, os dois vocabulários descreviam a mesma coisa — quem é a pessoa no sistema. Dois vocabulários paralelos para o mesmo conceito é como um deles fica errado sem ninguém perceber: era exatamente o que estava acontecendo, com `papelDa()` caindo em `servidor_compras` para todo mundo cujo vínculo não trouxesse papel.
 - **O que era o defeito concreto:** o backend tornou `workflowRoles` opcional no mesmo dia. Com a lista vazia — que passa a ser o caso comum — o fallback silencioso atribuiria "Servidor de Compras" ao jurídico, ao coordenador e a quem mais entrasse.
 - **O que se perde:** a distinção entre secretaria demandante e servidor de compras, que hoje não é usada em lugar nenhum. Se voltar a fazer falta, volta como atributo do vínculo, com uso definido — não como enum que ninguém lê.
-- **`WorkflowRole` continua no backend**, agora opcional. Removê-lo de vez é migração com perda de dado e fica como decisão à parte: [ordem de implementação](../../geradocs-backend/docs/ordem-de-implementacao.md), pendência do Bloco 4.
+- **Atualização de 09/09/2026:** `WorkflowRole` foi removido do backend pela
+  ADR-014. O front-end não deve voltar a enviar ou derivar comportamento de
+  `workflowRoles`; perfil de acesso e membership vigente são a referência.
+
+## Rebaseline Pós-Integração (09/09/2026)
+
+Após a integração das linhas de desenvolvimento, o contrato OpenAPI gerado e
+o backend atual passam a ser a fonte de verdade para clientes e telas. Etapas
+históricas que dependiam de `workflowRoles`, inclusive a antiga proposta de
+transferência organizacional, não devem ser retomadas sem redesenho. O plano
+vigente está em [rebaseline pós-integração](../../geradocs-backend/docs/rebaseline-pos-integracao.md).
 
 ## 27. `lib/dominio/` — a regra sai do mock e da tela
 

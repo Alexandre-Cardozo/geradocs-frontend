@@ -641,6 +641,14 @@ export function useRemoverUsuario() {
   })
 }
 
+export function useTransferirUsuario() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: api.transferirUsuario,
+    onSuccess: () => invalidarUsuarios(queryClient),
+  })
+}
+
 export function useCriarSecretaria(entidadeId: string | undefined) {
   const queryClient = useQueryClient()
   return useMutation({

@@ -58,8 +58,8 @@ describe("2. o mock não vaza para a interface", () => {
     // O objetivo declarado em docs/estrutura.md é que apagar lib/mocks na
     // integração não quebre tela nenhuma. Um import em componente quebra isso.
     const infratores = todoCodigo
-      .filter((arquivo) => !nome(arquivo).startsWith("lib/api/client.ts"))
-      .filter((arquivo) => !nome(arquivo).startsWith("lib/teste/"))
+      .filter((arquivo) => !nome(arquivo).replaceAll("\\", "/").startsWith("lib/api/client.ts"))
+      .filter((arquivo) => !nome(arquivo).replaceAll("\\", "/").startsWith("lib/teste/"))
       .filter((arquivo) => /from ["']@\/lib\/mocks/.test(readFileSync(arquivo, "utf8")))
       .map(nome)
     expect(infratores).toEqual([])

@@ -916,6 +916,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/users/{userId}/organization-transfer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["transferOrganization"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/users/{userId}/password-reset": {
         parameters: {
             query?: never;
@@ -1526,6 +1542,16 @@ export interface components {
             empty?: boolean;
             sorted?: boolean;
             unsorted?: boolean;
+        };
+        TransferUserOrganizationRequest: {
+            confirmed: boolean;
+            /** Format: uuid */
+            destinationDepartmentId?: string;
+            /** Format: uuid */
+            destinationOrganizationId: string;
+            reason: string;
+            /** Format: uuid */
+            sourceOrganizationId: string;
         };
         UpdateDepartmentRequest: {
             acronym?: string;
@@ -3500,6 +3526,32 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["DeactivationRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UserResponse"];
+                };
+            };
+        };
+    };
+    transferOrganization: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TransferUserOrganizationRequest"];
             };
         };
         responses: {

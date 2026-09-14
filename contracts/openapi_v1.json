@@ -1693,6 +1693,32 @@
         },
         "type" : "object"
       },
+      "TransferUserOrganizationRequest" : {
+        "properties" : {
+          "confirmed" : {
+            "type" : "boolean"
+          },
+          "destinationDepartmentId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "destinationOrganizationId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "reason" : {
+            "maxLength" : 500,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "sourceOrganizationId" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        },
+        "required" : [ "confirmed", "destinationOrganizationId", "reason", "sourceOrganizationId" ],
+        "type" : "object"
+      },
       "UpdateDepartmentRequest" : {
         "properties" : {
           "acronym" : {
@@ -4588,6 +4614,43 @@
             "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/DeactivationRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UserResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "user-controller" ]
+      }
+    },
+    "/api/v1/users/{userId}/organization-transfer" : {
+      "post" : {
+        "operationId" : "transferOrganization",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "userId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TransferUserOrganizationRequest"
               }
             }
           },

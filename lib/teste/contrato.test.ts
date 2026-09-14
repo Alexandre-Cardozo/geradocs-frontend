@@ -1,5 +1,6 @@
 import { execFileSync } from "node:child_process"
 import { readFileSync } from "node:fs"
+import { resolve } from "node:path"
 import { describe, expect, it } from "vitest"
 
 /**
@@ -21,8 +22,8 @@ describe("contrato", () => {
     const versionado = readFileSync("lib/api/gerado/v1.d.ts", "utf8")
 
     const regerado = execFileSync(
-      "npx",
-      ["openapi-typescript", "contracts/openapi_v1.json"],
+      process.execPath,
+      [resolve("node_modules/openapi-typescript/bin/cli.js"), "contracts/openapi_v1.json"],
       { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] },
     )
 

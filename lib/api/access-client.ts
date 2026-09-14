@@ -3,6 +3,9 @@ import "client-only"
 import { imagemProtegida, requisicaoProtegida } from "@/lib/api/auth-client"
 import { iniciaisDe, primeiroNome, tipoDaEntidade } from "@/lib/dominio"
 import type { PerfilAcesso, Secretaria, Tenant, TipoEntidade, Usuario } from "@/lib/types"
+import type { components } from "@/lib/api/gerado/v1"
+
+type TransferUserOrganizationRequest = components["schemas"]["TransferUserOrganizationRequest"]
 
 type BackendProfile = "ADMIN_GERAL" | "COORDENADOR" | "SERVIDOR"
 
@@ -360,6 +363,27 @@ export async function desativarUsuario(id: string): Promise<void> {
     headers: { "If-Match": ifMatch(user.version) },
     body: JSON.stringify({ reason: "Desativado pela administração." }),
   })
+}
+
+/** Comando administrativo explícito; a confirmação já foi feita pela tela. */
+export async function transferirUsuario(input: {
+  userId: string
+  sourceOrganizationId: TransferUserOrganizationRequest["sourceOrganizationId"]
+  destinationOrganizationId: TransferUserOrganizationRequest["destinationOrganizationId"]
+  destinationDepartmentId?: TransferUserOrganizationRequest["destinationDepartmentId"] | null
+  reason: string
+}): Promise<Usuario> {
+  const user = await requisicaoProtegida<BackendUser>(`/users/${input.userId}/organization-transfer`, {
+    method: "POST",
+    body: JSON.stringify({
+      sourceOrganizationId: input.sourceOrganizationId,
+      destinationOrganizationId: input.destinationOrganizationId,
+      destinationDepartmentId: input.destinationDepartmentId ?? null,
+      reason: input.reason.trim(),
+      confirmed: true,
+    }),
+  })
+  return usuarioDa(user)
 }
 
 /**
