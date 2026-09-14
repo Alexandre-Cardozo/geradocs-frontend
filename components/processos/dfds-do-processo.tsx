@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import { Button, Dropdown, FormField, Input, Tag } from "@/components/ui";
 import { IconCheck, IconFileText, IconPlus, IconTrash, IconUpload, IconX } from "@/components/ui/icons";
 import { BaixarDfd } from "@/components/processos/baixar-dfd";
+import { ErrorState, LoadingState } from "@/components/shared/estados";
 import { useToast } from "@/components/shared/providers";
 import {
   useAnexarArquivoAoDfd,
@@ -14,7 +15,7 @@ import {
   useRemoverDfd,
 } from "@/lib/api/hooks";
 import type { DfdAnexado } from "@/lib/api/procurement-client";
-import { formatarBytes } from "@/lib/format";
+import { formatData, formatarBytes } from "@/lib/format";
 
 /**
  * O cadastro de DFDs do processo.
@@ -34,10 +35,15 @@ export function DfdsDoProcesso({ processoId }: { processoId: string }) {
   const [registrando, setRegistrando] = useState(false);
 
   if (dfds.isPending) {
-    return <div className="text-sm text-text-muted">Carregando os DFDs do processo...</div>;
+    return <LoadingState label="Carregando os DFDs do processo..." />;
   }
   if (dfds.isError) {
-    return <div className="text-sm text-danger">Não foi possível listar os DFDs do processo.</div>;
+    return (
+      <ErrorState
+        message={dfds.error instanceof Error ? dfds.error.message : undefined}
+        onRetry={() => void dfds.refetch()}
+      />
+    );
   }
 
   return (
@@ -250,7 +256,7 @@ function LinhaDoDfd({ processoId, dfd }: { processoId: string; dfd: DfdAnexado }
       <span className="min-w-0 flex-1 basis-64">
         <span className="block truncate font-mono text-sm text-text-1">{dfd.nomeDoArquivo}</span>
         <span className="block text-xs text-text-3">
-          {dfd.secretaria} · {new Date(dfd.anexadoEm).toLocaleDateString("pt-BR")}
+          {dfd.secretaria} · {formatData(dfd.anexadoEm)}
           {dfd.arquivo ? ` · ${formatarBytes(dfd.arquivo.bytes)}` : ""}
         </span>
       </span>

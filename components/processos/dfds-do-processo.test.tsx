@@ -232,14 +232,21 @@ describe("DFDs do processo", () => {
     expect(await screen.findByText(/Nenhum DFD registrado/)).toBeInTheDocument()
   })
 
-  it("a falha do servidor aparece na tela", async () => {
+  it("a falha do servidor oferece nova tentativa", async () => {
+    let tentativas = 0
     servidor.use(
-      http.get(`${urlDaApi}/procurement-processes/:id/dfds`, () =>
-        HttpResponse.json({ status: 500 }, { status: 500 }),
-      ),
+      http.get(`${urlDaApi}/procurement-processes/:id/dfds`, () => {
+        tentativas += 1
+        return tentativas === 1
+          ? HttpResponse.json({ status: 500 }, { status: 500 })
+          : HttpResponse.json([])
+      }),
     )
     renderizar(<DfdsDoProcesso processoId={PROCESSO} />)
 
-    expect(await screen.findByText(/Não foi possível listar/)).toBeInTheDocument()
+    expect(await screen.findByText("Não foi possível carregar os dados")).toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: "Tentar Novamente" }))
+    await waitFor(() => expect(tentativas).toBe(2))
+    expect(await screen.findByText(/Nenhum DFD registrado/)).toBeInTheDocument()
   })
 })

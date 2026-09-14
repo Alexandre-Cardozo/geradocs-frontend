@@ -54,8 +54,10 @@ function invalidadas(invalidou: { mock: { calls: unknown[][] } }) {
  * Sem este apontamento, cada laço vira uma união que o compilador não aceita.
  */
 type Mutacao = { mutate: (entrada: never) => void; isError: boolean }
+type FuncaoDaApi = (...args: never[]) => unknown
 
 const comoMutacao = (usar: () => unknown) => usar as () => Mutacao
+const mockDaApi = (funcao: FuncaoDaApi) => vi.mocked(funcao) as unknown as ReturnType<typeof vi.fn>
 
 const chave = (valor: unknown) => JSON.stringify(valor)
 
@@ -68,110 +70,110 @@ afterEach(() => {
 })
 
 describe("consultas: cada uma pede ao servidor o que a sua chave promete", () => {
-  const consultas: Array<[string, () => unknown, unknown, keyof typeof api]> = [
-    ["useSessao", () => hooks.useSessao(), chaves.sessao, "getSessao"],
-    ["useEstatisticas", () => hooks.useEstatisticas(), chaves.estatisticas, "getEstatisticas"],
-    ["useProcessos", () => hooks.useProcessos(), chaves.processos({}), "getProcessos"],
-    ["useProcesso", () => hooks.useProcesso(PROCESSO), chaves.processo(PROCESSO), "getProcesso"],
-    ["useParecerDFD", () => hooks.useParecerDFD(PROCESSO), chaves.parecerDFD(PROCESSO), "getParecerDFD"],
+  const consultas: Array<[string, () => unknown, unknown, FuncaoDaApi]> = [
+    ["useSessao", () => hooks.useSessao(), chaves.sessao, api.getSessao],
+    ["useEstatisticas", () => hooks.useEstatisticas(), chaves.estatisticas, api.getEstatisticas],
+    ["useProcessos", () => hooks.useProcessos(), chaves.processos({}), api.getProcessos],
+    ["useProcesso", () => hooks.useProcesso(PROCESSO), chaves.processo(PROCESSO), api.getProcesso],
+    ["useParecerDFD", () => hooks.useParecerDFD(PROCESSO), chaves.parecerDFD(PROCESSO), api.getParecerDFD],
     // Uma consulta, duas leituras: `useSecoes` recorta as seções do mesmo
     // documento que `useDocumentoEmElaboracao` devolve inteiro (§80).
     [
       "useSecoes",
       () => hooks.useSecoes(PROCESSO, "ETP"),
       chaves.secoes(PROCESSO, "ETP"),
-      "getDocumento",
+      api.getDocumento,
     ],
     [
       "useDocumentoEmElaboracao",
       () => hooks.useDocumentoEmElaboracao(PROCESSO, "ETP"),
       chaves.secoes(PROCESSO, "ETP"),
-      "getDocumento",
+      api.getDocumento,
     ],
-    ["useDocumentos", () => hooks.useDocumentos(), chaves.documentos, "getDocumentos"],
+    ["useDocumentos", () => hooks.useDocumentos(), chaves.documentos, api.getDocumentos],
     [
       "useResumoDocumentos",
       () => hooks.useResumoDocumentos(),
       chaves.resumoDocumentos,
-      "getResumoDocumentos",
+      api.getResumoDocumentos,
     ],
     [
       "useHistoricoVersoes",
       () => hooks.useHistoricoVersoes(PROCESSO, "ETP"),
       chaves.historicoVersoes(PROCESSO, "ETP"),
-      "getHistoricoVersoes",
+      api.getHistoricoVersoes,
     ],
     [
       "useCorpoDocumento",
       () => hooks.useCorpoDocumento(PROCESSO, "ETP"),
       ["corpo-documento", PROCESSO, "ETP"],
-      "getCorpoDocumento",
+      api.getCorpoDocumento,
     ],
     [
       "useVersoesComTexto",
       () => hooks.useVersoesComTexto(PROCESSO, "ETP"),
       ["versoes-com-texto", PROCESSO, "ETP"],
-      "getVersoesComTexto",
+      api.getVersoesComTexto,
     ],
     [
       "useConsolidacaoDaDemanda",
       () => hooks.useConsolidacaoDaDemanda(PROCESSO),
       ["consolidacao-demanda", PROCESSO],
-      "getConsolidacaoDaDemanda",
+      api.getConsolidacaoDaDemanda,
     ],
     [
       "useComparacaoDeVersoes",
       () => hooks.useComparacaoDeVersoes(PROCESSO, "ETP", 1, 2),
       ["comparacao-versoes", PROCESSO, "ETP", 1, 2],
-      "compararVersoes",
+      api.compararVersoes,
     ],
-    ["useEntidades", () => hooks.useEntidades(), chaves.entidades, "getEntidades"],
+    ["useEntidades", () => hooks.useEntidades(), chaves.entidades, api.getEntidades],
     [
       "useConfigTenant",
       () => hooks.useConfigTenant(ENTIDADE),
       chaves.tenant(ENTIDADE),
-      "getConfigTenant",
+      api.getConfigTenant,
     ],
-    ["useUsuarios", () => hooks.useUsuarios(ENTIDADE), chaves.usuarios(ENTIDADE, ""), "getUsuarios"],
+    ["useUsuarios", () => hooks.useUsuarios(ENTIDADE), chaves.usuarios(ENTIDADE, ""), api.getUsuarios],
   ]
 
-  it.each(consultas)("%s", async (_nome, usar, chaveEsperada, fn) => {
+  it.each(consultas)("%s", async (_nome, usar, chaveEsperada, funcao) => {
     const { queryClient, wrapper } = ambiente()
-    vi.mocked(api[fn] as unknown as ReturnType<typeof vi.fn>).mockResolvedValue("ok")
+    mockDaApi(funcao).mockResolvedValue("ok")
 
     renderHook(comoMutacao(usar), { wrapper })
 
-    await waitFor(() => expect(api[fn]).toHaveBeenCalled())
+    await waitFor(() => expect(funcao).toHaveBeenCalled())
     expect(queryClient.getQueryData(chaveEsperada as readonly unknown[])).toBe("ok")
   })
 })
 
 describe("consultas que só disparam quando têm o que perguntar", () => {
-  const desligadas: Array<[string, () => unknown, keyof typeof api]> = [
-    ["useProcesso sem id", () => hooks.useProcesso(""), "getProcesso"],
-    ["useParecerDFD sem id", () => hooks.useParecerDFD(""), "getParecerDFD"],
-    ["useSecoes sem id", () => hooks.useSecoes("", "ETP"), "getSecoes"],
-    ["useCorpoDocumento sem id", () => hooks.useCorpoDocumento("", "ETP"), "getCorpoDocumento"],
-    ["useVersoesComTexto sem id", () => hooks.useVersoesComTexto("", "ETP"), "getVersoesComTexto"],
-    ["useHistoricoVersoes sem id", () => hooks.useHistoricoVersoes("", "ETP"), "getHistoricoVersoes"],
+  const desligadas: Array<[string, () => unknown, FuncaoDaApi]> = [
+    ["useProcesso sem id", () => hooks.useProcesso(""), api.getProcesso],
+    ["useParecerDFD sem id", () => hooks.useParecerDFD(""), api.getParecerDFD],
+    ["useSecoes sem id", () => hooks.useSecoes("", "ETP"), api.getSecoes],
+    ["useCorpoDocumento sem id", () => hooks.useCorpoDocumento("", "ETP"), api.getCorpoDocumento],
+    ["useVersoesComTexto sem id", () => hooks.useVersoesComTexto("", "ETP"), api.getVersoesComTexto],
+    ["useHistoricoVersoes sem id", () => hooks.useHistoricoVersoes("", "ETP"), api.getHistoricoVersoes],
     [
       "useConsolidacaoDaDemanda sem id",
       () => hooks.useConsolidacaoDaDemanda(""),
-      "getConsolidacaoDaDemanda",
+      api.getConsolidacaoDaDemanda,
     ],
     [
       "useComparacaoDeVersoes sem as duas versões",
       () => hooks.useComparacaoDeVersoes(PROCESSO, "ETP", 1, null),
-      "compararVersoes",
+      api.compararVersoes,
     ],
     [
       "usePrevisaoNoPca sem id",
       () => hooks.usePrevisaoNoPca(""),
-      "getVerificacaoPca",
+      api.getVerificacaoPca,
     ],
   ]
 
-  it.each(desligadas)("%s não chama o servidor", async (_nome, usar, fn) => {
+  it.each(desligadas)("%s não chama o servidor", async (_nome, usar, funcao) => {
     const { wrapper } = ambiente()
 
     renderHook(comoMutacao(usar), { wrapper })
@@ -179,7 +181,7 @@ describe("consultas que só disparam quando têm o que perguntar", () => {
     // Pedir a comparação antes de escolher as duas versões traria um 400 a cada
     // abertura de painel — e o erro apareceria para quem não fez nada errado.
     await new Promise((resolve) => setTimeout(resolve, 0))
-    expect(api[fn]).not.toHaveBeenCalled()
+    expect(funcao).not.toHaveBeenCalled()
   })
 })
 
@@ -226,24 +228,24 @@ describe("sessão", () => {
     await waitFor(() => expect(comSessao.result.current).toBe("coordenador"))
   })
 
-  const doPerfil: Array<[string, () => { mutate: (v: never) => void }, never, keyof typeof api]> = [
-    ["useRecuperarSenha", () => hooks.useRecuperarSenha(), "a@b.gov.br" as never, "recuperarSenha"],
+  const doPerfil: Array<[string, () => { mutate: (v: never) => void }, never, FuncaoDaApi]> = [
+    ["useRecuperarSenha", () => hooks.useRecuperarSenha(), "a@b.gov.br" as never, api.recuperarSenha],
     [
       "useRedefinirSenha",
       () => hooks.useRedefinirSenha(),
       { token: "t", senha: "s" } as never,
-      "resetarSenha",
+      api.resetarSenha,
     ],
   ]
 
-  it.each(doPerfil)("%s repassa o que a tela informou", async (_nome, usar, entrada, fn) => {
+  it.each(doPerfil)("%s repassa o que a tela informou", async (_nome, usar, entrada, funcao) => {
     const { wrapper } = ambiente()
-    vi.mocked(api[fn] as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(undefined)
+    mockDaApi(funcao).mockResolvedValue(undefined)
 
     const { result } = renderHook(comoMutacao(usar), { wrapper })
     result.current.mutate(entrada)
 
-    await waitFor(() => expect(api[fn]).toHaveBeenCalled())
+    await waitFor(() => expect(funcao).toHaveBeenCalled())
   })
 
   it("trocar a própria senha grava a sessão nova sem recarregar tudo", async () => {
@@ -287,16 +289,16 @@ describe("processo: o que fica velho quando ele muda", () => {
   })
 
   it("encerrar e reabrir recarregam listagem, processo e indicadores", async () => {
-    for (const [usar, entrada, fn] of [
-      [() => hooks.useEncerrarProcesso(), { processoId: PROCESSO }, "encerrarProcesso"],
+    for (const [usar, entrada, funcao] of [
+      [() => hooks.useEncerrarProcesso(), { processoId: PROCESSO }, api.encerrarProcesso],
       [
         () => hooks.useReabrirProcesso(),
         { processoId: PROCESSO, motivo: "Retificar o ETP." },
-        "reabrirProcesso",
+        api.reabrirProcesso,
       ],
     ] as const) {
       const { wrapper, invalidou } = ambiente()
-      vi.mocked(api[fn] as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({ id: PROCESSO })
+      mockDaApi(funcao).mockResolvedValue({ id: PROCESSO })
 
       const { result } = renderHook(comoMutacao(usar), { wrapper })
       result.current.mutate(entrada as never)
@@ -335,16 +337,16 @@ describe("processo: o que fica velho quando ele muda", () => {
 
 describe("documento: seções, estrutura e geração", () => {
   it("salvar e gerar seção recarregam as seções do documento", async () => {
-    for (const [usar, entrada, fn] of [
+    for (const [usar, entrada, funcao] of [
       [
         () => hooks.useAtualizarSecao(PROCESSO, "ETP"),
         { secaoId: "1", conteudo: "texto" },
-        "atualizarSecao",
+        api.atualizarSecao,
       ],
-      [() => hooks.useGerarSecao(PROCESSO, "ETP"), "1", "gerarSecao"],
+      [() => hooks.useGerarSecao(PROCESSO, "ETP"), "1", api.gerarSecao],
     ] as const) {
       const { wrapper, invalidou } = ambiente()
-      vi.mocked(api[fn] as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({ id: "1" })
+      mockDaApi(funcao).mockResolvedValue({ id: "1" })
 
       const { result } = renderHook(comoMutacao(usar), { wrapper })
       result.current.mutate(entrada as never)
@@ -381,14 +383,15 @@ describe("documento: seções, estrutura e geração", () => {
       ["4.1", "4.2"],
     ]
     const funcoes = [
-      "acrescentarSecaoDoDocumento",
-      "excluirSecaoDoDocumento",
-      "reordenarSecoesDoDocumento",
+      api.acrescentarSecaoDoDocumento,
+      api.excluirSecaoDoDocumento,
+      api.reordenarSecoesDoDocumento,
     ] as const
 
     for (let i = 0; i < acoes.length; i += 1) {
       const { wrapper, invalidou } = ambiente()
-      vi.mocked(api[funcoes[i]!] as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({})
+      const funcao = funcoes[i]!
+      mockDaApi(funcao).mockResolvedValue({})
 
       const { result } = renderHook(() => hooks.useEstruturaDoDocumento(PROCESSO, "ETP"), { wrapper })
       result.current[acoes[i]!].mutate(entradas[i] as never)
@@ -399,7 +402,7 @@ describe("documento: seções, estrutura e geração", () => {
         expect(invalidadas(invalidou)).toContain(chave(chaves.secoes(PROCESSO, "ETP"))),
       )
       expect(invalidadas(invalidou)).toContain(chave(["corpo-documento"]))
-      expect(api[funcoes[i]!]).toHaveBeenCalled()
+      expect(funcao).toHaveBeenCalled()
     }
   })
 
@@ -482,13 +485,13 @@ describe("cadastros", () => {
   })
 
   it("mexer em usuário recarrega usuários e entidades", async () => {
-    for (const [usar, entrada, fn] of [
-      [() => hooks.useCriarUsuario(), { nome: "Maria" }, "criarUsuario"],
-      [() => hooks.useAtualizarUsuario(), { id: "u1", nome: "Maria" }, "atualizarUsuario"],
-      [() => hooks.useRemoverUsuario(), "u1", "removerUsuario"],
+    for (const [usar, entrada, funcao] of [
+      [() => hooks.useCriarUsuario(), { nome: "Maria" }, api.criarUsuario],
+      [() => hooks.useAtualizarUsuario(), { id: "u1", nome: "Maria" }, api.atualizarUsuario],
+      [() => hooks.useRemoverUsuario(), "u1", api.removerUsuario],
     ] as const) {
       const { wrapper, invalidou } = ambiente()
-      vi.mocked(api[fn] as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({})
+      mockDaApi(funcao).mockResolvedValue({})
 
       const { result } = renderHook(comoMutacao(usar), { wrapper })
       result.current.mutate(entrada as never)
@@ -534,17 +537,17 @@ describe("cadastros", () => {
   })
 
   it("secretaria com entidade recarrega a configuração daquele órgão", async () => {
-    for (const [usar, entrada, fn] of [
-      [() => hooks.useCriarSecretaria(ENTIDADE), "Secretaria de Compras", "criarSecretaria"],
+    for (const [usar, entrada, funcao] of [
+      [() => hooks.useCriarSecretaria(ENTIDADE), "Secretaria de Compras", api.criarSecretaria],
       [
         () => hooks.useRenomearSecretaria(ENTIDADE),
         { id: "s1", nome: "Secretaria de Educação" },
-        "renomearSecretaria",
+        api.renomearSecretaria,
       ],
-      [() => hooks.useRemoverSecretaria(ENTIDADE), "s1", "removerSecretaria"],
+      [() => hooks.useRemoverSecretaria(ENTIDADE), "s1", api.removerSecretaria],
     ] as const) {
       const { wrapper, invalidou } = ambiente()
-      vi.mocked(api[fn] as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({})
+      mockDaApi(funcao).mockResolvedValue({})
 
       const { result } = renderHook(comoMutacao(usar), { wrapper })
       result.current.mutate(entrada as never)
