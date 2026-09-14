@@ -18,6 +18,9 @@ import { describe, expect, it } from "vitest"
  * repositórios não estão lado a lado.
  */
 describe("contrato", () => {
+  // A geração inicia um processo Node separado; em Windows, especialmente com
+  // Docker e o servidor de desenvolvimento ativos, ela pode superar o padrão
+  // de 5 s do Vitest sem indicar divergência de contrato.
   it("os tipos gerados correspondem ao contrato versionado", () => {
     const versionado = readFileSync("lib/api/gerado/v1.d.ts", "utf8")
 
@@ -30,5 +33,5 @@ describe("contrato", () => {
     // Sem isto, sincronizar o contrato e esquecer `npm run tipos` deixa os tipos
     // descrevendo a versão anterior da API — e o compilador aprova.
     expect(regerado.trim()).toBe(versionado.trim())
-  })
+  }, 20_000)
 })
