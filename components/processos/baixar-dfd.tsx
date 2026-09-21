@@ -4,7 +4,7 @@ import { useState } from "react"
 
 import { IconDownload } from "@/components/ui/icons"
 import { useToast } from "@/components/shared/providers"
-import { baixarDfd } from "@/lib/api/procurement-client"
+import { baixarDfd, baixarVersaoDoDfd } from "@/lib/api/procurement-client"
 
 /**
  * O botão que rebaixa um DFD anexado.
@@ -20,11 +20,13 @@ export function BaixarDfd({
   dfdId,
   nomeDoArquivo,
   className = "",
+  versao,
 }: {
   processoId: string
   dfdId: string
   nomeDoArquivo: string
   className?: string
+  versao?: number
 }) {
   const showToast = useToast()
   const [baixando, setBaixando] = useState(false)
@@ -32,7 +34,9 @@ export function BaixarDfd({
   const baixar = async () => {
     setBaixando(true)
     try {
-      const { conteudo, nomeSugerido } = await baixarDfd(processoId, dfdId)
+      const { conteudo, nomeSugerido } = versao === undefined
+        ? await baixarDfd(processoId, dfdId)
+        : await baixarVersaoDoDfd(processoId, dfdId, versao)
       const endereco = URL.createObjectURL(conteudo)
       const ancora = document.createElement("a")
       ancora.href = endereco

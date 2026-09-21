@@ -637,6 +637,39 @@
         "required" : [ "active", "createdAt", "id", "name", "organizationId", "updatedAt", "version" ],
         "type" : "object"
       },
+      "DfdFileVersionResponse" : {
+        "properties" : {
+          "byteSize" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "current" : {
+            "type" : "boolean"
+          },
+          "fileName" : {
+            "type" : "string"
+          },
+          "mediaType" : {
+            "type" : "string"
+          },
+          "sha256" : {
+            "type" : "string"
+          },
+          "uploadedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "uploadedBy" : {
+            "type" : "string"
+          },
+          "version" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "byteSize", "current", "fileName", "mediaType", "sha256", "uploadedAt", "uploadedBy", "version" ],
+        "type" : "object"
+      },
       "DfdFileView" : {
         "properties" : {
           "byteSize" : {
@@ -3437,6 +3470,88 @@
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProcessDfdResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "procurement-process-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{id}/dfds/{dfdId}/files" : {
+      "get" : {
+        "operationId" : "dfdFileVersions",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "dfdId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/DfdFileVersionResponse"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "procurement-process-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{id}/dfds/{dfdId}/files/{version}" : {
+      "get" : {
+        "operationId" : "dfdFileVersion",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "dfdId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "version",
+          "required" : true,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "format" : "byte",
+                  "type" : "string"
                 }
               }
             },

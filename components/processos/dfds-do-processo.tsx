@@ -13,8 +13,9 @@ import {
   useConfigTenant,
   useDfdsDoProcesso,
   useRemoverDfd,
+  useVersoesDoArquivoDfd,
 } from "@/lib/api/hooks";
-import type { DfdAnexado } from "@/lib/api/procurement-client";
+import type { DfdAnexado, VersaoDoArquivoDfd } from "@/lib/api/procurement-client";
 import { formatData, formatarBytes } from "@/lib/format";
 
 /**
@@ -227,6 +228,7 @@ function RegistrarDfd({
 /** Uma linha do cadastro: o DFD, o arquivo dele e as ações sobre ele. */
 function LinhaDoDfd({ processoId, dfd }: { processoId: string; dfd: DfdAnexado }) {
   const [confirmandoRemocao, setConfirmandoRemocao] = useState(false);
+  const [historicoAberto, setHistoricoAberto] = useState(false);
   const campoDeArquivo = useRef<HTMLInputElement>(null);
   const anexarArquivo = useAnexarArquivoAoDfd(processoId);
   const remover = useRemoverDfd(processoId);
@@ -285,6 +287,11 @@ function LinhaDoDfd({ processoId, dfd }: { processoId: string; dfd: DfdAnexado }
         {anexarArquivo.isPending ? "Enviando..." : dfd.arquivo ? "Substituir" : "Anexar arquivo"}
       </Button>
       {dfd.arquivo && <BaixarDfd processoId={processoId} dfdId={dfd.id} nomeDoArquivo={dfd.nomeDoArquivo} />}
+      {dfd.arquivo && (
+        <Button size="sm" variant="secondary" onClick={() => setHistoricoAberto((aberto) => !aberto)}>
+          {historicoAberto ? "Ocultar versões" : "Versões"}
+        </Button>
+      )}
       {confirmandoRemocao ? (
         /*
           Confirmar na própria linha, e não num diálogo: remover um DFD leva os
@@ -321,6 +328,42 @@ function LinhaDoDfd({ processoId, dfd }: { processoId: string; dfd: DfdAnexado }
           Remover
         </Button>
       )}
+      {historicoAberto && <HistoricoDoArquivo processoId={processoId} dfdId={dfd.id} />}
+    </li>
+  );
+}
+
+function HistoricoDoArquivo({ processoId, dfdId }: { processoId: string; dfdId: string }) {
+  const versoes = useVersoesDoArquivoDfd(processoId, dfdId, true);
+
+  if (versoes.isPending) return <p className="basis-full m-0 text-xs text-text-muted">Carregando versões...</p>;
+  if (versoes.isError) {
+    return (
+      <div className="basis-full flex items-center gap-2 text-xs text-danger">
+        Não foi possível carregar o histórico.
+        <Button size="sm" variant="secondary" onClick={() => void versoes.refetch()}>Tentar novamente</Button>
+      </div>
+    );
+  }
+  if (versoes.data.length === 0) return <p className="basis-full m-0 text-xs text-text-muted">Nenhuma versão disponível.</p>;
+
+  return (
+    <div className="basis-full border-t border-border pt-2">
+      <p className="m-0 mb-1 text-xs font-semibold text-text-2">Histórico de arquivos</p>
+      <ul className="m-0 flex list-none flex-col gap-1 p-0">
+        {versoes.data.map((versao) => <LinhaDaVersao key={versao.versao} processoId={processoId} dfdId={dfdId} versao={versao} />)}
+      </ul>
+    </div>
+  );
+}
+
+function LinhaDaVersao({ processoId, dfdId, versao }: { processoId: string; dfdId: string; versao: VersaoDoArquivoDfd }) {
+  return (
+    <li className="flex flex-wrap items-center gap-2 text-xs text-text-3">
+      <span className="font-mono text-text-2">v{versao.versao}</span>
+      {versao.vigente && <Tag tone="success">Versão vigente</Tag>}
+      <span className="min-w-0 flex-1 truncate">{versao.nomeDoArquivo} · {formatarBytes(versao.bytes)} · {formatData(versao.enviadoEm)} · {versao.enviadoPor}</span>
+      <BaixarDfd processoId={processoId} dfdId={dfdId} nomeDoArquivo={versao.nomeDoArquivo} versao={versao.versao} />
     </li>
   );
 }

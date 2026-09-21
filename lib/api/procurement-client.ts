@@ -520,6 +520,17 @@ export interface DfdAnexado {
   arquivo: { tipo: string; bytes: number; resumo: string } | null;
 }
 
+export interface VersaoDoArquivoDfd {
+  versao: number;
+  nomeDoArquivo: string;
+  tipo: string;
+  bytes: number;
+  hash: string;
+  enviadoEm: string;
+  enviadoPor: string;
+  vigente: boolean;
+}
+
 interface DfdDaApi {
   id: string;
   fileName: string;
@@ -619,6 +630,21 @@ export async function anexarArquivoAoDfd(
   );
 }
 
+export async function listarVersoesDoArquivoDfd(
+  processoId: string,
+  dfdId: string,
+): Promise<VersaoDoArquivoDfd[]> {
+  const versoes = await requisicaoProtegida<Array<{
+    version: number; fileName: string; mediaType: string; byteSize: number; sha256: string;
+    uploadedAt: string; uploadedBy: string; current: boolean;
+  }>>(`/procurement-processes/${encodeURIComponent(processoId)}/dfds/${encodeURIComponent(dfdId)}/files`);
+  return versoes.map((versao) => ({
+    versao: versao.version, nomeDoArquivo: versao.fileName, tipo: versao.mediaType,
+    bytes: versao.byteSize, hash: versao.sha256, enviadoEm: versao.uploadedAt,
+    enviadoPor: versao.uploadedBy, vigente: versao.current,
+  }));
+}
+
 /** Tira um DFD do processo, com os itens e o arquivo dele. */
 export async function removerDfd(processoId: string, dfdId: string): Promise<void> {
   await requisicaoProtegida<unknown>(
@@ -631,6 +657,12 @@ export async function removerDfd(processoId: string, dfdId: string): Promise<voi
 export function baixarDfd(processoId: string, dfdId: string) {
   return baixarProtegido(
     `/procurement-processes/${encodeURIComponent(processoId)}/dfds/${encodeURIComponent(dfdId)}/file`,
+  );
+}
+
+export function baixarVersaoDoDfd(processoId: string, dfdId: string, versao: number) {
+  return baixarProtegido(
+    `/procurement-processes/${encodeURIComponent(processoId)}/dfds/${encodeURIComponent(dfdId)}/files/${versao}`,
   );
 }
 

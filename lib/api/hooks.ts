@@ -26,6 +26,7 @@ import {
 import { iaDisponivel } from "@/lib/api/ai-client"
 import {
   anexarArquivoAoDfd,
+  listarVersoesDoArquivoDfd,
   anexarDocumentoDaColeta,
   conferenciaDaDispensa,
   atualizarColeta,
@@ -60,6 +61,7 @@ export const chaves = {
   processo: (id: string) => ["processo", id] as const,
   parecerDFD: (id: string) => ["parecer-dfd", id] as const,
   dfds: (id: string) => ["dfds", id] as const,
+  versoesDfd: (processoId: string, dfdId: string) => ["versoes-dfd", processoId, dfdId] as const,
   dotacoes: (id: string) => ["dotacoes", id] as const,
   coletas: (id: string) => ["coletas", id] as const,
   dispensa: (id: string) => ["conferencia-dispensa", id] as const,
@@ -783,6 +785,7 @@ export function useRegistrarDfd(processoId: string) {
 function recarregarDemanda(queryClient: QueryClient, processoId: string) {
   void queryClient.invalidateQueries({ queryKey: ["consolidacao-demanda", processoId] })
   void queryClient.invalidateQueries({ queryKey: chaves.dfds(processoId) })
+  void queryClient.invalidateQueries({ queryKey: ["versoes-dfd", processoId] })
   void queryClient.invalidateQueries({ queryKey: chaves.processo(processoId) })
 }
 
@@ -831,6 +834,15 @@ export function useDfdsDoProcesso(processoId: string) {
   return useQuery({
     queryKey: chaves.dfds(processoId),
     queryFn: () => listarDfds(processoId),
+  })
+}
+
+/** Historico sob demanda: evita baixar metadados de todos os DFDs ao abrir a tela. */
+export function useVersoesDoArquivoDfd(processoId: string, dfdId: string, habilitado: boolean) {
+  return useQuery({
+    queryKey: chaves.versoesDfd(processoId, dfdId),
+    queryFn: () => listarVersoesDoArquivoDfd(processoId, dfdId),
+    enabled: habilitado,
   })
 }
 

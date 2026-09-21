@@ -532,6 +532,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/procurement-processes/{id}/dfds/{dfdId}/files": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["dfdFileVersions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/procurement-processes/{id}/dfds/{dfdId}/files/{version}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["dfdFileVersion"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/procurement-processes/{id}/dfds/{dfdId}/items": {
         parameters: {
             query?: never;
@@ -1155,6 +1187,19 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
             /** Format: int64 */
+            version: number;
+        };
+        DfdFileVersionResponse: {
+            /** Format: int32 */
+            byteSize: number;
+            current: boolean;
+            fileName: string;
+            mediaType: string;
+            sha256: string;
+            /** Format: date-time */
+            uploadedAt: string;
+            uploadedBy: string;
+            /** Format: int32 */
             version: number;
         };
         DfdFileView: {
@@ -2764,6 +2809,53 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ProcessDfdResponse"];
+                };
+            };
+        };
+    };
+    dfdFileVersions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                dfdId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DfdFileVersionResponse"][];
+                };
+            };
+        };
+    };
+    dfdFileVersion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                dfdId: string;
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string;
                 };
             };
         };
