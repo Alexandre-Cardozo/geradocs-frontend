@@ -73,6 +73,9 @@ import {
   verificacaoDoProcesso,
 } from "@/lib/api/pca-client"
 import { baixarArquivo, gerarArquivos } from "@/lib/api/generation-client"
+import { consultarAuditoria, type ConsultaAuditoria, type PaginaAuditoria } from "@/lib/api/audit-client"
+
+export type { ConsultaAuditoria } from "@/lib/api/audit-client"
 import { dataHoraBrasiliaISO } from "@/lib/format"
 import type {
   FundamentoDaDispensa,
@@ -141,6 +144,10 @@ export async function logout(): Promise<void> {
 export async function getSessao(): Promise<Sessao | null> {
   const sessao = await obterSessao()
   return sessao ? clone(sessao) : null
+}
+
+export async function getAuditoria(params: ConsultaAuditoria = {}): Promise<PaginaAuditoria> {
+  return consultarAuditoria(params)
 }
 
 /**

@@ -20,6 +20,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/audit-entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["search"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/activate": {
         parameters: {
             query?: never;
@@ -126,6 +142,38 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["refresh"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/document-templates/{documentType}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_3"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/document-templates/{documentType}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["publish"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1036,6 +1084,36 @@ export interface components {
             fileName: string;
             items: components["schemas"]["DemandItemRequest"][];
         };
+        AuditEntryResponse: {
+            /** @enum {string} */
+            action: "LOGIN_SUCCEEDED" | "LOGIN_FAILED" | "PASSWORD_RESET_REQUESTED" | "PASSWORD_RESET_COMPLETED" | "USER_CREATED" | "USER_UPDATED" | "USER_DEACTIVATED" | "USER_ORGANIZATION_TRANSFERRED" | "USER_PASSWORD_RESET" | "USER_CPF_REVEALED" | "ORGANIZATION_CREATED" | "ORGANIZATION_UPDATED" | "ORGANIZATION_DEACTIVATED" | "ORGANIZATION_LETTERHEAD_UPDATED" | "DEPARTMENT_CREATED" | "DEPARTMENT_UPDATED" | "DEPARTMENT_DEACTIVATED" | "PROCUREMENT_PROCESS_CREATED" | "PROCUREMENT_PROCESS_UPDATED" | "PROCUREMENT_PROCESS_CLOSED" | "PROCUREMENT_PROCESS_REOPENED" | "SECTION_WRITTEN" | "SECTION_DISPENSED" | "DOCUMENT_FINALIZED" | "DOCUMENT_GENERATED" | "DOCUMENT_DOWNLOADED" | "PCA_IMPORTED" | "DFD_ATTACHED" | "DFD_UPDATED" | "DFD_REMOVED" | "BUDGET_APPROPRIATION_DECLARED" | "BUDGET_APPROPRIATION_UPDATED" | "BUDGET_APPROPRIATION_REMOVED" | "PRICE_QUOTE_RECORDED" | "PRICE_QUOTE_UPDATED" | "PRICE_QUOTE_REMOVED" | "TEMPLATE_PUBLISHED";
+            /** Format: uuid */
+            actorId: string;
+            actorName: string;
+            correlationId: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            occurredAt: string;
+            /** Format: uuid */
+            organizationId: string;
+            reason: string;
+            /** Format: uuid */
+            resourceId: string;
+            /** @enum {string} */
+            resourceType: "AUTHENTICATION" | "USER" | "ORGANIZATION" | "DEPARTMENT" | "PROCUREMENT_PROCESS" | "PCA_PLAN" | "TEMPLATE";
+        };
+        AuditPageResponse: {
+            content: components["schemas"]["AuditEntryResponse"][];
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            size: number;
+            /** Format: int64 */
+            totalElements: number;
+            /** Format: int32 */
+            totalPages: number;
+        };
         AuthenticationResponse: {
             accessToken: string;
             /** Format: date-time */
@@ -1249,6 +1327,22 @@ export interface components {
             sections: components["schemas"]["SectionResponseView"][];
             silentGaps: string[];
         };
+        DocumentTemplate: {
+            bodySizePt: number;
+            /** @enum {string} */
+            font: "TIMES" | "HELVETICA";
+            footerText?: string;
+            headerText?: string;
+            headingSizePt: number;
+            /** Format: uuid */
+            id: string;
+            lineHeight: number;
+            margins: components["schemas"]["Margins"];
+            /** Format: date-time */
+            publishedAt: string;
+            /** Format: int32 */
+            version: number;
+        };
         DocumentVersionResponse: {
             body: components["schemas"]["BlockView"][];
             contentHash: string;
@@ -1345,6 +1439,12 @@ export interface components {
             /** Format: uuid */
             organizationId?: string;
             password: string;
+        };
+        Margins: {
+            bottomMm: number;
+            leftMm: number;
+            rightMm: number;
+            topMm: number;
         };
         MembershipResponse: {
             active: boolean;
@@ -1528,6 +1628,19 @@ export interface components {
         ProvisionalPasswordResponse: {
             provisionalPassword: string;
         };
+        PublishTemplateRequest: {
+            bodySizePt: number;
+            /** @enum {string} */
+            font: "TIMES" | "HELVETICA";
+            footerText: string;
+            headerText: string;
+            headingSizePt: number;
+            lineHeight: number;
+            marginBottomMm: number;
+            marginLeftMm: number;
+            marginRightMm: number;
+            marginTopMm: number;
+        };
         ReopenProcurementProcessRequest: {
             reason: string;
         };
@@ -1563,7 +1676,7 @@ export interface components {
         SessionResponse: {
             activeMembership?: components["schemas"]["MembershipResponse"];
             organization?: components["schemas"]["OrganizationResponse"];
-            permissions: ("PROFILE_READ" | "USER_READ" | "USER_MANAGE" | "ORGANIZATION_READ" | "ORGANIZATION_MANAGE" | "PLATFORM_ADMIN")[];
+            permissions: ("PROFILE_READ" | "USER_READ" | "USER_MANAGE" | "ORGANIZATION_READ" | "ORGANIZATION_MANAGE" | "AUDIT_READ" | "PLATFORM_ADMIN")[];
             user: components["schemas"]["SessionUserResponse"];
         };
         SessionUserResponse: {
@@ -1587,6 +1700,16 @@ export interface components {
             empty?: boolean;
             sorted?: boolean;
             unsorted?: boolean;
+        };
+        TemplateResponse: {
+            documentType: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            publishedAt: string;
+            template: components["schemas"]["DocumentTemplate"];
+            /** Format: int32 */
+            version: number;
         };
         TransferUserOrganizationRequest: {
             confirmed: boolean;
@@ -1717,6 +1840,35 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["AiStatusResponse"];
+                };
+            };
+        };
+    };
+    search: {
+        parameters: {
+            query?: {
+                resourceType?: "AUTHENTICATION" | "USER" | "ORGANIZATION" | "DEPARTMENT" | "PROCUREMENT_PROCESS" | "PCA_PLAN" | "TEMPLATE";
+                resourceId?: string;
+                actorId?: string;
+                action?: "LOGIN_SUCCEEDED" | "LOGIN_FAILED" | "PASSWORD_RESET_REQUESTED" | "PASSWORD_RESET_COMPLETED" | "USER_CREATED" | "USER_UPDATED" | "USER_DEACTIVATED" | "USER_ORGANIZATION_TRANSFERRED" | "USER_PASSWORD_RESET" | "USER_CPF_REVEALED" | "ORGANIZATION_CREATED" | "ORGANIZATION_UPDATED" | "ORGANIZATION_DEACTIVATED" | "ORGANIZATION_LETTERHEAD_UPDATED" | "DEPARTMENT_CREATED" | "DEPARTMENT_UPDATED" | "DEPARTMENT_DEACTIVATED" | "PROCUREMENT_PROCESS_CREATED" | "PROCUREMENT_PROCESS_UPDATED" | "PROCUREMENT_PROCESS_CLOSED" | "PROCUREMENT_PROCESS_REOPENED" | "SECTION_WRITTEN" | "SECTION_DISPENSED" | "DOCUMENT_FINALIZED" | "DOCUMENT_GENERATED" | "DOCUMENT_DOWNLOADED" | "PCA_IMPORTED" | "DFD_ATTACHED" | "DFD_UPDATED" | "DFD_REMOVED" | "BUDGET_APPROPRIATION_DECLARED" | "BUDGET_APPROPRIATION_UPDATED" | "BUDGET_APPROPRIATION_REMOVED" | "PRICE_QUOTE_RECORDED" | "PRICE_QUOTE_UPDATED" | "PRICE_QUOTE_REMOVED" | "TEMPLATE_PUBLISHED";
+                from?: string;
+                to?: string;
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AuditPageResponse"];
                 };
             };
         };
@@ -1869,6 +2021,54 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["AuthenticationResponse"];
+                };
+            };
+        };
+    };
+    list_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                documentType: "COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["TemplateResponse"][];
+                };
+            };
+        };
+    };
+    publish: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                documentType: "COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PublishTemplateRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["TemplateResponse"];
                 };
             };
         };

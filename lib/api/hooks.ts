@@ -77,6 +77,7 @@ export const chaves = {
   timbre: (entidadeId: string | undefined) => ["timbre", entidadeId] as const,
   brasao: (entidadeId: string | undefined) => ["brasao", entidadeId] as const,
   trilha: (processoId: string) => ["trilha", processoId] as const,
+  auditoria: (params: api.ConsultaAuditoria) => ["auditoria", params] as const,
 }
 
 /* ── Sessão / autenticação ─────────────────────────────────────────────────── */
@@ -224,6 +225,13 @@ export function useTrilhaDoProcesso(processoId: string) {
 
 export function useEstatisticas() {
   return useQuery({ queryKey: chaves.estatisticas, queryFn: api.getEstatisticas })
+}
+
+export function useAuditoria(params: api.ConsultaAuditoria = {}) {
+  return useQuery({
+    queryKey: chaves.auditoria(params),
+    queryFn: () => api.getAuditoria(params),
+  })
 }
 
 export function useProcessos(params: ListaProcessosParams = {}) {

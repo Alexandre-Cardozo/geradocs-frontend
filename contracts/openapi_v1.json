@@ -150,6 +150,77 @@
         "required" : [ "departmentId", "fileName", "items" ],
         "type" : "object"
       },
+      "AuditEntryResponse" : {
+        "properties" : {
+          "action" : {
+            "enum" : [ "LOGIN_SUCCEEDED", "LOGIN_FAILED", "PASSWORD_RESET_REQUESTED", "PASSWORD_RESET_COMPLETED", "USER_CREATED", "USER_UPDATED", "USER_DEACTIVATED", "USER_ORGANIZATION_TRANSFERRED", "USER_PASSWORD_RESET", "USER_CPF_REVEALED", "ORGANIZATION_CREATED", "ORGANIZATION_UPDATED", "ORGANIZATION_DEACTIVATED", "ORGANIZATION_LETTERHEAD_UPDATED", "DEPARTMENT_CREATED", "DEPARTMENT_UPDATED", "DEPARTMENT_DEACTIVATED", "PROCUREMENT_PROCESS_CREATED", "PROCUREMENT_PROCESS_UPDATED", "PROCUREMENT_PROCESS_CLOSED", "PROCUREMENT_PROCESS_REOPENED", "SECTION_WRITTEN", "SECTION_DISPENSED", "DOCUMENT_FINALIZED", "DOCUMENT_GENERATED", "DOCUMENT_DOWNLOADED", "PCA_IMPORTED", "DFD_ATTACHED", "DFD_UPDATED", "DFD_REMOVED", "BUDGET_APPROPRIATION_DECLARED", "BUDGET_APPROPRIATION_UPDATED", "BUDGET_APPROPRIATION_REMOVED", "PRICE_QUOTE_RECORDED", "PRICE_QUOTE_UPDATED", "PRICE_QUOTE_REMOVED", "TEMPLATE_PUBLISHED" ],
+            "type" : "string"
+          },
+          "actorId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "actorName" : {
+            "type" : "string"
+          },
+          "correlationId" : {
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "occurredAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "organizationId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "reason" : {
+            "type" : "string"
+          },
+          "resourceId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "resourceType" : {
+            "enum" : [ "AUTHENTICATION", "USER", "ORGANIZATION", "DEPARTMENT", "PROCUREMENT_PROCESS", "PCA_PLAN", "TEMPLATE" ],
+            "type" : "string"
+          }
+        },
+        "required" : [ "action", "actorId", "actorName", "correlationId", "id", "occurredAt", "organizationId", "reason", "resourceId", "resourceType" ],
+        "type" : "object"
+      },
+      "AuditPageResponse" : {
+        "properties" : {
+          "content" : {
+            "items" : {
+              "$ref" : "#/components/schemas/AuditEntryResponse"
+            },
+            "type" : "array"
+          },
+          "page" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "size" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "totalElements" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "totalPages" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "content", "page", "size", "totalElements", "totalPages" ],
+        "type" : "object"
+      },
       "AuthenticationResponse" : {
         "properties" : {
           "accessToken" : {
@@ -807,6 +878,46 @@
         "required" : [ "body", "canGenerate", "changedSinceVersion", "currentVersion", "documentType", "finalized", "id", "pendingRequiredSections", "processId", "progress", "sections", "silentGaps" ],
         "type" : "object"
       },
+      "DocumentTemplate" : {
+        "properties" : {
+          "bodySizePt" : {
+            "type" : "number"
+          },
+          "font" : {
+            "enum" : [ "TIMES", "HELVETICA" ],
+            "type" : "string"
+          },
+          "footerText" : {
+            "type" : "string"
+          },
+          "headerText" : {
+            "type" : "string"
+          },
+          "headingSizePt" : {
+            "type" : "number"
+          },
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "lineHeight" : {
+            "type" : "number"
+          },
+          "margins" : {
+            "$ref" : "#/components/schemas/Margins"
+          },
+          "publishedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "version" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "bodySizePt", "font", "headingSizePt", "id", "lineHeight", "margins", "publishedAt", "version" ],
+        "type" : "object"
+      },
       "DocumentVersionResponse" : {
         "properties" : {
           "body" : {
@@ -1068,6 +1179,24 @@
           }
         },
         "required" : [ "password" ],
+        "type" : "object"
+      },
+      "Margins" : {
+        "properties" : {
+          "bottomMm" : {
+            "type" : "number"
+          },
+          "leftMm" : {
+            "type" : "number"
+          },
+          "rightMm" : {
+            "type" : "number"
+          },
+          "topMm" : {
+            "type" : "number"
+          }
+        },
+        "required" : [ "bottomMm", "leftMm", "rightMm", "topMm" ],
         "type" : "object"
       },
       "MembershipResponse" : {
@@ -1547,6 +1676,57 @@
         "required" : [ "provisionalPassword" ],
         "type" : "object"
       },
+      "PublishTemplateRequest" : {
+        "properties" : {
+          "bodySizePt" : {
+            "maximum" : 24,
+            "minimum" : 6,
+            "type" : "number"
+          },
+          "font" : {
+            "enum" : [ "TIMES", "HELVETICA" ],
+            "type" : "string"
+          },
+          "footerText" : {
+            "type" : "string"
+          },
+          "headerText" : {
+            "type" : "string"
+          },
+          "headingSizePt" : {
+            "maximum" : 36,
+            "minimum" : 6,
+            "type" : "number"
+          },
+          "lineHeight" : {
+            "maximum" : 2.5,
+            "minimum" : 1,
+            "type" : "number"
+          },
+          "marginBottomMm" : {
+            "maximum" : 100,
+            "minimum" : 5,
+            "type" : "number"
+          },
+          "marginLeftMm" : {
+            "maximum" : 100,
+            "minimum" : 5,
+            "type" : "number"
+          },
+          "marginRightMm" : {
+            "maximum" : 100,
+            "minimum" : 5,
+            "type" : "number"
+          },
+          "marginTopMm" : {
+            "maximum" : 100,
+            "minimum" : 5,
+            "type" : "number"
+          }
+        },
+        "required" : [ "bodySizePt", "font", "footerText", "headerText", "headingSizePt", "lineHeight", "marginBottomMm", "marginLeftMm", "marginRightMm", "marginTopMm" ],
+        "type" : "object"
+      },
       "ReopenProcurementProcessRequest" : {
         "properties" : {
           "reason" : {
@@ -1656,7 +1836,7 @@
           },
           "permissions" : {
             "items" : {
-              "enum" : [ "PROFILE_READ", "USER_READ", "USER_MANAGE", "ORGANIZATION_READ", "ORGANIZATION_MANAGE", "PLATFORM_ADMIN" ],
+              "enum" : [ "PROFILE_READ", "USER_READ", "USER_MANAGE", "ORGANIZATION_READ", "ORGANIZATION_MANAGE", "AUDIT_READ", "PLATFORM_ADMIN" ],
               "type" : "string"
             },
             "type" : "array",
@@ -1724,6 +1904,30 @@
             "type" : "boolean"
           }
         },
+        "type" : "object"
+      },
+      "TemplateResponse" : {
+        "properties" : {
+          "documentType" : {
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "publishedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "template" : {
+            "$ref" : "#/components/schemas/DocumentTemplate"
+          },
+          "version" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "documentType", "id", "publishedAt", "template", "version" ],
         "type" : "object"
       },
       "TransferUserOrganizationRequest" : {
@@ -2070,6 +2274,91 @@
         "tags" : [ "ai-status-controller" ]
       }
     },
+    "/api/v1/audit-entries" : {
+      "get" : {
+        "operationId" : "search",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "resourceType",
+          "required" : false,
+          "schema" : {
+            "enum" : [ "AUTHENTICATION", "USER", "ORGANIZATION", "DEPARTMENT", "PROCUREMENT_PROCESS", "PCA_PLAN", "TEMPLATE" ],
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "resourceId",
+          "required" : false,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "actorId",
+          "required" : false,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "action",
+          "required" : false,
+          "schema" : {
+            "enum" : [ "LOGIN_SUCCEEDED", "LOGIN_FAILED", "PASSWORD_RESET_REQUESTED", "PASSWORD_RESET_COMPLETED", "USER_CREATED", "USER_UPDATED", "USER_DEACTIVATED", "USER_ORGANIZATION_TRANSFERRED", "USER_PASSWORD_RESET", "USER_CPF_REVEALED", "ORGANIZATION_CREATED", "ORGANIZATION_UPDATED", "ORGANIZATION_DEACTIVATED", "ORGANIZATION_LETTERHEAD_UPDATED", "DEPARTMENT_CREATED", "DEPARTMENT_UPDATED", "DEPARTMENT_DEACTIVATED", "PROCUREMENT_PROCESS_CREATED", "PROCUREMENT_PROCESS_UPDATED", "PROCUREMENT_PROCESS_CLOSED", "PROCUREMENT_PROCESS_REOPENED", "SECTION_WRITTEN", "SECTION_DISPENSED", "DOCUMENT_FINALIZED", "DOCUMENT_GENERATED", "DOCUMENT_DOWNLOADED", "PCA_IMPORTED", "DFD_ATTACHED", "DFD_UPDATED", "DFD_REMOVED", "BUDGET_APPROPRIATION_DECLARED", "BUDGET_APPROPRIATION_UPDATED", "BUDGET_APPROPRIATION_REMOVED", "PRICE_QUOTE_RECORDED", "PRICE_QUOTE_UPDATED", "PRICE_QUOTE_REMOVED", "TEMPLATE_PUBLISHED" ],
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "from",
+          "required" : false,
+          "schema" : {
+            "format" : "date-time",
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "to",
+          "required" : false,
+          "schema" : {
+            "format" : "date-time",
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "default" : 0,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "default" : 50,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AuditPageResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "audit-controller" ]
+      }
+    },
     "/api/v1/auth/activate" : {
       "post" : {
         "operationId" : "activate",
@@ -2216,6 +2505,73 @@
           }
         },
         "tags" : [ "authentication-controller" ]
+      }
+    },
+    "/api/v1/document-templates/{documentType}" : {
+      "get" : {
+        "operationId" : "list_3",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "documentType",
+          "required" : true,
+          "schema" : {
+            "enum" : [ "COTACAO", "ETP", "MAPA", "TR", "EDITAL", "CONTRATO" ],
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/TemplateResponse"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "document-template-admin-controller" ]
+      }
+    },
+    "/api/v1/document-templates/{documentType}/versions" : {
+      "post" : {
+        "operationId" : "publish",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "documentType",
+          "required" : true,
+          "schema" : {
+            "enum" : [ "COTACAO", "ETP", "MAPA", "TR", "EDITAL", "CONTRATO" ],
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PublishTemplateRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TemplateResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "document-template-admin-controller" ]
       }
     },
     "/api/v1/generated-documents" : {
