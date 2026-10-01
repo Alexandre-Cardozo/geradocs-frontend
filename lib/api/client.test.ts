@@ -6,6 +6,7 @@ import * as contratacao from "@/lib/api/procurement-client"
 import * as elaboracao from "@/lib/api/authoring-client"
 import * as pca from "@/lib/api/pca-client"
 import * as impressao from "@/lib/api/generation-client"
+import * as auditoria from "@/lib/api/audit-client"
 
 /**
  * A fachada de dados.
@@ -26,6 +27,7 @@ vi.mock("@/lib/api/procurement-client")
 vi.mock("@/lib/api/authoring-client")
 vi.mock("@/lib/api/pca-client")
 vi.mock("@/lib/api/generation-client")
+vi.mock("@/lib/api/audit-client")
 
 const ARQUIVO_PCA = new File(["1;P"], "p.csv", { type: "text/csv" })
 const PROCESSO = "3f2b1a00-1111-4222-8333-444455556666"
@@ -123,6 +125,14 @@ describe("a fachada liga cada chamada no lugar certo", () => {
     ["getUsuarios", (a) => a.getUsuarios(ENTIDADE, "maria"), acesso.listarUsuarios, [ENTIDADE, "maria"]],
     ["atualizarUsuario", (a) => a.atualizarUsuario({ id: "u1", nome: "Maria" }), acesso.atualizarUsuario, [{ id: "u1", nome: "Maria" }]],
     ["removerUsuario", (a) => a.removerUsuario("u1"), acesso.desativarUsuario, ["u1"]],
+    [
+      "transferirUsuario",
+      (a) => a.transferirUsuario({ userId: "u1", sourceOrganizationId: ENTIDADE, destinationOrganizationId: "o2", reason: "Remanejamento" }),
+      acesso.transferirUsuario,
+      [{ userId: "u1", sourceOrganizationId: ENTIDADE, destinationOrganizationId: "o2", reason: "Remanejamento" }],
+    ],
+    ["getAuditoria", (a) => a.getAuditoria(), auditoria.consultarAuditoria, [{}]],
+    ["getAuditoria com filtro", (a) => a.getAuditoria({ tipoRecurso: "USER" }), auditoria.consultarAuditoria, [{ tipoRecurso: "USER" }]],
     ["criarSecretaria", (a) => a.criarSecretaria(ENTIDADE, "Compras"), acesso.criarDepartamento, [ENTIDADE, "Compras"]],
     ["renomearSecretaria", (a) => a.renomearSecretaria(ENTIDADE, "s1", "Educação"), acesso.renomearDepartamento, [ENTIDADE, "s1", "Educação"]],
     ["removerSecretaria", (a) => a.removerSecretaria(ENTIDADE, "s1"), acesso.desativarDepartamento, [ENTIDADE, "s1"]],

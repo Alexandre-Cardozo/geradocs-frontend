@@ -65,4 +65,22 @@ describe("baixar o DFD", () => {
     expect(screen.getByRole("button", { name: /Baixar DFD-v1.pdf/ })).toHaveTextContent("Baixar")
     expect(criou).not.toHaveBeenCalled()
   })
+
+  it("uma versão anterior vem pela rota da versão, e não pela do arquivo vigente", async () => {
+    const pedidas: string[] = []
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id/dfds/:dfdId/files/:versao`, ({ params }) => {
+        pedidas.push(String(params.versao))
+        return HttpResponse.text("%PDF-1.7 v1", { headers: { "Content-Type": PDF } })
+      }),
+    )
+    renderizar(
+      <BaixarDfd processoId={PROCESSO} dfdId="d-1" nomeDoArquivo="DFD-v1.pdf" versao={1} />,
+    )
+
+    await userEvent.click(screen.getByRole("button", { name: /Baixar DFD-v1.pdf/ }))
+
+    await waitFor(() => expect(pedidas).toEqual(["1"]))
+    expect(revogou).toHaveBeenCalledWith("blob:dfd")
+  })
 })

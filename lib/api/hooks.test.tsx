@@ -135,6 +135,7 @@ describe("consultas: cada uma pede ao servidor o que a sua chave promete", () =>
       api.getConfigTenant,
     ],
     ["useUsuarios", () => hooks.useUsuarios(ENTIDADE), chaves.usuarios(ENTIDADE, ""), api.getUsuarios],
+    ["useAuditoria", () => hooks.useAuditoria(), chaves.auditoria({}), api.getAuditoria],
   ]
 
   it.each(consultas)("%s", async (_nome, usar, chaveEsperada, funcao) => {
@@ -489,6 +490,11 @@ describe("cadastros", () => {
       [() => hooks.useCriarUsuario(), { nome: "Maria" }, api.criarUsuario],
       [() => hooks.useAtualizarUsuario(), { id: "u1", nome: "Maria" }, api.atualizarUsuario],
       [() => hooks.useRemoverUsuario(), "u1", api.removerUsuario],
+      [
+        () => hooks.useTransferirUsuario(),
+        { userId: "u1", sourceOrganizationId: ENTIDADE, destinationOrganizationId: "o2", reason: "Remanejamento" },
+        api.transferirUsuario,
+      ],
     ] as const) {
       const { wrapper, invalidou } = ambiente()
       mockDaApi(funcao).mockResolvedValue({})

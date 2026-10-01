@@ -193,6 +193,45 @@ describe("DFDs do processo", () => {
     expect(screen.getByRole("button", { name: "Substituir" })).toBeInTheDocument()
   })
 
+  it("o histórico só é pedido ao abrir, e marca qual versão vale", async () => {
+    let pediuHistorico = 0
+    comDfds([
+      dfd("d-1", "DFD 003/2026", "Secretaria de Educação", [], {
+        mediaType: PDF,
+        byteSize: 2048,
+        sha256: "a".repeat(64),
+      }),
+    ])
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id/dfds/:dfdId/files`, () => {
+        pediuHistorico += 1
+        return HttpResponse.json([
+          {
+            version: 2, fileName: "DFD-v2.pdf", mediaType: PDF, byteSize: 2048, sha256: "b".repeat(64),
+            uploadedAt: "2026-09-21T12:00:00Z", uploadedBy: "Maria Costa Andrade", current: true,
+          },
+          {
+            version: 1, fileName: "DFD-v1.pdf", mediaType: PDF, byteSize: 1024, sha256: "a".repeat(64),
+            uploadedAt: "2026-09-10T12:00:00Z", uploadedBy: "Maria Costa Andrade", current: false,
+          },
+        ])
+      }),
+    )
+    renderizar(<DfdsDoProcesso processoId={PROCESSO} />)
+
+    const versoes = await screen.findByRole("button", { name: "Versões" })
+    // Abrir a tela não baixa o histórico de cada DFD da lista.
+    expect(pediuHistorico).toBe(0)
+    await userEvent.click(versoes)
+
+    expect(await screen.findByText("Histórico de arquivos")).toBeInTheDocument()
+    expect(pediuHistorico).toBe(1)
+    expect(screen.getByText("v2")).toBeInTheDocument()
+    expect(screen.getByText("v1")).toBeInTheDocument()
+    expect(screen.getAllByText("Versão vigente")).toHaveLength(1)
+    expect(screen.getByRole("button", { name: /Baixar DFD-v1.pdf/ })).toBeInTheDocument()
+  })
+
   it("remover pede confirmação, e diz quantos itens vão junto", async () => {
     let removeu = false
     comDfds([dfd("d-1", "DFD 003/2026", "Secretaria de Educação", [papel])])
