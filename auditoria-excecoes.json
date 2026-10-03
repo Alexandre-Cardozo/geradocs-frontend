@@ -1,0 +1,8 @@
+[
+  {
+    "id": "GHSA-vfj7-8cjw-p6xm",
+    "pacote": "braces",
+    "motivo": "Sem versão corrigida (braces <= 3.0.3). Só chega por eslint-config-next → fast-glob → micromatch, no lint, que expande padrões escritos no próprio repositório; não vai para o navegador. A saída sugerida pelo npm é voltar ao eslint-config-next 14.",
+    "revisarAte": "2026-12-31"
+  }
+]

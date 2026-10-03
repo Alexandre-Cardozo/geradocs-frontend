@@ -28,8 +28,13 @@ jobs:
       # Efeito colateral aceito: um aviso publicado hoje pode reprovar uma PR que
       # não encostou em dependência nenhuma. É o preço de saber no dia, e não no
       # dia do incidente.
+      #
+      # Aviso sem versão corrigida não pode travar todo PR até alguém desligar o
+      # gate: o script tolera só o que está em auditoria-excecoes.json, com motivo
+      # e data de revisão, e só em ferramenta de desenvolvimento. O que chega ao
+      # navegador continua sem exceção.
       - name: Dependência vulnerável
-        run: npm audit --audit-level=high
+        run: node scripts/auditar-dependencias.mjs
 
       - name: ESLint (eslint-config-next + aderência ao DS)
         run: npm run lint
