@@ -26,8 +26,8 @@ const jetbrains = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "GeraDocs",
-    template: "%s · GeraDocs",
+    default: "GeraDocs | Homologação",
+    template: "%s | GeraDocs - Homologação",
   },
   description:
     "Plataforma GovTech da LAHHM para automação dos documentos de planejamento da contratação pública sob a Lei 14.133/2021.",
