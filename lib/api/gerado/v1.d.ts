@@ -1060,7 +1060,7 @@ export interface components {
         };
         ArchivedDocumentResponse: {
             /** @enum {string} */
-            documentType: "COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO";
+            documentType: "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
             /** Format: int32 */
             documentVersion: number;
             files: components["schemas"]["GeneratedFileResponse"][];
@@ -1086,7 +1086,7 @@ export interface components {
         };
         AuditEntryResponse: {
             /** @enum {string} */
-            action: "LOGIN_SUCCEEDED" | "LOGIN_FAILED" | "PASSWORD_RESET_REQUESTED" | "PASSWORD_RESET_COMPLETED" | "USER_CREATED" | "USER_UPDATED" | "USER_DEACTIVATED" | "USER_ORGANIZATION_TRANSFERRED" | "USER_PASSWORD_RESET" | "USER_CPF_REVEALED" | "ORGANIZATION_CREATED" | "ORGANIZATION_UPDATED" | "ORGANIZATION_DEACTIVATED" | "ORGANIZATION_LETTERHEAD_UPDATED" | "DEPARTMENT_CREATED" | "DEPARTMENT_UPDATED" | "DEPARTMENT_DEACTIVATED" | "PROCUREMENT_PROCESS_CREATED" | "PROCUREMENT_PROCESS_UPDATED" | "PROCUREMENT_PROCESS_CLOSED" | "PROCUREMENT_PROCESS_REOPENED" | "SECTION_WRITTEN" | "SECTION_DISPENSED" | "DOCUMENT_FINALIZED" | "DOCUMENT_GENERATED" | "DOCUMENT_DOWNLOADED" | "PCA_IMPORTED" | "DFD_ATTACHED" | "DFD_UPDATED" | "DFD_REMOVED" | "BUDGET_APPROPRIATION_DECLARED" | "BUDGET_APPROPRIATION_UPDATED" | "BUDGET_APPROPRIATION_REMOVED" | "PRICE_QUOTE_RECORDED" | "PRICE_QUOTE_UPDATED" | "PRICE_QUOTE_REMOVED" | "TEMPLATE_PUBLISHED";
+            action: "BUDGET_APPROPRIATION_DECLARED" | "BUDGET_APPROPRIATION_REMOVED" | "BUDGET_APPROPRIATION_UPDATED" | "DEPARTMENT_CREATED" | "DEPARTMENT_DEACTIVATED" | "DEPARTMENT_UPDATED" | "DFD_ATTACHED" | "DFD_REMOVED" | "DFD_UPDATED" | "DOCUMENT_DOWNLOADED" | "DOCUMENT_FINALIZED" | "DOCUMENT_GENERATED" | "LOGIN_FAILED" | "LOGIN_SUCCEEDED" | "ORGANIZATION_CREATED" | "ORGANIZATION_DEACTIVATED" | "ORGANIZATION_LETTERHEAD_UPDATED" | "ORGANIZATION_UPDATED" | "PASSWORD_RESET_COMPLETED" | "PASSWORD_RESET_REQUESTED" | "PCA_IMPORTED" | "PRICE_QUOTE_RECORDED" | "PRICE_QUOTE_REMOVED" | "PRICE_QUOTE_UPDATED" | "PROCUREMENT_PROCESS_CLOSED" | "PROCUREMENT_PROCESS_CREATED" | "PROCUREMENT_PROCESS_REOPENED" | "PROCUREMENT_PROCESS_UPDATED" | "SECTION_DISPENSED" | "SECTION_WRITTEN" | "TEMPLATE_PUBLISHED" | "USER_CPF_REVEALED" | "USER_CREATED" | "USER_DEACTIVATED" | "USER_ORGANIZATION_TRANSFERRED" | "USER_PASSWORD_RESET" | "USER_UPDATED";
             /** Format: uuid */
             actorId: string;
             actorName: string;
@@ -1101,7 +1101,7 @@ export interface components {
             /** Format: uuid */
             resourceId: string;
             /** @enum {string} */
-            resourceType: "AUTHENTICATION" | "USER" | "ORGANIZATION" | "DEPARTMENT" | "PROCUREMENT_PROCESS" | "PCA_PLAN" | "TEMPLATE";
+            resourceType: "AUTHENTICATION" | "DEPARTMENT" | "ORGANIZATION" | "PCA_PLAN" | "PROCUREMENT_PROCESS" | "TEMPLATE" | "USER";
         };
         AuditPageResponse: {
             content: components["schemas"]["AuditEntryResponse"][];
@@ -1183,7 +1183,7 @@ export interface components {
         };
         CreateOrganizationRequest: {
             /** @enum {string} */
-            entityType?: "PREFEITURA" | "CAMARA" | "AUTARQUIA" | "FUNDACAO" | "CONSORCIO" | "OUTRO";
+            entityType?: "AUTARQUIA" | "CAMARA" | "CONSORCIO" | "FUNDACAO" | "OUTRO" | "PREFEITURA";
             executiveAgency?: boolean;
             name: string;
             unit?: string;
@@ -1193,12 +1193,12 @@ export interface components {
             /** Format: uuid */
             departmentId: string;
             /** @enum {string} */
-            dispensationGround?: "VALUE_ENGINEERING" | "VALUE_GENERAL" | "OTHER";
-            documents?: ("COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO")[];
+            dispensationGround?: "OTHER" | "VALUE_ENGINEERING" | "VALUE_GENERAL";
+            documents?: ("CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR")[];
             estimatedValue: number;
             legalBasis?: string;
             /** @enum {string} */
-            modality: "ELECTRONIC_AUCTION" | "COMPETITION" | "CONTEST" | "AUCTION" | "COMPETITIVE_DIALOGUE" | "DIRECT_AWARD_ARTICLE_75" | "SOLE_SOURCE" | "ACCREDITATION";
+            modality: "ACCREDITATION" | "AUCTION" | "COMPETITION" | "COMPETITIVE_DIALOGUE" | "CONTEST" | "DIRECT_AWARD_ARTICLE_75" | "ELECTRONIC_AUCTION" | "SOLE_SOURCE";
             objectDescription: string;
             urgency: boolean;
         };
@@ -1295,7 +1295,7 @@ export interface components {
             /** Format: int32 */
             fiscalYear: number;
             /** @enum {string} */
-            ground?: "VALUE_ENGINEERING" | "VALUE_GENERAL" | "OTHER";
+            ground?: "OTHER" | "VALUE_ENGINEERING" | "VALUE_GENERAL";
             legalBasis?: string;
             limitAmount?: number;
             limitSource?: string;
@@ -1315,7 +1315,7 @@ export interface components {
             /** Format: int32 */
             currentVersion: number;
             /** @enum {string} */
-            documentType: "COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO";
+            documentType: "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
             finalized: boolean;
             /** Format: uuid */
             id: string;
@@ -1330,7 +1330,7 @@ export interface components {
         DocumentTemplate: {
             bodySizePt: number;
             /** @enum {string} */
-            font: "TIMES" | "HELVETICA";
+            font: "HELVETICA" | "TIMES";
             footerText?: string;
             headerText?: string;
             headingSizePt: number;
@@ -1372,7 +1372,7 @@ export interface components {
             estimatedValue?: number;
             foreseen: boolean;
             /** @enum {string} */
-            kind?: "EXACT" | "TERMS" | "WIDENED" | "DECLARED";
+            kind?: "DECLARED" | "EXACT" | "TERMS" | "WIDENED";
             quantity?: number;
             unit?: string;
         };
@@ -1419,7 +1419,7 @@ export interface components {
         IncongruenceView: {
             itemDescription: string;
             /** @enum {string} */
-            kind: "UNIT" | "SPECIFICATION" | "UNIT_PRICE" | "DELIVERY_DEADLINE";
+            kind: "DELIVERY_DEADLINE" | "SPECIFICATION" | "UNIT" | "UNIT_PRICE";
             values: components["schemas"]["DivergentValueView"][];
         };
         LetterheadResponse: {
@@ -1459,7 +1459,7 @@ export interface components {
             /** Format: date-time */
             createdAt: string;
             /** @enum {string} */
-            entityType: "PREFEITURA" | "CAMARA" | "AUTARQUIA" | "FUNDACAO" | "CONSORCIO" | "OUTRO";
+            entityType: "AUTARQUIA" | "CAMARA" | "CONSORCIO" | "FUNDACAO" | "OUTRO" | "PREFEITURA";
             executiveAgency: boolean;
             /** Format: uuid */
             id: string;
@@ -1602,14 +1602,14 @@ export interface components {
             departmentId?: string;
             departmentName?: string;
             /** @enum {string} */
-            dispensationGround?: "VALUE_ENGINEERING" | "VALUE_GENERAL" | "OTHER";
-            documents: ("COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO")[];
+            dispensationGround?: "OTHER" | "VALUE_ENGINEERING" | "VALUE_GENERAL";
+            documents: ("CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR")[];
             estimatedValue?: number;
             /** Format: uuid */
             id: string;
             legalBasis?: string;
             /** @enum {string} */
-            modality: "ELECTRONIC_AUCTION" | "COMPETITION" | "CONTEST" | "AUCTION" | "COMPETITIVE_DIALOGUE" | "DIRECT_AWARD_ARTICLE_75" | "SOLE_SOURCE" | "ACCREDITATION";
+            modality: "ACCREDITATION" | "AUCTION" | "COMPETITION" | "COMPETITIVE_DIALOGUE" | "CONTEST" | "DIRECT_AWARD_ARTICLE_75" | "ELECTRONIC_AUCTION" | "SOLE_SOURCE";
             objectDescription: string;
             /** Format: uuid */
             organizationId: string;
@@ -1618,7 +1618,7 @@ export interface components {
             responsibleUserId?: string;
             responsibleUserName?: string;
             /** @enum {string} */
-            status: "DRAFT" | "CLOSED";
+            status: "CLOSED" | "DRAFT";
             /** Format: date-time */
             updatedAt: string;
             urgency: boolean;
@@ -1631,7 +1631,7 @@ export interface components {
         PublishTemplateRequest: {
             bodySizePt: number;
             /** @enum {string} */
-            font: "TIMES" | "HELVETICA";
+            font: "HELVETICA" | "TIMES";
             footerText: string;
             headerText: string;
             headingSizePt: number;
@@ -1653,7 +1653,7 @@ export interface components {
         };
         SectionDiffView: {
             /** @enum {string} */
-            change: "ADDED" | "REMOVED" | "CHANGED" | "UNCHANGED";
+            change: "ADDED" | "CHANGED" | "REMOVED" | "UNCHANGED";
             currentText?: string;
             previousText?: string;
             sectionCode: string;
@@ -1665,7 +1665,7 @@ export interface components {
             hint?: string;
             legalBasis?: string;
             /** @enum {string} */
-            origin: "CATALOG" | "AD_HOC";
+            origin: "AD_HOC" | "CATALOG";
             /** Format: int32 */
             position: number;
             required: boolean;
@@ -1676,7 +1676,7 @@ export interface components {
         SessionResponse: {
             activeMembership?: components["schemas"]["MembershipResponse"];
             organization?: components["schemas"]["OrganizationResponse"];
-            permissions: ("PROFILE_READ" | "USER_READ" | "USER_MANAGE" | "ORGANIZATION_READ" | "ORGANIZATION_MANAGE" | "AUDIT_READ" | "PLATFORM_ADMIN")[];
+            permissions: ("AUDIT_READ" | "ORGANIZATION_MANAGE" | "ORGANIZATION_READ" | "PLATFORM_ADMIN" | "PROFILE_READ" | "USER_MANAGE" | "USER_READ")[];
             user: components["schemas"]["SessionUserResponse"];
         };
         SessionUserResponse: {
@@ -1734,7 +1734,7 @@ export interface components {
         };
         UpdateOrganizationRequest: {
             /** @enum {string} */
-            entityType?: "PREFEITURA" | "CAMARA" | "AUTARQUIA" | "FUNDACAO" | "CONSORCIO" | "OUTRO";
+            entityType?: "AUTARQUIA" | "CAMARA" | "CONSORCIO" | "FUNDACAO" | "OUTRO" | "PREFEITURA";
             executiveAgency?: boolean;
             name: string;
             unit?: string;
@@ -1743,12 +1743,12 @@ export interface components {
             changeNote?: string;
             demandObject?: string;
             /** @enum {string} */
-            dispensationGround?: "VALUE_ENGINEERING" | "VALUE_GENERAL" | "OTHER";
-            documents?: ("COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO")[];
+            dispensationGround?: "OTHER" | "VALUE_ENGINEERING" | "VALUE_GENERAL";
+            documents?: ("CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR")[];
             estimatedValue: number;
             legalBasis?: string;
             /** @enum {string} */
-            modality: "ELECTRONIC_AUCTION" | "COMPETITION" | "CONTEST" | "AUCTION" | "COMPETITIVE_DIALOGUE" | "DIRECT_AWARD_ARTICLE_75" | "SOLE_SOURCE" | "ACCREDITATION";
+            modality: "ACCREDITATION" | "AUCTION" | "COMPETITION" | "COMPETITIVE_DIALOGUE" | "CONTEST" | "DIRECT_AWARD_ARTICLE_75" | "ELECTRONIC_AUCTION" | "SOLE_SOURCE";
             objectDescription: string;
             urgency: boolean;
         };
@@ -1792,6 +1792,7 @@ export interface components {
             version: number;
         };
         UserSummaryResponse: {
+            appointmentDecree?: string;
             cpf?: string;
             email: string;
             /** Format: uuid */
@@ -1847,14 +1848,14 @@ export interface operations {
     search: {
         parameters: {
             query?: {
-                resourceType?: "AUTHENTICATION" | "USER" | "ORGANIZATION" | "DEPARTMENT" | "PROCUREMENT_PROCESS" | "PCA_PLAN" | "TEMPLATE";
-                resourceId?: string;
+                action?: "BUDGET_APPROPRIATION_DECLARED" | "BUDGET_APPROPRIATION_REMOVED" | "BUDGET_APPROPRIATION_UPDATED" | "DEPARTMENT_CREATED" | "DEPARTMENT_DEACTIVATED" | "DEPARTMENT_UPDATED" | "DFD_ATTACHED" | "DFD_REMOVED" | "DFD_UPDATED" | "DOCUMENT_DOWNLOADED" | "DOCUMENT_FINALIZED" | "DOCUMENT_GENERATED" | "LOGIN_FAILED" | "LOGIN_SUCCEEDED" | "ORGANIZATION_CREATED" | "ORGANIZATION_DEACTIVATED" | "ORGANIZATION_LETTERHEAD_UPDATED" | "ORGANIZATION_UPDATED" | "PASSWORD_RESET_COMPLETED" | "PASSWORD_RESET_REQUESTED" | "PCA_IMPORTED" | "PRICE_QUOTE_RECORDED" | "PRICE_QUOTE_REMOVED" | "PRICE_QUOTE_UPDATED" | "PROCUREMENT_PROCESS_CLOSED" | "PROCUREMENT_PROCESS_CREATED" | "PROCUREMENT_PROCESS_REOPENED" | "PROCUREMENT_PROCESS_UPDATED" | "SECTION_DISPENSED" | "SECTION_WRITTEN" | "TEMPLATE_PUBLISHED" | "USER_CPF_REVEALED" | "USER_CREATED" | "USER_DEACTIVATED" | "USER_ORGANIZATION_TRANSFERRED" | "USER_PASSWORD_RESET" | "USER_UPDATED";
                 actorId?: string;
-                action?: "LOGIN_SUCCEEDED" | "LOGIN_FAILED" | "PASSWORD_RESET_REQUESTED" | "PASSWORD_RESET_COMPLETED" | "USER_CREATED" | "USER_UPDATED" | "USER_DEACTIVATED" | "USER_ORGANIZATION_TRANSFERRED" | "USER_PASSWORD_RESET" | "USER_CPF_REVEALED" | "ORGANIZATION_CREATED" | "ORGANIZATION_UPDATED" | "ORGANIZATION_DEACTIVATED" | "ORGANIZATION_LETTERHEAD_UPDATED" | "DEPARTMENT_CREATED" | "DEPARTMENT_UPDATED" | "DEPARTMENT_DEACTIVATED" | "PROCUREMENT_PROCESS_CREATED" | "PROCUREMENT_PROCESS_UPDATED" | "PROCUREMENT_PROCESS_CLOSED" | "PROCUREMENT_PROCESS_REOPENED" | "SECTION_WRITTEN" | "SECTION_DISPENSED" | "DOCUMENT_FINALIZED" | "DOCUMENT_GENERATED" | "DOCUMENT_DOWNLOADED" | "PCA_IMPORTED" | "DFD_ATTACHED" | "DFD_UPDATED" | "DFD_REMOVED" | "BUDGET_APPROPRIATION_DECLARED" | "BUDGET_APPROPRIATION_UPDATED" | "BUDGET_APPROPRIATION_REMOVED" | "PRICE_QUOTE_RECORDED" | "PRICE_QUOTE_UPDATED" | "PRICE_QUOTE_REMOVED" | "TEMPLATE_PUBLISHED";
                 from?: string;
-                to?: string;
                 page?: number;
+                resourceId?: string;
+                resourceType?: "AUTHENTICATION" | "DEPARTMENT" | "ORGANIZATION" | "PCA_PLAN" | "PROCUREMENT_PROCESS" | "TEMPLATE" | "USER";
                 size?: number;
+                to?: string;
             };
             header?: never;
             path?: never;
@@ -2030,7 +2031,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                documentType: "COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO";
+                documentType: "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
             };
             cookie?: never;
         };
@@ -2052,7 +2053,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                documentType: "COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO";
+                documentType: "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
             };
             cookie?: never;
         };
@@ -2355,8 +2356,8 @@ export interface operations {
                 "If-Match"?: string;
             };
             path: {
-                organizationId: string;
                 departmentId: string;
+                organizationId: string;
             };
             cookie?: never;
         };
@@ -2384,8 +2385,8 @@ export interface operations {
                 "If-Match"?: string;
             };
             path: {
-                organizationId: string;
                 departmentId: string;
+                organizationId: string;
             };
             cookie?: never;
         };
@@ -2623,10 +2624,10 @@ export interface operations {
     list_1: {
         parameters: {
             query?: {
-                status?: "DRAFT" | "CLOSED";
-                search?: string;
                 page?: number;
+                search?: string;
                 size?: number;
+                status?: "CLOSED" | "DRAFT";
             };
             header?: never;
             path?: never;
@@ -2796,8 +2797,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                id: string;
                 appropriationId: string;
+                id: string;
             };
             cookie?: never;
         };
@@ -2823,8 +2824,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                id: string;
                 appropriationId: string;
+                id: string;
             };
             cookie?: never;
         };
@@ -2944,8 +2945,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                id: string;
                 dfdId: string;
+                id: string;
             };
             cookie?: never;
         };
@@ -2965,8 +2966,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                id: string;
                 dfdId: string;
+                id: string;
             };
             cookie?: never;
         };
@@ -2988,8 +2989,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                id: string;
                 dfdId: string;
+                id: string;
             };
             cookie?: never;
         };
@@ -3018,8 +3019,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                id: string;
                 dfdId: string;
+                id: string;
             };
             cookie?: never;
         };
@@ -3041,8 +3042,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                id: string;
                 dfdId: string;
+                id: string;
                 version: number;
             };
             cookie?: never;
@@ -3065,8 +3066,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                id: string;
                 dfdId: string;
+                id: string;
             };
             cookie?: never;
         };
@@ -3311,8 +3312,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                documentType: "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
                 processId: string;
-                documentType: "COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO";
             };
             cookie?: never;
         };
@@ -3334,8 +3335,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                documentType: "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
                 processId: string;
-                documentType: "COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO";
             };
             cookie?: never;
         };
@@ -3361,8 +3362,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                documentType: "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
                 processId: string;
-                documentType: "COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO";
             };
             cookie?: never;
         };
@@ -3384,8 +3385,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                documentType: "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
                 processId: string;
-                documentType: "COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO";
             };
             cookie?: never;
         };
@@ -3411,9 +3412,9 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                processId: string;
-                documentType: "COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO";
+                documentType: "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
                 fileId: string;
+                processId: string;
             };
             cookie?: never;
         };
@@ -3435,8 +3436,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                documentType: "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
                 processId: string;
-                documentType: "COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO";
             };
             cookie?: never;
         };
@@ -3462,8 +3463,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                documentType: "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
                 processId: string;
-                documentType: "COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO";
             };
             cookie?: never;
         };
@@ -3489,8 +3490,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                documentType: "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
                 processId: string;
-                documentType: "COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO";
                 sectionCode: string;
             };
             cookie?: never;
@@ -3517,8 +3518,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                documentType: "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
                 processId: string;
-                documentType: "COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO";
                 sectionCode: string;
             };
             cookie?: never;
@@ -3541,8 +3542,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                documentType: "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
                 processId: string;
-                documentType: "COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO";
                 sectionCode: string;
             };
             cookie?: never;
@@ -3569,8 +3570,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                documentType: "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
                 processId: string;
-                documentType: "COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO";
             };
             cookie?: never;
         };
@@ -3595,8 +3596,8 @@ export interface operations {
             };
             header?: never;
             path: {
+                documentType: "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
                 processId: string;
-                documentType: "COTACAO" | "ETP" | "MAPA" | "TR" | "EDITAL" | "CONTRATO";
             };
             cookie?: never;
         };

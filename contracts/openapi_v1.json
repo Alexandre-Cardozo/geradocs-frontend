@@ -79,7 +79,7 @@
       "ArchivedDocumentResponse" : {
         "properties" : {
           "documentType" : {
-            "enum" : [ "COTACAO", "ETP", "MAPA", "TR", "EDITAL", "CONTRATO" ],
+            "enum" : [ "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
             "type" : "string"
           },
           "documentVersion" : {
@@ -153,7 +153,7 @@
       "AuditEntryResponse" : {
         "properties" : {
           "action" : {
-            "enum" : [ "LOGIN_SUCCEEDED", "LOGIN_FAILED", "PASSWORD_RESET_REQUESTED", "PASSWORD_RESET_COMPLETED", "USER_CREATED", "USER_UPDATED", "USER_DEACTIVATED", "USER_ORGANIZATION_TRANSFERRED", "USER_PASSWORD_RESET", "USER_CPF_REVEALED", "ORGANIZATION_CREATED", "ORGANIZATION_UPDATED", "ORGANIZATION_DEACTIVATED", "ORGANIZATION_LETTERHEAD_UPDATED", "DEPARTMENT_CREATED", "DEPARTMENT_UPDATED", "DEPARTMENT_DEACTIVATED", "PROCUREMENT_PROCESS_CREATED", "PROCUREMENT_PROCESS_UPDATED", "PROCUREMENT_PROCESS_CLOSED", "PROCUREMENT_PROCESS_REOPENED", "SECTION_WRITTEN", "SECTION_DISPENSED", "DOCUMENT_FINALIZED", "DOCUMENT_GENERATED", "DOCUMENT_DOWNLOADED", "PCA_IMPORTED", "DFD_ATTACHED", "DFD_UPDATED", "DFD_REMOVED", "BUDGET_APPROPRIATION_DECLARED", "BUDGET_APPROPRIATION_UPDATED", "BUDGET_APPROPRIATION_REMOVED", "PRICE_QUOTE_RECORDED", "PRICE_QUOTE_UPDATED", "PRICE_QUOTE_REMOVED", "TEMPLATE_PUBLISHED" ],
+            "enum" : [ "BUDGET_APPROPRIATION_DECLARED", "BUDGET_APPROPRIATION_REMOVED", "BUDGET_APPROPRIATION_UPDATED", "DEPARTMENT_CREATED", "DEPARTMENT_DEACTIVATED", "DEPARTMENT_UPDATED", "DFD_ATTACHED", "DFD_REMOVED", "DFD_UPDATED", "DOCUMENT_DOWNLOADED", "DOCUMENT_FINALIZED", "DOCUMENT_GENERATED", "LOGIN_FAILED", "LOGIN_SUCCEEDED", "ORGANIZATION_CREATED", "ORGANIZATION_DEACTIVATED", "ORGANIZATION_LETTERHEAD_UPDATED", "ORGANIZATION_UPDATED", "PASSWORD_RESET_COMPLETED", "PASSWORD_RESET_REQUESTED", "PCA_IMPORTED", "PRICE_QUOTE_RECORDED", "PRICE_QUOTE_REMOVED", "PRICE_QUOTE_UPDATED", "PROCUREMENT_PROCESS_CLOSED", "PROCUREMENT_PROCESS_CREATED", "PROCUREMENT_PROCESS_REOPENED", "PROCUREMENT_PROCESS_UPDATED", "SECTION_DISPENSED", "SECTION_WRITTEN", "TEMPLATE_PUBLISHED", "USER_CPF_REVEALED", "USER_CREATED", "USER_DEACTIVATED", "USER_ORGANIZATION_TRANSFERRED", "USER_PASSWORD_RESET", "USER_UPDATED" ],
             "type" : "string"
           },
           "actorId" : {
@@ -186,7 +186,7 @@
             "type" : "string"
           },
           "resourceType" : {
-            "enum" : [ "AUTHENTICATION", "USER", "ORGANIZATION", "DEPARTMENT", "PROCUREMENT_PROCESS", "PCA_PLAN", "TEMPLATE" ],
+            "enum" : [ "AUTHENTICATION", "DEPARTMENT", "ORGANIZATION", "PCA_PLAN", "PROCUREMENT_PROCESS", "TEMPLATE", "USER" ],
             "type" : "string"
           }
         },
@@ -426,6 +426,7 @@
           "name" : {
             "maxLength" : 160,
             "minLength" : 0,
+            "pattern" : "\\s*|(?=.*\\p{L})[\\p{L}\\p{M}\\p{N} .,;'’\"()/&ºª°–-]+",
             "type" : "string"
           }
         },
@@ -435,7 +436,7 @@
       "CreateOrganizationRequest" : {
         "properties" : {
           "entityType" : {
-            "enum" : [ "PREFEITURA", "CAMARA", "AUTARQUIA", "FUNDACAO", "CONSORCIO", "OUTRO" ],
+            "enum" : [ "AUTARQUIA", "CAMARA", "CONSORCIO", "FUNDACAO", "OUTRO", "PREFEITURA" ],
             "type" : "string"
           },
           "executiveAgency" : {
@@ -444,11 +445,13 @@
           "name" : {
             "maxLength" : 200,
             "minLength" : 0,
+            "pattern" : "\\s*|(?=.*\\p{L})[\\p{L}\\p{M}\\p{N} .,;'’\"()/&ºª°–-]+",
             "type" : "string"
           },
           "unit" : {
             "maxLength" : 120,
             "minLength" : 0,
+            "pattern" : "\\s*|(?=.*\\p{L})[\\p{L}\\p{M}\\p{N} .,;'’\"()/&ºª°–-]+",
             "type" : "string"
           }
         },
@@ -467,12 +470,12 @@
             "type" : "string"
           },
           "dispensationGround" : {
-            "enum" : [ "VALUE_ENGINEERING", "VALUE_GENERAL", "OTHER" ],
+            "enum" : [ "OTHER", "VALUE_ENGINEERING", "VALUE_GENERAL" ],
             "type" : "string"
           },
           "documents" : {
             "items" : {
-              "enum" : [ "COTACAO", "ETP", "MAPA", "TR", "EDITAL", "CONTRATO" ],
+              "enum" : [ "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
               "type" : "string"
             },
             "type" : "array",
@@ -488,7 +491,7 @@
             "type" : "string"
           },
           "modality" : {
-            "enum" : [ "ELECTRONIC_AUCTION", "COMPETITION", "CONTEST", "AUCTION", "COMPETITIVE_DIALOGUE", "DIRECT_AWARD_ARTICLE_75", "SOLE_SOURCE", "ACCREDITATION" ],
+            "enum" : [ "ACCREDITATION", "AUCTION", "COMPETITION", "COMPETITIVE_DIALOGUE", "CONTEST", "DIRECT_AWARD_ARTICLE_75", "ELECTRONIC_AUCTION", "SOLE_SOURCE" ],
             "type" : "string"
           },
           "objectDescription" : {
@@ -508,6 +511,7 @@
           "appointmentDecree" : {
             "maxLength" : 60,
             "minLength" : 0,
+            "pattern" : "\\s*|(?=.*[0-9])[\\p{L}\\p{M}\\p{N} .,;'’()/ºª°–-]+",
             "type" : "string"
           },
           "cpf" : {
@@ -527,11 +531,13 @@
           "jobTitle" : {
             "maxLength" : 120,
             "minLength" : 0,
+            "pattern" : "\\s*|(?=.*\\p{L})[\\p{L}\\p{M}\\p{N} .,;'’\"()/&ºª°–-]+",
             "type" : "string"
           },
           "name" : {
             "maxLength" : 200,
             "minLength" : 0,
+            "pattern" : "\\s*|(?=.*\\p{L})[\\p{L}\\p{M} '’.-]+",
             "type" : "string"
           },
           "organizationId" : {
@@ -545,6 +551,7 @@
           "registrationNumber" : {
             "maxLength" : 40,
             "minLength" : 0,
+            "pattern" : "\\s*|\\s*(?=.*[0-9])[A-Za-z0-9./-]+\\s*",
             "type" : "string"
           }
         },
@@ -779,7 +786,7 @@
             "type" : "integer"
           },
           "ground" : {
-            "enum" : [ "VALUE_ENGINEERING", "VALUE_GENERAL", "OTHER" ],
+            "enum" : [ "OTHER", "VALUE_ENGINEERING", "VALUE_GENERAL" ],
             "type" : "string"
           },
           "legalBasis" : {
@@ -838,7 +845,7 @@
             "type" : "integer"
           },
           "documentType" : {
-            "enum" : [ "COTACAO", "ETP", "MAPA", "TR", "EDITAL", "CONTRATO" ],
+            "enum" : [ "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
             "type" : "string"
           },
           "finalized" : {
@@ -884,7 +891,7 @@
             "type" : "number"
           },
           "font" : {
-            "enum" : [ "TIMES", "HELVETICA" ],
+            "enum" : [ "HELVETICA", "TIMES" ],
             "type" : "string"
           },
           "footerText" : {
@@ -1000,7 +1007,7 @@
             "type" : "boolean"
           },
           "kind" : {
-            "enum" : [ "EXACT", "TERMS", "WIDENED", "DECLARED" ],
+            "enum" : [ "DECLARED", "EXACT", "TERMS", "WIDENED" ],
             "type" : "string"
           },
           "quantity" : {
@@ -1126,7 +1133,7 @@
             "type" : "string"
           },
           "kind" : {
-            "enum" : [ "UNIT", "SPECIFICATION", "UNIT_PRICE", "DELIVERY_DEADLINE" ],
+            "enum" : [ "DELIVERY_DEADLINE", "SPECIFICATION", "UNIT", "UNIT_PRICE" ],
             "type" : "string"
           },
           "values" : {
@@ -1227,7 +1234,7 @@
             "type" : "string"
           },
           "entityType" : {
-            "enum" : [ "PREFEITURA", "CAMARA", "AUTARQUIA", "FUNDACAO", "CONSORCIO", "OUTRO" ],
+            "enum" : [ "AUTARQUIA", "CAMARA", "CONSORCIO", "FUNDACAO", "OUTRO", "PREFEITURA" ],
             "type" : "string"
           },
           "executiveAgency" : {
@@ -1606,12 +1613,12 @@
             "type" : "string"
           },
           "dispensationGround" : {
-            "enum" : [ "VALUE_ENGINEERING", "VALUE_GENERAL", "OTHER" ],
+            "enum" : [ "OTHER", "VALUE_ENGINEERING", "VALUE_GENERAL" ],
             "type" : "string"
           },
           "documents" : {
             "items" : {
-              "enum" : [ "COTACAO", "ETP", "MAPA", "TR", "EDITAL", "CONTRATO" ],
+              "enum" : [ "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
               "type" : "string"
             },
             "type" : "array",
@@ -1628,7 +1635,7 @@
             "type" : "string"
           },
           "modality" : {
-            "enum" : [ "ELECTRONIC_AUCTION", "COMPETITION", "CONTEST", "AUCTION", "COMPETITIVE_DIALOGUE", "DIRECT_AWARD_ARTICLE_75", "SOLE_SOURCE", "ACCREDITATION" ],
+            "enum" : [ "ACCREDITATION", "AUCTION", "COMPETITION", "COMPETITIVE_DIALOGUE", "CONTEST", "DIRECT_AWARD_ARTICLE_75", "ELECTRONIC_AUCTION", "SOLE_SOURCE" ],
             "type" : "string"
           },
           "objectDescription" : {
@@ -1649,7 +1656,7 @@
             "type" : "string"
           },
           "status" : {
-            "enum" : [ "DRAFT", "CLOSED" ],
+            "enum" : [ "CLOSED", "DRAFT" ],
             "type" : "string"
           },
           "updatedAt" : {
@@ -1684,7 +1691,7 @@
             "type" : "number"
           },
           "font" : {
-            "enum" : [ "TIMES", "HELVETICA" ],
+            "enum" : [ "HELVETICA", "TIMES" ],
             "type" : "string"
           },
           "footerText" : {
@@ -1769,7 +1776,7 @@
       "SectionDiffView" : {
         "properties" : {
           "change" : {
-            "enum" : [ "ADDED", "REMOVED", "CHANGED", "UNCHANGED" ],
+            "enum" : [ "ADDED", "CHANGED", "REMOVED", "UNCHANGED" ],
             "type" : "string"
           },
           "currentText" : {
@@ -1803,7 +1810,7 @@
             "type" : "string"
           },
           "origin" : {
-            "enum" : [ "CATALOG", "AD_HOC" ],
+            "enum" : [ "AD_HOC", "CATALOG" ],
             "type" : "string"
           },
           "position" : {
@@ -1836,7 +1843,7 @@
           },
           "permissions" : {
             "items" : {
-              "enum" : [ "PROFILE_READ", "USER_READ", "USER_MANAGE", "ORGANIZATION_READ", "ORGANIZATION_MANAGE", "AUDIT_READ", "PLATFORM_ADMIN" ],
+              "enum" : [ "AUDIT_READ", "ORGANIZATION_MANAGE", "ORGANIZATION_READ", "PLATFORM_ADMIN", "PROFILE_READ", "USER_MANAGE", "USER_READ" ],
               "type" : "string"
             },
             "type" : "array",
@@ -1961,11 +1968,13 @@
           "acronym" : {
             "maxLength" : 30,
             "minLength" : 0,
+            "pattern" : "^[A-Za-z0-9-]*$",
             "type" : "string"
           },
           "name" : {
             "maxLength" : 160,
             "minLength" : 0,
+            "pattern" : "\\s*|(?=.*\\p{L})[\\p{L}\\p{M}\\p{N} .,;'’\"()/&ºª°–-]+",
             "type" : "string"
           }
         },
@@ -1989,11 +1998,13 @@
           "footerText" : {
             "maxLength" : 500,
             "minLength" : 0,
+            "pattern" : "[\\n\\r\\t[^\\p{Cc}\\p{Cf}]]*",
             "type" : "string"
           },
           "headerText" : {
             "maxLength" : 500,
             "minLength" : 0,
+            "pattern" : "[\\n\\r\\t[^\\p{Cc}\\p{Cf}]]*",
             "type" : "string"
           }
         },
@@ -2002,7 +2013,7 @@
       "UpdateOrganizationRequest" : {
         "properties" : {
           "entityType" : {
-            "enum" : [ "PREFEITURA", "CAMARA", "AUTARQUIA", "FUNDACAO", "CONSORCIO", "OUTRO" ],
+            "enum" : [ "AUTARQUIA", "CAMARA", "CONSORCIO", "FUNDACAO", "OUTRO", "PREFEITURA" ],
             "type" : "string"
           },
           "executiveAgency" : {
@@ -2011,11 +2022,13 @@
           "name" : {
             "maxLength" : 200,
             "minLength" : 0,
+            "pattern" : "\\s*|(?=.*\\p{L})[\\p{L}\\p{M}\\p{N} .,;'’\"()/&ºª°–-]+",
             "type" : "string"
           },
           "unit" : {
             "maxLength" : 200,
             "minLength" : 0,
+            "pattern" : "\\s*|(?=.*\\p{L})[\\p{L}\\p{M}\\p{N} .,;'’\"()/&ºª°–-]+",
             "type" : "string"
           }
         },
@@ -2035,12 +2048,12 @@
             "type" : "string"
           },
           "dispensationGround" : {
-            "enum" : [ "VALUE_ENGINEERING", "VALUE_GENERAL", "OTHER" ],
+            "enum" : [ "OTHER", "VALUE_ENGINEERING", "VALUE_GENERAL" ],
             "type" : "string"
           },
           "documents" : {
             "items" : {
-              "enum" : [ "COTACAO", "ETP", "MAPA", "TR", "EDITAL", "CONTRATO" ],
+              "enum" : [ "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
               "type" : "string"
             },
             "type" : "array",
@@ -2056,7 +2069,7 @@
             "type" : "string"
           },
           "modality" : {
-            "enum" : [ "ELECTRONIC_AUCTION", "COMPETITION", "CONTEST", "AUCTION", "COMPETITIVE_DIALOGUE", "DIRECT_AWARD_ARTICLE_75", "SOLE_SOURCE", "ACCREDITATION" ],
+            "enum" : [ "ACCREDITATION", "AUCTION", "COMPETITION", "COMPETITIVE_DIALOGUE", "CONTEST", "DIRECT_AWARD_ARTICLE_75", "ELECTRONIC_AUCTION", "SOLE_SOURCE" ],
             "type" : "string"
           },
           "objectDescription" : {
@@ -2076,6 +2089,7 @@
           "appointmentDecree" : {
             "maxLength" : 60,
             "minLength" : 0,
+            "pattern" : "\\s*|(?=.*[0-9])[\\p{L}\\p{M}\\p{N} .,;'’()/ºª°–-]+",
             "type" : "string"
           },
           "departmentId" : {
@@ -2091,11 +2105,13 @@
           "jobTitle" : {
             "maxLength" : 160,
             "minLength" : 0,
+            "pattern" : "\\s*|(?=.*\\p{L})[\\p{L}\\p{M}\\p{N} .,;'’\"()/&ºª°–-]+",
             "type" : "string"
           },
           "name" : {
             "maxLength" : 200,
             "minLength" : 0,
+            "pattern" : "\\s*|(?=.*\\p{L})[\\p{L}\\p{M} '’.-]+",
             "type" : "string"
           },
           "organizationId" : {
@@ -2109,6 +2125,7 @@
           "registrationNumber" : {
             "maxLength" : 40,
             "minLength" : 0,
+            "pattern" : "\\s*|\\s*(?=.*[0-9])[A-Za-z0-9./-]+\\s*",
             "type" : "string"
           }
         },
@@ -2181,6 +2198,9 @@
       },
       "UserSummaryResponse" : {
         "properties" : {
+          "appointmentDecree" : {
+            "type" : "string"
+          },
           "cpf" : {
             "type" : "string"
           },
@@ -2279,18 +2299,10 @@
         "operationId" : "search",
         "parameters" : [ {
           "in" : "query",
-          "name" : "resourceType",
+          "name" : "action",
           "required" : false,
           "schema" : {
-            "enum" : [ "AUTHENTICATION", "USER", "ORGANIZATION", "DEPARTMENT", "PROCUREMENT_PROCESS", "PCA_PLAN", "TEMPLATE" ],
-            "type" : "string"
-          }
-        }, {
-          "in" : "query",
-          "name" : "resourceId",
-          "required" : false,
-          "schema" : {
-            "format" : "uuid",
+            "enum" : [ "BUDGET_APPROPRIATION_DECLARED", "BUDGET_APPROPRIATION_REMOVED", "BUDGET_APPROPRIATION_UPDATED", "DEPARTMENT_CREATED", "DEPARTMENT_DEACTIVATED", "DEPARTMENT_UPDATED", "DFD_ATTACHED", "DFD_REMOVED", "DFD_UPDATED", "DOCUMENT_DOWNLOADED", "DOCUMENT_FINALIZED", "DOCUMENT_GENERATED", "LOGIN_FAILED", "LOGIN_SUCCEEDED", "ORGANIZATION_CREATED", "ORGANIZATION_DEACTIVATED", "ORGANIZATION_LETTERHEAD_UPDATED", "ORGANIZATION_UPDATED", "PASSWORD_RESET_COMPLETED", "PASSWORD_RESET_REQUESTED", "PCA_IMPORTED", "PRICE_QUOTE_RECORDED", "PRICE_QUOTE_REMOVED", "PRICE_QUOTE_UPDATED", "PROCUREMENT_PROCESS_CLOSED", "PROCUREMENT_PROCESS_CREATED", "PROCUREMENT_PROCESS_REOPENED", "PROCUREMENT_PROCESS_UPDATED", "SECTION_DISPENSED", "SECTION_WRITTEN", "TEMPLATE_PUBLISHED", "USER_CPF_REVEALED", "USER_CREATED", "USER_DEACTIVATED", "USER_ORGANIZATION_TRANSFERRED", "USER_PASSWORD_RESET", "USER_UPDATED" ],
             "type" : "string"
           }
         }, {
@@ -2303,23 +2315,7 @@
           }
         }, {
           "in" : "query",
-          "name" : "action",
-          "required" : false,
-          "schema" : {
-            "enum" : [ "LOGIN_SUCCEEDED", "LOGIN_FAILED", "PASSWORD_RESET_REQUESTED", "PASSWORD_RESET_COMPLETED", "USER_CREATED", "USER_UPDATED", "USER_DEACTIVATED", "USER_ORGANIZATION_TRANSFERRED", "USER_PASSWORD_RESET", "USER_CPF_REVEALED", "ORGANIZATION_CREATED", "ORGANIZATION_UPDATED", "ORGANIZATION_DEACTIVATED", "ORGANIZATION_LETTERHEAD_UPDATED", "DEPARTMENT_CREATED", "DEPARTMENT_UPDATED", "DEPARTMENT_DEACTIVATED", "PROCUREMENT_PROCESS_CREATED", "PROCUREMENT_PROCESS_UPDATED", "PROCUREMENT_PROCESS_CLOSED", "PROCUREMENT_PROCESS_REOPENED", "SECTION_WRITTEN", "SECTION_DISPENSED", "DOCUMENT_FINALIZED", "DOCUMENT_GENERATED", "DOCUMENT_DOWNLOADED", "PCA_IMPORTED", "DFD_ATTACHED", "DFD_UPDATED", "DFD_REMOVED", "BUDGET_APPROPRIATION_DECLARED", "BUDGET_APPROPRIATION_UPDATED", "BUDGET_APPROPRIATION_REMOVED", "PRICE_QUOTE_RECORDED", "PRICE_QUOTE_UPDATED", "PRICE_QUOTE_REMOVED", "TEMPLATE_PUBLISHED" ],
-            "type" : "string"
-          }
-        }, {
-          "in" : "query",
           "name" : "from",
-          "required" : false,
-          "schema" : {
-            "format" : "date-time",
-            "type" : "string"
-          }
-        }, {
-          "in" : "query",
-          "name" : "to",
           "required" : false,
           "schema" : {
             "format" : "date-time",
@@ -2336,12 +2332,36 @@
           }
         }, {
           "in" : "query",
+          "name" : "resourceId",
+          "required" : false,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "resourceType",
+          "required" : false,
+          "schema" : {
+            "enum" : [ "AUTHENTICATION", "DEPARTMENT", "ORGANIZATION", "PCA_PLAN", "PROCUREMENT_PROCESS", "TEMPLATE", "USER" ],
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
           "name" : "size",
           "required" : false,
           "schema" : {
             "default" : 50,
             "format" : "int32",
             "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "to",
+          "required" : false,
+          "schema" : {
+            "format" : "date-time",
+            "type" : "string"
           }
         } ],
         "responses" : {
@@ -2515,7 +2535,7 @@
           "name" : "documentType",
           "required" : true,
           "schema" : {
-            "enum" : [ "COTACAO", "ETP", "MAPA", "TR", "EDITAL", "CONTRATO" ],
+            "enum" : [ "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
             "type" : "string"
           }
         } ],
@@ -2545,7 +2565,7 @@
           "name" : "documentType",
           "required" : true,
           "schema" : {
-            "enum" : [ "COTACAO", "ETP", "MAPA", "TR", "EDITAL", "CONTRATO" ],
+            "enum" : [ "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
             "type" : "string"
           }
         } ],
@@ -2750,18 +2770,18 @@
       "patch" : {
         "operationId" : "update_2",
         "parameters" : [ {
+          "in" : "header",
+          "name" : "If-Match",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
           "in" : "path",
           "name" : "organizationId",
           "required" : true,
           "schema" : {
             "format" : "uuid",
-            "type" : "string"
-          }
-        }, {
-          "in" : "header",
-          "name" : "If-Match",
-          "required" : false,
-          "schema" : {
             "type" : "string"
           }
         } ],
@@ -2794,18 +2814,18 @@
       "post" : {
         "operationId" : "deactivate_1",
         "parameters" : [ {
+          "in" : "header",
+          "name" : "If-Match",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
           "in" : "path",
           "name" : "organizationId",
           "required" : true,
           "schema" : {
             "format" : "uuid",
-            "type" : "string"
-          }
-        }, {
-          "in" : "header",
-          "name" : "If-Match",
-          "required" : false,
-          "schema" : {
             "type" : "string"
           }
         } ],
@@ -2903,11 +2923,10 @@
       "patch" : {
         "operationId" : "updateDepartment",
         "parameters" : [ {
-          "in" : "path",
-          "name" : "organizationId",
-          "required" : true,
+          "in" : "header",
+          "name" : "If-Match",
+          "required" : false,
           "schema" : {
-            "format" : "uuid",
             "type" : "string"
           }
         }, {
@@ -2919,10 +2938,11 @@
             "type" : "string"
           }
         }, {
-          "in" : "header",
-          "name" : "If-Match",
-          "required" : false,
+          "in" : "path",
+          "name" : "organizationId",
+          "required" : true,
           "schema" : {
+            "format" : "uuid",
             "type" : "string"
           }
         } ],
@@ -2955,11 +2975,10 @@
       "post" : {
         "operationId" : "deactivateDepartment",
         "parameters" : [ {
-          "in" : "path",
-          "name" : "organizationId",
-          "required" : true,
+          "in" : "header",
+          "name" : "If-Match",
+          "required" : false,
           "schema" : {
-            "format" : "uuid",
             "type" : "string"
           }
         }, {
@@ -2971,10 +2990,11 @@
             "type" : "string"
           }
         }, {
-          "in" : "header",
-          "name" : "If-Match",
-          "required" : false,
+          "in" : "path",
+          "name" : "organizationId",
+          "required" : true,
           "schema" : {
+            "format" : "uuid",
             "type" : "string"
           }
         } ],
@@ -3094,18 +3114,18 @@
       "get" : {
         "operationId" : "logo",
         "parameters" : [ {
+          "in" : "header",
+          "name" : "If-None-Match",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
           "in" : "path",
           "name" : "organizationId",
           "required" : true,
           "schema" : {
             "format" : "uuid",
-            "type" : "string"
-          }
-        }, {
-          "in" : "header",
-          "name" : "If-None-Match",
-          "required" : false,
-          "schema" : {
             "type" : "string"
           }
         } ],
@@ -3279,11 +3299,12 @@
         "operationId" : "list_1",
         "parameters" : [ {
           "in" : "query",
-          "name" : "status",
+          "name" : "page",
           "required" : false,
           "schema" : {
-            "enum" : [ "DRAFT", "CLOSED" ],
-            "type" : "string"
+            "default" : 0,
+            "format" : "int32",
+            "type" : "integer"
           }
         }, {
           "in" : "query",
@@ -3294,21 +3315,20 @@
           }
         }, {
           "in" : "query",
-          "name" : "page",
-          "required" : false,
-          "schema" : {
-            "default" : 0,
-            "format" : "int32",
-            "type" : "integer"
-          }
-        }, {
-          "in" : "query",
           "name" : "size",
           "required" : false,
           "schema" : {
             "default" : 20,
             "format" : "int32",
             "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "status",
+          "required" : false,
+          "schema" : {
+            "enum" : [ "CLOSED", "DRAFT" ],
+            "type" : "string"
           }
         } ],
         "responses" : {
@@ -3408,18 +3428,18 @@
       "patch" : {
         "operationId" : "update_1",
         "parameters" : [ {
+          "in" : "header",
+          "name" : "If-Match",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
           "in" : "path",
           "name" : "id",
           "required" : true,
           "schema" : {
             "format" : "uuid",
-            "type" : "string"
-          }
-        }, {
-          "in" : "header",
-          "name" : "If-Match",
-          "required" : false,
-          "schema" : {
             "type" : "string"
           }
         } ],
@@ -3518,7 +3538,7 @@
         "operationId" : "removeAppropriation",
         "parameters" : [ {
           "in" : "path",
-          "name" : "id",
+          "name" : "appropriationId",
           "required" : true,
           "schema" : {
             "format" : "uuid",
@@ -3526,7 +3546,7 @@
           }
         }, {
           "in" : "path",
-          "name" : "appropriationId",
+          "name" : "id",
           "required" : true,
           "schema" : {
             "format" : "uuid",
@@ -3544,7 +3564,7 @@
         "operationId" : "updateAppropriation",
         "parameters" : [ {
           "in" : "path",
-          "name" : "id",
+          "name" : "appropriationId",
           "required" : true,
           "schema" : {
             "format" : "uuid",
@@ -3552,7 +3572,7 @@
           }
         }, {
           "in" : "path",
-          "name" : "appropriationId",
+          "name" : "id",
           "required" : true,
           "schema" : {
             "format" : "uuid",
@@ -3727,7 +3747,7 @@
         "operationId" : "removeDfd",
         "parameters" : [ {
           "in" : "path",
-          "name" : "id",
+          "name" : "dfdId",
           "required" : true,
           "schema" : {
             "format" : "uuid",
@@ -3735,7 +3755,7 @@
           }
         }, {
           "in" : "path",
-          "name" : "dfdId",
+          "name" : "id",
           "required" : true,
           "schema" : {
             "format" : "uuid",
@@ -3755,7 +3775,7 @@
         "operationId" : "dfdFile",
         "parameters" : [ {
           "in" : "path",
-          "name" : "id",
+          "name" : "dfdId",
           "required" : true,
           "schema" : {
             "format" : "uuid",
@@ -3763,7 +3783,7 @@
           }
         }, {
           "in" : "path",
-          "name" : "dfdId",
+          "name" : "id",
           "required" : true,
           "schema" : {
             "format" : "uuid",
@@ -3789,7 +3809,7 @@
         "operationId" : "attachDfdFile",
         "parameters" : [ {
           "in" : "path",
-          "name" : "id",
+          "name" : "dfdId",
           "required" : true,
           "schema" : {
             "format" : "uuid",
@@ -3797,7 +3817,7 @@
           }
         }, {
           "in" : "path",
-          "name" : "dfdId",
+          "name" : "id",
           "required" : true,
           "schema" : {
             "format" : "uuid",
@@ -3840,7 +3860,7 @@
         "operationId" : "dfdFileVersions",
         "parameters" : [ {
           "in" : "path",
-          "name" : "id",
+          "name" : "dfdId",
           "required" : true,
           "schema" : {
             "format" : "uuid",
@@ -3848,7 +3868,7 @@
           }
         }, {
           "in" : "path",
-          "name" : "dfdId",
+          "name" : "id",
           "required" : true,
           "schema" : {
             "format" : "uuid",
@@ -3878,7 +3898,7 @@
         "operationId" : "dfdFileVersion",
         "parameters" : [ {
           "in" : "path",
-          "name" : "id",
+          "name" : "dfdId",
           "required" : true,
           "schema" : {
             "format" : "uuid",
@@ -3886,7 +3906,7 @@
           }
         }, {
           "in" : "path",
-          "name" : "dfdId",
+          "name" : "id",
           "required" : true,
           "schema" : {
             "format" : "uuid",
@@ -3922,7 +3942,7 @@
         "operationId" : "updateDfdItems",
         "parameters" : [ {
           "in" : "path",
-          "name" : "id",
+          "name" : "dfdId",
           "required" : true,
           "schema" : {
             "format" : "uuid",
@@ -3930,7 +3950,7 @@
           }
         }, {
           "in" : "path",
-          "name" : "dfdId",
+          "name" : "id",
           "required" : true,
           "schema" : {
             "format" : "uuid",
@@ -4282,18 +4302,18 @@
         "operationId" : "open",
         "parameters" : [ {
           "in" : "path",
-          "name" : "processId",
+          "name" : "documentType",
           "required" : true,
           "schema" : {
-            "format" : "uuid",
+            "enum" : [ "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
             "type" : "string"
           }
         }, {
           "in" : "path",
-          "name" : "documentType",
+          "name" : "processId",
           "required" : true,
           "schema" : {
-            "enum" : [ "COTACAO", "ETP", "MAPA", "TR", "EDITAL", "CONTRATO" ],
+            "format" : "uuid",
             "type" : "string"
           }
         } ],
@@ -4317,18 +4337,18 @@
         "operationId" : "finalizeDocument",
         "parameters" : [ {
           "in" : "path",
-          "name" : "processId",
+          "name" : "documentType",
           "required" : true,
           "schema" : {
-            "format" : "uuid",
+            "enum" : [ "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
             "type" : "string"
           }
         }, {
           "in" : "path",
-          "name" : "documentType",
+          "name" : "processId",
           "required" : true,
           "schema" : {
-            "enum" : [ "COTACAO", "ETP", "MAPA", "TR", "EDITAL", "CONTRATO" ],
+            "format" : "uuid",
             "type" : "string"
           }
         } ],
@@ -4361,18 +4381,18 @@
         "operationId" : "history",
         "parameters" : [ {
           "in" : "path",
-          "name" : "processId",
+          "name" : "documentType",
           "required" : true,
           "schema" : {
-            "format" : "uuid",
+            "enum" : [ "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
             "type" : "string"
           }
         }, {
           "in" : "path",
-          "name" : "documentType",
+          "name" : "processId",
           "required" : true,
           "schema" : {
-            "enum" : [ "COTACAO", "ETP", "MAPA", "TR", "EDITAL", "CONTRATO" ],
+            "format" : "uuid",
             "type" : "string"
           }
         } ],
@@ -4397,18 +4417,18 @@
         "operationId" : "generate",
         "parameters" : [ {
           "in" : "path",
-          "name" : "processId",
+          "name" : "documentType",
           "required" : true,
           "schema" : {
-            "format" : "uuid",
+            "enum" : [ "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
             "type" : "string"
           }
         }, {
           "in" : "path",
-          "name" : "documentType",
+          "name" : "processId",
           "required" : true,
           "schema" : {
-            "enum" : [ "COTACAO", "ETP", "MAPA", "TR", "EDITAL", "CONTRATO" ],
+            "format" : "uuid",
             "type" : "string"
           }
         } ],
@@ -4442,7 +4462,15 @@
         "operationId" : "download",
         "parameters" : [ {
           "in" : "path",
-          "name" : "processId",
+          "name" : "documentType",
+          "required" : true,
+          "schema" : {
+            "enum" : [ "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "fileId",
           "required" : true,
           "schema" : {
             "format" : "uuid",
@@ -4450,15 +4478,7 @@
           }
         }, {
           "in" : "path",
-          "name" : "documentType",
-          "required" : true,
-          "schema" : {
-            "enum" : [ "COTACAO", "ETP", "MAPA", "TR", "EDITAL", "CONTRATO" ],
-            "type" : "string"
-          }
-        }, {
-          "in" : "path",
-          "name" : "fileId",
+          "name" : "processId",
           "required" : true,
           "schema" : {
             "format" : "uuid",
@@ -4486,18 +4506,18 @@
         "operationId" : "addSection",
         "parameters" : [ {
           "in" : "path",
-          "name" : "processId",
+          "name" : "documentType",
           "required" : true,
           "schema" : {
-            "format" : "uuid",
+            "enum" : [ "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
             "type" : "string"
           }
         }, {
           "in" : "path",
-          "name" : "documentType",
+          "name" : "processId",
           "required" : true,
           "schema" : {
-            "enum" : [ "COTACAO", "ETP", "MAPA", "TR", "EDITAL", "CONTRATO" ],
+            "format" : "uuid",
             "type" : "string"
           }
         } ],
@@ -4531,18 +4551,18 @@
         "operationId" : "reorderSections",
         "parameters" : [ {
           "in" : "path",
-          "name" : "processId",
+          "name" : "documentType",
           "required" : true,
           "schema" : {
-            "format" : "uuid",
+            "enum" : [ "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
             "type" : "string"
           }
         }, {
           "in" : "path",
-          "name" : "documentType",
+          "name" : "processId",
           "required" : true,
           "schema" : {
-            "enum" : [ "COTACAO", "ETP", "MAPA", "TR", "EDITAL", "CONTRATO" ],
+            "format" : "uuid",
             "type" : "string"
           }
         } ],
@@ -4576,18 +4596,18 @@
         "operationId" : "removeSection",
         "parameters" : [ {
           "in" : "path",
-          "name" : "processId",
+          "name" : "documentType",
           "required" : true,
           "schema" : {
-            "format" : "uuid",
+            "enum" : [ "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
             "type" : "string"
           }
         }, {
           "in" : "path",
-          "name" : "documentType",
+          "name" : "processId",
           "required" : true,
           "schema" : {
-            "enum" : [ "COTACAO", "ETP", "MAPA", "TR", "EDITAL", "CONTRATO" ],
+            "format" : "uuid",
             "type" : "string"
           }
         }, {
@@ -4616,18 +4636,18 @@
         "operationId" : "saveSection",
         "parameters" : [ {
           "in" : "path",
-          "name" : "processId",
+          "name" : "documentType",
           "required" : true,
           "schema" : {
-            "format" : "uuid",
+            "enum" : [ "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
             "type" : "string"
           }
         }, {
           "in" : "path",
-          "name" : "documentType",
+          "name" : "processId",
           "required" : true,
           "schema" : {
-            "enum" : [ "COTACAO", "ETP", "MAPA", "TR", "EDITAL", "CONTRATO" ],
+            "format" : "uuid",
             "type" : "string"
           }
         }, {
@@ -4668,18 +4688,18 @@
         "operationId" : "generateSection",
         "parameters" : [ {
           "in" : "path",
-          "name" : "processId",
+          "name" : "documentType",
           "required" : true,
           "schema" : {
-            "format" : "uuid",
+            "enum" : [ "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
             "type" : "string"
           }
         }, {
           "in" : "path",
-          "name" : "documentType",
+          "name" : "processId",
           "required" : true,
           "schema" : {
-            "enum" : [ "COTACAO", "ETP", "MAPA", "TR", "EDITAL", "CONTRATO" ],
+            "format" : "uuid",
             "type" : "string"
           }
         }, {
@@ -4719,18 +4739,18 @@
         "operationId" : "versions",
         "parameters" : [ {
           "in" : "path",
-          "name" : "processId",
+          "name" : "documentType",
           "required" : true,
           "schema" : {
-            "format" : "uuid",
+            "enum" : [ "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
             "type" : "string"
           }
         }, {
           "in" : "path",
-          "name" : "documentType",
+          "name" : "processId",
           "required" : true,
           "schema" : {
-            "enum" : [ "COTACAO", "ETP", "MAPA", "TR", "EDITAL", "CONTRATO" ],
+            "format" : "uuid",
             "type" : "string"
           }
         } ],
@@ -4757,18 +4777,18 @@
         "operationId" : "comparison",
         "parameters" : [ {
           "in" : "path",
-          "name" : "processId",
+          "name" : "documentType",
           "required" : true,
           "schema" : {
-            "format" : "uuid",
+            "enum" : [ "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
             "type" : "string"
           }
         }, {
           "in" : "path",
-          "name" : "documentType",
+          "name" : "processId",
           "required" : true,
           "schema" : {
-            "enum" : [ "COTACAO", "ETP", "MAPA", "TR", "EDITAL", "CONTRATO" ],
+            "format" : "uuid",
             "type" : "string"
           }
         }, {
@@ -4959,18 +4979,18 @@
       "patch" : {
         "operationId" : "update",
         "parameters" : [ {
+          "in" : "header",
+          "name" : "If-Match",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
           "in" : "path",
           "name" : "userId",
           "required" : true,
           "schema" : {
             "format" : "uuid",
-            "type" : "string"
-          }
-        }, {
-          "in" : "header",
-          "name" : "If-Match",
-          "required" : false,
-          "schema" : {
             "type" : "string"
           }
         } ],
@@ -5003,18 +5023,18 @@
       "get" : {
         "operationId" : "avatar",
         "parameters" : [ {
+          "in" : "header",
+          "name" : "If-None-Match",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
           "in" : "path",
           "name" : "userId",
           "required" : true,
           "schema" : {
             "format" : "uuid",
-            "type" : "string"
-          }
-        }, {
-          "in" : "header",
-          "name" : "If-None-Match",
-          "required" : false,
-          "schema" : {
             "type" : "string"
           }
         } ],
@@ -5065,18 +5085,18 @@
       "post" : {
         "operationId" : "deactivate",
         "parameters" : [ {
+          "in" : "header",
+          "name" : "If-Match",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
           "in" : "path",
           "name" : "userId",
           "required" : true,
           "schema" : {
             "format" : "uuid",
-            "type" : "string"
-          }
-        }, {
-          "in" : "header",
-          "name" : "If-Match",
-          "required" : false,
-          "schema" : {
             "type" : "string"
           }
         } ],
