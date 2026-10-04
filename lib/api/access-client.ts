@@ -85,7 +85,7 @@ function tenantDa(organization: BackendOrganization, secretarias: Secretaria[] =
     secretarias,
     timbrado: true,
     cabecalho: organization.name.toUpperCase(),
-    rodape: "Documento gerado eletronicamente pela plataforma GeraDocs · {data} · Processo nº {numero}",
+    rodape: "Documento gerado eletronicamente pela plataforma GeraDocs · {data} · Processo nº {processo}",
   }
 }
 

@@ -17,6 +17,10 @@ import {
 } from "@/lib/api/hooks"
 import { FORMATOS_DE_BRASAO, TAMANHO_MAXIMO_DO_BRASAO } from "@/lib/api/access-client"
 import { formatarBytes } from "@/lib/format"
+import { VARIAVEIS_DO_TIMBRE, erroTextoDoTimbre } from "@/lib/validacao/campos"
+
+/** "{processo} (número do processo), {data} (...)" — a dica diz o que cada uma imprime. */
+const LISTA_DE_VARIAVEIS = VARIAVEIS_DO_TIMBRE.map((v) => `${v.nome} (${v.descricao})`).join(", ")
 
 /**
  * Timbragem do órgão: brasão, cabeçalho e rodapé (ADR-026).
@@ -38,6 +42,8 @@ export default function Timbre() {
   const seletorDeBrasao = useRef<HTMLInputElement>(null)
   const [cabecalho, setCabecalho] = useState("")
   const [rodape, setRodape] = useState("")
+  const erroDoCabecalho = erroTextoDoTimbre(cabecalho, "O cabeçalho")
+  const erroDoRodape = erroTextoDoTimbre(rodape, "O rodapé")
   const [timbreSincronizado, setTimbreSincronizado] = useState<number | null>(null)
 
   // O timbre vem do servidor. Semeia uma vez, e de novo a cada versão nova:
@@ -170,21 +176,27 @@ export default function Timbre() {
 
           <SectionBlock
             title="Cabeçalho dos Documentos"
-            hint="Texto exibido no topo de cada página dos documentos gerados. Use quebras de linha para organizar as informações. Variáveis disponíveis: {processo}, {data}, {secretaria}."
+            hint={`Texto exibido no topo de cada página dos documentos gerados. Use quebras de linha para organizar as informações. Variáveis disponíveis: ${LISTA_DE_VARIAVEIS}.`}
           >
             <Textarea value={cabecalho} onChange={(e) => setCabecalho(e.target.value)} rows={4} />
+            {erroDoCabecalho && <p className="m-0 mt-1.5 text-xs text-danger">{erroDoCabecalho}</p>}
           </SectionBlock>
 
           <SectionBlock
             title="Rodapé dos Documentos"
-            hint="Texto exibido na parte inferior de cada página. Variáveis disponíveis: {processo}, {data}, {numero}, {pagina}."
+            hint={`Texto exibido na parte inferior de cada página. Variáveis disponíveis: ${LISTA_DE_VARIAVEIS}. Sem {pagina}, o número da página sai no fim do rodapé.`}
           >
             <Textarea value={rodape} onChange={(e) => setRodape(e.target.value)} rows={3} />
+            {erroDoRodape && <p className="m-0 mt-1.5 text-xs text-danger">{erroDoRodape}</p>}
           </SectionBlock>
 
           <div className="flex gap-2.5">
+            <p id="motivo-salvar-timbre" className="sr-only">
+              Cabeçalho e rodapé só aceitam as variáveis listadas e não podem ter caracteres de controle.
+            </p>
             <Button
-              disabled={salvarTimbre.isPending}
+              disabled={salvarTimbre.isPending || erroDoCabecalho !== undefined || erroDoRodape !== undefined}
+              ariaDescribedBy="motivo-salvar-timbre"
               onClick={() =>
                 salvarTimbre.mutate(
                   { cabecalho, rodape },

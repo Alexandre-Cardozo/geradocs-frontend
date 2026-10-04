@@ -2,6 +2,20 @@
 
 import { IconImage } from "@/components/ui/icons"
 import { dataBrasiliaISO, formatData } from "@/lib/format"
+import { VARIAVEIS_DO_TIMBRE } from "@/lib/validacao/campos"
+
+/**
+ * Troca as variáveis por valores de exemplo, como a geração troca pelos do
+ * processo. Antes só o rodapé era resolvido, e só a primeira ocorrência de
+ * cada variável: o cabeçalho mostrava "{processo}" cru, o que fazia parecer que
+ * as variáveis não funcionavam.
+ */
+function comExemplos(texto: string): string {
+  return VARIAVEIS_DO_TIMBRE.reduce(
+    (resultado, v) => resultado.replaceAll(v.nome, v.nome === "{data}" ? formatData(dataBrasiliaISO()) : v.exemplo),
+    texto,
+  )
+}
 
 /**
  * Pré-visualização ao vivo do documento timbrado (brasão + cabeçalho + rodapé).
@@ -23,10 +37,8 @@ export function PreviaDoTimbre({
   // timbre, e um interruptor que não desliga nada era exatamente a configuração
   // inventada que este passo removeu.
   const timbrado = logoUrl !== null || cabecalho.trim() !== "" || rodape.trim() !== ""
-  const rodapeResolvido = rodape
-    .replace("{data}", formatData(dataBrasiliaISO()))
-    .replace("{numero}", "PROC-2024-090")
-    .replace("{pagina}", "1")
+  // Sem {pagina}, o documento põe "· página N" no fim do rodapé; a prévia também.
+  const rodapeResolvido = comExemplos(rodape.includes("{pagina}") ? rodape : `${rodape.trim()} · página {pagina}`)
 
   return (
     <div className="lg:sticky lg:top-4">
@@ -47,7 +59,7 @@ export function PreviaDoTimbre({
                 </div>
               )}
               <div className="min-w-0 flex-1">
-                {cabecalho.split("\n").map((linha, i) => (
+                {comExemplos(cabecalho).split("\n").map((linha, i) => (
                   <div
                     key={i}
                     className={`truncate font-display leading-tight text-text-1 ${i === 0 ? "text-2xs font-bold" : "text-2xs font-medium text-text-3"}`}
