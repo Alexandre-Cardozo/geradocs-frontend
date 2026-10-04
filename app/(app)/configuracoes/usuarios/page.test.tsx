@@ -59,6 +59,7 @@ describe("usuários da entidade", () => {
     expect(await screen.findByText("Maria Costa Andrade")).toBeInTheDocument()
   })
 
+
   it("a senha de primeiro acesso aparece depois de cadastrar", async () => {
     comCoordenador([])
     servidor.use(
@@ -85,5 +86,19 @@ describe("usuários da entidade", () => {
     // Fora do painel de cadastro: ele fecha no sucesso, e o aviso nascia
     // desmontado — o servidor era gravado e a senha nunca aparecia.
     await waitFor(() => expect(screen.getByText(porTextoInteiro(SENHA_DE_TESTE))).toBeInTheDocument())
+  })
+
+  it("o cadastro do coordenador tem os mesmos campos do administrador, com a entidade travada", async () => {
+    comCoordenador([])
+    renderizar(<Usuarios />)
+
+    await userEvent.click(await screen.findByRole("button", { name: /Adicionar Servidor/ }))
+
+    expect(screen.getByLabelText(/Matrícula/)).toBeInTheDocument()
+    expect(screen.getByLabelText(/Decreto de Nomeação/)).toBeInTheDocument()
+    // Ele só cadastra na própria entidade: ela aparece, mas não se troca.
+    const entidade = screen.getByLabelText(/^Entidade/)
+    await waitFor(() => expect(entidade).toHaveValue(sessaoServidor.organization.name))
+    expect(entidade).toBeDisabled()
   })
 })

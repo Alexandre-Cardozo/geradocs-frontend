@@ -2,25 +2,20 @@
 
 import { useState } from "react"
 
-import { Button, Dropdown, FormField, InfoBanner, Input, Tag } from "@/components/ui"
+import { Button, Dropdown, InfoBanner, Input, Tag } from "@/components/ui"
 import { IconPlus, IconTrash } from "@/components/ui/icons"
 import { EmptyState, ErrorState, SkeletonRows } from "@/components/shared/estados"
 import { FotoDePerfil } from "@/components/shared/foto-de-perfil"
 import { Th } from "@/components/shared/tabela"
 import { useToast } from "@/components/shared/providers"
+import { CadastroDeServidor, SEM_RECUSAS, type DadosDoCadastro } from "@/components/admin/cadastro-de-servidor"
 import { CredenciaisIniciais } from "@/components/admin/credenciais-iniciais"
 import { FichaDoServidor } from "@/components/admin/ficha-do-servidor"
 import { ApiError } from "@/lib/api/auth-client"
 import { useCriarUsuario, useEntidades, useRemoverUsuario, useUsuarios } from "@/lib/api/hooks"
-import { formatCPF, validaCPF } from "@/lib/auth/cpf"
-import { validaEmail } from "@/lib/auth/email"
-import { erroCargo, erroDecreto, erroMatricula, erroNomeDePessoa } from "@/lib/validacao/campos"
+import { formatCPF } from "@/lib/auth/cpf"
 import { formatDataHora } from "@/lib/format"
 import { PERFIL_ACESSO_LABEL, type PerfilAcesso, type Usuario } from "@/lib/types"
-
-/** Os campos do formulário, pelo nome que o contrato dá a cada um. */
-type CampoDoCadastro =
-  | "name" | "cpf" | "email" | "jobTitle" | "registrationNumber" | "appointmentDecree" | "profileAccess"
 
 /** Só os dois perfis de entidade: o admin geral não é listado aqui. */
 const perfilTone = (p: PerfilAcesso) => (p === "coordenador" ? "success" : "neutral")
@@ -39,27 +34,8 @@ export default function AdminServidores() {
   const remover = useRemoverUsuario()
 
   const [novo, setNovo] = useState(false)
-  const [nome, setNome] = useState("")
-  const [cpf, setCpf] = useState("")
-  const [email, setEmail] = useState("")
-  const [cargo, setCargo] = useState("")
-  const [matricula, setMatricula] = useState("")
-  const [decreto, setDecreto] = useState("")
   const [credenciais, setCredenciais] = useState<{ nome: string; chave: string; senha: string } | null>(null)
   const [fichaAberta, setFichaAberta] = useState<string | null>(null)
-  const [perfil, setPerfil] = useState<PerfilAcesso>("servidor")
-  const [entidadeId, setEntidadeId] = useState("")
-  // O que o servidor recusou, campo a campo. Cada motivo some quando a pessoa
-  // mexe naquele campo: continuar mostrando-o depois da correção seria mentir.
-  const [recusas, setRecusas] = useState<Partial<Record<CampoDoCadastro, string>>>({})
-  const alterar = (campo: CampoDoCadastro, set: (v: string) => void) => (valor: string) => {
-    set(valor)
-    setRecusas((atuais) => {
-      const demais = { ...atuais }
-      delete demais[campo]
-      return demais
-    })
-  }
 
   /**
    * Esta tela é a dos servidores das entidades.
@@ -82,55 +58,26 @@ export default function AdminServidores() {
     return okPref && okFuncao
   })
 
-  const cpfValido = validaCPF(cpf)
-  const emailValido = validaEmail(email)
-  // Todo servidor cadastrado aqui pertence a uma entidade: sem ela o cadastro
-  // não tem lotação, e o servidor não teria processo nenhum para trabalhar.
-  // O que se vê ao digitar. Tem precedência sobre a recusa do servidor, que é
-  // sobre o valor enviado — e o valor já pode ter mudado desde então.
-  const errosDoFormato = {
-    name: erroNomeDePessoa(nome),
-    jobTitle: erroCargo(cargo),
-    registrationNumber: erroMatricula(matricula),
-    appointmentDecree: erroDecreto(decreto),
-  }
-  const formatoOk = Object.values(errosDoFormato).every((erro) => erro === undefined)
-  const podeSalvar = nome.trim() !== "" && cpfValido && emailValido && entidadeId !== "" && formatoOk
-
-  const salvar = () => {
-    if (!podeSalvar) return
-    criar.mutate(
-      {
-        nome, cpf, email, cargo, matricula, decretoNomeacao: decreto,
-        perfilAcesso: perfil,
-        entidadeId,
+  const salvar = (dados: DadosDoCadastro) => {
+    criar.mutate(dados, {
+      onSuccess: (criado) => {
+        // A senha volta uma única vez: guardá-la aqui é o que permite
+        // mostrá-la para ser entregue. Fica **fora** do painel de cadastro,
+        // que fecha na linha seguinte — a primeira versão a mostrava dentro
+        // dele, e o aviso nascia desmontado.
+        setCredenciais({
+          nome: criado.usuario.nome,
+          // O CPF que acabou de ser digitado, e não o da resposta: o servidor
+          // devolve mascarado de propósito, e "***.***.***-74" não abre porta
+          // nenhuma para quem recebe a credencial.
+          chave: dados.cpf,
+          senha: criado.senhaProvisoria,
+        })
+        showToast("Servidor cadastrado.")
+        setNovo(false)
       },
-      {
-        onSuccess: (criado) => {
-          // A senha volta uma única vez: guardá-la aqui é o que permite
-          // mostrá-la para ser entregue. Fica **fora** do painel de cadastro,
-          // que fecha na linha seguinte — a primeira versão a mostrava dentro
-          // dele, e o aviso nascia desmontado.
-          setCredenciais({
-            nome: criado.usuario.nome,
-            // O CPF que acabou de ser digitado, e não o da resposta: o servidor
-            // devolve mascarado de propósito, e "***.***.***-74" não abre porta
-            // nenhuma para quem recebe a credencial.
-            chave: cpf,
-            senha: criado.senhaProvisoria,
-          })
-          showToast("Servidor cadastrado.")
-          setNovo(false)
-          setNome(""); setCpf(""); setEmail(""); setCargo(""); setMatricula(""); setDecreto("")
-          setPerfil("servidor"); setEntidadeId("")
-          setRecusas({})
-        },
-        onError: (e) => {
-          if (e instanceof ApiError) setRecusas(e.campos)
-          showToast(e instanceof Error ? e.message : "Não foi possível cadastrar.")
-        },
-      }
-    )
+      onError: (e) => showToast(e instanceof Error ? e.message : "Não foi possível cadastrar."),
+    })
   }
 
   // Da própria listagem: ela já traz tudo o que a ficha mostra, e uma leitura a
@@ -156,7 +103,14 @@ export default function AdminServidores() {
           <h1 className="m-0 font-display text-2xl font-extrabold tracking-tight text-text-1">Servidores</h1>
           <p className="m-0 mt-1 text-md text-text-3">Cadastre os servidores de cada entidade e defina o perfil de acesso de cada um.</p>
         </div>
-        <Button icon={<IconPlus size={14} strokeWidth={2.5} />} onClick={() => setNovo((v) => !v)}>
+        <Button
+          icon={<IconPlus size={14} strokeWidth={2.5} />}
+          onClick={() => {
+            // A recusa da tentativa anterior não vale para um painel que reabre vazio.
+            criar.reset()
+            setNovo((v) => !v)
+          }}
+        >
           Novo Servidor
         </Button>
       </div>
@@ -198,65 +152,18 @@ export default function AdminServidores() {
       )}
 
       {novo && (
-        <div className="mb-5 rounded-card border border-border bg-surface p-5">
-          <h2 className="m-0 mb-4 font-display text-md font-bold text-text-1">Cadastrar Servidor</h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <FormField label="Nome Completo" required hint={errosDoFormato.name ?? recusas.name}>
-              <Input value={nome} onChange={(e) => alterar("name", setNome)(e.target.value)} placeholder="Nome do servidor" />
-            </FormField>
-            <FormField label="CPF" required hint={cpf !== "" && !cpfValido ? "CPF inválido." : recusas.cpf}>
-              <Input value={cpf} onChange={(e) => alterar("cpf", setCpf)(formatCPF(e.target.value))} placeholder="000.000.000-00" />
-            </FormField>
-            <FormField label="E-mail" required hint={email.trim() !== "" && !emailValido ? "E-mail inválido." : recusas.email}>
-              <Input value={email} onChange={(e) => alterar("email", setEmail)(e.target.value)} type="email" placeholder="email@prefeitura.gov.br" />
-            </FormField>
-            <FormField label="Cargo" hint={errosDoFormato.jobTitle ?? recusas.jobTitle}>
-              <Input value={cargo} onChange={(e) => alterar("jobTitle", setCargo)(e.target.value)} placeholder="Ex: Servidor de Compras" />
-            </FormField>
-            <FormField label="Matrícula" hint={errosDoFormato.registrationNumber ?? recusas.registrationNumber ?? "Número funcional no RH. Pode ser a chave de login (ADR-015)."}>
-              <Input value={matricula} onChange={(e) => alterar("registrationNumber", setMatricula)(e.target.value)} placeholder="Ex: MAT-4471" />
-            </FormField>
-            <FormField label="Decreto de Nomeação" hint={errosDoFormato.appointmentDecree ?? recusas.appointmentDecree ?? "Para comissionados, é o número que a pessoa costuma lembrar."}>
-              <Input value={decreto} onChange={(e) => alterar("appointmentDecree", setDecreto)(e.target.value)} placeholder="Ex: Decreto 1.234/2026" />
-            </FormField>
-            <FormField label="Perfil de Acesso" required hint={recusas.profileAccess}>
-              <Dropdown
-                value={perfil}
-                onChange={(v) => alterar("profileAccess", (p) => setPerfil(p as PerfilAcesso))(v)}
-                ariaLabel="Perfil de acesso"
-                options={[
-                  { value: "servidor", label: PERFIL_ACESSO_LABEL.servidor },
-                  { value: "coordenador", label: PERFIL_ACESSO_LABEL.coordenador },
-                ]}
-              />
-            </FormField>
-            <FormField label="Entidade" required>
-              <Dropdown
-                value={entidadeId}
-                onChange={setEntidadeId}
-                ariaLabel="Entidade"
-                options={[
-                  { value: "", label: "Selecione a entidade..." },
-                  ...(entidades.data ?? []).map((e) => ({ value: e.id, label: e.nome })),
-                ]}
-              />
-            </FormField>
-          </div>
-          <div className="mt-4 flex gap-2.5">
-            <Button variant="secondary" onClick={() => setNovo(false)}>Cancelar</Button>
-            <p id="motivo-criar-servidor" className="sr-only">
-              Nome, CPF válido, e-mail válido e a entidade são obrigatórios, e
-              cada campo preenchido precisa estar no formato indicado. A senha é
-              sorteada pelo sistema.
-            </p>
-            <Button
-              disabled={criar.isPending || !podeSalvar}
-              ariaDescribedBy="motivo-criar-servidor"
-              onClick={salvar}
-            >
-              {criar.isPending ? "Salvando..." : "Cadastrar"}
-            </Button>
-          </div>
+        <div className="mb-5">
+          <CadastroDeServidor
+            titulo="Cadastrar Servidor"
+            entidade={{ opcoes: entidades.data ?? [] }}
+            salvando={criar.isPending}
+            recusas={criar.error instanceof ApiError ? criar.error.campos : SEM_RECUSAS}
+            onCadastrar={salvar}
+            onCancelar={() => {
+              criar.reset()
+              setNovo(false)
+            }}
+          />
         </div>
       )}
 
