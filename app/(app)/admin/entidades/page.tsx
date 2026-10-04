@@ -9,6 +9,7 @@ import { Th } from "@/components/shared/tabela";
 import { useToast } from "@/components/shared/providers";
 import { useCriarEntidade, useEntidades, useRemoverEntidade, useUsuarios } from "@/lib/api/hooks";
 import { TIPO_ENTIDADE_LABEL, type TipoEntidade } from "@/lib/types";
+import { erroNomeInstitucional } from "@/lib/validacao/campos";
 
 const TIPOS = Object.entries(TIPO_ENTIDADE_LABEL).map(([value, label]) => ({ value, label }));
 
@@ -47,8 +48,11 @@ export default function AdminEntidades() {
 
   const ordenadas = [...(entidades.data ?? [])].sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
 
+  const erroDoNome = erroNomeInstitucional(nome, "O nome da entidade");
+  const podeSalvar = nome.trim() !== "" && erroDoNome === undefined;
+
   const salvar = () => {
-    if (nome.trim() === "") return;
+    if (!podeSalvar) return;
     criar.mutate(
       { nome, tipo, agenciaExecutiva: qualificavel && agenciaExecutiva },
       {
@@ -94,7 +98,10 @@ export default function AdminEntidades() {
             <FormField
               label="Nome da Entidade"
               required
-              hint="É o que a plataforma precisa para criar a entidade. O restante — secretarias, timbre e PCA — o coordenador configura depois."
+              hint={
+                erroDoNome ??
+                "É o que a plataforma precisa para criar a entidade. O restante — secretarias, timbre e PCA — o coordenador configura depois."
+              }
             >
               <Input
                 value={nome}
@@ -103,7 +110,7 @@ export default function AdminEntidades() {
                 onKeyDown={(e) => {
                   // Formulário curto: Enter cadastra, como em qualquer outro.
                   // Obrigar o mouse aqui seria atrito sem motivo.
-                  if (e.key === "Enter" && nome.trim() !== "" && !criar.isPending) salvar();
+                  if (e.key === "Enter" && podeSalvar && !criar.isPending) salvar();
                 }}
               />
             </FormField>
@@ -141,10 +148,10 @@ export default function AdminEntidades() {
               Cancelar
             </Button>
             <p id="motivo-criar-entidade" className="sr-only">
-              O nome da entidade é obrigatório.
+              O nome da entidade é obrigatório e precisa ter letras, sem símbolos como dois-pontos ou sublinhado.
             </p>
             <Button
-              disabled={criar.isPending || nome.trim() === ""}
+              disabled={criar.isPending || !podeSalvar}
               ariaDescribedBy="motivo-criar-entidade"
               onClick={salvar}
             >

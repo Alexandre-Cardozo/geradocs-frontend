@@ -452,6 +452,45 @@ describe("criarUsuario", () => {
     expect(corpo.profileAccess).toBe("COORDENADOR")
   })
 
+  it("devolve o motivo de cada campo recusado na validação", async () => {
+    servidor.use(
+      http.post(`${urlDaApi}/users`, () =>
+        HttpResponse.json(
+          {
+            title: "Erro de validação",
+            status: 400,
+            detail: "Existem campos inválidos.",
+            code: "VALIDATION_ERROR",
+            errors: [
+              { field: "email", message: "Informe um e-mail válido." },
+              { field: "registrationNumber", message: "A matrícula deve ter no máximo 40 caracteres." },
+            ],
+          },
+          { status: 400, headers: { "Content-Type": "application/problem+json" } },
+        ),
+      ),
+    )
+    const { criarUsuario } = await carregarClienteLimpo()
+
+    const erro = await criarUsuario({
+      nome: "Ana Paula Ribeiro",
+      cpf: "11144477735",
+      email: "1.@gmail@hotmail.com",
+      cargo: "",
+      perfilAcesso: "servidor",
+      entidadeId: organizacao.id,
+    }).catch((e: unknown) => e)
+
+    // A mensagem é o motivo de cada campo, e não o genérico do servidor.
+    expect((erro as Error).message).toBe(
+      "Informe um e-mail válido. A matrícula deve ter no máximo 40 caracteres.",
+    )
+    expect((erro as { campos: Record<string, string> }).campos).toEqual({
+      email: "Informe um e-mail válido.",
+      registrationNumber: "A matrícula deve ter no máximo 40 caracteres.",
+    })
+  })
+
   it("monta as iniciais do primeiro e do último nome", async () => {
     servidor.use(http.get(`${urlDaApi}/users`, () => HttpResponse.json([usuarioApi])))
     const { listarUsuarios } = await carregarClienteLimpo()

@@ -10,8 +10,10 @@ import { useToast } from "@/components/shared/providers"
 import { CredenciaisIniciais } from "@/components/admin/credenciais-iniciais"
 import { useCriarUsuario, useSessao, useUsuarios } from "@/lib/api/hooks"
 import { formatCPF, validaCPF } from "@/lib/auth/cpf"
+import { validaEmail } from "@/lib/auth/email"
 import { formatDataHora } from "@/lib/format"
 import { PERFIL_ACESSO_LABEL, type PerfilAcesso } from "@/lib/types"
+import { erroCargo, erroNomeDePessoa } from "@/lib/validacao/campos"
 
 /**
  * Usuários e permissões do órgão: quem entra e com qual perfil.
@@ -39,6 +41,11 @@ export default function Usuarios() {
     senha: string
   } | null>(null)
 
+  // As mesmas regras do cadastro do administrador: o servidor recusa igual.
+  const erroDoNome = erroNomeDePessoa(nsNome)
+  const erroDoEmail = nsEmail.trim() !== "" && !validaEmail(nsEmail) ? "E-mail inválido." : undefined
+  const erroDoCargo = erroCargo(nsCargo)
+
   return (
     <div className="w-full p-4 sm:p-5 lg:p-7">
       {/* Fora do painel de cadastro: ele fecha no sucesso, e o aviso nascia
@@ -60,7 +67,7 @@ export default function Usuarios() {
             Adicionar Servidor à Entidade
           </h3>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <FormField label="Nome Completo" required>
+            <FormField label="Nome Completo" required hint={erroDoNome}>
               <Input
                 value={nsNome}
                 onChange={(e) => setNsNome(e.target.value)}
@@ -78,7 +85,7 @@ export default function Usuarios() {
                 placeholder="000.000.000-00"
               />
             </FormField>
-            <FormField label="E-mail" required>
+            <FormField label="E-mail" required hint={erroDoEmail}>
               <Input
                 value={nsEmail}
                 onChange={(e) => setNsEmail(e.target.value)}
@@ -86,7 +93,7 @@ export default function Usuarios() {
                 placeholder="email@prefeitura.gov.br"
               />
             </FormField>
-            <FormField label="Cargo">
+            <FormField label="Cargo" hint={erroDoCargo}>
               <Input
                 value={nsCargo}
                 onChange={(e) => setNsCargo(e.target.value)}
@@ -110,15 +117,18 @@ export default function Usuarios() {
               Cancelar
             </Button>
             <p id="motivo-criar-servidor-tenant" className="sr-only">
-              Nome, CPF válido, e-mail e a entidade são obrigatórios. A senha é sorteada pelo
-              sistema e aparece depois de cadastrar.
+              Nome, CPF válido, e-mail válido e a entidade são obrigatórios, e cada campo
+              preenchido precisa estar no formato indicado. A senha é sorteada pelo sistema e
+              aparece depois de cadastrar.
             </p>
             <Button
               disabled={
                 criarServidor.isPending ||
                 nsNome.trim() === "" ||
+                erroDoNome !== undefined ||
                 !validaCPF(nsCpf) ||
-                nsEmail.trim() === "" ||
+                !validaEmail(nsEmail) ||
+                erroDoCargo !== undefined ||
                 !entidadeId
               }
               ariaDescribedBy="motivo-criar-servidor-tenant"

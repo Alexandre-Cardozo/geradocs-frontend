@@ -10,10 +10,17 @@ import { Th } from "@/components/shared/tabela"
 import { useToast } from "@/components/shared/providers"
 import { CredenciaisIniciais } from "@/components/admin/credenciais-iniciais"
 import { FichaDoServidor } from "@/components/admin/ficha-do-servidor"
+import { ApiError } from "@/lib/api/auth-client"
 import { useCriarUsuario, useEntidades, useRemoverUsuario, useUsuarios } from "@/lib/api/hooks"
 import { formatCPF, validaCPF } from "@/lib/auth/cpf"
+import { validaEmail } from "@/lib/auth/email"
+import { erroCargo, erroDecreto, erroMatricula, erroNomeDePessoa } from "@/lib/validacao/campos"
 import { formatDataHora } from "@/lib/format"
 import { PERFIL_ACESSO_LABEL, type PerfilAcesso, type Usuario } from "@/lib/types"
+
+/** Os campos do formulário, pelo nome que o contrato dá a cada um. */
+type CampoDoCadastro =
+  | "name" | "cpf" | "email" | "jobTitle" | "registrationNumber" | "appointmentDecree" | "profileAccess"
 
 /** Só os dois perfis de entidade: o admin geral não é listado aqui. */
 const perfilTone = (p: PerfilAcesso) => (p === "coordenador" ? "success" : "neutral")
@@ -42,6 +49,17 @@ export default function AdminServidores() {
   const [fichaAberta, setFichaAberta] = useState<string | null>(null)
   const [perfil, setPerfil] = useState<PerfilAcesso>("servidor")
   const [entidadeId, setEntidadeId] = useState("")
+  // O que o servidor recusou, campo a campo. Cada motivo some quando a pessoa
+  // mexe naquele campo: continuar mostrando-o depois da correção seria mentir.
+  const [recusas, setRecusas] = useState<Partial<Record<CampoDoCadastro, string>>>({})
+  const alterar = (campo: CampoDoCadastro, set: (v: string) => void) => (valor: string) => {
+    set(valor)
+    setRecusas((atuais) => {
+      const demais = { ...atuais }
+      delete demais[campo]
+      return demais
+    })
+  }
 
   /**
    * Esta tela é a dos servidores das entidades.
@@ -65,9 +83,19 @@ export default function AdminServidores() {
   })
 
   const cpfValido = validaCPF(cpf)
+  const emailValido = validaEmail(email)
   // Todo servidor cadastrado aqui pertence a uma entidade: sem ela o cadastro
   // não tem lotação, e o servidor não teria processo nenhum para trabalhar.
-  const podeSalvar = nome.trim() !== "" && cpfValido && email.trim() !== "" && entidadeId !== ""
+  // O que se vê ao digitar. Tem precedência sobre a recusa do servidor, que é
+  // sobre o valor enviado — e o valor já pode ter mudado desde então.
+  const errosDoFormato = {
+    name: erroNomeDePessoa(nome),
+    jobTitle: erroCargo(cargo),
+    registrationNumber: erroMatricula(matricula),
+    appointmentDecree: erroDecreto(decreto),
+  }
+  const formatoOk = Object.values(errosDoFormato).every((erro) => erro === undefined)
+  const podeSalvar = nome.trim() !== "" && cpfValido && emailValido && entidadeId !== "" && formatoOk
 
   const salvar = () => {
     if (!podeSalvar) return
@@ -95,8 +123,12 @@ export default function AdminServidores() {
           setNovo(false)
           setNome(""); setCpf(""); setEmail(""); setCargo(""); setMatricula(""); setDecreto("")
           setPerfil("servidor"); setEntidadeId("")
+          setRecusas({})
         },
-        onError: (e) => showToast(e instanceof Error ? e.message : "Não foi possível cadastrar."),
+        onError: (e) => {
+          if (e instanceof ApiError) setRecusas(e.campos)
+          showToast(e instanceof Error ? e.message : "Não foi possível cadastrar.")
+        },
       }
     )
   }
@@ -135,7 +167,7 @@ export default function AdminServidores() {
             nome={credenciais.nome}
             chave={credenciais.chave}
             senha={credenciais.senha}
-            titulo="Credenciais de primeiro acesso"
+            titulo="Credenciais de Primeiro Acesso"
             onFechar={() => setCredenciais(null)}
           />
         </div>
@@ -169,28 +201,28 @@ export default function AdminServidores() {
         <div className="mb-5 rounded-card border border-border bg-surface p-5">
           <h2 className="m-0 mb-4 font-display text-md font-bold text-text-1">Cadastrar Servidor</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <FormField label="Nome Completo" required>
-              <Input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome do servidor" />
+            <FormField label="Nome Completo" required hint={errosDoFormato.name ?? recusas.name}>
+              <Input value={nome} onChange={(e) => alterar("name", setNome)(e.target.value)} placeholder="Nome do servidor" />
             </FormField>
-            <FormField label="CPF" required hint={cpf !== "" && !cpfValido ? "CPF inválido." : undefined}>
-              <Input value={cpf} onChange={(e) => setCpf(formatCPF(e.target.value))} placeholder="000.000.000-00" />
+            <FormField label="CPF" required hint={cpf !== "" && !cpfValido ? "CPF inválido." : recusas.cpf}>
+              <Input value={cpf} onChange={(e) => alterar("cpf", setCpf)(formatCPF(e.target.value))} placeholder="000.000.000-00" />
             </FormField>
-            <FormField label="E-mail" required>
-              <Input value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="email@prefeitura.gov.br" />
+            <FormField label="E-mail" required hint={email.trim() !== "" && !emailValido ? "E-mail inválido." : recusas.email}>
+              <Input value={email} onChange={(e) => alterar("email", setEmail)(e.target.value)} type="email" placeholder="email@prefeitura.gov.br" />
             </FormField>
-            <FormField label="Cargo">
-              <Input value={cargo} onChange={(e) => setCargo(e.target.value)} placeholder="Ex: Servidor de Compras" />
+            <FormField label="Cargo" hint={errosDoFormato.jobTitle ?? recusas.jobTitle}>
+              <Input value={cargo} onChange={(e) => alterar("jobTitle", setCargo)(e.target.value)} placeholder="Ex: Servidor de Compras" />
             </FormField>
-            <FormField label="Matrícula" hint="Número funcional no RH. Pode ser a chave de login (ADR-015).">
-              <Input value={matricula} onChange={(e) => setMatricula(e.target.value)} placeholder="Ex: MAT-4471" />
+            <FormField label="Matrícula" hint={errosDoFormato.registrationNumber ?? recusas.registrationNumber ?? "Número funcional no RH. Pode ser a chave de login (ADR-015)."}>
+              <Input value={matricula} onChange={(e) => alterar("registrationNumber", setMatricula)(e.target.value)} placeholder="Ex: MAT-4471" />
             </FormField>
-            <FormField label="Decreto de Nomeação" hint="Para comissionados, é o número que a pessoa costuma lembrar.">
-              <Input value={decreto} onChange={(e) => setDecreto(e.target.value)} placeholder="Ex: Decreto 1.234/2026" />
+            <FormField label="Decreto de Nomeação" hint={errosDoFormato.appointmentDecree ?? recusas.appointmentDecree ?? "Para comissionados, é o número que a pessoa costuma lembrar."}>
+              <Input value={decreto} onChange={(e) => alterar("appointmentDecree", setDecreto)(e.target.value)} placeholder="Ex: Decreto 1.234/2026" />
             </FormField>
-            <FormField label="Perfil de Acesso" required>
+            <FormField label="Perfil de Acesso" required hint={recusas.profileAccess}>
               <Dropdown
                 value={perfil}
-                onChange={(v) => setPerfil(v as PerfilAcesso)}
+                onChange={(v) => alterar("profileAccess", (p) => setPerfil(p as PerfilAcesso))(v)}
                 ariaLabel="Perfil de acesso"
                 options={[
                   { value: "servidor", label: PERFIL_ACESSO_LABEL.servidor },
@@ -213,7 +245,8 @@ export default function AdminServidores() {
           <div className="mt-4 flex gap-2.5">
             <Button variant="secondary" onClick={() => setNovo(false)}>Cancelar</Button>
             <p id="motivo-criar-servidor" className="sr-only">
-              Nome, CPF válido, e-mail e a entidade são obrigatórios. A senha é
+              Nome, CPF válido, e-mail válido e a entidade são obrigatórios, e
+              cada campo preenchido precisa estar no formato indicado. A senha é
               sorteada pelo sistema.
             </p>
             <Button

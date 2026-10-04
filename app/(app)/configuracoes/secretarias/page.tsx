@@ -14,6 +14,10 @@ import {
   useSessao,
 } from "@/lib/api/hooks"
 import type { Secretaria } from "@/lib/types"
+import { erroNomeInstitucional } from "@/lib/validacao/campos"
+
+/** O nome é o que aparece como Secretaria Requisitante no processo e no documento. */
+const erroDoNome = (nome: string) => erroNomeInstitucional(nome, "O nome da secretaria")
 
 /** Botão de ícone das ações da linha — editar, salvar, cancelar, remover. */
 function AcaoDaLinha({
@@ -76,9 +80,11 @@ function LinhaDaSecretaria({
   onRemover: () => void
 }) {
   const [nome, setNome] = useState(secretaria.nome)
+  const erro = erroDoNome(nome)
 
   if (editando) {
     return (
+      <div>
       <div className="flex min-h-13 items-center gap-2 rounded-md border border-royal bg-surface px-2 py-1">
         <Input
           value={nome}
@@ -88,14 +94,14 @@ function LinhaDaSecretaria({
           disabled={salvando}
           onKeyDown={(e) => {
             // Enter confirma e Esc desiste — o mesmo par do cadastro logo acima.
-            if (e.key === "Enter") onSalvar(nome)
+            if (e.key === "Enter" && erro === undefined) onSalvar(nome)
             if (e.key === "Escape") onCancelar()
           }}
         />
         <AcaoDaLinha
           rotulo={`Salvar o nome de ${secretaria.nome}`}
           tom="confirma"
-          disabled={salvando || nome.trim() === ""}
+          disabled={salvando || nome.trim() === "" || erro !== undefined}
           onClick={() => onSalvar(nome)}
         >
           <IconCheck size={14} strokeWidth={2.5} />
@@ -103,6 +109,8 @@ function LinhaDaSecretaria({
         <AcaoDaLinha rotulo="Cancelar a edição" disabled={salvando} onClick={onCancelar}>
           <IconX size={14} />
         </AcaoDaLinha>
+      </div>
+      {erro && <p className="m-0 mt-1 text-xs text-danger">{erro}</p>}
       </div>
     )
   }
@@ -163,12 +171,15 @@ export default function Secretarias() {
     )
   }
 
+  const erroNovaSecretaria = erroDoNome(novaSecretaria)
+
   const adicionar = () => {
     const nome = novaSecretaria.trim()
     if (nome === "") {
       showToast("Informe o nome da secretaria para adicionar.")
       return
     }
+    if (erroNovaSecretaria) return
     criarSecretaria.mutate(nome, {
       onSuccess: () => {
         setNovaSecretaria("")
@@ -239,11 +250,12 @@ export default function Secretarias() {
                 if (e.key === "Enter") adicionar()
               }}
             />
+            {erroNovaSecretaria && <p className="m-0 mt-1 text-xs text-danger">{erroNovaSecretaria}</p>}
           </div>
           <Button
             icon={<IconPlus size={14} strokeWidth={2.5} />}
             onClick={adicionar}
-            disabled={criarSecretaria.isPending || novaSecretaria.trim() === ""}
+            disabled={criarSecretaria.isPending || novaSecretaria.trim() === "" || erroNovaSecretaria !== undefined}
             className="h-9.5"
           >
             {criarSecretaria.isPending ? "Adicionando..." : "Adicionar Nova Secretaria"}

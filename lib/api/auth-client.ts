@@ -11,6 +11,8 @@ interface ApiProblem {
   detail?: string
   title?: string
   code?: string
+  /** Um item por campo recusado na validação (`VALIDATION_ERROR`). */
+  errors?: { field?: string; message?: string }[]
 }
 
 /**
@@ -28,10 +30,17 @@ type BackendSession = Schemas["SessionResponse"]
 type AuthenticationResponse = Schemas["AuthenticationResponse"]
 
 export class ApiError extends Error {
+  /**
+   * @param campos o motivo de cada campo recusado, pelo nome do campo no
+   *               contrato (`email`, `cpf`...). Sem isto, a recusa de validação
+   *               chegava à tela só como "Existem campos inválidos." — e a
+   *               pessoa ficava sem saber qual corrigir.
+   */
   constructor(
     message: string,
     readonly status: number,
     readonly code?: string,
+    readonly campos: Readonly<Record<string, string>> = {},
   ) {
     super(message)
     this.name = "ApiError"
@@ -53,7 +62,17 @@ async function problemaDa(response: Response): Promise<ApiProblem> {
 
 async function erroDa(response: Response, fallback: string): Promise<ApiError> {
   const problema = await problemaDa(response)
-  return new ApiError(problema.detail ?? problema.title ?? fallback, response.status, problema.code)
+  const campos: Record<string, string> = {}
+  for (const erro of problema.errors ?? []) {
+    // O primeiro motivo de cada campo basta: é ele que a tela mostra.
+    if (erro.field && erro.message && !(erro.field in campos)) campos[erro.field] = erro.message
+  }
+  // Com o motivo de cada campo em mãos, a mensagem é ele: o genérico
+  // "Existem campos inválidos." chegava ao toast de toda tela sem dizer qual
+  // campo corrigir.
+  const motivos = Object.values(campos)
+  const mensagem = motivos.length > 0 ? motivos.join(" ") : problema.detail ?? problema.title ?? fallback
+  return new ApiError(mensagem, response.status, problema.code, campos)
 }
 
 async function requisicaoPublica<T>(path: string, init: RequestInit): Promise<T> {
