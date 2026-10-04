@@ -611,8 +611,8 @@
       "DemandItemRequest" : {
         "properties" : {
           "deliveryDays" : {
+            "exclusiveMinimum" : 0,
             "format" : "int32",
-            "minimum" : 0,
             "type" : "integer"
           },
           "description" : {
@@ -621,7 +621,7 @@
             "type" : "string"
           },
           "quantity" : {
-            "minimum" : 0,
+            "exclusiveMinimum" : 0,
             "type" : "number"
           },
           "specification" : {
