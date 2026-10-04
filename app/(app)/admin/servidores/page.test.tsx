@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest"
 
 import AdminServidores from "@/app/(app)/admin/servidores/page"
 import { urlDaApi } from "@/lib/teste/handlers"
-import { renderizar, screen, userEvent, waitFor } from "@/lib/teste/renderizar"
+import { renderizar, screen, userEvent, waitFor, porTextoInteiro } from "@/lib/teste/renderizar"
 import { servidor } from "@/lib/teste/servidor-msw"
 import { PERFIL_ACESSO_LABEL } from "@/lib/types"
 
@@ -85,8 +85,8 @@ describe("cadastro de servidores", () => {
     await waitFor(() =>
       expect(screen.queryByRole("button", { name: "Cadastrar" })).not.toBeInTheDocument(),
     )
-    expect(screen.getByText(SORTEADA)).toBeInTheDocument()
-    expect(screen.getByText(/Credenciais de primeiro acesso/)).toBeInTheDocument()
+    expect(screen.getByText(porTextoInteiro(SORTEADA))).toBeInTheDocument()
+    expect(screen.getByText(/Credenciais de Primeiro Acesso/)).toBeInTheDocument()
   })
 
   it("a chave de acesso vem junto da senha, e não mascarada", async () => {
@@ -118,8 +118,8 @@ describe("cadastro de servidores", () => {
 
     // O cadastro já foi gravado no servidor, mas sem senha não há acesso a
     // entregar: a tela não pode mostrar credenciais que não existem.
-    await waitFor(() => expect(screen.queryByText(SORTEADA)).not.toBeInTheDocument())
-    expect(screen.queryByText(/Credenciais de primeiro acesso/)).not.toBeInTheDocument()
+    await waitFor(() => expect(screen.queryByText(porTextoInteiro(SORTEADA))).not.toBeInTheDocument())
+    expect(screen.queryByText(/Credenciais de Primeiro Acesso/)).not.toBeInTheDocument()
     // E o painel continua aberto, porque o cadastro não foi concluído com êxito.
     expect(screen.getByRole("button", { name: "Cadastrar" })).toBeInTheDocument()
   })
@@ -252,8 +252,8 @@ describe("ficha do servidor", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Redefinir senha" }))
 
-    expect(await screen.findByText(SORTEADA)).toBeInTheDocument()
-    expect(screen.getByText(/Senha redefinida/)).toBeInTheDocument()
+    expect(await screen.findByText(porTextoInteiro(SORTEADA))).toBeInTheDocument()
+    expect(screen.getByText(/Senha Redefinida/)).toBeInTheDocument()
     // A chave que acompanha a senha precisa ser digitável no login.
     expect(await screen.findByText("111.444.777-35")).toBeInTheDocument()
   })
@@ -273,7 +273,7 @@ describe("ficha do servidor", () => {
 
     // A senha só existe fora do hash neste instante: escondê-la porque o CPF
     // falhou trocaria um problema pequeno por um irreversível.
-    expect(await screen.findByText(SORTEADA)).toBeInTheDocument()
+    expect(await screen.findByText(porTextoInteiro(SORTEADA))).toBeInTheDocument()
     expect(screen.getAllByText("***.***.***-35").length).toBeGreaterThan(0)
   })
 

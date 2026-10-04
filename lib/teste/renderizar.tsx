@@ -18,5 +18,16 @@ export function renderizar(ui: ReactElement, options?: Omit<RenderOptions, "wrap
   return render(ui, { wrapper: Provedores, ...options })
 }
 
+/**
+ * Acha o texto mesmo quando a tela o parte em vários nós — a senha provisória,
+ * por exemplo, aparece em blocos de quatro. Casa com o elemento mais interno
+ * cujo texto inteiro é exatamente o procurado.
+ */
+export function porTextoInteiro(texto: string) {
+  return (_: string, elemento: Element | null) =>
+    elemento?.textContent === texto &&
+    !Array.from(elemento.children).some((filho) => filho.textContent === texto)
+}
+
 export * from "@testing-library/react"
 export { default as userEvent } from "@testing-library/user-event"

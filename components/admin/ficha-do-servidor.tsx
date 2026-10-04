@@ -145,7 +145,7 @@ export function FichaDoServidor({
             nome={servidor.nome}
             chave={cpfInteiro ?? servidor.cpf}
             senha={novaSenha}
-            titulo="Senha redefinida"
+            titulo="Senha Redefinida"
             onFechar={() => setNovaSenha(null)}
           />
         </div>

@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest"
 import Usuarios from "@/app/(app)/configuracoes/usuarios/page"
 import { sessaoServidor } from "@/lib/teste/fixtures-api"
 import { urlDaApi } from "@/lib/teste/handlers"
-import { renderizar, screen, userEvent, waitFor } from "@/lib/teste/renderizar"
+import { renderizar, screen, userEvent, waitFor, porTextoInteiro } from "@/lib/teste/renderizar"
 import { servidor } from "@/lib/teste/servidor-msw"
 
 /**
@@ -84,6 +84,6 @@ describe("usuários da entidade", () => {
 
     // Fora do painel de cadastro: ele fecha no sucesso, e o aviso nascia
     // desmontado — o servidor era gravado e a senha nunca aparecia.
-    await waitFor(() => expect(screen.getByText(SENHA_DE_TESTE)).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText(porTextoInteiro(SENHA_DE_TESTE))).toBeInTheDocument())
   })
 })

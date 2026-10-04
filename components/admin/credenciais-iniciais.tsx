@@ -1,10 +1,26 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useId, useRef, useState } from "react"
 
-import { Button, InfoBanner } from "@/components/ui"
+import { Button, IconCheck, IconCheckCircle, IconClipboard, IconLock } from "@/components/ui"
 import { useToast } from "@/components/shared/providers"
 import { formatCPF } from "@/lib/auth/cpf"
+
+/** Quanto tempo o ícone de "copiado" fica no lugar do de copiar. */
+const CONFIRMACAO_MS = 2000
+
+type Copiavel = "tudo" | "chave" | "senha"
+
+/**
+ * Quebra a senha em blocos de quatro só na tela.
+ *
+ * <p>A senha vai ser ditada por telefone ou passada para um bilhete, e dezesseis
+ * caracteres corridos fazem quem lê perder o lugar. Os blocos são espaçamento,
+ * não texto: selecionar e copiar à mão devolve a senha sem espaços.
+ */
+function blocos(senha: string) {
+  return senha.match(/.{1,4}/g) ?? [senha]
+}
 
 /**
  * As credenciais de acesso, mostradas uma única vez.
@@ -16,6 +32,10 @@ import { formatCPF } from "@/lib/auth/cpf"
  * <p>Mostra a <b>chave de acesso</b> junto com a senha porque é o par que a
  * pessoa precisa receber. A primeira versão mostrava só a senha, e quem
  * cadastrava tinha de lembrar sozinho de que se entra com o CPF.
+ *
+ * <p>A caixa aparece depois que o painel de cadastro fecha, muitas vezes fora da
+ * área visível: por isso ela recebe o foco ao montar. E fechar sem ter copiado
+ * nada pede uma confirmação — é a única ação da tela que não tem volta.
  */
 export function CredenciaisIniciais({
   nome,
@@ -32,15 +52,46 @@ export function CredenciaisIniciais({
   onFechar: () => void
 }) {
   const showToast = useToast()
-  const [copiado, setCopiado] = useState(false)
+  const tituloId = useId()
+  const caixa = useRef<HTMLElement>(null)
+  const [recemCopiado, setRecemCopiado] = useState<Copiavel | null>(null)
+  const [jaCopiou, setJaCopiou] = useState(false)
+  const [confirmandoFechar, setConfirmandoFechar] = useState(false)
 
-  const chaveFormatada = chave.includes("*") ? chave : formatCPF(chave)
-  const tudo = `Acesso: ${chaveFormatada}\nSenha: ${senha}`
+  const mascarada = chave.includes("*")
+  const chaveFormatada = mascarada ? chave : formatCPF(chave)
 
-  const copiar = (texto: string, aviso: string, marcar = false) => {
+  useEffect(() => {
+    caixa.current?.focus()
+  }, [])
+
+  // Recarregar ou fechar a aba some com a senha do mesmo jeito que "Já anotei".
+  useEffect(() => {
+    const avisar = (evento: BeforeUnloadEvent) => evento.preventDefault()
+    window.addEventListener("beforeunload", avisar)
+    return () => window.removeEventListener("beforeunload", avisar)
+  }, [])
+
+  useEffect(() => {
+    if (!recemCopiado) return
+    const volta = setTimeout(() => setRecemCopiado(null), CONFIRMACAO_MS)
+    return () => clearTimeout(volta)
+  }, [recemCopiado])
+
+  const mensagemPronta = () =>
+    [
+      `Acesso ao GeraDocs: ${window.location.origin}/login`,
+      `Login (CPF): ${chaveFormatada}`,
+      `Senha provisória: ${senha}`,
+      "No primeiro acesso, o sistema pede para criar uma senha nova.",
+    ].join("\n")
+
+  const copiar = (qual: Copiavel, texto: string, aviso: string) => {
     void navigator.clipboard.writeText(texto).then(
       () => {
-        if (marcar) setCopiado(true)
+        setRecemCopiado(qual)
+        setJaCopiou(true)
+        setConfirmandoFechar(false)
         showToast(aviso)
       },
       // Sem permissão de área de transferência o texto continua selecionável:
@@ -49,42 +100,102 @@ export function CredenciaisIniciais({
     )
   }
 
-  return (
-    <InfoBanner tone="warning">
-      <div className="font-semibold">
-        {titulo} — {nome}
-      </div>
-      <p className="m-0 mt-1">
-        Entregue estes dados a quem vai usar o acesso. A senha aparece{" "}
-        <strong>uma única vez</strong> e não há como recuperá-la depois — só redefinir.
-      </p>
+  const pedirFechar = () => (jaCopiou ? onFechar() : setConfirmandoFechar(true))
 
-      <dl className="m-0 mt-2.5 grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-2.5 gap-y-1.5">
-        <dt className="m-0 text-xs font-semibold">Acesso</dt>
-        <dd className="m-0">
-          <code className="rounded-sm border border-border bg-surface px-2 py-1 font-mono text-sm text-text-1 select-all">
-            {chaveFormatada}
-          </code>
-        </dd>
-        <dt className="m-0 text-xs font-semibold">Senha</dt>
-        <dd className="m-0">
-          <code className="rounded-sm border border-border bg-surface px-2 py-1 font-mono text-sm text-text-1 select-all">
-            {senha}
-          </code>
-        </dd>
+  const botaoCopiar = (qual: Exclude<Copiavel, "tudo">, rotulo: string, texto: string, aviso: string) => (
+    <Button
+      size="sm"
+      variant="ghost"
+      className="w-8 shrink-0 px-0!"
+      icon={recemCopiado === qual ? <IconCheck size={15} /> : <IconClipboard size={15} />}
+      onClick={() => copiar(qual, texto, aviso)}
+    >
+      <span className="sr-only">{recemCopiado === qual ? `${rotulo} copiado` : `Copiar ${rotulo}`}</span>
+    </Button>
+  )
+
+  return (
+    <section
+      ref={caixa}
+      tabIndex={-1}
+      aria-labelledby={tituloId}
+      className="rounded-card border border-border bg-surface p-5 outline-none"
+    >
+      <div className="flex items-start gap-3">
+        <span className="mt-0.5 flex shrink-0 text-success">
+          <IconCheckCircle size={20} />
+        </span>
+        <div className="min-w-0">
+          <h3 id={tituloId} className="m-0 font-display text-md font-bold text-text-1">
+            {titulo}
+          </h3>
+          <p className="m-0 mt-0.5 text-base text-text-3">
+            Entregue o login e a senha a <strong className="font-semibold text-text-1">{nome}</strong>.
+          </p>
+        </div>
+      </div>
+
+      <dl className="m-0 mt-4 divide-y divide-border-soft rounded-md border border-border bg-ice">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 px-4 py-2.5">
+          <dt className="m-0 w-full shrink-0 sm:w-36 text-2xs font-semibold tracking-wider text-text-muted uppercase">
+            Login (CPF)
+          </dt>
+          <dd className="m-0 min-w-0 flex-1 font-mono text-md text-text-1 select-all">{chaveFormatada}</dd>
+          {!mascarada && botaoCopiar("chave", "CPF", chaveFormatada, "CPF copiado.")}
+        </div>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 px-4 py-2.5">
+          <dt className="m-0 w-full shrink-0 sm:w-36 text-2xs font-semibold tracking-wider text-text-muted uppercase">
+            Senha provisória
+          </dt>
+          <dd className="m-0 min-w-0 flex-1">
+            <code className="flex flex-wrap gap-x-2 font-mono text-md text-text-1 select-all">
+              {blocos(senha).map((bloco, i) => (
+                <span key={i}>{bloco}</span>
+              ))}
+            </code>
+          </dd>
+          {botaoCopiar("senha", "Senha", senha, "Senha copiada.")}
+        </div>
       </dl>
 
-      <div className="mt-2.5 flex flex-wrap items-center gap-2.5">
-        <Button size="sm" variant="secondary" onClick={() => copiar(tudo, "Credenciais copiadas.", true)}>
-          {copiado ? "Copiadas" : "Copiar acesso e senha"}
-        </Button>
-        <Button size="sm" variant="ghost" onClick={() => copiar(senha, "Senha copiada.")}>
-          Copiar só a senha
-        </Button>
-        <Button size="sm" variant="ghost" onClick={onFechar}>
-          Já anotei
-        </Button>
+      <p className="m-0 mt-3 flex items-start gap-2 text-sm text-tint-warning-fg">
+        <span className="mt-0.5 flex shrink-0">
+          <IconLock size={14} />
+        </span>
+        <span>
+          A senha aparece <strong>só agora</strong> — depois de fechar, só dá para redefini-la. No
+          primeiro acesso, o sistema pede para {nome.split(" ")[0]} criar uma senha nova.
+        </span>
+      </p>
+
+      <div className="mt-4 flex flex-wrap items-center gap-2.5 border-t border-border-soft pt-4">
+        {confirmandoFechar ? (
+          <>
+            <p className="m-0 mr-1 text-sm text-text-3">
+              Nada foi copiado. Depois de fechar, a senha não aparece de novo. Fechar mesmo assim?
+            </p>
+            <Button size="sm" variant="secondary" onClick={() => setConfirmandoFechar(false)}>
+              Voltar
+            </Button>
+            <Button size="sm" variant="danger-soft" onClick={onFechar}>
+              Fechar sem Copiar
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button
+              size="sm"
+              icon={recemCopiado === "tudo" ? <IconCheck size={15} /> : <IconClipboard size={15} />}
+              onClick={() => copiar("tudo", mensagemPronta(), "Mensagem com login e senha copiada.")}
+            >
+              {recemCopiado === "tudo" ? "Mensagem Copiada" : "Copiar Mensagem para Envio"}
+            </Button>
+            <Button size="sm" variant="secondary" onClick={pedirFechar}>
+              Já anotei
+            </Button>
+          </>
+        )}
       </div>
-    </InfoBanner>
+    </section>
   )
 }

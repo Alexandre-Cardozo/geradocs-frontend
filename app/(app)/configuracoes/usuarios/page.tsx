@@ -56,7 +56,7 @@ export default function Usuarios() {
             nome={credenciais.nome}
             chave={credenciais.chave}
             senha={credenciais.senha}
-            titulo="Credenciais de primeiro acesso"
+            titulo="Credenciais de Primeiro Acesso"
             onFechar={() => setCredenciais(null)}
           />
         </div>
