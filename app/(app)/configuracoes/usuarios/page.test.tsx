@@ -59,6 +59,15 @@ describe("usuários da entidade", () => {
     expect(await screen.findByText("Maria Costa Andrade")).toBeInTheDocument()
   })
 
+  it("mostra a matrícula de cada servidor, que o coordenador também cadastra", async () => {
+    comCoordenador([servidora, { ...servidora, id: "outro", name: "João da Silva", registrationNumber: null }])
+    renderizar(<Usuarios />)
+
+    expect(await screen.findByRole("columnheader", { name: "Matrícula" })).toBeInTheDocument()
+    expect(screen.getByText("MAT-4471")).toBeInTheDocument()
+    // Sem matrícula, um traço — e não uma célula vazia que parece erro de carga.
+    expect(screen.getByText("—", { selector: "td" })).toBeInTheDocument()
+  })
 
   it("a senha de primeiro acesso aparece depois de cadastrar", async () => {
     comCoordenador([])

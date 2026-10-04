@@ -108,10 +108,10 @@ export default function Usuarios() {
         )}
         {servidores.isSuccess && servidores.data.length > 0 && (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px] border-collapse">
+            <table className="w-full min-w-[760px] border-collapse">
               <thead>
                 <tr className="border-b border-border bg-ice">
-                  {["Servidor", "Cargo", "Perfil de Acesso", "Último Acesso"].map((h, i) => (
+                  {["Servidor", "Matrícula", "Cargo", "Perfil de Acesso", "Último Acesso"].map((h, i) => (
                     <Th key={h === "" ? `vazio-${i}` : h}>{h}</Th>
                   ))}
                 </tr>
@@ -135,6 +135,7 @@ export default function Usuarios() {
                         </div>
                       </div>
                     </td>
+                    <td className="px-4 py-3.25 font-mono text-sm text-text-3">{u.matricula ?? "—"}</td>
                     <td className="px-4 py-3.25 text-sm text-text-3">{u.cargo}</td>
                     <td className="px-4 py-3.25">
                       <Tag tone={u.perfilAcesso === "coordenador" ? "success" : "neutral"}>
