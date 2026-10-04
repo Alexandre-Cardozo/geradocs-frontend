@@ -452,6 +452,44 @@ describe("criarUsuario", () => {
     expect(corpo.profileAccess).toBe("COORDENADOR")
   })
 
+  it("fica com o primeiro motivo de cada campo e ignora item incompleto", async () => {
+    servidor.use(
+      http.post(`${urlDaApi}/users`, () =>
+        HttpResponse.json(
+          {
+            title: "Erro de validação",
+            status: 400,
+            detail: "Existem campos inválidos.",
+            code: "VALIDATION_ERROR",
+            errors: [
+              // Tamanho e formato falham juntos no mesmo campo: a tela mostra um.
+              { field: "name", message: "O nome deve ter no máximo 200 caracteres." },
+              { field: "name", message: "O nome deve conter apenas letras, espaços, apóstrofo, hífen e ponto." },
+              { field: "email" },
+              { message: "Sem campo." },
+            ],
+          },
+          { status: 400, headers: { "Content-Type": "application/problem+json" } },
+        ),
+      ),
+    )
+    const { criarUsuario } = await carregarClienteLimpo()
+
+    const erro = await criarUsuario({
+      nome: "Ana",
+      cpf: "11144477735",
+      email: "ana@prefeitura.gov.br",
+      cargo: "",
+      perfilAcesso: "servidor",
+      entidadeId: organizacao.id,
+    }).catch((e: unknown) => e)
+
+    expect((erro as { campos: Record<string, string> }).campos).toEqual({
+      name: "O nome deve ter no máximo 200 caracteres.",
+    })
+    expect((erro as Error).message).toBe("O nome deve ter no máximo 200 caracteres.")
+  })
+
   it("devolve o motivo de cada campo recusado na validação", async () => {
     servidor.use(
       http.post(`${urlDaApi}/users`, () =>
