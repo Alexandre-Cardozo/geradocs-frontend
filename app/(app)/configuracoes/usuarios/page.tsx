@@ -2,18 +2,18 @@
 
 import { useState } from "react"
 
-import { Button, Dropdown, FormField, Input, Tag } from "@/components/ui"
+import { Button, Tag } from "@/components/ui"
 import { IconPlus } from "@/components/ui/icons"
 import { EmptyState, ErrorState, SkeletonRows } from "@/components/shared/estados"
 import { Th } from "@/components/shared/tabela"
 import { useToast } from "@/components/shared/providers"
+import { CadastroDeServidor, SEM_RECUSAS, type DadosDoCadastro } from "@/components/admin/cadastro-de-servidor"
 import { CredenciaisIniciais } from "@/components/admin/credenciais-iniciais"
+import { ApiError } from "@/lib/api/auth-client"
 import { useCriarUsuario, useSessao, useUsuarios } from "@/lib/api/hooks"
-import { formatCPF, validaCPF } from "@/lib/auth/cpf"
-import { validaEmail } from "@/lib/auth/email"
+import { formatCPF } from "@/lib/auth/cpf"
 import { formatDataHora } from "@/lib/format"
-import { PERFIL_ACESSO_LABEL, type PerfilAcesso } from "@/lib/types"
-import { erroCargo, erroNomeDePessoa } from "@/lib/validacao/campos"
+import { PERFIL_ACESSO_LABEL } from "@/lib/types"
 
 /**
  * Usuários e permissões do órgão: quem entra e com qual perfil.
@@ -25,26 +25,38 @@ import { erroCargo, erroNomeDePessoa } from "@/lib/validacao/campos"
 export default function Usuarios() {
   const showToast = useToast()
   const { data: sessao } = useSessao()
-  const entidadeId = sessao?.entidade?.id
-  const servidores = useUsuarios(entidadeId)
+  const entidade = sessao?.entidade
+  const servidores = useUsuarios(entidade?.id)
   const criarServidor = useCriarUsuario()
 
   const [novoServidor, setNovoServidor] = useState(false)
-  const [nsNome, setNsNome] = useState("")
-  const [nsCpf, setNsCpf] = useState("")
-  const [nsEmail, setNsEmail] = useState("")
-  const [nsCargo, setNsCargo] = useState("")
-  const [nsPerfil, setNsPerfil] = useState<PerfilAcesso>("servidor")
   const [credenciais, setCredenciais] = useState<{
     nome: string
     chave: string
     senha: string
   } | null>(null)
 
-  // As mesmas regras do cadastro do administrador: o servidor recusa igual.
-  const erroDoNome = erroNomeDePessoa(nsNome)
-  const erroDoEmail = nsEmail.trim() !== "" && !validaEmail(nsEmail) ? "E-mail inválido." : undefined
-  const erroDoCargo = erroCargo(nsCargo)
+  const abrirOuFecharCadastro = (aberto: boolean) => {
+    // A recusa da tentativa anterior não vale para um painel que reabre vazio.
+    criarServidor.reset()
+    setNovoServidor(aberto)
+  }
+
+  const salvar = (dados: DadosDoCadastro) =>
+    criarServidor.mutate(dados, {
+      onSuccess: (criado) => {
+        setCredenciais({
+          // O CPF digitado, e não o da resposta: o servidor mascara de
+          // propósito, e credencial pela metade não abre porta nenhuma.
+          nome: criado.usuario.nome,
+          chave: dados.cpf,
+          senha: criado.senhaProvisoria,
+        })
+        showToast("Servidor cadastrado.")
+        setNovoServidor(false)
+      },
+      onError: (e) => showToast(e instanceof Error ? e.message : "Não foi possível cadastrar."),
+    })
 
   return (
     <div className="w-full p-4 sm:p-5 lg:p-7">
@@ -62,113 +74,17 @@ export default function Usuarios() {
         </div>
       )}
       {novoServidor && (
-        <div className="mb-4 rounded-card border border-border bg-surface p-5">
-          <h3 className="m-0 mb-4 font-display text-md font-bold text-text-1">
-            Adicionar Servidor à Entidade
-          </h3>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <FormField label="Nome Completo" required hint={erroDoNome}>
-              <Input
-                value={nsNome}
-                onChange={(e) => setNsNome(e.target.value)}
-                placeholder="Nome do servidor"
-              />
-            </FormField>
-            <FormField
-              label="CPF"
-              required
-              hint={nsCpf !== "" && !validaCPF(nsCpf) ? "CPF inválido." : undefined}
-            >
-              <Input
-                value={nsCpf}
-                onChange={(e) => setNsCpf(formatCPF(e.target.value))}
-                placeholder="000.000.000-00"
-              />
-            </FormField>
-            <FormField label="E-mail" required hint={erroDoEmail}>
-              <Input
-                value={nsEmail}
-                onChange={(e) => setNsEmail(e.target.value)}
-                type="email"
-                placeholder="email@prefeitura.gov.br"
-              />
-            </FormField>
-            <FormField label="Cargo" hint={erroDoCargo}>
-              <Input
-                value={nsCargo}
-                onChange={(e) => setNsCargo(e.target.value)}
-                placeholder="Ex: Servidor de Compras"
-              />
-            </FormField>
-            <FormField label="Perfil de Acesso" required>
-              <Dropdown
-                value={nsPerfil}
-                onChange={(v) => setNsPerfil(v as PerfilAcesso)}
-                ariaLabel="Perfil de acesso"
-                options={[
-                  { value: "servidor", label: PERFIL_ACESSO_LABEL.servidor },
-                  { value: "coordenador", label: PERFIL_ACESSO_LABEL.coordenador },
-                ]}
-              />
-            </FormField>
-          </div>
-          <div className="mt-4 flex gap-2.5">
-            <Button variant="secondary" onClick={() => setNovoServidor(false)}>
-              Cancelar
-            </Button>
-            <p id="motivo-criar-servidor-tenant" className="sr-only">
-              Nome, CPF válido, e-mail válido e a entidade são obrigatórios, e cada campo
-              preenchido precisa estar no formato indicado. A senha é sorteada pelo sistema e
-              aparece depois de cadastrar.
-            </p>
-            <Button
-              disabled={
-                criarServidor.isPending ||
-                nsNome.trim() === "" ||
-                erroDoNome !== undefined ||
-                !validaCPF(nsCpf) ||
-                !validaEmail(nsEmail) ||
-                erroDoCargo !== undefined ||
-                !entidadeId
-              }
-              ariaDescribedBy="motivo-criar-servidor-tenant"
-              onClick={() =>
-                criarServidor.mutate(
-                  {
-                    nome: nsNome,
-                    cpf: nsCpf,
-                    email: nsEmail,
-                    cargo: nsCargo,
-                    perfilAcesso: nsPerfil,
-                    entidadeId: entidadeId ?? null,
-                  },
-                  {
-                    onSuccess: (criado) => {
-                      setCredenciais({
-                        // O CPF digitado, e não o da resposta: o servidor
-                        // mascara de propósito, e credencial pela metade não
-                        // abre porta nenhuma.
-                        nome: criado.usuario.nome,
-                        chave: nsCpf,
-                        senha: criado.senhaProvisoria,
-                      })
-                      showToast("Servidor cadastrado.")
-                      setNovoServidor(false)
-                      setNsNome("")
-                      setNsCpf("")
-                      setNsEmail("")
-                      setNsCargo("")
-                      setNsPerfil("servidor")
-                    },
-                    onError: (e) =>
-                      showToast(e instanceof Error ? e.message : "Não foi possível cadastrar."),
-                  },
-                )
-              }
-            >
-              {criarServidor.isPending ? "Salvando..." : "Cadastrar"}
-            </Button>
-          </div>
+        <div className="mb-4">
+          {/* A mesma ficha de cadastro do administrador, com a entidade travada
+              na do coordenador: ele só cadastra na própria. */}
+          <CadastroDeServidor
+            titulo="Adicionar Servidor à Entidade"
+            entidade={{ fixa: { id: entidade?.id ?? "", nome: entidade?.nome ?? "" } }}
+            salvando={criarServidor.isPending}
+            recusas={criarServidor.error instanceof ApiError ? criarServidor.error.campos : SEM_RECUSAS}
+            onCadastrar={salvar}
+            onCancelar={() => abrirOuFecharCadastro(false)}
+          />
         </div>
       )}
 
@@ -180,7 +96,7 @@ export default function Usuarios() {
           <Button
             size="sm"
             icon={<IconPlus size={13} strokeWidth={2.5} />}
-            onClick={() => setNovoServidor((v) => !v)}
+            onClick={() => abrirOuFecharCadastro(!novoServidor)}
           >
             Adicionar Servidor
           </Button>
