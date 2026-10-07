@@ -618,6 +618,12 @@ export default function HubProcesso() {
                           setRetificando(null)
                           showToast(`${tipo} retificado — ${rotuloDaVersao(doc.versao)}.`)
                         },
+                        onError: (erro) =>
+                          showToast(
+                            erro instanceof Error
+                              ? erro.message
+                              : `Não foi possível retificar o ${tipo}. Tente novamente.`,
+                          ),
                       },
                     )
                   }

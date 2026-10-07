@@ -405,6 +405,14 @@ export default function EditorDocumento() {
                       )
                       router.push(`/processos/detalhe?id=${encodeURIComponent(processoId)}`)
                     },
+                    // Sem isto a falha era muda: o botão voltava ao estado
+                    // inicial e nenhum documento aparecia, sem dizer por quê.
+                    onError: (erro) =>
+                      showToast(
+                        erro instanceof Error
+                          ? erro.message
+                          : `Não foi possível gerar o ${tipo}. Tente novamente.`,
+                      ),
                   },
                 )
               }
