@@ -12,7 +12,7 @@ import {
   useRemoverDotacao,
 } from "@/lib/api/hooks"
 import type { DadosDaDotacao, DotacaoOrcamentaria } from "@/lib/api/procurement-client"
-import { formatBRL, parseValorBR } from "@/lib/format"
+import { anoBrasilia, formatBRL, parseValorBR } from "@/lib/format"
 
 /**
  * O cadastro de dotação orçamentária do processo.
@@ -150,7 +150,7 @@ const VAZIA: DadosDaDotacao = {
   naturezaDaDespesa: "",
   fonteDeRecurso: "",
   ficha: "",
-  exercicio: new Date().getFullYear(),
+  exercicio: anoBrasilia(),
   valor: "",
 }
 

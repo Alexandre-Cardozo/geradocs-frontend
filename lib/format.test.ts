@@ -5,6 +5,7 @@ import {
   dataBrasiliaISO,
   dataHoraBrasiliaISO,
   dataPorExtenso,
+  deCampoDataHora,
   formatBRL,
   formatData,
   formatarBytes,
@@ -13,6 +14,7 @@ import {
   horaBrasilia,
   mascaraValorBR,
   normalizaValorBR,
+  paraCampoDataHora,
   parseValorBR,
   saudacao,
 } from "@/lib/format"
@@ -104,16 +106,57 @@ describe("normalizaValorBR", () => {
 })
 
 describe("datas", () => {
-  it("converte ISO para o formato brasileiro", () => {
+  it("converte data pura para o formato brasileiro, sem mexer no dia", () => {
     expect(formatData("2024-07-05")).toBe("05/07/2024")
+    expect(formatDataHora("2024-07-05")).toBe("05/07/2024")
   })
 
-  it("ignora a parte de hora ao formatar só a data", () => {
+  it("mostra o instante do servidor no horário de Brasília (UTC−3)", () => {
+    expect(formatDataHora("2024-07-03T19:42:00Z")).toBe("03/07/2024 — 16:42")
+    expect(formatDataHora("2024-07-03T19:42:00.123456789Z")).toBe("03/07/2024 — 16:42")
+    expect(formatDataHora("2024-07-03T21:42:00+02:00")).toBe("03/07/2024 — 16:42")
+  })
+
+  it("muda o dia quando, em Brasília, ainda é o dia anterior", () => {
+    // 02:30 UTC do dia 8 é 23:30 do dia 7 em Brasília.
+    expect(formatData("2024-07-08T02:30:00Z")).toBe("07/07/2024")
+    expect(formatDataHora("2024-07-08T02:30:00Z")).toBe("07/07/2024 — 23:30")
+    expect(formatData("2024-07-08T03:00:00Z")).toBe("08/07/2024")
+    expect(formatDataHora("2024-07-08T03:00:00Z")).toBe("08/07/2024 — 00:00")
+  })
+
+  it("lê data e hora sem fuso como hora de Brasília", () => {
+    expect(formatDataHora("2024-07-03T16:42:00")).toBe("03/07/2024 — 16:42")
     expect(formatData("2024-07-05T16:42:00-03:00")).toBe("05/07/2024")
   })
 
-  it("separa data e hora com travessão", () => {
-    expect(formatDataHora("2024-07-03T16:42:00")).toBe("03/07/2024 — 16:42")
+  it("devolve o texto como veio quando não é data", () => {
+    expect(formatData("sem data")).toBe("sem data")
+    expect(formatDataHora("sem data")).toBe("sem data")
+  })
+})
+
+describe("campo datetime-local", () => {
+  it("leva o instante do servidor para a hora de Brasília", () => {
+    expect(paraCampoDataHora("2024-07-08T02:30:00Z")).toBe("2024-07-07T23:30")
+  })
+
+  it("mantém a hora já digitada no campo", () => {
+    expect(paraCampoDataHora("2024-07-07T23:30")).toBe("2024-07-07T23:30")
+  })
+
+  it("deixa vazio o campo sem valor ou com valor inválido", () => {
+    expect(paraCampoDataHora("")).toBe("")
+    expect(paraCampoDataHora("sem data")).toBe("")
+  })
+
+  it("grava a hora digitada como instante UTC, lida em Brasília", () => {
+    expect(deCampoDataHora("2024-07-07T23:30")).toBe("2024-07-08T02:30:00.000Z")
+  })
+
+  it("ida e volta pelo campo preservam o instante", () => {
+    const servidor = "2024-07-08T02:30:00.000Z"
+    expect(deCampoDataHora(paraCampoDataHora(servidor))).toBe(servidor)
   })
 })
 

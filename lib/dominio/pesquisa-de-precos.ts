@@ -16,7 +16,7 @@
  */
 
 import type { ColetaDePreco } from "@/lib/api/procurement-client"
-import { formatBRL, parseValorBR } from "@/lib/format"
+import { formatBRL, formatData, parseValorBR } from "@/lib/format"
 
 /** O conjunto mínimo que o Art. 6º exige para média, mediana ou menor valor. */
 export const MINIMO_DE_PRECOS = 3
@@ -188,11 +188,11 @@ export function textoDasFontes(
 export function textoDaSerie(itens: ItemPesquisado[]): string {
   const blocos = itens.map((item) => {
     const linhas = item.coletas.map((c) => {
-      const quando = c.coletadoEm.slice(0, 10).split("-").reverse().join("/")
+      const quando = formatData(c.coletadoEm)
       const quem = c.fornecedor ? ` · ${c.fornecedor}` : ""
       const doc = c.documentoDoFornecedor ? ` (${c.documentoDoFornecedor})` : ""
       const validade = c.validaAte
-        ? ` · proposta válida até ${c.validaAte.split("-").reverse().join("/")}`
+        ? ` · proposta válida até ${formatData(c.validaAte)}`
         : ""
       return `  - ${c.fonte}${quem}${doc} · ${quando} · ${formatBRL(parseValorBR(c.valorUnitario))}${validade}`
     })

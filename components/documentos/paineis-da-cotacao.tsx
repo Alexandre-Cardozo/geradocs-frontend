@@ -31,7 +31,14 @@ import {
   textoDoPrecoDeReferencia,
   type MetodoDeApuracao,
 } from "@/lib/dominio/pesquisa-de-precos"
-import { formatBRL, parseValorBR } from "@/lib/format"
+import {
+  dataHoraBrasiliaISO,
+  deCampoDataHora,
+  formatBRL,
+  formatData,
+  paraCampoDataHora,
+  parseValorBR,
+} from "@/lib/format"
 import type { SecaoDocumento } from "@/lib/types"
 
 /**
@@ -299,11 +306,11 @@ function LinhaDaColeta({
           {paraExame && <Tag tone="warning">Destoa da mediana — examine</Tag>}
         </div>
         <p className="m-0 mt-0.5 text-xs text-text-3">
-          {coleta.coletadoEm.slice(0, 10).split("-").reverse().join("/")}
+          {formatData(coleta.coletadoEm)}
           {coleta.fornecedor ? ` · ${coleta.fornecedor}` : ""}
           {coleta.documentoDoFornecedor ? ` (${coleta.documentoDoFornecedor})` : ""}
           {coleta.validaAte
-            ? ` · válida até ${coleta.validaAte.split("-").reverse().join("/")}`
+            ? ` · válida até ${formatData(coleta.validaAte)}`
             : ""}
         </p>
         {/*
@@ -359,11 +366,6 @@ function LinhaDaColeta({
   )
 }
 
-/** O instante da coleta no formato que o campo `datetime-local` usa. */
-function paraCampoLocal(iso: string): string {
-  return iso.slice(0, 16)
-}
-
 /**
  * Registrar ou corrigir uma coleta.
  *
@@ -395,7 +397,7 @@ function FormularioDaColeta({
           item: "",
           fonte: "",
           valorUnitario: "",
-          coletadoEm: new Date().toISOString().slice(0, 16),
+          coletadoEm: paraCampoDataHora(dataHoraBrasiliaISO()),
         },
   )
   const trocar = (campo: keyof DadosDaColeta, valor: string) =>
@@ -416,7 +418,7 @@ function FormularioDaColeta({
   const motivo = `motivo-coleta-${coleta?.id ?? "nova"}`
 
   const gravar = () => {
-    const corpo = { ...dados, coletadoEm: new Date(dados.coletadoEm).toISOString() }
+    const corpo = { ...dados, coletadoEm: deCampoDataHora(dados.coletadoEm) }
     const aoFalhar = (erro: unknown) =>
       showToast(erro instanceof Error ? erro.message : "Não foi possível gravar o preço.")
     if (coleta) {
@@ -491,7 +493,7 @@ function FormularioDaColeta({
           >
             <Input
               type="datetime-local"
-              value={paraCampoLocal(dados.coletadoEm)}
+              value={paraCampoDataHora(dados.coletadoEm)}
               onChange={(e) => trocar("coletadoEm", e.target.value)}
               ariaLabel="Data e Hora da Coleta"
             />
