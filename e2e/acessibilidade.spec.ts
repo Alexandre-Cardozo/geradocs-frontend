@@ -146,3 +146,13 @@ test("o detalhe do processo não tem violação grave", async ({ page }) => {
 
   expect(await violacoesGraves(page)).toEqual([])
 })
+
+test("a confirmação de encerramento com pendências não tem violação grave", async ({ page }) => {
+  await comSessao(page)
+  await comProcessoEDocumento(page)
+  await page.goto(rota(`/processos/detalhe?id=${encodeURIComponent(processo.id)}`))
+  await page.getByRole("button", { name: "Encerrar Processo" }).click()
+  await expect(page.getByRole("dialog", { name: /Encerrar processo com pendências/ })).toBeVisible()
+
+  expect(await violacoesGraves(page)).toEqual([])
+})

@@ -145,4 +145,30 @@ test.describe("liberdade no fluxo do processo", () => {
     await expect(page.getByRole("heading", { name: "Revisão e Geração" })).toBeVisible()
     expect(gerou).toBe(false)
   })
+
+  test("encerrar com documento pendente pede justificativa na própria tela", async ({ page }) => {
+    await comSessao(page)
+    await comProcessoEDocumento(page)
+    let enviado: Record<string, unknown> | null = null
+    await page.route(`${API}/procurement-processes/*/closure`, async (rota) => {
+      enviado = rota.request().postDataJSON() as Record<string, unknown>
+      await rota.fulfill({ json: { ...processo, status: "CLOSED" } })
+    })
+
+    await page.goto(rota(`/processos/detalhe?id=${processo.id}`))
+    await page.getByRole("button", { name: "Encerrar Processo" }).click()
+
+    // Era o window.prompt do navegador: campo de uma linha, sem a cara da
+    // plataforma, e confirmar em branco não fazia nada sem dizer por quê.
+    const dialogo = page.getByRole("dialog", { name: /Encerrar processo com pendências/ })
+    await expect(dialogo).toBeVisible()
+    const confirmar = dialogo.getByRole("button", { name: "Encerrar mesmo assim" })
+    await expect(confirmar).toBeDisabled()
+
+    await page.getByRole("textbox", { name: /Justificativa/ }).fill("O TR será feito no sistema da entidade.")
+    await confirmar.click()
+
+    await expect(dialogo).toBeHidden()
+    expect(enviado).toEqual({ justification: "O TR será feito no sistema da entidade." })
+  })
 })

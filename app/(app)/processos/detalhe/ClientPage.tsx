@@ -31,6 +31,7 @@ import { ConferenciaDaDispensa } from "@/components/processos/conferencia-da-dis
 import { ConsolidacaoDaDemanda } from "@/components/processos/consolidacao-da-demanda"
 import { DfdsDoProcesso } from "@/components/processos/dfds-do-processo"
 import { DotacoesDoProcesso } from "@/components/processos/dotacoes-do-processo"
+import { EncerramentoComPendencias } from "@/components/processos/encerramento-com-pendencias"
 import { ItensDaDemanda } from "@/components/processos/itens-da-demanda"
 import { TrilhaDoProcesso } from "@/components/processos/trilha-do-processo"
 import { PainelRetificacao } from "@/components/processos/painel-retificacao"
@@ -77,6 +78,7 @@ export default function HubProcesso() {
   // Modalidade escolhida mas ainda não aplicada: fica pendente enquanto o
   // alerta de impacto está na tela.
   const [novaModalidade, setNovaModalidade] = useState<Modalidade | null>(null)
+  const [confirmandoEncerramento, setConfirmandoEncerramento] = useState(false)
   // Documento cuja retificação está sendo declarada. Um por vez: retificar dois
   // ao mesmo tempo esconderia qual histórico está sendo lido.
   const [retificando, setRetificando] = useState<TipoDocumento | null>(null)
@@ -174,21 +176,15 @@ export default function HubProcesso() {
   const pendentes = documentosPendentes(proc, tiposGeradosAgora)
   const podeEncerrar = proc.status !== "concluido" && proc.documentos.length > 0
 
-  const encerrarProcesso = () => {
-    // Pendência não impede: exige justificativa. A plataforma orienta, não trava.
-    const justificativa =
-      pendentes.length === 0
-        ? ""
-        : (window.prompt(
-            `Faltam ${pendentes.length} documento(s): ${pendentes
-              .map((t) => CATALOGO[t].titulo)
-              .join(", ")}.\n\nInforme a justificativa para encerrar mesmo assim:`,
-          ) ?? "")
-    if (pendentes.length > 0 && justificativa.trim() === "") return
+  // Pendência não impede: exige justificativa. A plataforma orienta, não trava.
+  const encerrarProcesso = (justificativa: string) => {
     encerrar.mutate(
       { processoId, justificativa },
       {
-        onSuccess: () => showToast("Processo encerrado. Protocole os documentos no sistema da entidade."),
+        onSuccess: () => {
+          setConfirmandoEncerramento(false)
+          showToast("Processo encerrado. Protocole os documentos no sistema da entidade.")
+        },
         onError: (e) => showToast(e instanceof Error ? e.message : "Não foi possível encerrar o processo."),
       },
     )
@@ -678,11 +674,22 @@ export default function HubProcesso() {
           <Button
             icon={<IconArrowRight size={14} strokeWidth={2.5} />}
             disabled={encerrar.isPending}
-            onClick={encerrarProcesso}
+            onClick={() =>
+              pendentes.length === 0 ? encerrarProcesso("") : setConfirmandoEncerramento(true)
+            }
           >
             {encerrar.isPending ? "Encerrando..." : "Encerrar Processo"}
           </Button>
         </div>
+      )}
+
+      {confirmandoEncerramento && pendentes.length > 0 && (
+        <EncerramentoComPendencias
+          pendentes={pendentes.map((t) => CATALOGO[t].titulo)}
+          pendente={encerrar.isPending}
+          onConfirmar={encerrarProcesso}
+          onCancelar={() => setConfirmandoEncerramento(false)}
+        />
       )}
 
       {proc.status === "concluido" && (
