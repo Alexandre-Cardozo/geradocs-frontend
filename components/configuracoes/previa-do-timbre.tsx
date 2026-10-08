@@ -49,7 +49,9 @@ export function PreviaDoTimbre({
         {/* Folha A4 estilizada */}
         <div className="mx-auto flex aspect-[1/1.414] w-full max-w-70 flex-col rounded-sm border border-border bg-surface p-5">
           {timbrado ? (
-            <div className="flex items-start gap-2.5 border-b-2 border-navy pb-2.5">
+            // Como no documento gerado: brasão à esquerda e o texto centralizado
+            // no espaço à direita dele, na altura do meio do brasão.
+            <div className="flex items-center gap-2.5 border-b-2 border-navy pb-2.5">
               {logoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element -- object URL de rota autenticada
                 <img src={logoUrl} alt="" className="size-8 shrink-0 object-contain" />
@@ -58,7 +60,7 @@ export function PreviaDoTimbre({
                   <IconImage size={16} strokeWidth={1.5} />
                 </div>
               )}
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 flex-1 text-center">
                 {comExemplos(cabecalho).split("\n").map((linha, i) => (
                   <div
                     key={i}
