@@ -1165,4 +1165,6 @@ Relato (08/10/2026): no celular, em homologação, a pessoa entrava com a creden
 
 **Por que o e2e não pegou.** Ele rodava só contra o `next dev`, onde a raiz responde. A mesma suíte agora roda também contra o export estático, servido como o Pages serve (`scripts/servir-publicacao.mjs`, `E2E_PUBLICADO=1`), no CI. Contra o build anterior, o teste de login reprova; o teste do título reprova sem `useRotaAtual`.
 
+**A config do repositório não chegava à produção.** O primeiro deploy da correção passou no CI e não mudou nada no Pages. O `actions/configure-pages`, com `static_site_generator: next`, não reconhece `next.config.ts`: cria um `next.config.js` em branco, injeta `output`, `basePath` e `images`, e o Next lê esse no lugar do nosso. Até aqui a config injetada era equivalente e ninguém notou. A opção saiu do `deploy.yml`, que agora reprova a publicação se `out/login/index.html` — fruto do `trailingSlash` — não existir.
+
 **O que continua em aberto.** Recarregar a página (F5, nova aba) ainda perde a sessão no iPhone, porque o cookie de renovação segue sendo de terceiros. A saída é a da ADR-013 do backend: front e API sob o mesmo domínio registrável.

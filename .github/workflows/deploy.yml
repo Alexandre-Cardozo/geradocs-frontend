@@ -27,11 +27,15 @@ jobs:
           node-version: 24
           cache: npm
           
+      # Sem `static_site_generator: next`: com ele, a action não reconhece o
+      # next.config.ts, cria um next.config.js em branco com output/basePath/
+      # images, e o Next lê esse no lugar do nosso. Toda a config do repositório
+      # era ignorada em produção — o `trailingSlash` do login no celular
+      # (08/10/2026) passou no CI e não chegou ao Pages. O next.config.ts já
+      # declara tudo o que a action injetava; o prefixo vem do env abaixo.
       - name: Setup Pages
         uses: actions/configure-pages@v5
-        with:
-          static_site_generator: next
-          
+
       - name: Install dependencies
         run: npm ci
         
@@ -49,7 +53,15 @@ jobs:
         run: |
           test -n "$NEXT_PUBLIC_API_URL"
           npm run build
-        
+
+      # `login/index.html` só existe com o `trailingSlash` do next.config.ts. Se
+      # faltar, o build leu outra config — e o login no celular volta a quebrar.
+      - name: Config do repositório aplicada
+        run: |
+          test -f out/login/index.html || { echo "::error::out/login/index.html ausente — o build ignorou o next.config.ts"; exit 1; }
+          test -f out/index.txt        || { echo "::error::out/index.txt ausente"; exit 1; }
+          test -f out/404.html         || { echo "::error::out/404.html ausente"; exit 1; }
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
