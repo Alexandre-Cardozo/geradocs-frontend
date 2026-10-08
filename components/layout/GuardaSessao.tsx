@@ -1,11 +1,13 @@
 "use client"
 
-import { usePathname, useRouter } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { useEffect, type ReactNode } from "react"
 
 import { Button } from "@/components/ui"
 import { useSessao } from "@/lib/api/hooks"
 import { rotaPermitida } from "@/lib/auth/acesso"
+
+import { useRotaAtual } from "./use-rota-atual"
 
 /**
  * Guarda do shell autenticado. Sem sessão → /login. Com sessão mas sem acesso à
@@ -14,7 +16,7 @@ import { rotaPermitida } from "@/lib/auth/acesso"
  */
 export default function GuardaSessao({ children }: { children: ReactNode }) {
   const router = useRouter()
-  const pathname = usePathname()
+  const pathname = useRotaAtual()
   const sessao = useSessao()
 
   const perfil = sessao.data?.usuario.perfilAcesso

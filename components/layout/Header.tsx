@@ -1,12 +1,14 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
 
 import { SearchInput, StatusBadge } from "@/components/ui"
 import { IconBell, IconMenu, IconPlus } from "@/components/ui/icons"
 import { usePerfil, useProcessos } from "@/lib/api/hooks"
+
+import { useRotaAtual } from "./use-rota-atual"
 
 /** Título do header por rota (equivalente ao viewTitles do protótipo). */
 function tituloDaRota(pathname: string): string {
@@ -107,7 +109,7 @@ function BuscaGlobal() {
 }
 
 export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
-  const pathname = usePathname()
+  const pathname = useRotaAtual()
   const perfil = usePerfil()
   // O admin geral não opera o fluxo de processos: sem busca de processos nem CTA.
   const mostraProcessos = perfil !== "admin_geral"

@@ -1152,3 +1152,17 @@ Era o mesmo atalho que a §69 tinha tirado de dentro das seções, sobrevivendo 
 Agora ele se chama **"Revisar e Gerar"** e abre o editor já na etapa de Revisão e Geração, onde estão a estrutura, a prévia do corpo inteiro e o aviso de lacunas silenciosas. A geração continua a um clique — só que depois da leitura, e não no lugar dela.
 
 O editor passou a aceitar `&etapa=revisao` para abrir direto na etapa final. É a mesma etapa alcançável pela trilha; o parâmetro só evita que quem veio do processo tenha de procurá-la.
+
+## 82. Rotas com barra final — o login no celular voltava para a tela de login
+
+Relato (08/10/2026): no celular, em homologação, a pessoa entrava com a credencial certa e a tela de login reaparecia vazia. No computador, não.
+
+**Causa.** O site é publicado sob `basePath` (`/geradocs-frontend`) e, sem `trailingSlash`, o Next buscava os dados de navegação da raiz em `/geradocs-frontend.txt` — fora do site, 404 no Pages. Diante do 404, o Next desiste da navegação interna e **recarrega a página**. Toda ida para "/" recarregava: depois do login, pelo menu e pela guarda de RBAC. O access token vive só na memória e ia junto; a sessão dependia então do cookie de renovação, que é de outro site (`onrender.com`). O Chrome do computador o envia; o WebKit — motor de todo navegador no iPhone — o bloqueia. Sem renovação, a guarda devolvia ao login.
+
+**Correção.** `trailingSlash: true`: cada rota vira pasta (`/login/index.html`) e os dados da raiz passam a ser `/geradocs-frontend/index.txt`, que existe. Vale também em desenvolvimento, para a URL local ser a da publicação. As URLs antigas, sem barra, continuam abrindo: o Pages redireciona a pasta para a versão com barra.
+
+**Efeito colateral corrigido junto.** Com `trailingSlash`, o `usePathname` passa a devolver a barra (`/processos/`). O cabeçalho, o item ativo do menu e o RBAC comparam a rota por igualdade, e o título caía em "GeraDocs". A moldura lê agora a rota por `useRotaAtual` (`components/layout/use-rota-atual.ts`), que tira a barra final.
+
+**Por que o e2e não pegou.** Ele rodava só contra o `next dev`, onde a raiz responde. A mesma suíte agora roda também contra o export estático, servido como o Pages serve (`scripts/servir-publicacao.mjs`, `E2E_PUBLICADO=1`), no CI. Contra o build anterior, o teste de login reprova; o teste do título reprova sem `useRotaAtual`.
+
+**O que continua em aberto.** Recarregar a página (F5, nova aba) ainda perde a sessão no iPhone, porque o cookie de renovação segue sendo de terceiros. A saída é a da ADR-013 do backend: front e API sob o mesmo domínio registrável.

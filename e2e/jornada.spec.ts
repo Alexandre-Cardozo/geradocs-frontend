@@ -26,7 +26,7 @@ test.describe("guarda de sessão", () => {
 
     await page.goto(rota("/processos"))
 
-    await expect(page).toHaveURL(/\/login$/)
+    await expect(page).toHaveURL(/\/login\/?$/)
     await expect(page.getByPlaceholder("000.000.000-00")).toBeVisible()
   })
 
@@ -41,7 +41,7 @@ test.describe("guarda de sessão", () => {
     // A mensagem é genérica de propósito: dizer "usuário não encontrado"
     // transformaria a tela em oráculo de quem tem conta.
     await expect(page.getByText(/CPF ou senha inválida/i)).toBeVisible()
-    await expect(page).toHaveURL(/\/login$/)
+    await expect(page).toHaveURL(/\/login\/?$/)
   })
 
   test("com credencial válida, entra e chega ao painel", async ({ page }) => {
@@ -50,10 +50,15 @@ test.describe("guarda de sessão", () => {
 
     await page.getByPlaceholder("000.000.000-00").fill("333.333.333-33")
     await page.getByPlaceholder("Sua senha").fill("UmaSenhaSegura!2026")
+    // Um recarregamento apaga esta marca. É o que importa aqui: o access token
+    // vive só na memória, e o `prestesALogar` recusa a renovação — como o iPhone,
+    // que não envia o cookie de terceiros. Recarregar seria voltar ao login.
+    await page.evaluate(() => Object.assign(window, { __semRecarregar: true }))
     await page.getByRole("button", { name: "Entrar" }).click()
 
-    await expect(page).not.toHaveURL(/\/login$/)
+    await expect(page).not.toHaveURL(/\/login\/?$/)
     await expect(menuLateral(page).getByRole("link", { name: "Processos" })).toBeVisible()
+    expect(await page.evaluate(() => "__semRecarregar" in window)).toBe(true)
   })
 
   test("backend fora do ar mostra o motivo, não uma tela quebrada", async ({ page }) => {
@@ -93,7 +98,30 @@ test.describe("navegação por perfil", () => {
 
     // O RBAC de rota é conveniência de interface — quem barra de verdade é o
     // backend —, mas mostrar a tela e depois falhar seria pior que não mostrar.
-    await expect(page).toHaveURL(new RegExp(`^http://localhost:3000${APP}/?$`))
+    await expect(page).toHaveURL(new RegExp(`^http://localhost:\\d+${APP}/?$`))
+  })
+
+  test("o título do cabeçalho acompanha a rota", async ({ page }) => {
+    await comSessao(page)
+    const titulo = page.locator("header h1")
+
+    // O cabeçalho, o menu e o RBAC comparam a rota por igualdade
+    // ("/processos"). Com `trailingSlash` o `usePathname` devolve "/processos/";
+    // sem o `useRotaAtual`, o título cairia no padrão sem ninguém notar.
+    for (const [caminho, esperado] of [
+      ["/processos", "Processos de Contratação"],
+      ["/processos/novo", "Novo Processo"],
+      ["/documentos", "Documentos Gerados"],
+    ] as const) {
+      await page.goto(rota(caminho))
+      await expect(titulo).toHaveText(esperado)
+    }
+
+    // Voltar ao painel pelo menu é ir para "/" — a rota que recarregava a página.
+    await page.evaluate(() => Object.assign(window, { __semRecarregar: true }))
+    await menuLateral(page).getByRole("link", { name: "Dashboard" }).click()
+    await expect(titulo).toHaveText("Dashboard")
+    expect(await page.evaluate(() => "__semRecarregar" in window)).toBe(true)
   })
 })
 

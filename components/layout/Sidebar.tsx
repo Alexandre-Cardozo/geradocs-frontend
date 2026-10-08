@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
 
 import geradocsLogo from "@/public/geradocs-mark-white.png";
@@ -22,6 +22,8 @@ import { FotoDePerfil } from "@/components/shared/foto-de-perfil";
 import { useBrasao, useLogout, useSessao, useTimbre } from "@/lib/api/hooks";
 import { navPrincipal, navSistema, type IconeNav } from "@/lib/auth/acesso";
 import { PERFIL_ACESSO_LABEL, TIPO_ENTIDADE_LABEL } from "@/lib/types";
+
+import { useRotaAtual } from "./use-rota-atual";
 
 /** Mapa de chave de ícone (RBAC) → componente. */
 const ICONES: Record<IconeNav, ReactNode> = {
@@ -105,7 +107,7 @@ export default function Sidebar({
   aberta?: boolean;
   onNavigate?: () => void;
 }) {
-  const pathname = usePathname();
+  const pathname = useRotaAtual();
   const router = useRouter();
   const { data: sessao } = useSessao();
   const logout = useLogout();

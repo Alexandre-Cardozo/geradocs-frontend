@@ -1,11 +1,12 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
 import { useState } from "react"
 
 import { IconLock } from "@/components/ui/icons"
 import { useSessao } from "@/lib/api/hooks"
+
+import { useRotaAtual } from "./use-rota-atual"
 
 /**
  * O aviso de que a senha ainda é a que o sistema sorteou.
@@ -25,7 +26,7 @@ import { useSessao } from "@/lib/api/hooks"
  */
 export function AvisoDeSenhaProvisoria() {
   const sessao = useSessao()
-  const pathname = usePathname()
+  const pathname = useRotaAtual()
   const [dispensado, setDispensado] = useState(false)
 
   const usuario = sessao.data?.usuario

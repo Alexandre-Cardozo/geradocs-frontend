@@ -17,6 +17,19 @@ const prefixo = process.env.NEXT_PUBLIC_BASE_PATH ?? ""
 const nextConfig: NextConfig = {
   output: "export",
   ...(prefixo === "" ? {} : { basePath: prefixo }),
+  /**
+   * Cada rota vira uma pasta (`/login/index.html`), e os dados de navegação
+   * dela ficam dentro da pasta.
+   *
+   * <p>Sem isto, a raiz sob `basePath` pedia `/geradocs-frontend.txt` — um
+   * arquivo fora do site, que o Pages responde com 404. O Next então desistia
+   * da navegação interna e recarregava a página: toda ida para "/" (depois do
+   * login, no menu, na guarda de RBAC) levava junto o access token, que vive só
+   * na memória. No computador a renovação pelo cookie disfarçava; no iPhone o
+   * cookie é de terceiros, não chega, e a pessoa voltava para o login. Valer
+   * também em desenvolvimento é proposital: a URL é a mesma da publicação.
+   */
+  trailingSlash: true,
   images: {
     unoptimized: true,
   },

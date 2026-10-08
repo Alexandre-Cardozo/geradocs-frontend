@@ -106,6 +106,18 @@ jobs:
       - name: Jornada de ponta a ponta
         run: npm run e2e
 
+      # A mesma jornada contra o export estático servido como o GitHub Pages o
+      # serve, sob o prefixo do repositório. O `next dev` não reproduz a
+      # publicação: o login que recarregava a página no celular (08/10/2026)
+      # passava verde no passo acima e só falhava no Pages.
+      - name: Jornada no site publicado
+        env:
+          NEXT_PUBLIC_BASE_PATH: /geradocs-frontend
+          E2E_PUBLICADO: "1"
+        run: |
+          npm run build
+          npm run e2e
+
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
