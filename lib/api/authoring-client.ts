@@ -27,6 +27,7 @@ const tipos: Record<TipoDocumento, string> = {
   Mapa: "MAPA",
   TR: "TR",
   Edital: "EDITAL",
+  Aviso: "AVISO",
   Contrato: "CONTRATO",
 };
 

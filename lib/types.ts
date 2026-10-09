@@ -286,7 +286,7 @@ export interface EventoDoProcesso {
  * O DFD é insumo (anexo + verificação) e o PCA é contexto do órgão — nenhum dos
  * dois é gerado aqui. Metadados de cada tipo: `lib/documentos/catalogo.ts`.
  */
-export type TipoDocumento = "Cotação" | "ETP" | "Mapa" | "TR" | "Edital" | "Contrato"
+export type TipoDocumento = "Cotação" | "ETP" | "Mapa" | "TR" | "Edital" | "Aviso" | "Contrato"
 
 /** Um arquivo que o servidor imprimiu, com o que ele mediu. */
 export interface ArquivoDoDocumento {

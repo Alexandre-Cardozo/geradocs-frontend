@@ -53,7 +53,7 @@
       "AnnexVersionResponse" : {
         "properties" : {
           "documentType" : {
-            "enum" : [ "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+            "enum" : [ "AVISO", "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
             "type" : "string"
           },
           "version" : {
@@ -93,7 +93,7 @@
       "ArchivedDocumentResponse" : {
         "properties" : {
           "documentType" : {
-            "enum" : [ "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+            "enum" : [ "AVISO", "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
             "type" : "string"
           },
           "documentVersion" : {
@@ -489,7 +489,7 @@
           },
           "documents" : {
             "items" : {
-              "enum" : [ "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+              "enum" : [ "AVISO", "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
               "type" : "string"
             },
             "type" : "array",
@@ -859,7 +859,7 @@
             "type" : "integer"
           },
           "documentType" : {
-            "enum" : [ "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+            "enum" : [ "AVISO", "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
             "type" : "string"
           },
           "finalized" : {
@@ -1638,7 +1638,7 @@
           },
           "documents" : {
             "items" : {
-              "enum" : [ "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+              "enum" : [ "AVISO", "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
               "type" : "string"
             },
             "type" : "array",
@@ -2073,7 +2073,7 @@
           },
           "documents" : {
             "items" : {
-              "enum" : [ "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+              "enum" : [ "AVISO", "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
               "type" : "string"
             },
             "type" : "array",
@@ -2555,7 +2555,7 @@
           "name" : "documentType",
           "required" : true,
           "schema" : {
-            "enum" : [ "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+            "enum" : [ "AVISO", "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
             "type" : "string"
           }
         } ],
@@ -2585,7 +2585,7 @@
           "name" : "documentType",
           "required" : true,
           "schema" : {
-            "enum" : [ "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+            "enum" : [ "AVISO", "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
             "type" : "string"
           }
         } ],
@@ -4325,7 +4325,7 @@
           "name" : "documentType",
           "required" : true,
           "schema" : {
-            "enum" : [ "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+            "enum" : [ "AVISO", "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
             "type" : "string"
           }
         }, {
@@ -4360,7 +4360,7 @@
           "name" : "documentType",
           "required" : true,
           "schema" : {
-            "enum" : [ "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+            "enum" : [ "AVISO", "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
             "type" : "string"
           }
         }, {
@@ -4404,7 +4404,7 @@
           "name" : "documentType",
           "required" : true,
           "schema" : {
-            "enum" : [ "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+            "enum" : [ "AVISO", "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
             "type" : "string"
           }
         }, {
@@ -4440,7 +4440,7 @@
           "name" : "documentType",
           "required" : true,
           "schema" : {
-            "enum" : [ "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+            "enum" : [ "AVISO", "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
             "type" : "string"
           }
         }, {
@@ -4485,7 +4485,7 @@
           "name" : "documentType",
           "required" : true,
           "schema" : {
-            "enum" : [ "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+            "enum" : [ "AVISO", "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
             "type" : "string"
           }
         }, {
@@ -4529,7 +4529,7 @@
           "name" : "documentType",
           "required" : true,
           "schema" : {
-            "enum" : [ "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+            "enum" : [ "AVISO", "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
             "type" : "string"
           }
         }, {
@@ -4574,7 +4574,7 @@
           "name" : "documentType",
           "required" : true,
           "schema" : {
-            "enum" : [ "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+            "enum" : [ "AVISO", "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
             "type" : "string"
           }
         }, {
@@ -4619,7 +4619,7 @@
           "name" : "documentType",
           "required" : true,
           "schema" : {
-            "enum" : [ "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+            "enum" : [ "AVISO", "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
             "type" : "string"
           }
         }, {
@@ -4659,7 +4659,7 @@
           "name" : "documentType",
           "required" : true,
           "schema" : {
-            "enum" : [ "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+            "enum" : [ "AVISO", "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
             "type" : "string"
           }
         }, {
@@ -4711,7 +4711,7 @@
           "name" : "documentType",
           "required" : true,
           "schema" : {
-            "enum" : [ "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+            "enum" : [ "AVISO", "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
             "type" : "string"
           }
         }, {
@@ -4762,7 +4762,7 @@
           "name" : "documentType",
           "required" : true,
           "schema" : {
-            "enum" : [ "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+            "enum" : [ "AVISO", "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
             "type" : "string"
           }
         }, {
@@ -4800,7 +4800,7 @@
           "name" : "documentType",
           "required" : true,
           "schema" : {
-            "enum" : [ "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+            "enum" : [ "AVISO", "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
             "type" : "string"
           }
         }, {

@@ -41,13 +41,14 @@ Ordem declarada em `CATALOGO[tipo].ordem`. O hub do processo numera e ordena os 
 | 3 | **Mapa de Riscos** | Art. 18, X | Concomitante ao ETP; sua matriz de alocação (Art. 22) alimenta a cláusula correspondente do contrato |
 | 4 | **TR** | Art. 6º, XXIII | Fundamenta-se no ETP (alínea "b") |
 | 5 | **Edital** | Art. 25 | Tem o TR entre os seus elementos (Art. 25, § 3º) |
-| 5.1 | **Contrato** (minuta) | Art. 89 a 95; cláusulas do Art. 92 | Consta obrigatoriamente como anexo do edital (Art. 18, VI), vinculado a ele e à proposta (Art. 92, II) |
+| 5.1 | **Contrato** (minuta) | Art. 89 a 95; cláusulas do Art. 92 | Consta obrigatoriamente como anexo do edital (Art. 18, VI), vinculado a ele e à proposta (Art. 92, II). Sem Edital no processo, vem por último, solta |
+| 6 | **Aviso de Contratação Direta** | Art. 75, § 3º | Só na dispensa por valor; faz o papel de chamamento que o edital faz na licitação, e se fundamenta no TR |
 
 ### Dependências
 
 Declaradas em `CATALOGO[tipo].requer` e aplicadas por `pendencias()`:
 
-- **TR requer ETP** · **Edital requer TR** · **Contrato requer TR**
+- **TR requer ETP** · **Edital requer TR** · **Aviso requer TR** · **Contrato requer TR**
 - Cotação e Mapa não travam nada — são concomitantes ao planejamento.
 
 Uma dependência **só bloqueia se o processo de fato contiver aquele documento**. No Leilão, por exemplo, o Edital é obrigatório e não há TR (a avaliação do bem faz esse papel); o Edital não pode ficar esperando um documento que o processo nunca terá.
@@ -64,7 +65,7 @@ A **minuta de contrato** consta obrigatoriamente como anexo do edital (Art. 18, 
 - **O TR também é anexo do edital**, mas mantém o próprio lugar na ordem: é elaborado antes e fundamenta o Edital. Colocado sob ele, esconderia a sequência do fluxo.
 - **Sem Edital no processo, a minuta fica solta.** É o caso da Dispensa e da Inexigibilidade, em que não há edital de que ela seja anexo (Art. 72).
 
-O agrupamento é de apresentação. A composição do arquivo do Edital com os anexos ao final ainda não existe: hoje cada documento é gerado em arquivo próprio.
+**O arquivo do Edital leva os anexos ao final**, cada um em folha nova (ADR-040 do back-end): o TR e a minuta que o processo contém e já foram gerados, numerados em romanos na ordem do fluxo. O anexo ainda não gerado fica de fora sem travar a geração, e a etapa final do Edital avisa antes do clique (`anexosDoArquivo()` e `AnexosDoArquivo`). O TR e a minuta continuam saindo também em arquivo próprio.
 
 ## Matriz modalidade × documentos
 
@@ -75,11 +76,16 @@ Declarada em `REGRA_MODALIDADE`. O wizard só oferece os tipos cabíveis à moda
 | Pregão Eletrônico · Concorrência · Diálogo Competitivo · Credenciamento | ETP, TR, Edital | Contrato | Cotação, Mapa, Contrato |
 | Concurso | ETP, Edital | — | Cotação, Mapa, TR, Contrato |
 | Leilão | Edital | — | Cotação, Mapa, ETP, TR, Contrato |
-| **Dispensa Art. 75 · Inexigibilidade** | TR | — | ETP, Cotação, Mapa, Contrato — **sem Edital** |
+| **Dispensa Art. 75** | TR | Aviso¹ | ETP, Cotação, Mapa, Aviso¹, Contrato — **sem Edital** |
+| **Inexigibilidade** | TR | — | ETP, Cotação, Mapa, Contrato — **sem Edital** |
+
+¹ Só na dispensa por valor (Art. 75, I e II), declarada no fundamento da dispensa.
 
 **A minuta de contrato é opcional, mas recomendada nas licitações em que o contrato é a regra.** É opcional porque o instrumento de contrato pode ser substituído por nota de empenho nas compras com entrega imediata e integral (Art. 95, II). Quando existe, porém, ela constará obrigatoriamente como anexo do edital (Art. 18, VI). Por isso vem marcada no Pregão, na Concorrência, no Diálogo Competitivo e no Credenciamento. No Leilão e no Concurso vem desmarcada: a alienação se resolve na arrematação, e o concurso, no prêmio e na cessão dos direitos. Na contratação direta também vem desmarcada, porque na dispensa por valor o contrato pode ser substituído por nota de empenho (Art. 95, I).
 
 **Contratação direta não gera edital de licitação.** O Art. 72 instrui o processo com DFD, ETP *quando for o caso*, TR, estimativa de despesa, parecer jurídico e autorização — por isso, nessas modalidades, o ETP é opcional (Art. 18, § 2º c/c Art. 72, I) e o Edital não é oferecido. No Credenciamento (Art. 79), o "Edital" é o de chamamento público.
+
+**Na dispensa por valor, o chamamento é o Aviso de Contratação Direta.** As contratações dos incisos I e II do Art. 75 "serão preferencialmente precedidas de divulgação de aviso em sítio eletrônico oficial, pelo prazo mínimo de 3 (três) dias úteis" (Art. 75, § 3º). Por isso `documentosDaModalidade()` só oferece o Aviso quando o processo declara um desses incisos, e ele vem marcado — "preferencialmente" é recomendação, não obrigação, e por isso continua opcional. Sem o inciso declarado, o wizard explica como incluí-lo; declarado depois, o Aviso passa a aparecer em "Adicionar documento" no hub.
 
 ## Seções obrigatórias e dispensáveis
 
@@ -94,6 +100,7 @@ Isso reflete o **Art. 18, § 2º**: no ETP, apenas os incisos **I, IV, VI, VIII 
 | Mapa de Riscos | 6 | 5 |
 | TR | 10 (alíneas "a" a "j" do Art. 6º, XXIII) | 10 |
 | Edital | 14 | 13 |
+| Aviso de Contratação Direta | 8 | 8 |
 | Contrato | 19 (cláusulas do Art. 92) | 16 |
 
 O par `fundamentoLegal` + `hint` de cada seção é o que orienta o servidor na tela e, no backend, o que instruirá o modelo de IA a redigir a seção.

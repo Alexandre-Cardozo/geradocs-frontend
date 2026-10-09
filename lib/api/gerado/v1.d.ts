@@ -1048,7 +1048,7 @@ export interface components {
         };
         AnnexVersionResponse: {
             /** @enum {string} */
-            documentType: "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
+            documentType: "AVISO" | "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
             /** Format: int32 */
             version: number;
         };
@@ -1066,7 +1066,7 @@ export interface components {
         };
         ArchivedDocumentResponse: {
             /** @enum {string} */
-            documentType: "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
+            documentType: "AVISO" | "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
             /** Format: int32 */
             documentVersion: number;
             files: components["schemas"]["GeneratedFileResponse"][];
@@ -1200,7 +1200,7 @@ export interface components {
             departmentId: string;
             /** @enum {string} */
             dispensationGround?: "OTHER" | "VALUE_ENGINEERING" | "VALUE_GENERAL";
-            documents?: ("CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR")[];
+            documents?: ("AVISO" | "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR")[];
             estimatedValue: number;
             legalBasis?: string;
             /** @enum {string} */
@@ -1321,7 +1321,7 @@ export interface components {
             /** Format: int32 */
             currentVersion: number;
             /** @enum {string} */
-            documentType: "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
+            documentType: "AVISO" | "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
             finalized: boolean;
             /** Format: uuid */
             id: string;
@@ -1610,7 +1610,7 @@ export interface components {
             departmentName?: string;
             /** @enum {string} */
             dispensationGround?: "OTHER" | "VALUE_ENGINEERING" | "VALUE_GENERAL";
-            documents: ("CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR")[];
+            documents: ("AVISO" | "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR")[];
             estimatedValue?: number;
             /** Format: uuid */
             id: string;
@@ -1751,7 +1751,7 @@ export interface components {
             demandObject?: string;
             /** @enum {string} */
             dispensationGround?: "OTHER" | "VALUE_ENGINEERING" | "VALUE_GENERAL";
-            documents?: ("CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR")[];
+            documents?: ("AVISO" | "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR")[];
             estimatedValue: number;
             legalBasis?: string;
             /** @enum {string} */
@@ -2038,7 +2038,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                documentType: "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
+                documentType: "AVISO" | "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
             };
             cookie?: never;
         };
@@ -2060,7 +2060,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                documentType: "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
+                documentType: "AVISO" | "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
             };
             cookie?: never;
         };
@@ -3319,7 +3319,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                documentType: "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
+                documentType: "AVISO" | "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
                 processId: string;
             };
             cookie?: never;
@@ -3342,7 +3342,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                documentType: "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
+                documentType: "AVISO" | "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
                 processId: string;
             };
             cookie?: never;
@@ -3369,7 +3369,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                documentType: "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
+                documentType: "AVISO" | "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
                 processId: string;
             };
             cookie?: never;
@@ -3392,7 +3392,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                documentType: "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
+                documentType: "AVISO" | "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
                 processId: string;
             };
             cookie?: never;
@@ -3419,7 +3419,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                documentType: "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
+                documentType: "AVISO" | "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
                 fileId: string;
                 processId: string;
             };
@@ -3443,7 +3443,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                documentType: "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
+                documentType: "AVISO" | "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
                 processId: string;
             };
             cookie?: never;
@@ -3470,7 +3470,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                documentType: "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
+                documentType: "AVISO" | "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
                 processId: string;
             };
             cookie?: never;
@@ -3497,7 +3497,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                documentType: "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
+                documentType: "AVISO" | "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
                 processId: string;
                 sectionCode: string;
             };
@@ -3525,7 +3525,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                documentType: "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
+                documentType: "AVISO" | "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
                 processId: string;
                 sectionCode: string;
             };
@@ -3549,7 +3549,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                documentType: "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
+                documentType: "AVISO" | "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
                 processId: string;
                 sectionCode: string;
             };
@@ -3577,7 +3577,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                documentType: "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
+                documentType: "AVISO" | "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
                 processId: string;
             };
             cookie?: never;
@@ -3603,7 +3603,7 @@ export interface operations {
             };
             header?: never;
             path: {
-                documentType: "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
+                documentType: "AVISO" | "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
                 processId: string;
             };
             cookie?: never;

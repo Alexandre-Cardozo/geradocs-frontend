@@ -8,7 +8,7 @@
  */
 
 import { secoesPorTipoBase } from "@/lib/documentos/secoes"
-import type { Modalidade, TipoDocumento } from "@/lib/types"
+import type { FundamentoDaDispensa, Modalidade, TipoDocumento } from "@/lib/types"
 
 export interface MetaDocumento {
   tipo: TipoDocumento
@@ -39,8 +39,9 @@ export interface MetaDocumento {
  * Ordem canônica: a Cotação embasa a estimativa de valor do ETP (Art. 18, § 1º,
  * VI); o Mapa de Riscos é concomitante ao ETP; o TR se fundamenta no ETP
  * (Art. 6º, XXIII, 'b'); o Edital tem o TR entre os seus elementos (Art. 25,
- * § 3º); e a minuta de contrato consta obrigatoriamente como anexo do edital
- * (Art. 18, VI), vinculada a ele (Art. 92, II).
+ * § 3º); na dispensa por valor, o Aviso de Contratação Direta faz o papel de
+ * chamamento (Art. 75, § 3º); e a minuta de contrato consta obrigatoriamente
+ * como anexo do edital (Art. 18, VI), vinculada a ele (Art. 92, II).
  */
 export const CATALOGO: Record<TipoDocumento, MetaDocumento> = {
   "Cotação": {
@@ -104,12 +105,26 @@ export const CATALOGO: Record<TipoDocumento, MetaDocumento> = {
     formato: "DOCX + PDF",
     tamanhoKB: 424,
   },
+  Aviso: {
+    tipo: "Aviso",
+    slug: "aviso",
+    titulo: "Aviso de Contratação Direta",
+    descricao: "Divulga a dispensa por valor e busca propostas adicionais por no mínimo 3 dias úteis",
+    ordem: 6,
+    fundamento: "Art. 75, § 3º, Lei 14.133/21",
+    // As cores do Edital: o aviso faz na dispensa o papel que o edital faz na
+    // licitação, e os dois nunca aparecem no mesmo processo.
+    chip: "bg-doc-edital-bg text-doc-edital",
+    requer: ["TR"],
+    formato: "DOCX + PDF",
+    tamanhoKB: 180,
+  },
   Contrato: {
     tipo: "Contrato",
     slug: "contrato",
     titulo: "Minuta de Contrato",
     descricao: "Reúne as cláusulas necessárias e integra os anexos do edital",
-    ordem: 6,
+    ordem: 7,
     fundamento: "Art. 92, Lei 14.133/21",
     chip: "bg-doc-contrato-bg text-doc-contrato",
     requer: ["TR"],
@@ -140,6 +155,11 @@ export const ORDEM_FLUXO: TipoDocumento[] = (Object.values(CATALOGO) as MetaDocu
  * marcada nas licitações em que o contrato é a regra. No Leilão e no Concurso
  * fica desmarcada: a alienação se resolve na arrematação, e o concurso, no
  * prêmio e na cessão dos direitos.
+ *
+ * O Aviso de Contratação Direta é da dispensa por valor (Art. 75, I e II): é
+ * dela que o § 3º fala, e por isso `documentosDaModalidade` só o oferece quando
+ * o processo declara um desses incisos. Vem marcado porque a lei pede que a
+ * contratação seja "preferencialmente" precedida dele.
  */
 export const REGRA_MODALIDADE: Record<
   Modalidade,
@@ -151,14 +171,30 @@ export const REGRA_MODALIDADE: Record<
   "Credenciamento": { obrigatorios: ["ETP", "TR", "Edital"], opcionais: ["Cotação", "Mapa", "Contrato"], recomendados: ["Contrato"] },
   "Concurso": { obrigatorios: ["ETP", "Edital"], opcionais: ["Cotação", "Mapa", "TR", "Contrato"], recomendados: [] },
   "Leilão": { obrigatorios: ["Edital"], opcionais: ["Cotação", "Mapa", "ETP", "TR", "Contrato"], recomendados: [] },
-  "Dispensa Art. 75": { obrigatorios: ["TR"], opcionais: ["ETP", "Cotação", "Mapa", "Contrato"], recomendados: [] },
+  "Dispensa Art. 75": { obrigatorios: ["TR"], opcionais: ["ETP", "Cotação", "Mapa", "Aviso", "Contrato"], recomendados: ["Aviso"] },
   "Inexigibilidade": { obrigatorios: ["TR"], opcionais: ["ETP", "Cotação", "Mapa", "Contrato"], recomendados: [] },
 }
 
-/** Tipos cabíveis à modalidade (obrigatórios + opcionais), na ordem do fluxo. */
-export function documentosDaModalidade(modalidade: Modalidade): TipoDocumento[] {
+/** O Art. 75, § 3º fala das contratações dos incisos I e II: a dispensa por valor. */
+export function ehDispensaPorValor(fundamento: FundamentoDaDispensa | undefined): boolean {
+  return fundamento === "VALUE_ENGINEERING" || fundamento === "VALUE_GENERAL"
+}
+
+/**
+ * Tipos cabíveis à modalidade (obrigatórios + opcionais), na ordem do fluxo.
+ *
+ * @param fundamento o inciso declarado na dispensa; sem ele, o Aviso de
+ *                   Contratação Direta não é oferecido, porque só a dispensa
+ *                   por valor o prevê (Art. 75, § 3º)
+ */
+export function documentosDaModalidade(
+  modalidade: Modalidade,
+  fundamento?: FundamentoDaDispensa
+): TipoDocumento[] {
   const regra = REGRA_MODALIDADE[modalidade]
-  return ordenar([...regra.obrigatorios, ...regra.opcionais])
+  return ordenar([...regra.obrigatorios, ...regra.opcionais]).filter(
+    (tipo) => tipo !== "Aviso" || ehDispensaPorValor(fundamento)
+  )
 }
 
 export function ehObrigatorio(modalidade: Modalidade, tipo: TipoDocumento): boolean {

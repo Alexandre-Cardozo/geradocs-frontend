@@ -163,3 +163,47 @@ describe("novo processo: a minuta de contrato como anexo do edital", () => {
     expect(minuta).not.toHaveTextContent("Anexo do Edital")
   })
 })
+
+/**
+ * Na dispensa por valor, a contratação é "preferencialmente precedida" de aviso
+ * com prazo mínimo de 3 dias úteis (Art. 75, § 3º). Só os incisos I e II.
+ */
+describe("novo processo: o aviso de contratação direta", () => {
+  async function irParaDocumentosDaDispensa(inciso: RegExp | null) {
+    comSecretarias([{ id: "02753761-6201-45f7-a9d9-2a1abf6d4f3c", name: "Secretaria de Meio Ambiente" }])
+    renderizar(<NovoProcesso />)
+    await userEvent.click(await screen.findByRole("button", { name: /Dispensa de Licitação/ }))
+    if (inciso) {
+      await userEvent.click(screen.getByRole("button", { name: "Fundamento da Dispensa" }))
+      await userEvent.click(await screen.findByRole("option", { name: inciso }))
+    }
+    await userEvent.click(screen.getByRole("button", { name: /Continuar/ }))
+    await userEvent.click(screen.getByRole("button", { name: /Secretaria requisitante/ }))
+    await userEvent.click(await screen.findByRole("option", { name: "Secretaria de Meio Ambiente" }))
+    await userEvent.type(screen.getByPlaceholderText(/Modernização dos laboratórios/), "Aquisição de toner")
+    await userEvent.type(screen.getByPlaceholderText(/Aquisição de 150 microcomputadores/), "Toner")
+    await userEvent.click(screen.getByRole("button", { name: /Continuar/ }))
+  }
+
+  it("na dispensa por valor, vem oferecido e já marcado", async () => {
+    await irParaDocumentosDaDispensa(/Art\. 75, II/)
+
+    const aviso = await screen.findByRole("button", { name: /Aviso de Contratação Direta/ })
+    expect(aviso).toHaveAttribute("aria-pressed", "true")
+    expect(aviso).toHaveTextContent("Art. 75, § 3º, Lei 14.133/21")
+  })
+
+  it("em outra hipótese do Art. 75, não é oferecido", async () => {
+    await irParaDocumentosDaDispensa(/Outra hipótese/)
+
+    await screen.findByRole("button", { name: /Termo de Referência/ })
+    expect(screen.queryByRole("button", { name: /Aviso de Contratação Direta/ })).not.toBeInTheDocument()
+  })
+
+  it("sem o inciso declarado, explica como incluí-lo", async () => {
+    await irParaDocumentosDaDispensa(null)
+
+    expect(await screen.findByText(/declare o inciso na etapa de Modalidade/)).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /Aviso de Contratação Direta/ })).not.toBeInTheDocument()
+  })
+})

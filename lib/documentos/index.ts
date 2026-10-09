@@ -5,6 +5,7 @@ export {
   agruparAnexos,
   anexosDoArquivo,
   documentosDaModalidade,
+  ehDispensaPorValor,
   ehObrigatorio,
   ordenar,
   pendencias,

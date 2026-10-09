@@ -7,6 +7,7 @@ import {
   agruparAnexos,
   anexosDoArquivo,
   documentosDaModalidade,
+  ehDispensaPorValor,
   ehObrigatorio,
   ordenar,
   pendencias,
@@ -20,7 +21,7 @@ describe("ordem canônica", () => {
     // Cotação embasa a estimativa do ETP (Art. 18, § 1º, VI); o TR se funda no
     // ETP (Art. 6º, XXIII, 'b'); o Edital tem o TR entre os seus elementos
     // (Art. 25, § 3º); a minuta de contrato é anexo do edital (Art. 18, VI).
-    expect(ORDEM_FLUXO).toEqual(["Cotação", "ETP", "Mapa", "TR", "Edital", "Contrato"])
+    expect(ORDEM_FLUXO).toEqual(["Cotação", "ETP", "Mapa", "TR", "Edital", "Aviso", "Contrato"])
   })
 
   it("reordena qualquer lista pela ordem do fluxo", () => {
@@ -61,7 +62,7 @@ describe("matriz modalidade × documentos", () => {
 
   it("deixa a minuta desmarcada no Leilão, no Concurso e na contratação direta", () => {
     for (const modalidade of ["Leilão", "Concurso", "Dispensa Art. 75", "Inexigibilidade"] as Modalidade[]) {
-      expect(REGRA_MODALIDADE[modalidade].recomendados, modalidade).toEqual([])
+      expect(REGRA_MODALIDADE[modalidade].recomendados, modalidade).not.toContain("Contrato")
     }
   })
 
@@ -76,6 +77,40 @@ describe("matriz modalidade × documentos", () => {
   it("devolve os cabíveis já na ordem do fluxo", () => {
     const cabiveis = documentosDaModalidade("Pregão Eletrônico")
     expect(cabiveis).toEqual(ordenar(cabiveis))
+  })
+})
+
+describe("aviso de contratação direta", () => {
+  it("só a dispensa por valor o oferece", () => {
+    // Art. 75, § 3º: o aviso é das contratações dos incisos I e II.
+    expect(documentosDaModalidade("Dispensa Art. 75", "VALUE_GENERAL")).toContain("Aviso")
+    expect(documentosDaModalidade("Dispensa Art. 75", "VALUE_ENGINEERING")).toContain("Aviso")
+    expect(documentosDaModalidade("Dispensa Art. 75", "OTHER")).not.toContain("Aviso")
+    // Sem inciso declarado não há como saber se é dispensa por valor.
+    expect(documentosDaModalidade("Dispensa Art. 75")).not.toContain("Aviso")
+  })
+
+  it("não existe fora da dispensa, qualquer que seja o fundamento", () => {
+    expect(documentosDaModalidade("Pregão Eletrônico", "VALUE_GENERAL")).not.toContain("Aviso")
+    expect(documentosDaModalidade("Inexigibilidade", "VALUE_GENERAL")).not.toContain("Aviso")
+  })
+
+  it("vem marcado na dispensa, porque a lei o quer 'preferencialmente'", () => {
+    expect(REGRA_MODALIDADE["Dispensa Art. 75"].recomendados).toEqual(["Aviso"])
+    expect(ehObrigatorio("Dispensa Art. 75", "Aviso")).toBe(false)
+  })
+
+  it("reconhece a dispensa por valor pelo inciso", () => {
+    expect(ehDispensaPorValor("VALUE_GENERAL")).toBe(true)
+    expect(ehDispensaPorValor("VALUE_ENGINEERING")).toBe(true)
+    expect(ehDispensaPorValor("OTHER")).toBe(false)
+    expect(ehDispensaPorValor(undefined)).toBe(false)
+  })
+
+  it("fica depois do TR, em que se fundamenta, e não é anexo de nada", () => {
+    expect(pendencias("Aviso", ["TR", "Aviso"], [])).toEqual(["TR"])
+    expect(CATALOGO.Aviso.anexoDe).toBeUndefined()
+    expect(agruparAnexos(["TR", "Aviso", "Contrato"]).map((g) => g.tipo)).toEqual(["TR", "Aviso", "Contrato"])
   })
 })
 
@@ -199,6 +234,7 @@ describe("catálogo como fonte única", () => {
       Mapa: 6,
       TR: 10,
       Edital: 14,
+      Aviso: 8,
       Contrato: 19,
     })
   })

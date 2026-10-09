@@ -19,6 +19,7 @@ const obrigatoriasEsperadas: Record<TipoDocumento, number> = {
   Mapa: 5,
   TR: 10,
   Edital: 13,
+  Aviso: 8,
   Contrato: 16,
 }
 
@@ -28,6 +29,7 @@ const totalEsperado: Record<TipoDocumento, number> = {
   Mapa: 6,
   TR: 10,
   Edital: 14,
+  Aviso: 8,
   Contrato: 19,
 }
 

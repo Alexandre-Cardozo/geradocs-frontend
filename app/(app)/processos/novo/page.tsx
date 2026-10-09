@@ -40,6 +40,7 @@ import {
   CATALOGO,
   REGRA_MODALIDADE,
   agruparAnexos,
+  documentosDaModalidade,
   ehObrigatorio,
   ordenar,
   totalSecoes,
@@ -162,6 +163,12 @@ const CLASSES_SELECAO: Record<
     chip: "border-doc-edital bg-doc-edital-bg text-doc-edital",
     check: "border-doc-edital bg-doc-edital",
   },
+  // As cores do Edital: o aviso faz na dispensa o papel do edital na licitação.
+  Aviso: {
+    card: "border-doc-edital bg-doc-edital-bg",
+    chip: "border-doc-edital bg-doc-edital-bg text-doc-edital",
+    check: "border-doc-edital bg-doc-edital",
+  },
   Contrato: {
     card: "border-doc-contrato bg-doc-contrato-bg",
     chip: "border-doc-contrato bg-doc-contrato-bg text-doc-contrato",
@@ -226,13 +233,20 @@ export default function NovoProcesso() {
   // edital de licitação e o ETP nela é dispensável (Art. 18, § 2º c/c Art. 72, I).
   const modalidadeSel = modalidades.find((m) => m.key === modalidade);
   const regra = modalidadeSel ? REGRA_MODALIDADE[modalidadeSel.valor] : null;
-  const tiposCabiveis = regra
-    ? ordenar([...regra.obrigatorios, ...regra.opcionais])
+  // O Aviso de Contratação Direta só cabe na dispensa por valor (Art. 75,
+  // § 3º): depende do inciso declarado acima, e some se ele mudar.
+  const tiposCabiveis = modalidadeSel
+    ? documentosDaModalidade(
+        modalidadeSel.valor,
+        fundamentoDaDispensa === "" ? undefined : fundamentoDaDispensa,
+      )
     : [];
   const documentosEscolhidos = regra
     ? ordenar([
         ...regra.obrigatorios,
-        ...opcionaisSelecionados.filter((t) => regra.opcionais.includes(t)),
+        ...opcionaisSelecionados.filter(
+          (t) => regra.opcionais.includes(t) && tiposCabiveis.includes(t),
+        ),
       ])
     : [];
 
@@ -718,6 +732,15 @@ export default function NovoProcesso() {
                     contratação direta e não gera edital de licitação — o
                     processo é instruído na forma do Art. 72 da Lei 14.133/21,
                     em que o ETP é dispensável (Art. 18, § 2º).
+                    {modalidadeSel.valor === "Dispensa Art. 75" &&
+                      !tiposCabiveis.includes("Aviso") && (
+                        <>
+                          {" "}
+                          O Aviso de Contratação Direta é oferecido na dispensa
+                          por valor (Art. 75, I e II): declare o inciso na etapa
+                          de Modalidade para incluí-lo.
+                        </>
+                      )}
                   </InfoBanner>
                 )}
               </div>

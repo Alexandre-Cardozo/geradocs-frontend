@@ -321,6 +321,58 @@ const secoesEdital: SecaoDocumento[] = secoes([
   },
 ])
 
+/**
+ * Aviso de Contratação Direta — dispensa por valor (Art. 75, I e II).
+ *
+ * O § 3º pede que a contratação seja precedida de aviso em sítio eletrônico
+ * oficial, por no mínimo 3 dias úteis, com a especificação do objeto e a
+ * manifestação de interesse em obter propostas adicionais, selecionando-se a
+ * mais vantajosa. As demais seções trazem o que o Art. 72 exige do processo de
+ * contratação direta e as sanções do Art. 155.
+ */
+const secoesAviso: SecaoDocumento[] = secoes([
+  {
+    titulo: "Identificação da Contratação Direta",
+    fundamentoLegal: "Art. 75, § 3º, Lei 14.133/21",
+    hint: "Identifique o órgão, o número do processo, o inciso do Art. 75 que fundamenta a dispensa por valor e o sítio eletrônico oficial em que o aviso é divulgado.",
+  },
+  {
+    titulo: "Do Objeto",
+    fundamentoLegal: "Art. 75, § 3º, Lei 14.133/21",
+    hint: "Especifique o objeto pretendido de forma clara e suficiente, com quantidades e unidades de medida, remetendo ao Termo de Referência para o detalhamento.",
+  },
+  {
+    titulo: "Do Valor Estimado",
+    fundamentoLegal: "Art. 23 e Art. 24, Lei 14.133/21",
+    hint: "Informe o valor estimado da contratação ou, se a Administração optar pelo sigilo do orçamento, registre o sigilo e a justificativa.",
+  },
+  {
+    titulo: "Do Prazo e da Forma de Envio das Propostas",
+    fundamentoLegal: "Art. 75, § 3º, Lei 14.133/21",
+    hint: "Fixe o período de recebimento das propostas adicionais, de no mínimo 3 (três) dias úteis de divulgação, e a forma de envio, com data, horário e o sistema ou endereço eletrônico.",
+  },
+  {
+    titulo: "Do Critério de Seleção da Proposta",
+    fundamentoLegal: "Art. 75, § 3º, Lei 14.133/21",
+    hint: "Defina o critério pelo qual será selecionada a proposta mais vantajosa e as regras de desempate.",
+  },
+  {
+    titulo: "Da Habilitação",
+    fundamentoLegal: "Art. 72, V, Lei 14.133/21",
+    hint: "Relacione os documentos que comprovam que o fornecedor preenche os requisitos de habilitação e a qualificação mínima necessária, sem exigências que restrinjam a participação.",
+  },
+  {
+    titulo: "Das Sanções Administrativas",
+    fundamentoLegal: "Art. 155 e Art. 156, Lei 14.133/21",
+    hint: "Enumere as infrações e as sanções aplicáveis ao fornecedor que não mantiver a proposta ou não celebrar a contratação, assegurados o contraditório e a ampla defesa.",
+  },
+  {
+    titulo: "Das Disposições Finais",
+    fundamentoLegal: "Art. 72, parágrafo único, Lei 14.133/21",
+    hint: "Registre a divulgação do ato que autoriza a contratação direta em sítio eletrônico oficial e relacione os documentos que acompanham o aviso, como o Termo de Referência e a minuta de contrato, quando houver.",
+  },
+])
+
 /** Minuta de contrato — cláusulas necessárias do Art. 92, Lei 14.133/21. */
 const secoesContrato: SecaoDocumento[] = secoes([
   {
@@ -431,6 +483,7 @@ export const secoesPorTipoBase: Record<TipoDocumento, SecaoDocumento[]> = {
   Mapa: secoesMapa,
   TR: secoesTR,
   Edital: secoesEdital,
+  Aviso: secoesAviso,
   Contrato: secoesContrato,
 }
 

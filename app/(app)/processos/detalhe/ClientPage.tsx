@@ -68,6 +68,7 @@ export default function HubProcesso() {
     Mapa: useSecoes(processoId, "Mapa"),
     TR: useSecoes(processoId, "TR"),
     Edital: useSecoes(processoId, "Edital"),
+    Aviso: useSecoes(processoId, "Aviso"),
     Contrato: useSecoes(processoId, "Contrato"),
   }
 
@@ -192,7 +193,9 @@ export default function HubProcesso() {
 
   // Os documentos que ainda cabem acrescentar — limitados aos cabíveis à
   // modalidade (Dispensa não tem Edital).
-  const tiposDisponiveis = documentosDaModalidade(proc.modalidade).filter((t) => !proc.documentos.includes(t))
+  const tiposDisponiveis = documentosDaModalidade(proc.modalidade, proc.fundamentoDaDispensa).filter(
+    (t) => !proc.documentos.includes(t),
+  )
   const tiposGerados = docsGerados.map((d) => d.tipo)
   const dfdVerificado = parecer.data != null
 
