@@ -4,6 +4,7 @@ import { useState } from "react"
 
 import { Button, InfoBanner, Tag } from "@/components/ui"
 import { IconDownload, IconEye } from "@/components/ui/icons"
+import { AnexosDoArquivo } from "@/components/documentos/anexos-do-arquivo"
 import { EstruturaDoDocumento } from "@/components/documentos/estrutura-do-documento"
 import { PreviaDoDocumento } from "@/components/documentos/previa-do-documento"
 import {
@@ -74,6 +75,7 @@ export function EtapaFinal({
 
       <EstruturaDoDocumento processoId={processoId} tipo={tipo} secoes={secoes} />
       <PreviaDoDocumento blocos={corpoDoDocumento(secoes)} />
+      <AnexosDoArquivo processoId={processoId} tipo={tipo} />
 
       {lacunas.length > 0 && (
         <InfoBanner tone="info">

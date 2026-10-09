@@ -50,6 +50,20 @@
         "required" : [ "available" ],
         "type" : "object"
       },
+      "AnnexVersionResponse" : {
+        "properties" : {
+          "documentType" : {
+            "enum" : [ "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+            "type" : "string"
+          },
+          "version" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "documentType", "version" ],
+        "type" : "object"
+      },
       "ArchiveSummaryResponse" : {
         "properties" : {
           "finishedEtps" : {
@@ -1091,6 +1105,12 @@
       },
       "GenerationJobResponse" : {
         "properties" : {
+          "annexes" : {
+            "items" : {
+              "$ref" : "#/components/schemas/AnnexVersionResponse"
+            },
+            "type" : "array"
+          },
           "attempts" : {
             "format" : "int32",
             "type" : "integer"
@@ -1124,7 +1144,7 @@
             "type" : "boolean"
           }
         },
-        "required" : [ "attempts", "documentVersion", "files", "id", "requestedAt", "succeeded" ],
+        "required" : [ "annexes", "attempts", "documentVersion", "files", "id", "requestedAt", "succeeded" ],
         "type" : "object"
       },
       "IncongruenceView" : {

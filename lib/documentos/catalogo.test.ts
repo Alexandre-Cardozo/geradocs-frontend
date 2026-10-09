@@ -5,6 +5,7 @@ import {
   ORDEM_FLUXO,
   REGRA_MODALIDADE,
   agruparAnexos,
+  anexosDoArquivo,
   documentosDaModalidade,
   ehObrigatorio,
   ordenar,
@@ -126,6 +127,46 @@ describe("anexos do edital", () => {
       { tipo: "Cotação", anexos: [] },
       { tipo: "Edital", anexos: ["Contrato"] },
     ])
+  })
+})
+
+describe("anexos dentro do arquivo do Edital", () => {
+  it("entram o TR e a minuta gerados, numerados na ordem do fluxo", () => {
+    expect(
+      anexosDoArquivo("Edital", ["TR", "Edital", "Contrato"], [
+        { tipo: "Contrato", versao: 2 },
+        { tipo: "TR", versao: 1 },
+      ])
+    ).toEqual({
+      incluidos: [
+        { tipo: "TR", numero: "I", versao: 1 },
+        { tipo: "Contrato", numero: "II", versao: 2 },
+      ],
+      faltando: [],
+    })
+  })
+
+  it("o anexo ainda não gerado fica de fora, e a numeração acompanha o que entrou", () => {
+    expect(anexosDoArquivo("Edital", ["TR", "Edital", "Contrato"], [{ tipo: "Contrato", versao: 1 }])).toEqual({
+      incluidos: [{ tipo: "Contrato", numero: "I", versao: 1 }],
+      faltando: ["TR"],
+    })
+  })
+
+  it("usa a versão mais recente quando o acervo traz mais de uma", () => {
+    const { incluidos } = anexosDoArquivo("Edital", ["Edital", "Contrato"], [
+      { tipo: "Contrato", versao: 1 },
+      { tipo: "Contrato", versao: 3 },
+    ])
+    expect(incluidos.map((a) => a.versao)).toEqual([3])
+  })
+
+  it("ignora o que o processo não contém, e documento sem anexo não tem nada", () => {
+    expect(anexosDoArquivo("Edital", ["Edital"], [{ tipo: "TR", versao: 1 }])).toEqual({
+      incluidos: [],
+      faltando: [],
+    })
+    expect(anexosDoArquivo("ETP", ["ETP", "TR"], [])).toEqual({ incluidos: [], faltando: [] })
   })
 })
 

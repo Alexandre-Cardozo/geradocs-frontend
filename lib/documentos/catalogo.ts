@@ -198,6 +198,56 @@ export function agruparAnexos(tipos: TipoDocumento[]): GrupoDeDocumentos[] {
     .map((tipo) => ({ tipo, anexos: ordenados.filter((t) => sob(t) === tipo) }))
 }
 
+/** Numeração romana dos anexos, como o edital os cita. */
+function romano(n: number): string {
+  const tabela: Array<[number, string]> = [[10, "X"], [9, "IX"], [5, "V"], [4, "IV"], [1, "I"]]
+  let resto = n
+  let texto = ""
+  for (const [valor, simbolo] of tabela) {
+    while (resto >= valor) {
+      texto += simbolo
+      resto -= valor
+    }
+  }
+  return texto
+}
+
+export interface AnexoDoArquivo {
+  tipo: TipoDocumento
+  /** "I", "II" — a numeração com que o anexo sai impresso. */
+  numero: string
+  versao: number
+}
+
+/**
+ * Os anexos que saem dentro do arquivo do documento, e os que vão ficar de fora.
+ *
+ * Espelha a regra do servidor (ADR-040 do back-end): entra o anexo que o
+ * processo contém e que já foi gerado, na ordem do fluxo, com a versão vigente;
+ * a numeração acompanha o que entrou. O que o processo contém e ainda não foi
+ * gerado fica de fora — e a geração não trava, só avisa.
+ *
+ * @param gerados os documentos do processo que já têm versão gerada
+ */
+export function anexosDoArquivo(
+  tipo: TipoDocumento,
+  doProcesso: TipoDocumento[],
+  gerados: Array<{ tipo: TipoDocumento; versao: number }>
+): { incluidos: AnexoDoArquivo[]; faltando: TipoDocumento[] } {
+  const incluidos: AnexoDoArquivo[] = []
+  const faltando: TipoDocumento[] = []
+  const anexos = ORDEM_FLUXO.filter((t) => CATALOGO[t].anexoDe?.tipo === tipo && doProcesso.includes(t))
+  for (const anexo of anexos) {
+    const versoes = gerados.filter((g) => g.tipo === anexo).map((g) => g.versao)
+    if (versoes.length === 0) {
+      faltando.push(anexo)
+    } else {
+      incluidos.push({ tipo: anexo, numero: romano(incluidos.length + 1), versao: Math.max(...versoes) })
+    }
+  }
+  return { incluidos, faltando }
+}
+
 /** Resolve o slug da URL para o tipo. Retorna undefined se o slug não existir. */
 export function porSlug(slug: string): TipoDocumento | undefined {
   return ORDEM_FLUXO.find((tipo) => CATALOGO[tipo].slug === slug)

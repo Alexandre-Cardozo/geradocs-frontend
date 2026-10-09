@@ -1046,6 +1046,12 @@ export interface components {
         AiStatusResponse: {
             available: boolean;
         };
+        AnnexVersionResponse: {
+            /** @enum {string} */
+            documentType: "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
+            /** Format: int32 */
+            version: number;
+        };
         ArchiveSummaryResponse: {
             /** Format: int64 */
             finishedEtps: number;
@@ -1402,6 +1408,7 @@ export interface components {
             text: string;
         };
         GenerationJobResponse: {
+            annexes: components["schemas"]["AnnexVersionResponse"][];
             /** Format: int32 */
             attempts: number;
             /** Format: int32 */
