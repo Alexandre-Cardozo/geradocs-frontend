@@ -115,3 +115,51 @@ describe("novo processo: o número", () => {
     expect(numero.className).not.toMatch(/text-royal/)
   })
 })
+
+/**
+ * A minuta de contrato consta obrigatoriamente como anexo do edital (Art. 18,
+ * VI). Listada como mais um documento solto, ela parecia peça à parte — e vinha
+ * desmarcada até no Pregão, em que o contrato é a regra.
+ */
+describe("novo processo: a minuta de contrato como anexo do edital", () => {
+  async function irParaDocumentos(modalidade: RegExp) {
+    comSecretarias([{ id: "02753761-6201-45f7-a9d9-2a1abf6d4f3c", name: "Secretaria de Meio Ambiente" }])
+    renderizar(<NovoProcesso />)
+    await userEvent.click(await screen.findByRole("button", { name: modalidade }))
+    await userEvent.click(screen.getByRole("button", { name: /Continuar/ }))
+    await userEvent.click(screen.getByRole("button", { name: /Secretaria requisitante/ }))
+    await userEvent.click(await screen.findByRole("option", { name: "Secretaria de Meio Ambiente" }))
+    await userEvent.type(screen.getByPlaceholderText(/Modernização dos laboratórios/), "Aquisição de computadores")
+    await userEvent.type(screen.getByPlaceholderText(/Aquisição de 150 microcomputadores/), "150 desktops")
+    await userEvent.click(screen.getByRole("button", { name: /Continuar/ }))
+  }
+
+  it("no Pregão, vem sob o Edital, já marcada", async () => {
+    await irParaDocumentos(/Pregão Eletrônico/)
+
+    const minuta = await screen.findByRole("button", { name: /Minuta de Contrato/ })
+    expect(minuta).toHaveAttribute("aria-pressed", "true")
+    expect(minuta).toHaveTextContent("Anexo do Edital")
+    expect(minuta).toHaveTextContent("Art. 18, VI, Lei 14.133/21")
+    // Numerada como subitem do Edital, e não como o sexto documento.
+    const edital = screen.getByRole("button", { name: /Edital de Licitação/ })
+    expect(edital).toHaveTextContent("5.")
+    expect(minuta).toHaveTextContent("5.1")
+  })
+
+  it("continua opcional: dá para desmarcar", async () => {
+    await irParaDocumentos(/Pregão Eletrônico/)
+
+    const minuta = await screen.findByRole("button", { name: /Minuta de Contrato/ })
+    await userEvent.click(minuta)
+    expect(minuta).toHaveAttribute("aria-pressed", "false")
+  })
+
+  it("na Dispensa, sem edital, fica solta e desmarcada", async () => {
+    await irParaDocumentos(/Dispensa de Licitação/)
+
+    const minuta = await screen.findByRole("button", { name: /Minuta de Contrato/ })
+    expect(minuta).toHaveAttribute("aria-pressed", "false")
+    expect(minuta).not.toHaveTextContent("Anexo do Edital")
+  })
+})

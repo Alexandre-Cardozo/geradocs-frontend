@@ -39,6 +39,7 @@ import {
 import {
   CATALOGO,
   REGRA_MODALIDADE,
+  agruparAnexos,
   ehObrigatorio,
   ordenar,
   totalSecoes,
@@ -235,16 +236,92 @@ export default function NovoProcesso() {
       ])
     : [];
 
-  /** Trocar a modalidade muda o conjunto cabível — os opcionais voltam ao zero. */
+  /**
+   * Trocar a modalidade muda o conjunto cabível — os opcionais voltam aos
+   * recomendados da nova modalidade (a minuta de contrato, nas licitações).
+   */
   const escolherModalidade = (key: string) => {
     setModalidade(key);
-    setOpcionaisSelecionados([]);
+    const valor = modalidades.find((m) => m.key === key)?.valor;
+    setOpcionaisSelecionados(valor ? REGRA_MODALIDADE[valor].recomendados : []);
   };
 
   const toggleDoc = (tipo: TipoDocumento) => {
     if (!modalidadeSel || ehObrigatorio(modalidadeSel.valor, tipo)) return;
     setOpcionaisSelecionados((prev) =>
       prev.includes(tipo) ? prev.filter((t) => t !== tipo) : [...prev, tipo],
+    );
+  };
+
+  /**
+   * Cartão de seleção de um documento no passo 3.
+   *
+   * @param anexo apresentado sob o principal — ganha a etiqueta e o fundamento
+   *              de anexo
+   */
+  const cartaoDocumento = (tipo: TipoDocumento, numero: string, anexo = false) => {
+    const meta = CATALOGO[tipo];
+    const principal = anexo ? meta.anexoDe : undefined;
+    const classes = CLASSES_SELECAO[tipo];
+    const obrig = modalidadeSel
+      ? ehObrigatorio(modalidadeSel.valor, tipo)
+      : false;
+    const selected = documentosEscolhidos.includes(tipo);
+    return (
+      <button
+        type="button"
+        onClick={() => toggleDoc(tipo)}
+        aria-pressed={selected}
+        className={`flex w-full items-start gap-4 rounded-card px-4.5 py-4 text-left transition-colors ${
+          selected
+            ? `border-2 ${classes.card}`
+            : "border border-border bg-surface"
+        } ${obrig ? "cursor-default" : "cursor-pointer"}`}
+      >
+        <span
+          className={`mt-0.5 flex size-9.5 shrink-0 items-center justify-center rounded-lg border ${
+            selected
+              ? classes.chip
+              : "border-border bg-ice text-text-muted"
+          }`}
+        >
+          <IconFile size={17} />
+        </span>
+        <span className="block flex-1">
+          <span className="flex flex-wrap items-center gap-2">
+            <span className="font-mono text-xs text-text-muted">
+              {numero}
+            </span>
+            <span className="font-display text-md font-bold text-text-1">
+              {meta.titulo}
+            </span>
+            {obrig ? (
+              <Tag tone="success">Obrigatório</Tag>
+            ) : (
+              <Tag tone="info">Opcional</Tag>
+            )}
+            {principal && (
+              <Tag tone="neutral">Anexo do {principal.tipo}</Tag>
+            )}
+          </span>
+          <span className="mt-1 block text-base text-text-3">
+            {meta.descricao}
+          </span>
+          <span className="mt-1.25 block text-xs text-text-muted">
+            {totalSecoes(tipo)} seções · {meta.fundamento}
+            {principal && ` · ${principal.fundamento}`}
+          </span>
+        </span>
+        <span
+          className={`mt-2 flex size-5.5 shrink-0 items-center justify-center rounded-sm border-2 text-surface transition-colors ${
+            selected ? classes.check : "border-border bg-ice"
+          }`}
+        >
+          {selected && (
+            <IconCheck size={11} strokeWidth={3.5} />
+          )}
+        </span>
+      </button>
     );
   };
 
@@ -615,67 +692,24 @@ export default function NovoProcesso() {
                   modalidade já vêm marcados.
                 </p>
                 <div className="flex flex-col gap-2.5">
-                  {tiposCabiveis.map((tipo, i) => {
-                    const meta = CATALOGO[tipo];
-                    const classes = CLASSES_SELECAO[tipo];
-                    const obrig = modalidadeSel
-                      ? ehObrigatorio(modalidadeSel.valor, tipo)
-                      : false;
-                    const selected = documentosEscolhidos.includes(tipo);
-                    return (
-                      <button
-                        key={tipo}
-                        type="button"
-                        onClick={() => toggleDoc(tipo)}
-                        aria-pressed={selected}
-                        className={`flex w-full items-start gap-4 rounded-card px-4.5 py-4 text-left transition-colors ${
-                          selected
-                            ? `border-2 ${classes.card}`
-                            : "border border-border bg-surface"
-                        } ${obrig ? "cursor-default" : "cursor-pointer"}`}
-                      >
-                        <span
-                          className={`mt-0.5 flex size-9.5 shrink-0 items-center justify-center rounded-lg border ${
-                            selected
-                              ? classes.chip
-                              : "border-border bg-ice text-text-muted"
-                          }`}
+                  {agruparAnexos(tiposCabiveis).map((grupo, i) => (
+                    <div key={grupo.tipo} className="flex flex-col gap-2">
+                      {cartaoDocumento(grupo.tipo, `${i + 1}.`)}
+                      {/*
+                        O anexo vem sob o principal, e não como mais um item da
+                        lista: a minuta de contrato é divulgada com o edital
+                        (Art. 18, VI), não à parte dele.
+                      */}
+                      {grupo.anexos.map((anexo, j) => (
+                        <div
+                          key={anexo}
+                          className="ml-4 border-l-2 border-border pl-3 sm:ml-6 sm:pl-4"
                         >
-                          <IconFile size={17} />
-                        </span>
-                        <span className="block flex-1">
-                          <span className="flex flex-wrap items-center gap-2">
-                            <span className="font-mono text-xs text-text-muted">
-                              {i + 1}.
-                            </span>
-                            <span className="font-display text-md font-bold text-text-1">
-                              {meta.titulo}
-                            </span>
-                            {obrig ? (
-                              <Tag tone="success">Obrigatório</Tag>
-                            ) : (
-                              <Tag tone="info">Opcional</Tag>
-                            )}
-                          </span>
-                          <span className="mt-1 block text-base text-text-3">
-                            {meta.descricao}
-                          </span>
-                          <span className="mt-1.25 block text-xs text-text-muted">
-                            {totalSecoes(tipo)} seções · {meta.fundamento}
-                          </span>
-                        </span>
-                        <span
-                          className={`mt-2 flex size-5.5 shrink-0 items-center justify-center rounded-sm border-2 text-surface transition-colors ${
-                            selected ? classes.check : "border-border bg-ice"
-                          }`}
-                        >
-                          {selected && (
-                            <IconCheck size={11} strokeWidth={3.5} />
-                          )}
-                        </span>
-                      </button>
-                    );
-                  })}
+                          {cartaoDocumento(anexo, `${i + 1}.${j + 1}`, true)}
+                        </div>
+                      ))}
+                    </div>
+                  ))}
                 </div>
                 {modalidadeSel && !tiposCabiveis.includes("Edital") && (
                   <InfoBanner tone="info" className="mt-3">

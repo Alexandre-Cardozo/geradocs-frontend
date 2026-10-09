@@ -36,7 +36,7 @@ import { ItensDaDemanda } from "@/components/processos/itens-da-demanda"
 import { TrilhaDoProcesso } from "@/components/processos/trilha-do-processo"
 import { PainelRetificacao } from "@/components/processos/painel-retificacao"
 import { AlertaOrientacao } from "@/components/shared/alerta-orientacao"
-import { CATALOGO, documentosDaModalidade, ordenar, pendencias } from "@/lib/documentos"
+import { CATALOGO, agruparAnexos, documentosDaModalidade, ordenar, pendencias } from "@/lib/documentos"
 import {
   documentosPendentes,
   impactoTrocaModalidade,
@@ -190,12 +190,198 @@ export default function HubProcesso() {
     )
   }
 
-  // Documentos do processo na ordem canônica do fluxo, e os que ainda cabem
-  // acrescentar — limitados aos cabíveis à modalidade (Dispensa não tem Edital).
-  const tiposDoProcesso = ordenar(proc.documentos)
+  // Os documentos que ainda cabem acrescentar — limitados aos cabíveis à
+  // modalidade (Dispensa não tem Edital).
   const tiposDisponiveis = documentosDaModalidade(proc.modalidade).filter((t) => !proc.documentos.includes(t))
   const tiposGerados = docsGerados.map((d) => d.tipo)
   const dfdVerificado = parecer.data != null
+
+  /**
+   * Cartão de um documento do processo.
+   *
+   * @param anexo apresentado sob o principal — ganha a etiqueta e o fundamento
+   *              de anexo
+   */
+  const cartaoDocumento = (tipo: TipoDocumento, numero: string, anexo = false) => {
+    const principal = anexo ? CATALOGO[tipo].anexoDe : undefined
+    const meta = CATALOGO[tipo]
+    const gerado = docsGerados.find((d) => d.tipo === tipo)
+    const finalizado = gerado != null
+    const secoesLista = secoesPorTipo[tipo].data ?? []
+    const concluidas = secoesLista.filter((s) => s.status === "Completo").length
+    const total = secoesLista.length
+    const progresso = finalizado ? 100 : total > 0 ? Math.round((concluidas / total) * 100) : 0
+    // Só as seções indispensáveis liberam a geração (no ETP, Art. 18, § 2º).
+    const obrigatoriasOk =
+      total > 0 && secoesLista.filter((s) => s.obrigatoria).every((s) => s.status === "Completo")
+    // Dependências ainda não geradas: o TR se fundamenta no ETP, o Edital
+    // tem o TR como anexo, e a minuta de contrato vincula-se a ambos.
+    /*
+      A dependência é **orientação**, e não trava.
+
+      Antes o cartão bloqueado não tinha botão nenhum: não dava para abrir
+      o documento nem para ler o que já estava escrito. Mas o TR se
+      fundamenta no ETP e nada impede redigi-lo antes de gerar o ETP — a
+      ordem é do fluxo, não da lei —, e travar transformava orientação em
+      obstáculo, que é o que fez o fluxo de aprovação sair do produto
+      (§24). A etiqueta continua dizendo o que falta (§80).
+    */
+    const bloqueios = pendencias(tipo, proc.documentos, tiposGerados)
+    const dependePendente = bloqueios.length > 0 && !finalizado
+    const editorHref = `/processos/documento?id=${encodeURIComponent(processoId)}&tipo=${meta.slug}`
+
+    return (
+      <div
+        /*
+         * Bloqueado muda a superfície, não a opacidade.
+         *
+         * `opacity-70` no cartão inteiro apagava o texto junto: a 70% os
+         * cinzas caem para 3,2:1, abaixo dos 4,5:1 da WCAG AA — e apagava
+         * justamente a etiqueta que diz o que falta para desbloquear.
+         */
+        className={`flex flex-col rounded-card border border-border p-5 ${
+          dependePendente ? "bg-ice" : "bg-surface"
+        }`}
+      >
+        <div className="mb-3 flex items-start gap-3">
+          <span className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${meta.chip}`}>
+            <IconFileText size={18} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="font-display text-md font-bold text-text-1">
+              <span className="mr-1.5 font-mono text-xs text-text-muted">{numero}</span>
+              {meta.titulo}
+            </div>
+            <div className="mt-0.5 font-mono text-xs text-text-muted">
+              {meta.fundamento}
+              {principal && ` · ${principal.fundamento}`}
+            </div>
+            {principal && (
+              <div className="mt-1.5">
+                <Tag tone="neutral">Anexo do {principal.tipo}</Tag>
+              </div>
+            )}
+          </div>
+          {finalizado ? (
+            <span className="flex flex-col items-end">
+              <span className="flex items-center gap-1 text-sm font-semibold text-success">
+                <IconCheckCircle size={15} strokeWidth={2.5} />
+                Finalizado
+              </span>
+              {gerado && (
+                <span
+                  className={`mt-0.5 font-mono text-2xs ${
+                    gerado.versao > 1 ? "font-semibold text-tint-warning-fg" : "text-text-muted"
+                  }`}
+                >
+                  {rotuloDaVersao(gerado.versao)}
+                </span>
+              )}
+            </span>
+          ) : (
+            <span className="text-sm font-semibold text-text-3">{progresso}%</span>
+          )}
+        </div>
+
+        <ProgressBar percent={progresso} />
+
+
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          {dependePendente && (
+            <Tag tone="warning">
+              Fundamenta-se em {bloqueios.map((d) => CATALOGO[d].titulo).join(" e ")}
+            </Tag>
+          )}
+          {finalizado ? (
+            <>
+              <Button size="sm" variant="secondary" icon={<IconEye size={13} />} onClick={() => router.push("/documentos")}>
+                Visualizar Documento
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => router.push(editorHref)}>
+                Revisar Seções
+              </Button>
+              {proc.status !== "concluido" && retificando !== tipo && (
+                <Button size="sm" variant="ghost" onClick={() => setRetificando(tipo)}>
+                  Retificar
+                </Button>
+              )}
+            </>
+          ) : obrigatoriasOk ? (
+            <>
+              {/*
+                Leva à prévia, e não gera na hora.
+
+                Este botão gerava direto: era o mesmo atalho que a §69
+                tirou de dentro das seções — "Finalizar e Gerar" sem
+                passar pelo que vai sair — sobrevivendo do lado de fora.
+                Agora abre o editor já na etapa de Revisão e Geração, que
+                é onde o documento inteiro pode ser lido antes (§81).
+              */}
+              <Button
+                size="sm"
+                onClick={() => router.push(`${editorHref}&etapa=revisao`)}
+              >
+                Revisar e Gerar
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => router.push(editorHref)}>
+                Revisar Seções
+              </Button>
+            </>
+          ) : (
+            <Button
+              size="sm"
+              icon={<IconArrowRight size={13} strokeWidth={2.5} />}
+              onClick={() => router.push(editorHref)}
+            >
+              {progresso > 0 ? `Continuar ${tipo}` : `Elaborar ${tipo}`}
+            </Button>
+          )}
+          {/*
+            Documento entrava no processo e não saía — nem por engano, e
+            enquanto ficasse contava como pendência no encerramento para
+            sempre. Concluído não sai: virou peça dos autos (§80).
+          */}
+          {!finalizado && (
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={atualizar.isPending}
+              onClick={() => retirarDocumento(tipo)}
+            >
+              Retirar do processo
+            </Button>
+          )}
+        </div>
+
+        {retificando === tipo && gerado && (
+          <PainelRetificacao
+            processoId={processoId}
+            tipo={tipo}
+            versaoAtual={gerado.versao}
+            pendente={gerar.isPending}
+            onConfirmar={(retificacao: Retificacao) =>
+              gerar.mutate(
+                { processoId, tipo, retificacao },
+                {
+                  onSuccess: (doc) => {
+                    setRetificando(null)
+                    showToast(`${tipo} retificado — ${rotuloDaVersao(doc.versao)}.`)
+                  },
+                  onError: (erro) =>
+                    showToast(
+                      erro instanceof Error
+                        ? erro.message
+                        : `Não foi possível retificar o ${tipo}. Tente novamente.`,
+                    ),
+                },
+              )
+            }
+            onCancelar={() => setRetificando(null)}
+          />
+        )}
+      </div>
+    )
+  }
 
   return (
     <div className="w-full p-4 sm:p-5 lg:p-7">
@@ -457,178 +643,20 @@ export default function HubProcesso() {
       </div>
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        {tiposDoProcesso.map((tipo, i) => {
-          const meta = CATALOGO[tipo]
-          const gerado = docsGerados.find((d) => d.tipo === tipo)
-          const finalizado = gerado != null
-          const secoesLista = secoesPorTipo[tipo].data ?? []
-          const concluidas = secoesLista.filter((s) => s.status === "Completo").length
-          const total = secoesLista.length
-          const progresso = finalizado ? 100 : total > 0 ? Math.round((concluidas / total) * 100) : 0
-          // Só as seções indispensáveis liberam a geração (no ETP, Art. 18, § 2º).
-          const obrigatoriasOk =
-            total > 0 && secoesLista.filter((s) => s.obrigatoria).every((s) => s.status === "Completo")
-          // Dependências ainda não geradas: o TR se fundamenta no ETP, o Edital
-          // tem o TR como anexo, e a minuta de contrato vincula-se a ambos.
-          /*
-            A dependência é **orientação**, e não trava.
-
-            Antes o cartão bloqueado não tinha botão nenhum: não dava para abrir
-            o documento nem para ler o que já estava escrito. Mas o TR se
-            fundamenta no ETP e nada impede redigi-lo antes de gerar o ETP — a
-            ordem é do fluxo, não da lei —, e travar transformava orientação em
-            obstáculo, que é o que fez o fluxo de aprovação sair do produto
-            (§24). A etiqueta continua dizendo o que falta (§80).
-          */
-          const bloqueios = pendencias(tipo, proc.documentos, tiposGerados)
-          const dependePendente = bloqueios.length > 0 && !finalizado
-          const editorHref = `/processos/documento?id=${encodeURIComponent(processoId)}&tipo=${meta.slug}`
-
-          return (
-            <div
-              key={tipo}
-              /*
-               * Bloqueado muda a superfície, não a opacidade.
-               *
-               * `opacity-70` no cartão inteiro apagava o texto junto: a 70% os
-               * cinzas caem para 3,2:1, abaixo dos 4,5:1 da WCAG AA — e apagava
-               * justamente a etiqueta que diz o que falta para desbloquear.
-               */
-              className={`flex flex-col rounded-card border border-border p-5 ${
-                dependePendente ? "bg-ice" : "bg-surface"
-              }`}
-            >
-              <div className="mb-3 flex items-start gap-3">
-                <span className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${meta.chip}`}>
-                  <IconFileText size={18} />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="font-display text-md font-bold text-text-1">
-                    <span className="mr-1.5 font-mono text-xs text-text-muted">{i + 1}.</span>
-                    {meta.titulo}
-                  </div>
-                  <div className="mt-0.5 font-mono text-xs text-text-muted">{meta.fundamento}</div>
-                </div>
-                {finalizado ? (
-                  <span className="flex flex-col items-end">
-                    <span className="flex items-center gap-1 text-sm font-semibold text-success">
-                      <IconCheckCircle size={15} strokeWidth={2.5} />
-                      Finalizado
-                    </span>
-                    {gerado && (
-                      <span
-                        className={`mt-0.5 font-mono text-2xs ${
-                          gerado.versao > 1 ? "font-semibold text-tint-warning-fg" : "text-text-muted"
-                        }`}
-                      >
-                        {rotuloDaVersao(gerado.versao)}
-                      </span>
-                    )}
-                  </span>
-                ) : (
-                  <span className="text-sm font-semibold text-text-3">{progresso}%</span>
-                )}
+        {agruparAnexos(proc.documentos).map((grupo, i) => (
+          <div key={grupo.tipo} className="flex flex-col gap-2">
+            {cartaoDocumento(grupo.tipo, `${i + 1}.`)}
+            {/*
+              A minuta de contrato vem sob o Edital, de que é anexo (Art. 18,
+              VI), e não como mais um cartão solto na grade.
+            */}
+            {grupo.anexos.map((anexo, j) => (
+              <div key={anexo} className="ml-4 border-l-2 border-border pl-3 sm:ml-6 sm:pl-4">
+                {cartaoDocumento(anexo, `${i + 1}.${j + 1}`, true)}
               </div>
-
-              <ProgressBar percent={progresso} />
-
-
-              <div className="mt-4 flex flex-wrap items-center gap-2">
-                {dependePendente && (
-                  <Tag tone="warning">
-                    Fundamenta-se em {bloqueios.map((d) => CATALOGO[d].titulo).join(" e ")}
-                  </Tag>
-                )}
-                {finalizado ? (
-                  <>
-                    <Button size="sm" variant="secondary" icon={<IconEye size={13} />} onClick={() => router.push("/documentos")}>
-                      Visualizar Documento
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => router.push(editorHref)}>
-                      Revisar Seções
-                    </Button>
-                    {proc.status !== "concluido" && retificando !== tipo && (
-                      <Button size="sm" variant="ghost" onClick={() => setRetificando(tipo)}>
-                        Retificar
-                      </Button>
-                    )}
-                  </>
-                ) : obrigatoriasOk ? (
-                  <>
-                    {/*
-                      Leva à prévia, e não gera na hora.
-
-                      Este botão gerava direto: era o mesmo atalho que a §69
-                      tirou de dentro das seções — "Finalizar e Gerar" sem
-                      passar pelo que vai sair — sobrevivendo do lado de fora.
-                      Agora abre o editor já na etapa de Revisão e Geração, que
-                      é onde o documento inteiro pode ser lido antes (§81).
-                    */}
-                    <Button
-                      size="sm"
-                      onClick={() => router.push(`${editorHref}&etapa=revisao`)}
-                    >
-                      Revisar e Gerar
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => router.push(editorHref)}>
-                      Revisar Seções
-                    </Button>
-                  </>
-                ) : (
-                  <Button
-                    size="sm"
-                    icon={<IconArrowRight size={13} strokeWidth={2.5} />}
-                    onClick={() => router.push(editorHref)}
-                  >
-                    {progresso > 0 ? `Continuar ${tipo}` : `Elaborar ${tipo}`}
-                  </Button>
-                )}
-                {/*
-                  Documento entrava no processo e não saía — nem por engano, e
-                  enquanto ficasse contava como pendência no encerramento para
-                  sempre. Concluído não sai: virou peça dos autos (§80).
-                */}
-                {!finalizado && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    disabled={atualizar.isPending}
-                    onClick={() => retirarDocumento(tipo)}
-                  >
-                    Retirar do processo
-                  </Button>
-                )}
-              </div>
-
-              {retificando === tipo && gerado && (
-                <PainelRetificacao
-                  processoId={processoId}
-                  tipo={tipo}
-                  versaoAtual={gerado.versao}
-                  pendente={gerar.isPending}
-                  onConfirmar={(retificacao: Retificacao) =>
-                    gerar.mutate(
-                      { processoId, tipo, retificacao },
-                      {
-                        onSuccess: (doc) => {
-                          setRetificando(null)
-                          showToast(`${tipo} retificado — ${rotuloDaVersao(doc.versao)}.`)
-                        },
-                        onError: (erro) =>
-                          showToast(
-                            erro instanceof Error
-                              ? erro.message
-                              : `Não foi possível retificar o ${tipo}. Tente novamente.`,
-                          ),
-                      },
-                    )
-                  }
-                  onCancelar={() => setRetificando(null)}
-                />
-              )}
-            </div>
-          )
-        })}
+            ))}
+          </div>
+        ))}
       </div>
 
       {/* Adicionar novos documentos */}

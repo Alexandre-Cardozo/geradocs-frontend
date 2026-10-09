@@ -27,13 +27,20 @@ export interface MetaDocumento {
   formato: string
   /** Tamanho aproximado do arquivo gerado, em KB. */
   tamanhoKB: number
+  /**
+   * Documento de que este é anexo, quando é. O anexo continua sendo um
+   * documento próprio — com editor, versões e geração independentes —, mas é
+   * divulgado como elemento do principal (Art. 25, § 3º).
+   */
+  anexoDe?: { tipo: TipoDocumento; fundamento: string }
 }
 
 /**
  * Ordem canônica: a Cotação embasa a estimativa de valor do ETP (Art. 18, § 1º,
  * VI); o Mapa de Riscos é concomitante ao ETP; o TR se fundamenta no ETP
- * (Art. 6º, XXIII, 'b'); o Edital tem o TR como anexo (Art. 25, § 1º); e a
- * minuta de contrato é anexo do edital, vinculada a ele (Art. 92, II).
+ * (Art. 6º, XXIII, 'b'); o Edital tem o TR entre os seus elementos (Art. 25,
+ * § 3º); e a minuta de contrato consta obrigatoriamente como anexo do edital
+ * (Art. 18, VI), vinculada a ele (Art. 92, II).
  */
 export const CATALOGO: Record<TipoDocumento, MetaDocumento> = {
   "Cotação": {
@@ -83,6 +90,7 @@ export const CATALOGO: Record<TipoDocumento, MetaDocumento> = {
     requer: ["ETP"],
     formato: "DOCX + PDF",
     tamanhoKB: 348,
+    anexoDe: { tipo: "Edital", fundamento: "Art. 25, § 3º, Lei 14.133/21" },
   },
   Edital: {
     tipo: "Edital",
@@ -107,6 +115,7 @@ export const CATALOGO: Record<TipoDocumento, MetaDocumento> = {
     requer: ["TR"],
     formato: "DOCX + PDF",
     tamanhoKB: 386,
+    anexoDe: { tipo: "Edital", fundamento: "Art. 18, VI, Lei 14.133/21" },
   },
 }
 
@@ -123,19 +132,27 @@ export const ORDEM_FLUXO: TipoDocumento[] = (Object.values(CATALOGO) as MetaDocu
  * de despesa, parecer jurídico e autorização. Por isso o ETP é opcional e o
  * Edital não é oferecido. No Credenciamento (Art. 79), o edital é o de
  * chamamento público.
+ *
+ * `recomendados` são opcionais que já vêm marcados. A minuta de contrato é
+ * opcional porque o instrumento pode ser substituído por nota de empenho nas
+ * compras com entrega imediata e integral (Art. 95, II) — mas, quando existe,
+ * consta obrigatoriamente como anexo do edital (Art. 18, VI), e por isso vem
+ * marcada nas licitações em que o contrato é a regra. No Leilão e no Concurso
+ * fica desmarcada: a alienação se resolve na arrematação, e o concurso, no
+ * prêmio e na cessão dos direitos.
  */
 export const REGRA_MODALIDADE: Record<
   Modalidade,
-  { obrigatorios: TipoDocumento[]; opcionais: TipoDocumento[] }
+  { obrigatorios: TipoDocumento[]; opcionais: TipoDocumento[]; recomendados: TipoDocumento[] }
 > = {
-  "Pregão Eletrônico": { obrigatorios: ["ETP", "TR", "Edital"], opcionais: ["Cotação", "Mapa", "Contrato"] },
-  "Concorrência": { obrigatorios: ["ETP", "TR", "Edital"], opcionais: ["Cotação", "Mapa", "Contrato"] },
-  "Diálogo Competitivo": { obrigatorios: ["ETP", "TR", "Edital"], opcionais: ["Cotação", "Mapa", "Contrato"] },
-  "Credenciamento": { obrigatorios: ["ETP", "TR", "Edital"], opcionais: ["Cotação", "Mapa", "Contrato"] },
-  "Concurso": { obrigatorios: ["ETP", "Edital"], opcionais: ["Cotação", "Mapa", "TR", "Contrato"] },
-  "Leilão": { obrigatorios: ["Edital"], opcionais: ["Cotação", "Mapa", "ETP", "TR", "Contrato"] },
-  "Dispensa Art. 75": { obrigatorios: ["TR"], opcionais: ["ETP", "Cotação", "Mapa", "Contrato"] },
-  "Inexigibilidade": { obrigatorios: ["TR"], opcionais: ["ETP", "Cotação", "Mapa", "Contrato"] },
+  "Pregão Eletrônico": { obrigatorios: ["ETP", "TR", "Edital"], opcionais: ["Cotação", "Mapa", "Contrato"], recomendados: ["Contrato"] },
+  "Concorrência": { obrigatorios: ["ETP", "TR", "Edital"], opcionais: ["Cotação", "Mapa", "Contrato"], recomendados: ["Contrato"] },
+  "Diálogo Competitivo": { obrigatorios: ["ETP", "TR", "Edital"], opcionais: ["Cotação", "Mapa", "Contrato"], recomendados: ["Contrato"] },
+  "Credenciamento": { obrigatorios: ["ETP", "TR", "Edital"], opcionais: ["Cotação", "Mapa", "Contrato"], recomendados: ["Contrato"] },
+  "Concurso": { obrigatorios: ["ETP", "Edital"], opcionais: ["Cotação", "Mapa", "TR", "Contrato"], recomendados: [] },
+  "Leilão": { obrigatorios: ["Edital"], opcionais: ["Cotação", "Mapa", "ETP", "TR", "Contrato"], recomendados: [] },
+  "Dispensa Art. 75": { obrigatorios: ["TR"], opcionais: ["ETP", "Cotação", "Mapa", "Contrato"], recomendados: [] },
+  "Inexigibilidade": { obrigatorios: ["TR"], opcionais: ["ETP", "Cotação", "Mapa", "Contrato"], recomendados: [] },
 }
 
 /** Tipos cabíveis à modalidade (obrigatórios + opcionais), na ordem do fluxo. */
@@ -151,6 +168,34 @@ export function ehObrigatorio(modalidade: Modalidade, tipo: TipoDocumento): bool
 /** Reordena uma lista de tipos segundo a ordem canônica do fluxo. */
 export function ordenar(tipos: TipoDocumento[]): TipoDocumento[] {
   return [...tipos].sort((a, b) => CATALOGO[a].ordem - CATALOGO[b].ordem)
+}
+
+export interface GrupoDeDocumentos {
+  tipo: TipoDocumento
+  /** Anexos apresentados sob o documento, na ordem do fluxo. */
+  anexos: TipoDocumento[]
+}
+
+/**
+ * Agrupa os documentos para exibição: o anexo elaborado depois do principal
+ * aparece sob ele.
+ *
+ * A minuta de contrato vem sob o Edital, de que é anexo (Art. 18, VI). O TR
+ * também é anexo do Edital, mas é elaborado antes e o fundamenta — sob o Edital
+ * ele esconderia a ordem do fluxo, então mantém o próprio lugar. Sem o
+ * principal no processo (na Dispensa não há Edital), o anexo fica solto.
+ */
+export function agruparAnexos(tipos: TipoDocumento[]): GrupoDeDocumentos[] {
+  const ordenados = ordenar(tipos)
+  const sob = (tipo: TipoDocumento): TipoDocumento | undefined => {
+    const principal = CATALOGO[tipo].anexoDe?.tipo
+    return principal && ordenados.includes(principal) && CATALOGO[principal].ordem < CATALOGO[tipo].ordem
+      ? principal
+      : undefined
+  }
+  return ordenados
+    .filter((tipo) => sob(tipo) === undefined)
+    .map((tipo) => ({ tipo, anexos: ordenados.filter((t) => sob(t) === tipo) }))
 }
 
 /** Resolve o slug da URL para o tipo. Retorna undefined se o slug não existir. */

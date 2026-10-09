@@ -310,7 +310,7 @@ const secoesEdital: SecaoDocumento[] = secoes([
   },
   {
     titulo: "Das Disposições Finais e dos Anexos",
-    fundamentoLegal: "Art. 25, § 1º, Lei 14.133/21",
+    fundamentoLegal: "Art. 25, § 3º, Lei 14.133/21",
     hint: "Relacione os anexos que integram o edital — Termo de Referência, minuta de contrato, modelo de proposta e matriz de riscos, quando houver — e registre a divulgação no PNCP (Art. 54).",
   },
   {

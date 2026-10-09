@@ -40,8 +40,8 @@ Ordem declarada em `CATALOGO[tipo].ordem`. O hub do processo numera e ordena os 
 | 2 | **ETP** | Art. 18, § 1º | Consome a pesquisa de preços e fundamenta a contratação |
 | 3 | **Mapa de Riscos** | Art. 18, X | Concomitante ao ETP; sua matriz de alocação (Art. 22) alimenta a cláusula correspondente do contrato |
 | 4 | **TR** | Art. 6º, XXIII | Fundamenta-se no ETP (alínea "b") |
-| 5 | **Edital** | Art. 25 | Tem o TR como anexo (Art. 25, § 1º) |
-| 6 | **Contrato** (minuta) | Art. 89 a 95; cláusulas do Art. 92 | Anexo do edital, vinculado a ele e à proposta (Art. 92, II) |
+| 5 | **Edital** | Art. 25 | Tem o TR entre os seus elementos (Art. 25, § 3º) |
+| 5.1 | **Contrato** (minuta) | Art. 89 a 95; cláusulas do Art. 92 | Consta obrigatoriamente como anexo do edital (Art. 18, VI), vinculado a ele e à proposta (Art. 92, II) |
 
 ### Dependências
 
@@ -54,16 +54,30 @@ Uma dependência **só bloqueia se o processo de fato contiver aquele documento*
 
 No hub, um documento com dependência pendente tem o botão de ação substituído por uma tag "Requer …" até que a dependência seja gerada.
 
+### Anexos do edital
+
+Declarados em `CATALOGO[tipo].anexoDe` e agrupados por `agruparAnexos()`.
+
+A **minuta de contrato** consta obrigatoriamente como anexo do edital (Art. 18, VI), e todos os elementos do edital — minuta, TR, projetos e demais anexos — são divulgados com ele (Art. 25, § 3º). Por isso, no passo 3 do wizard e no hub do processo, a minuta aparece **sob o Edital**, numerada como subitem (5.1) e com a etiqueta "Anexo do Edital".
+
+- **Continua sendo um documento próprio**, com editor, versões e geração independentes. Fundir as cláusulas no corpo do edital quebraria a contratação direta, que tem minuta sem ter edital, e misturaria duas peças que seguem caminhos diferentes depois da licitação: o contrato é assinado à parte.
+- **O TR também é anexo do edital**, mas mantém o próprio lugar na ordem: é elaborado antes e fundamenta o Edital. Colocado sob ele, esconderia a sequência do fluxo.
+- **Sem Edital no processo, a minuta fica solta.** É o caso da Dispensa e da Inexigibilidade, em que não há edital de que ela seja anexo (Art. 72).
+
+O agrupamento é de apresentação. A composição do arquivo do Edital com os anexos ao final ainda não existe: hoje cada documento é gerado em arquivo próprio.
+
 ## Matriz modalidade × documentos
 
-Declarada em `REGRA_MODALIDADE`. O wizard só oferece os tipos cabíveis à modalidade escolhida — os obrigatórios já vêm marcados e travados.
+Declarada em `REGRA_MODALIDADE`. O wizard só oferece os tipos cabíveis à modalidade escolhida — os obrigatórios já vêm marcados e travados, e os recomendados vêm marcados mas podem ser desmarcados.
 
-| Modalidade | Obrigatórios | Opcionais |
-|---|---|---|
-| Pregão Eletrônico · Concorrência · Diálogo Competitivo · Credenciamento | ETP, TR, Edital | Cotação, Mapa, Contrato |
-| Concurso | ETP, Edital | Cotação, Mapa, TR, Contrato |
-| Leilão | Edital | Cotação, Mapa, ETP, TR, Contrato |
-| **Dispensa Art. 75 · Inexigibilidade** | TR | ETP, Cotação, Mapa, Contrato — **sem Edital** |
+| Modalidade | Obrigatórios | Recomendados | Opcionais |
+|---|---|---|---|
+| Pregão Eletrônico · Concorrência · Diálogo Competitivo · Credenciamento | ETP, TR, Edital | Contrato | Cotação, Mapa, Contrato |
+| Concurso | ETP, Edital | — | Cotação, Mapa, TR, Contrato |
+| Leilão | Edital | — | Cotação, Mapa, ETP, TR, Contrato |
+| **Dispensa Art. 75 · Inexigibilidade** | TR | — | ETP, Cotação, Mapa, Contrato — **sem Edital** |
+
+**A minuta de contrato é opcional, mas recomendada nas licitações em que o contrato é a regra.** É opcional porque o instrumento de contrato pode ser substituído por nota de empenho nas compras com entrega imediata e integral (Art. 95, II). Quando existe, porém, ela constará obrigatoriamente como anexo do edital (Art. 18, VI). Por isso vem marcada no Pregão, na Concorrência, no Diálogo Competitivo e no Credenciamento. No Leilão e no Concurso vem desmarcada: a alienação se resolve na arrematação, e o concurso, no prêmio e na cessão dos direitos. Na contratação direta também vem desmarcada, porque na dispensa por valor o contrato pode ser substituído por nota de empenho (Art. 95, I).
 
 **Contratação direta não gera edital de licitação.** O Art. 72 instrui o processo com DFD, ETP *quando for o caso*, TR, estimativa de despesa, parecer jurídico e autorização — por isso, nessas modalidades, o ETP é opcional (Art. 18, § 2º c/c Art. 72, I) e o Edital não é oferecido. No Credenciamento (Art. 79), o "Edital" é o de chamamento público.
 
