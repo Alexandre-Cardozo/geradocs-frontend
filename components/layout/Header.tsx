@@ -21,6 +21,7 @@ function tituloDaRota(pathname: string): string {
   if (pathname === "/processos/detalhe") return "Progresso do Processo"
   if (pathname.startsWith("/aprovacoes")) return "Aprovações"
   if (pathname.startsWith("/documentos")) return "Documentos Gerados"
+  if (pathname.startsWith("/normas")) return "Normas do Órgão"
   if (pathname.startsWith("/configuracoes/timbre")) return "Timbre dos Documentos"
   if (pathname.startsWith("/configuracoes/secretarias")) return "Secretarias do Órgão"
   if (pathname.startsWith("/configuracoes/pca")) return "PCA — Plano de Contratações"

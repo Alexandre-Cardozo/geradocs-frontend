@@ -24,6 +24,8 @@ const matriz: Array<{ rota: string; permitidos: PerfilAcesso[] }> = [
   { rota: "/processos", permitidos: ["servidor", "coordenador"] },
   { rota: "/processos/novo", permitidos: ["servidor", "coordenador"] },
   { rota: "/documentos", permitidos: ["servidor", "coordenador"] },
+  // O servidor consulta e baixa as normas; o administrador geral não é do órgão.
+  { rota: "/normas", permitidos: ["servidor", "coordenador"] },
   { rota: "/perfil", permitidos: perfis },
 ]
 
@@ -61,6 +63,10 @@ describe("navegação por perfil", () => {
   it("o administrador geral não vê processos nem documentos", () => {
     const hrefs = navPrincipal("admin_geral").map((item) => item.href)
     expect(hrefs).toEqual(["/", "/admin/entidades", "/admin/servidores"])
+  })
+
+  it("as normas do órgão ficam no menu principal, ao alcance do servidor", () => {
+    expect(navPrincipal("servidor").map((item) => item.href)).toContain("/normas")
   })
 
   it("servidor e coordenador veem o mesmo menu principal", () => {

@@ -14,6 +14,7 @@ const ACESSO_ROTA: Array<{ prefixo: string; perfis: PerfilAcesso[] }> = [
   { prefixo: "/configuracoes", perfis: ["coordenador"] },
   { prefixo: "/processos", perfis: ["servidor", "coordenador"] },
   { prefixo: "/documentos", perfis: ["servidor", "coordenador"] },
+  { prefixo: "/normas", perfis: ["servidor", "coordenador"] },
   { prefixo: "/perfil", perfis: ["servidor", "coordenador", "admin_geral"] },
 ]
 
@@ -29,6 +30,7 @@ export type IconeNav =
   | "dashboard"
   | "processos"
   | "documentos"
+  | "normas"
   | "timbre"
   | "secretarias"
   | "pca"
@@ -55,6 +57,9 @@ export function navPrincipal(perfil: PerfilAcesso): ItemNav[] {
     { href: "/", label: "Dashboard", icone: "dashboard" },
     { href: "/processos", label: "Processos", icone: "processos" },
     { href: "/documentos", label: "Documentos", icone: "documentos" },
+    // Na navegação principal, e não em Configurações: o servidor também
+    // consulta, e Configurações é só do coordenador.
+    { href: "/normas", label: "Normas do Órgão", icone: "normas" },
   ]
 }
 

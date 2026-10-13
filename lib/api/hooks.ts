@@ -46,6 +46,16 @@ import {
   type ItemDoDfd,
 } from "@/lib/api/procurement-client"
 import * as api from "@/lib/api/client"
+import {
+  cadastrarNorma,
+  corrigirNorma,
+  excluirNorma,
+  listarNormas,
+  restabelecerNorma,
+  revogarNorma,
+  trocarArquivoDaNorma,
+  versoesDaNorma,
+} from "@/lib/api/regulation-client"
 import type { ListaProcessosParams } from "@/lib/api/client"
 import type { TipoDocumento, Tenant } from "@/lib/types"
 
@@ -980,5 +990,39 @@ export function useIaDisponivel() {
     queryKey: chaves.iaDisponivel,
     queryFn: iaDisponivel,
     staleTime: Infinity,
+  })
+}
+
+/* ── Normas do órgão (ADR-043 do back-end) ─────────────────────────────────── */
+
+const CHAVE_NORMAS = ["normas"] as const
+
+/**
+ * O acervo de normas do órgão e as operações do coordenador sobre ele.
+ *
+ * <p>Toda operação recarrega a lista: a resposta de uma traz só a norma
+ * alterada, e a ordem da lista (vigentes primeiro) depende de todas.
+ */
+export function useNormas() {
+  const queryClient = useQueryClient()
+  const normas = useQuery({ queryKey: CHAVE_NORMAS, queryFn: listarNormas })
+  const recarregar = () => void queryClient.invalidateQueries({ queryKey: CHAVE_NORMAS })
+  return {
+    normas,
+    cadastrar: useMutation({ mutationFn: cadastrarNorma, onSuccess: recarregar }),
+    corrigir: useMutation({ mutationFn: corrigirNorma, onSuccess: recarregar }),
+    trocarArquivo: useMutation({ mutationFn: trocarArquivoDaNorma, onSuccess: recarregar }),
+    revogar: useMutation({ mutationFn: revogarNorma, onSuccess: recarregar }),
+    restabelecer: useMutation({ mutationFn: restabelecerNorma, onSuccess: recarregar }),
+    excluir: useMutation({ mutationFn: excluirNorma, onSuccess: recarregar }),
+  }
+}
+
+/** As versões do arquivo de uma norma, só quando o painel delas é aberto. */
+export function useVersoesDaNorma(id: string, aberto: boolean) {
+  return useQuery({
+    queryKey: [...CHAVE_NORMAS, id, "versoes"],
+    queryFn: () => versoesDaNorma(id),
+    enabled: aberto,
   })
 }
