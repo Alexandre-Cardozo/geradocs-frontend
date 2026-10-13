@@ -53,8 +53,12 @@ export function FormularioDeNorma({
             options={Object.entries(ESPECIES_DE_NORMA).map(([value, label]) => ({ value, label }))}
           />
         </FormField>
-        <FormField label="Número" hint="Como publicado. Ex.: 10.210/2025">
-          <Input value={dados.numero} onChange={(e) => alterar("numero", e.target.value)} placeholder="10.210/2025" />
+        <FormField label="Número">
+          <Input
+            value={dados.numero}
+            onChange={(e) => alterar("numero", e.target.value)}
+            placeholder="Ex.: 10.210/2025"
+          />
           {tentou && erros.numero && <ValidationMsg type="error" msg={erros.numero} />}
         </FormField>
         <FormField label="Data de publicação">
@@ -68,11 +72,7 @@ export function FormularioDeNorma({
         </FormField>
       </div>
 
-      <FormField
-        label="Ementa ou assunto"
-        required
-        hint="É por ela que quem consulta — e a IA — sabem do que a norma trata."
-      >
+      <FormField label="Ementa ou assunto" required>
         <Textarea
           value={dados.ementa}
           onChange={(e) => alterar("ementa", e.target.value)}
@@ -82,23 +82,24 @@ export function FormularioDeNorma({
         {tentou && erros.ementa && <ValidationMsg type="error" msg={erros.ementa} />}
       </FormField>
 
-      <FormField label="Observação" hint="Opcional. Ex.: aplica-se somente às contratações de obras.">
-        <Textarea value={dados.observacao} onChange={(e) => alterar("observacao", e.target.value)} rows={2} />
+      <FormField label="Observação">
+        <Textarea
+          value={dados.observacao}
+          onChange={(e) => alterar("observacao", e.target.value)}
+          rows={2}
+          placeholder="Opcional. Ex.: aplica-se somente às contratações de obras."
+        />
         {tentou && erros.observacao && <ValidationMsg type="error" msg={erros.observacao} />}
       </FormField>
 
       {modo === "cadastro" && (
-        <FormField
-          label="Arquivo da norma"
-          required
-          hint="PDF, DOCX ou TXT, até 10 MB. Prefira o PDF com texto: o digitalizado a IA não consegue ler."
-        >
+        <FormField label="Arquivo da norma" required>
           <FileUpload
             file={nomeDoArquivo}
             onChange={setNomeDoArquivo}
             onArquivo={setArquivo}
             accept={FORMATOS_DA_NORMA}
-            placeholder="Clique para selecionar a norma ou arraste o arquivo aqui"
+            placeholder="Clique para selecionar a norma (até 10 MB) ou arraste o arquivo aqui"
           />
           {tentou && erros.arquivo && <ValidationMsg type="error" msg={erros.arquivo} />}
         </FormField>
