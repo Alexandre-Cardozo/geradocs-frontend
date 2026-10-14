@@ -1028,6 +1028,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listStaff"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/users": {
         parameters: {
             query?: never;
@@ -1512,6 +1528,8 @@ export interface components {
             legalActRegulationId?: string;
             preparedByCpf?: string;
             preparedByName?: string;
+            /** Format: uuid */
+            preparedByUserId?: string;
             rectificationDescribed?: boolean;
             rectificationDetail?: string;
             /** @enum {string} */
@@ -1914,6 +1932,14 @@ export interface components {
             empty?: boolean;
             sorted?: boolean;
             unsorted?: boolean;
+        };
+        StaffMemberResponse: {
+            cpf: string;
+            /** Format: uuid */
+            id: string;
+            jobTitle?: string;
+            name: string;
+            registrationNumber?: string;
         };
         TemplateResponse: {
             documentType: string;
@@ -4117,6 +4143,26 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["RegulationResponse"];
+                };
+            };
+        };
+    };
+    listStaff: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["StaffMemberResponse"][];
                 };
             };
         };

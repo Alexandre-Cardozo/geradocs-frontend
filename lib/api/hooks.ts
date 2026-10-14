@@ -11,6 +11,7 @@ import { useEffect, useMemo, useState } from "react"
 
 import {
   enviarBrasao,
+  listarServidoresDoOrgao,
   obterBrasao,
   obterTimbre,
   redefinirSenhaDeUsuario,
@@ -88,6 +89,7 @@ export const chaves = {
   brasao: (entidadeId: string | undefined) => ["brasao", entidadeId] as const,
   trilha: (processoId: string) => ["trilha", processoId] as const,
   auditoria: (params: api.ConsultaAuditoria) => ["auditoria", params] as const,
+  servidoresDoOrgao: ["servidores-do-orgao"] as const,
 }
 
 /* ── Sessão / autenticação ─────────────────────────────────────────────────── */
@@ -1005,6 +1007,19 @@ const CHAVE_NORMAS = ["normas"] as const
  * <p>Toda operação recarrega a lista: a resposta de uma traz só a norma
  * alterada, e a ordem da lista (vigentes primeiro) depende de todas.
  */
+/**
+ * Os colegas de quem está logado, para indicar quem elaborou o documento
+ * (ADR-045 do back-end). Só busca quando a pessoa escolhe essa opção.
+ */
+export function useServidoresDoOrgao(habilitado: boolean) {
+  return useQuery({
+    queryKey: chaves.servidoresDoOrgao,
+    queryFn: listarServidoresDoOrgao,
+    enabled: habilitado,
+    staleTime: 5 * 60_000,
+  })
+}
+
 export function useNormas() {
   const queryClient = useQueryClient()
   const normas = useQuery({ queryKey: CHAVE_NORMAS, queryFn: listarNormas })

@@ -556,3 +556,29 @@ export async function removerBrasao(organizationId: string): Promise<Timbre> {
 export async function obterBrasao(organizationId: string): Promise<Blob | null> {
   return imagemProtegida(`/organizations/${organizationId}/letterhead/logo`)
 }
+
+/**
+ * Um servidor do órgão, como pode ser indicado responsável pela elaboração
+ * (ADR-045 do back-end). O CPF vem sempre mascarado: o inteiro é lido do
+ * cadastro pelo servidor na hora de concluir, e não passa pela tela.
+ */
+export interface ServidorDoOrgao {
+  id: string
+  nome: string
+  cargo: string | null
+  matricula: string | null
+  /** Mascarado: `***.456.789-**`. */
+  cpf: string
+}
+
+/** Os colegas de quem está logado — ativos, com CPF no cadastro, sem ele mesmo. */
+export async function listarServidoresDoOrgao(): Promise<ServidorDoOrgao[]> {
+  const servidores = await requisicaoProtegida<components["schemas"]["StaffMemberResponse"][]>("/staff")
+  return servidores.map((s) => ({
+    id: s.id,
+    nome: s.name,
+    cargo: s.jobTitle ?? null,
+    matricula: s.registrationNumber ?? null,
+    cpf: s.cpf,
+  }))
+}

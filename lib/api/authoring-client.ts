@@ -217,6 +217,7 @@ export async function concluirDocumento(
   elaboracao?: Elaboracao,
 ): Promise<DocumentoEmElaboracao> {
   const ato = elaboracao?.ato;
+  const responsavel = elaboracao?.responsavel;
   return mapear(
     await requisicaoProtegida<DocumentoApi>(`${rota(processoId, tipo)}/finalize`, {
       method: "POST",
@@ -227,8 +228,9 @@ export async function concluirDocumento(
               rectificationDetail: retificacao.detalhe,
             }
           : {}),
-        ...(elaboracao?.responsavel
-          ? { preparedByName: elaboracao.responsavel.nome, preparedByCpf: elaboracao.responsavel.cpf }
+        ...(responsavel && "servidorId" in responsavel ? { preparedByUserId: responsavel.servidorId } : {}),
+        ...(responsavel && "nome" in responsavel
+          ? { preparedByName: responsavel.nome, preparedByCpf: responsavel.cpf }
           : {}),
         ...(ato && "normaId" in ato ? { legalActRegulationId: ato.normaId } : {}),
         ...(ato && "citacao" in ato ? { legalActCitation: ato.citacao } : {}),

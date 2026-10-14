@@ -5,6 +5,7 @@ import {
   cpfMascarado,
   elaboracaoDe,
   errosDaElaboracao,
+  filtrarServidores,
   rotuloDoAto,
 } from "@/lib/documentos/elaboracao"
 
@@ -49,5 +50,25 @@ describe("elaboração do documento", () => {
     expect(errosDaElaboracao({ ...ESCOLHA_INICIAL, ato: "digitado", citacao: "7" })).toEqual({
       citacao: "Informe o número e a data do ato.",
     })
+  })
+
+  it("outro servidor do órgão vai pelo id — o CPF vem do cadastro, no servidor", () => {
+    const servidor = { ...ESCOLHA_INICIAL, responsavel: "servidor" as const }
+    expect(errosDaElaboracao(servidor)).toEqual({ servidor: "Escolha o servidor que elaborou." })
+
+    const escolhido = { ...servidor, servidorId: "u-jose" }
+    expect(errosDaElaboracao(escolhido)).toEqual({})
+    expect(elaboracaoDe(escolhido, "TR")).toEqual({ responsavel: { servidorId: "u-jose" } })
+  })
+
+  it("acha o servidor pelo nome, cargo ou matrícula, sem ligar para acento e caixa", () => {
+    const jose = { id: "1", nome: "José Pereira", cargo: "Analista", matricula: null, cpf: "***.982.247-**" }
+    const ana = { id: "2", nome: "Ana Souza", cargo: null, matricula: "MAT-0042", cpf: "***.533.447-**" }
+
+    expect(filtrarServidores([jose, ana], "  ")).toEqual([jose, ana])
+    expect(filtrarServidores([jose, ana], "JOSE")).toEqual([jose])
+    expect(filtrarServidores([jose, ana], "analis")).toEqual([jose])
+    expect(filtrarServidores([jose, ana], "0042")).toEqual([ana])
+    expect(filtrarServidores([jose, ana], "Carlos")).toEqual([])
   })
 })

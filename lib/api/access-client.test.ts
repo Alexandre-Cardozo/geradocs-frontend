@@ -1100,3 +1100,22 @@ describe("timbre do órgão", () => {
     expect(await obterBrasao(ORGAO)).toBeNull()
   })
 })
+
+describe("listarServidoresDoOrgao", () => {
+  it("traz os colegas com o CPF como o servidor manda — mascarado —, e cargo e matrícula ausentes como nulos", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/staff`, () =>
+        HttpResponse.json([
+          { id: "u-ana", name: "Ana Souza", jobTitle: "Analista", registrationNumber: "0042", cpf: "***.533.447-**" },
+          { id: "u-jose", name: "José Pereira", cpf: "***.982.247-**" },
+        ]),
+      ),
+    )
+    const { listarServidoresDoOrgao } = await carregarClienteLimpo()
+
+    expect(await listarServidoresDoOrgao()).toEqual([
+      { id: "u-ana", nome: "Ana Souza", cargo: "Analista", matricula: "0042", cpf: "***.533.447-**" },
+      { id: "u-jose", nome: "José Pereira", cargo: null, matricula: null, cpf: "***.982.247-**" },
+    ])
+  })
+})

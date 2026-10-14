@@ -284,7 +284,10 @@ describe("elaboração na conclusão", () => {
       ato: { normaId: "n-1" },
     })
     await concluirDocumento(PROCESSO, "Edital", undefined, { ato: { citacao: "10.210/2025" } })
+    await concluirDocumento(PROCESSO, "TR", undefined, { responsavel: { servidorId: "u-jose" } })
 
+    // O colega do órgão vai pelo id: o CPF inteiro dele não passa pela tela.
+    expect(corpos[2]).toEqual({ preparedByUserId: "u-jose" })
     expect(corpos[0]).toEqual({
       preparedByName: "José Pereira",
       preparedByCpf: "52998224725",

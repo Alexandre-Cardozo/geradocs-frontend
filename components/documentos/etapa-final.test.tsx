@@ -143,11 +143,11 @@ describe("etapa final: quem elaborou", () => {
     return gerar
   }
 
-  it("por padrão é quem conclui, com o CPF mascarado", async () => {
+  it("por padrão é quem conclui, e mostra o nome e o CPF mascarado como vão sair", async () => {
     renderizarDo("TR")
 
-    expect(await screen.findByText("Maria Costa Andrade")).toBeInTheDocument()
-    expect(screen.getByText("CPF ***.333.333-**")).toBeInTheDocument()
+    expect(await screen.findByDisplayValue("Maria Costa Andrade")).toBeDisabled()
+    expect(screen.getByDisplayValue("***.333.333-**")).toBeDisabled()
     // Fora do ETP e do Edital não há ato a citar.
     expect(screen.queryByRole("button", { name: "Portaria" })).not.toBeInTheDocument()
   })
@@ -155,7 +155,7 @@ describe("etapa final: quem elaborou", () => {
   it("outra pessoa precisa de nome e CPF válidos antes de gerar", async () => {
     const gerar = renderizarDo("TR")
 
-    await userEvent.click(await screen.findByRole("button", { name: "Informar outra pessoa" }))
+    await userEvent.click(await screen.findByRole("button", { name: /Pessoa Externa/ }))
     await userEvent.type(screen.getByPlaceholderText("Ex.: José Pereira"), "José Pereira")
     await userEvent.type(screen.getByRole("textbox", { name: "CPF de quem elaborou" }), "12345678900")
     await userEvent.click(screen.getByRole("button", { name: /Finalizar e Gerar/ }))
@@ -217,5 +217,80 @@ describe("etapa final: quem elaborou", () => {
     await userEvent.click(screen.getByRole("button", { name: /Finalizar e Gerar/ }))
 
     expect(gerar).toHaveBeenCalledWith(false, { ato: { normaId: "n-dec" } })
+  })
+
+  it("outro servidor do órgão é escolhido na lista, e vai pelo id", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/staff`, () =>
+        HttpResponse.json([
+          { id: "u-ana", name: "Ana Souza", jobTitle: "Analista", registrationNumber: "0042", cpf: "***.533.447-**" },
+          { id: "u-jose", name: "José Pereira", cpf: "***.982.247-**" },
+        ]),
+      ),
+    )
+    const gerar = renderizarDo("TR")
+
+    await userEvent.click(await screen.findByRole("button", { name: /Servidor do Órgão/ }))
+    // Sem escolher, não gera — e diz o que falta.
+    await userEvent.click(screen.getByRole("button", { name: /Finalizar e Gerar/ }))
+    expect(await screen.findByText("Escolha o servidor que elaborou.")).toBeInTheDocument()
+    expect(gerar).not.toHaveBeenCalled()
+
+    expect(await screen.findByRole("option", { name: /Ana Souza/ })).toHaveTextContent("Analista · Matrícula 0042")
+    await userEvent.type(screen.getByRole("textbox", { name: "Buscar servidor do órgão" }), "jose")
+    expect(screen.queryByRole("option", { name: /Ana Souza/ })).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole("option", { name: /José Pereira/ }))
+
+    // Escolhido, aparece como vai sair no documento.
+    expect(screen.getByDisplayValue("José Pereira")).toBeDisabled()
+    expect(screen.getByDisplayValue("***.982.247-**")).toBeDisabled()
+    await userEvent.click(screen.getByRole("button", { name: /Finalizar e Gerar/ }))
+    expect(gerar).toHaveBeenCalledWith(false, { responsavel: { servidorId: "u-jose" } })
+
+    // Trocar volta à lista.
+    await userEvent.click(screen.getByRole("button", { name: "Trocar Servidor" }))
+    expect(screen.getByRole("textbox", { name: "Buscar servidor do órgão" })).toBeInTheDocument()
+  })
+
+  it("busca sem resultado diz isso, e órgão sem colegas aponta a pessoa externa", async () => {
+    servidor.use(http.get(`${urlDaApi}/staff`, () => HttpResponse.json([])))
+    renderizarDo("TR")
+
+    await userEvent.click(await screen.findByRole("button", { name: /Servidor do Órgão/ }))
+    expect(await screen.findByText(/Nenhum outro servidor ativo/)).toBeInTheDocument()
+    await userEvent.type(screen.getByRole("textbox", { name: "Buscar servidor do órgão" }), "Carlos")
+    expect(screen.getByText("Nenhum servidor encontrado com essa busca.")).toBeInTheDocument()
+  })
+
+  it("a falha ao carregar os servidores oferece tentar de novo", async () => {
+    servidor.use(http.get(`${urlDaApi}/staff`, () => HttpResponse.json({}, { status: 500 })))
+    renderizarDo("TR")
+
+    await userEvent.click(await screen.findByRole("button", { name: /Servidor do Órgão/ }))
+    expect(await screen.findByText("Não foi possível carregar os servidores.")).toBeInTheDocument()
+    servidor.use(http.get(`${urlDaApi}/staff`, () => HttpResponse.json([])))
+    await userEvent.click(screen.getByRole("button", { name: "Tentar Novamente" }))
+    expect(await screen.findByText(/Nenhum outro servidor ativo/)).toBeInTheDocument()
+  })
+
+  it("mostra quem ficou salvo na última versão gerada", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id/documents/:tipo/versions`, () =>
+        HttpResponse.json([
+          {
+            version: 2,
+            note: "Regeração",
+            generatedAt: "2026-10-10T12:00:00Z",
+            contentHash: "a".repeat(64),
+            preparedBy: { name: "Ana Souza", cpf: "***.533.447-**" },
+            legalActCitation: null,
+            body: [],
+          },
+        ]),
+      ),
+    )
+    renderizarDo("TR")
+
+    expect(await screen.findByText(/Na versão 2 gerada/)).toHaveTextContent("Na versão 2 gerada: Ana Souza · CPF ***.533.447-**")
   })
 })

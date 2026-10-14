@@ -2,6 +2,8 @@ import { HttpResponse, http } from "msw"
 import { describe, expect, it } from "vitest"
 
 import { DfdsDoProcesso } from "@/components/processos/dfds-do-processo"
+import { dataBrasiliaISO } from "@/lib/format"
+import { somarDias } from "@/lib/processos/prazo-do-dfd"
 import { sessaoServidor } from "@/lib/teste/fixtures-api"
 import { urlDaApi } from "@/lib/teste/handlers"
 import { renderizar, screen, userEvent, waitFor } from "@/lib/teste/renderizar"
@@ -316,7 +318,9 @@ describe("dfd: data prevista e ficha da secretaria", () => {
     comDfds([comFicha])
     renderizar(<DfdsDoProcesso processoId={PROCESSO} />)
 
-    expect(await screen.findByText("Conclusão prevista: 15/12/2026")).toBeInTheDocument()
+    expect(await screen.findByText("15/12/2026")).toBeInTheDocument()
+    // Quanto falta vem ao lado da data, para que a vencida salte aos olhos.
+    expect(screen.getByText(/^(Em \d+ dias?|Vence hoje|Venceu há \d+ dias?)$/)).toBeInTheDocument()
     expect(
       screen.getByText(
         "UG 020101 · educacao@x.gov.br · Rua Central, 10 · Secretário(a): Ana Souza (CPF ***.982.247-**) — Decreto nº 1.234/2025",
@@ -330,8 +334,9 @@ describe("dfd: data prevista e ficha da secretaria", () => {
     renderizar(<DfdsDoProcesso processoId={PROCESSO} />)
 
     expect(await screen.findByText(/sem e-mail, endereço, UG, secretário — o coordenador completa/)).toBeInTheDocument()
+    expect(screen.getByText("Não informada")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /Data prevista de conclusão de DFD 003\/2026/ })).toHaveTextContent(
-      "Informar data prevista",
+      "Informar",
     )
   })
 
@@ -355,6 +360,52 @@ describe("dfd: data prevista e ficha da secretaria", () => {
 
     await waitFor(() => expect(enviado.expectedCompletionDate).toBe("2027-01-31"))
     expect(enviado.items).toHaveLength(1)
+  })
+
+  it("o atalho preenche a data a partir de hoje, e o ano errado é apontado antes do envio", async () => {
+    comSecretarias()
+    comDfds([comFicha])
+    let enviado: { expectedCompletionDate?: string | null } = {}
+    let gravou = 0
+    servidor.use(
+      http.put(`${urlDaApi}/procurement-processes/:id/dfds/:dfd/items`, async ({ request }) => {
+        gravou += 1
+        enviado = (await request.json()) as typeof enviado
+        return HttpResponse.json({})
+      }),
+    )
+    renderizar(<DfdsDoProcesso processoId={PROCESSO} />)
+
+    await userEvent.click(await screen.findByRole("button", { name: /Data prevista de conclusão de DFD 003\/2026/ }))
+    const campo = screen.getByLabelText("Nova data prevista de DFD 003/2026")
+    await userEvent.clear(campo)
+    await userEvent.type(campo, "0202-01-31")
+    expect(screen.getByText(/Confira o ano/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: "Salvar" }))
+    expect(gravou).toBe(0)
+
+    await userEvent.click(screen.getByRole("button", { name: "+30 dias" }))
+    expect(campo).toHaveValue(somarDias(dataBrasiliaISO(), 30))
+    await userEvent.click(screen.getByRole("button", { name: "Salvar" }))
+    await waitFor(() => expect(enviado.expectedCompletionDate).toBe(somarDias(dataBrasiliaISO(), 30)))
+  })
+
+  it("a data pode ser removida", async () => {
+    comSecretarias()
+    comDfds([comFicha])
+    let enviado: { expectedCompletionDate?: string | null } = { expectedCompletionDate: "x" }
+    servidor.use(
+      http.put(`${urlDaApi}/procurement-processes/:id/dfds/:dfd/items`, async ({ request }) => {
+        enviado = (await request.json()) as typeof enviado
+        return HttpResponse.json({})
+      }),
+    )
+    renderizar(<DfdsDoProcesso processoId={PROCESSO} />)
+
+    await userEvent.click(await screen.findByRole("button", { name: /Data prevista de conclusão de DFD 003\/2026/ }))
+    await userEvent.click(screen.getByRole("button", { name: "Remover a data" }))
+
+    await waitFor(() => expect(enviado.expectedCompletionDate).toBeNull())
   })
 
   it("registrar leva a data prevista informada", async () => {
