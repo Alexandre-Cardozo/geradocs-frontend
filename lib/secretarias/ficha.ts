@@ -6,9 +6,11 @@
  * apontar o campo antes do envio.
  */
 
+import type { FichaParaSalvar } from "@/lib/api/access-client"
 import { validaCPF } from "@/lib/auth/cpf"
 import { validaEmail } from "@/lib/auth/email"
-import type { FichaDaSecretaria } from "@/lib/types"
+import type { FichaDaSecretaria, Secretaria } from "@/lib/types"
+import { erroNomeInstitucional } from "@/lib/validacao/campos"
 
 export interface FichaEmEdicao {
   email: string
@@ -56,4 +58,51 @@ export function pendenciasDaFicha(ficha: FichaDaSecretaria): string[] {
   if (!ficha.ug) faltam.push("UG")
   if (!ficha.secretario) faltam.push("secretário")
   return faltam
+}
+
+/** O que vai ao servidor. CPF em branco não vai: o servidor mantém o guardado, que a tela só conhece mascarado. */
+export function fichaParaSalvar(ficha: FichaEmEdicao): FichaParaSalvar {
+  const { cpfNovo, ...resto } = ficha
+  const cpf = cpfNovo.trim()
+  return cpf ? { ...resto, cpfDoSecretario: cpf } : resto
+}
+
+/** Sem acento, caixa e espaço sobrando: "Secretaria de Saúde" e "secretaria  de saude" são a mesma. */
+function comparavel(nome: string): string {
+  return nome
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLocaleLowerCase("pt-BR")
+    .replace(/\s+/g, " ")
+    .trim()
+}
+
+/**
+ * O nome é o que aparece como Secretaria Requisitante no processo e no documento.
+ *
+ * <p>Duas com o mesmo nome deixariam quem abre o processo sem saber qual escolher
+ * — por isso a repetição é apontada aqui, antes de virar cadastro.
+ *
+ * @param outras as secretarias já cadastradas, sem a que está sendo editada
+ */
+export function erroDoNome(nome: string, outras: Secretaria[]): string | undefined {
+  if (nome.trim() === "") return "Informe o nome da secretaria."
+  const formato = erroNomeInstitucional(nome, "O nome da secretaria")
+  if (formato) return formato
+  const repetida = outras.find((s) => comparavel(s.nome) === comparavel(nome))
+  return repetida ? `Já existe uma secretaria com este nome: ${repetida.nome}.` : undefined
+}
+
+/**
+ * Nada mudou: nem o nome, nem a ficha, nem um CPF novo digitado.
+ *
+ * <p>Gravar o que não mudou subiria a versão do registro e apareceria na trilha
+ * do órgão como uma edição que não houve.
+ */
+export function nadaMudou(secretaria: Secretaria, nome: string, ficha: FichaEmEdicao): boolean {
+  const original = emEdicao(secretaria.ficha)
+  return (
+    nome.trim() === secretaria.nome &&
+    (Object.keys(original) as Array<keyof FichaEmEdicao>).every((campo) => ficha[campo].trim() === original[campo])
+  )
 }

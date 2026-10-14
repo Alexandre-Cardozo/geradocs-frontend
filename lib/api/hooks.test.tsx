@@ -28,6 +28,7 @@ vi.mock("@/lib/api/client", async (importOriginal) => {
 
 const PROCESSO = "3f2b1a00-1111-4222-8333-444455556666"
 const ENTIDADE = "1b7c8e10-2d3f-4a5b-8c9d-0e1f2a3b4c5d"
+const FICHA = { email: "", endereco: "", ug: "020101", secretario: "", decretoDeNomeacao: "" }
 
 function ambiente() {
   const queryClient = new QueryClient({
@@ -526,9 +527,8 @@ describe("cadastros", () => {
   it("secretaria sem entidade identificada recusa antes de chamar o servidor", async () => {
     for (const usar of [
       () => hooks.useCriarSecretaria(undefined),
-      () => hooks.useRenomearSecretaria(undefined),
+      () => hooks.useAtualizarSecretaria(undefined),
       () => hooks.useRemoverSecretaria(undefined),
-      () => hooks.useSalvarFichaDaSecretaria(undefined),
     ]) {
       const { wrapper } = ambiente()
       const { result } = renderHook(comoMutacao(usar), { wrapper })
@@ -538,25 +538,20 @@ describe("cadastros", () => {
       // nenhum — e o erro só apareceria depois, na lista.
       await waitFor(() => expect(result.current.isError).toBe(true))
       expect(api.criarSecretaria).not.toHaveBeenCalled()
-      expect(api.renomearSecretaria).not.toHaveBeenCalled()
+      expect(api.atualizarSecretaria).not.toHaveBeenCalled()
       expect(api.removerSecretaria).not.toHaveBeenCalled()
     }
   })
 
   it("secretaria com entidade recarrega a configuração daquele órgão", async () => {
     for (const [usar, entrada, funcao] of [
-      [() => hooks.useCriarSecretaria(ENTIDADE), "Secretaria de Compras", api.criarSecretaria],
+      [() => hooks.useCriarSecretaria(ENTIDADE), { nome: "Secretaria de Compras", ficha: FICHA }, api.criarSecretaria],
       [
-        () => hooks.useRenomearSecretaria(ENTIDADE),
-        { id: "s1", nome: "Secretaria de Educação" },
-        api.renomearSecretaria,
+        () => hooks.useAtualizarSecretaria(ENTIDADE),
+        { id: "s1", nome: "Secretaria de Educação", ficha: FICHA },
+        api.atualizarSecretaria,
       ],
       [() => hooks.useRemoverSecretaria(ENTIDADE), "s1", api.removerSecretaria],
-      [
-        () => hooks.useSalvarFichaDaSecretaria(ENTIDADE),
-        { id: "s1", ficha: { email: "", endereco: "", ug: "020101", secretario: "", decretoDeNomeacao: "" } },
-        api.salvarFichaDaSecretaria,
-      ],
     ] as const) {
       const { wrapper, invalidou } = ambiente()
       mockDaApi(funcao).mockResolvedValue({})

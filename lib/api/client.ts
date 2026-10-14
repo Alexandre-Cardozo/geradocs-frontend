@@ -28,9 +28,8 @@ import {
   atualizarUsuario as atualizarUsuarioNaApi,
   criarUsuario as criarUsuarioNaApi,
   desativarDepartamento as desativarDepartamentoNaApi,
-  renomearDepartamento as renomearDepartamentoNaApi,
-  salvarFichaDoDepartamento,
-  type FichaParaSalvar,
+  atualizarDepartamento as atualizarDepartamentoNaApi,
+  type SecretariaParaSalvar,
   desativarEntidade as desativarEntidadeNaApi,
   desativarUsuario as desativarUsuarioNaApi,
   transferirUsuario as transferirUsuarioNaApi,
@@ -79,7 +78,7 @@ import { baixarArquivo, gerarArquivos } from "@/lib/api/generation-client"
 import { consultarAuditoria, type ConsultaAuditoria, type PaginaAuditoria } from "@/lib/api/audit-client"
 
 export type { ConsultaAuditoria } from "@/lib/api/audit-client"
-export type { FichaParaSalvar } from "@/lib/api/access-client"
+export type { FichaParaSalvar, SecretariaParaSalvar } from "@/lib/api/access-client"
 import { dataHoraBrasiliaISO } from "@/lib/format"
 import type {
   FundamentoDaDispensa,
@@ -746,25 +745,17 @@ export async function transferirUsuario(input: TransferirUsuarioInput): Promise<
   return transferirUsuarioNaApi(input)
 }
 
-export async function criarSecretaria(entidadeId: string, nome: string): Promise<Secretaria> {
-  return criarDepartamentoNaApi(entidadeId, nome)
+export async function criarSecretaria(entidadeId: string, secretaria: SecretariaParaSalvar): Promise<Secretaria> {
+  return criarDepartamentoNaApi(entidadeId, secretaria)
 }
 
-/** A ficha da secretaria: e-mail, endereço, UG e o secretário (ADR-044 do back-end). */
-export async function salvarFichaDaSecretaria(
+/** O nome e a ficha da secretaria: e-mail, endereço, UG e o secretário (ADR-044 do back-end). */
+export async function atualizarSecretaria(
   entidadeId: string,
   secretariaId: string,
-  ficha: FichaParaSalvar,
+  secretaria: SecretariaParaSalvar,
 ): Promise<Secretaria> {
-  return salvarFichaDoDepartamento(entidadeId, secretariaId, ficha)
-}
-
-export async function renomearSecretaria(
-  entidadeId: string,
-  secretariaId: string,
-  nome: string,
-): Promise<Secretaria> {
-  return renomearDepartamentoNaApi(entidadeId, secretariaId, nome)
+  return atualizarDepartamentoNaApi(entidadeId, secretariaId, secretaria)
 }
 
 export async function removerSecretaria(entidadeId: string, secretariaId: string): Promise<void> {
