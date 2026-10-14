@@ -5,6 +5,7 @@ import { useState } from "react"
 import { Button, InfoBanner, Tag } from "@/components/ui"
 import { IconDownload, IconEye } from "@/components/ui/icons"
 import { AnexosDoArquivo } from "@/components/documentos/anexos-do-arquivo"
+import { ElaboracaoDoDocumento } from "@/components/documentos/elaboracao-do-documento"
 import { EstruturaDoDocumento } from "@/components/documentos/estrutura-do-documento"
 import { PreviaDoDocumento } from "@/components/documentos/previa-do-documento"
 import {
@@ -14,6 +15,13 @@ import {
   podeGerar,
 } from "@/lib/dominio"
 import { CATALOGO } from "@/lib/documentos"
+import {
+  ESCOLHA_INICIAL,
+  elaboracaoDe,
+  errosDaElaboracao,
+  type Elaboracao,
+  type EscolhaDaElaboracao,
+} from "@/lib/documentos/elaboracao"
 import type { SecaoDocumento, TipoDocumento } from "@/lib/types"
 
 /**
@@ -45,12 +53,22 @@ export function EtapaFinal({
   secoes: SecaoDocumento[]
   jaGerado: boolean
   pendente: boolean
-  /** `regerar` distingue a primeira geração da substituição da anterior. */
-  onGerar: (regerar: boolean) => void
+  /**
+   * `regerar` distingue a primeira geração da substituição da anterior;
+   * `elaboracao` leva quem elaborou e o ato normativo (ADR-044).
+   */
+  onGerar: (regerar: boolean, elaboracao: Elaboracao) => void
   /** Leva ao acervo, onde o documento gerado é baixado. */
   onVisualizar: () => void
 }) {
   const [confirmarRegerar, setConfirmarRegerar] = useState(false)
+  const [escolha, setEscolha] = useState<EscolhaDaElaboracao>(ESCOLHA_INICIAL)
+  const [tentou, setTentou] = useState(false)
+  const elaboracaoOk = Object.keys(errosDaElaboracao(escolha)).length === 0
+  const gerar = (regerar: boolean) => {
+    setTentou(true)
+    if (elaboracaoOk) onGerar(regerar, elaboracaoDe(escolha, tipo))
+  }
 
   const meta = CATALOGO[tipo]
   const pendentes = obrigatoriasPendentes(secoes)
@@ -76,6 +94,13 @@ export function EtapaFinal({
       <EstruturaDoDocumento processoId={processoId} tipo={tipo} secoes={secoes} />
       <PreviaDoDocumento blocos={corpoDoDocumento(secoes)} />
       <AnexosDoArquivo processoId={processoId} tipo={tipo} />
+      <ElaboracaoDoDocumento
+        processoId={processoId}
+        tipo={tipo}
+        escolha={escolha}
+        onChange={setEscolha}
+        mostrarErros={tentou}
+      />
 
       {lacunas.length > 0 && (
         <InfoBanner tone="info">
@@ -97,7 +122,7 @@ export function EtapaFinal({
               <Button variant="secondary" disabled={pendente} onClick={() => setConfirmarRegerar(false)}>
                 Cancelar
               </Button>
-              <Button variant="dark" disabled={pendente} onClick={() => onGerar(true)}>
+              <Button variant="dark" disabled={pendente} onClick={() => gerar(true)}>
                 {pendente ? "Regerando..." : "Confirmar e Regerar"}
               </Button>
             </>
@@ -119,7 +144,7 @@ export function EtapaFinal({
             // O guarda-corpo nº 7: botão travado sem dizer o que falta é motivo
             // que só existe para quem enxerga a tela.
             ariaDescribedBy="motivo-da-geracao"
-            onClick={() => onGerar(false)}
+            onClick={() => gerar(false)}
           >
             {pendente ? `Gerando ${tipo}...` : `Finalizar e Gerar ${tipo}`}
           </Button>

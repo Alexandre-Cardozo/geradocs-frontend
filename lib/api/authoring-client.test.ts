@@ -253,6 +253,73 @@ describe("histórico de versões", () => {
   })
 })
 
+/** Quem elaborou e o ato normativo (ADR-044 do back-end). */
+describe("elaboração na conclusão", () => {
+  function capturar() {
+    const corpos: Record<string, unknown>[] = []
+    servidor.use(
+      http.post(`${urlDaApi}/procurement-processes/:id/documents/:tipo/finalize`, async ({ request }) => {
+        corpos.push((await request.json()) as Record<string, unknown>)
+        return HttpResponse.json({ ...documentoApi, finalized: true, currentVersion: 1 })
+      }),
+    )
+    return corpos
+  }
+
+  it("sem elaboração não envia nada: o servidor usa quem conclui e mantém o ato", async () => {
+    const corpos = capturar()
+    const { concluirDocumento } = await carregarClienteLimpo()
+
+    await concluirDocumento(PROCESSO, "ETP")
+
+    expect(corpos[0]).toEqual({})
+  })
+
+  it("envia outra pessoa, a norma do acervo ou o ato digitado", async () => {
+    const corpos = capturar()
+    const { concluirDocumento } = await carregarClienteLimpo()
+
+    await concluirDocumento(PROCESSO, "ETP", undefined, {
+      responsavel: { nome: "José Pereira", cpf: "52998224725" },
+      ato: { normaId: "n-1" },
+    })
+    await concluirDocumento(PROCESSO, "Edital", undefined, { ato: { citacao: "10.210/2025" } })
+
+    expect(corpos[0]).toEqual({
+      preparedByName: "José Pereira",
+      preparedByCpf: "52998224725",
+      legalActRegulationId: "n-1",
+    })
+    expect(corpos[1]).toEqual({ legalActCitation: "10.210/2025" })
+  })
+
+  it("a versão traz quem elaborou e o ato — ou nada, nas anteriores", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id/documents/:tipo/versions`, () =>
+        HttpResponse.json([
+          {
+            version: 2,
+            note: "Regeração",
+            generatedAt: "2026-10-14T12:00:00Z",
+            contentHash: "a".repeat(64),
+            preparedBy: { name: "Maria Costa", cpf: "***.982.247-**" },
+            legalActCitation: "Portaria nº 77/2026",
+            body: [],
+          },
+          { version: 1, note: "Geração inicial", generatedAt: "2026-10-01T12:00:00Z", contentHash: "b".repeat(64), body: [] },
+        ]),
+      ),
+    )
+    const { versoesComTexto } = await carregarClienteLimpo()
+
+    const [atual, anterior] = await versoesComTexto(PROCESSO, "ETP")
+    expect(atual?.responsavel).toEqual({ nome: "Maria Costa", cpf: "***.982.247-**" })
+    expect(atual?.atoNormativo).toBe("Portaria nº 77/2026")
+    expect(anterior?.responsavel).toBeNull()
+    expect(anterior?.atoNormativo).toBeNull()
+  })
+})
+
 describe("comparação entre versões", () => {
   it("traduz o diff e a errata para o vocabulário da interface", async () => {
     servidor.use(

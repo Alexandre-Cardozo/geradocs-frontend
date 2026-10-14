@@ -4,6 +4,7 @@ import { baixarProtegido, requisicaoProtegida } from "@/lib/api/auth-client";
 import { ordenar } from "@/lib/documentos";
 import { formatNumeroBR, parseValorBR } from "@/lib/format";
 import type {
+  FichaDaSecretaria,
   FundamentoDaDispensa,
   Modalidade,
   NovoProcessoInput,
@@ -478,6 +479,8 @@ export async function registrarDfd(
   secretariaId: string,
   identificacao: string,
   arquivo?: File | null,
+  /** AAAA-MM-DD; a data pretendida para a conclusão da contratação (ADR-044). */
+  dataPrevista?: string,
 ): Promise<void> {
   const corpo = new FormData();
   // `Blob` com tipo, e não string: sem o `Content-Type` da parte, o servidor
@@ -490,6 +493,7 @@ export async function registrarDfd(
           departmentId: secretariaId,
           fileName: identificacao,
           items: [],
+          expectedCompletionDate: dataPrevista || null,
         }),
       ],
       { type: "application/json" },
@@ -519,6 +523,10 @@ export interface DfdAnexado {
   itens: ItemDoDfd[];
   /** Nulo quando o DFD foi registrado só pelo número: não há download a oferecer. */
   arquivo: { tipo: string; bytes: number; resumo: string } | null;
+  /** AAAA-MM-DD: a data pretendida para a conclusão da contratação (ADR-044). */
+  dataPrevista: string | null;
+  /** A ficha da secretaria de origem, com o CPF do secretário mascarado. */
+  fichaDaSecretaria: FichaDaSecretaria;
 }
 
 export interface VersaoDoArquivoDfd {
@@ -546,6 +554,15 @@ interface DfdDaApi {
     unitPrice?: number | null;
   }>;
   file?: { mediaType: string; byteSize: number; sha256: string } | null;
+  expectedCompletionDate?: string | null;
+  department?: {
+    institutionalEmail?: string | null;
+    address?: string | null;
+    managementUnit?: string | null;
+    secretaryName?: string | null;
+    secretaryCpf?: string | null;
+    secretaryAppointment?: string | null;
+  };
 }
 
 /**
@@ -578,6 +595,15 @@ export async function listarDfds(processoId: string): Promise<DfdAnexado[]> {
     arquivo: dfd.file
       ? { tipo: dfd.file.mediaType, bytes: dfd.file.byteSize, resumo: dfd.file.sha256 }
       : null,
+    dataPrevista: dfd.expectedCompletionDate ?? null,
+    fichaDaSecretaria: {
+      email: dfd.department?.institutionalEmail ?? null,
+      endereco: dfd.department?.address ?? null,
+      ug: dfd.department?.managementUnit ?? null,
+      secretario: dfd.department?.secretaryName ?? null,
+      cpfDoSecretario: dfd.department?.secretaryCpf ?? null,
+      decretoDeNomeacao: dfd.department?.secretaryAppointment ?? null,
+    },
   }));
 }
 
@@ -591,6 +617,11 @@ export async function atualizarItensDoDfd(
   processoId: string,
   dfdId: string,
   itens: ItemDoDfd[],
+  /**
+   * A data prevista que o DFD tem — ou a nova. Vai sempre: a rota troca itens e
+   * data juntos, e omiti-la apagaria a data a cada item corrigido.
+   */
+  dataPrevista: string | null,
 ): Promise<void> {
   await requisicaoProtegida<unknown>(
     `/procurement-processes/${encodeURIComponent(processoId)}/dfds/${encodeURIComponent(dfdId)}/items`,
@@ -606,6 +637,7 @@ export async function atualizarItensDoDfd(
           // "não estimado" é outra coisa.
           unitPrice: item.valorUnitario ? parseValorBR(item.valorUnitario) : null,
         })),
+        expectedCompletionDate: dataPrevista || null,
       }),
     },
   );

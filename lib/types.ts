@@ -327,6 +327,23 @@ export interface Secretaria {
   id: string
   nome: string
   sigla?: string
+  /** A ficha que o DFD mostra (ADR-044 do back-end). */
+  ficha: FichaDaSecretaria
+}
+
+/**
+ * E-mail institucional, endereço, UG e o secretário.
+ *
+ * <p>Tudo opcional. O CPF do secretário só chega mascarado
+ * (`***.456.789-**`): a lista de secretarias é lida por todo servidor.
+ */
+export interface FichaDaSecretaria {
+  email: string | null
+  endereco: string | null
+  ug: string | null
+  secretario: string | null
+  cpfDoSecretario: string | null
+  decretoDeNomeacao: string | null
 }
 
 /**

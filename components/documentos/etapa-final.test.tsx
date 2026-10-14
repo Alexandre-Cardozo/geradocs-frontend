@@ -1,7 +1,10 @@
+import { HttpResponse, http } from "msw"
 import { describe, expect, it, vi } from "vitest"
 
 import { EtapaFinal } from "@/components/documentos/etapa-final"
+import { urlDaApi } from "@/lib/teste/handlers"
 import { renderizar, screen, userEvent } from "@/lib/teste/renderizar"
+import { servidor } from "@/lib/teste/servidor-msw"
 import type { SecaoDocumento } from "@/lib/types"
 
 /**
@@ -73,7 +76,7 @@ describe("etapa final do documento", () => {
 
     await userEvent.click(await screen.findByRole("button", { name: /Finalizar e Gerar/ }))
 
-    expect(gerar).toHaveBeenCalledWith(false)
+    expect(gerar).toHaveBeenCalledWith(false, {})
   })
 
   it("dispensável em branco sem justificativa é apontada, e não trava", async () => {
@@ -100,7 +103,7 @@ describe("etapa final do documento", () => {
     expect(gerar).not.toHaveBeenCalled()
 
     await userEvent.click(screen.getByRole("button", { name: /Confirmar e Regerar/ }))
-    expect(gerar).toHaveBeenCalledWith(true)
+    expect(gerar).toHaveBeenCalledWith(true, {})
   })
 
   it("já gerado, o caminho de ver o documento leva ao acervo", async () => {
@@ -112,5 +115,107 @@ describe("etapa final do documento", () => {
     await userEvent.click(await screen.findByRole("button", { name: /Visualizar Documento/ }))
 
     expect(visualizar).toHaveBeenCalled()
+  })
+})
+
+/**
+ * Responsável pela elaboração e o ato normativo (ADR-044 do back-end).
+ *
+ * <p>Por padrão é quem conclui; informar outra pessoa exige nome e CPF válidos.
+ * No ETP vem a portaria; no Edital, o decreto.
+ */
+describe("etapa final: quem elaborou", () => {
+  const prontas = [secao("1", true, "Completo", "Necessidade descrita.")]
+
+  function renderizarDo(tipo: "ETP" | "TR" | "Edital") {
+    const gerar = vi.fn()
+    renderizar(
+      <EtapaFinal
+        processoId={PROCESSO}
+        tipo={tipo}
+        secoes={prontas}
+        jaGerado={false}
+        pendente={false}
+        onGerar={gerar}
+        onVisualizar={vi.fn()}
+      />,
+    )
+    return gerar
+  }
+
+  it("por padrão é quem conclui, com o CPF mascarado", async () => {
+    renderizarDo("TR")
+
+    expect(await screen.findByText("Maria Costa Andrade")).toBeInTheDocument()
+    expect(screen.getByText("CPF ***.333.333-**")).toBeInTheDocument()
+    // Fora do ETP e do Edital não há ato a citar.
+    expect(screen.queryByRole("button", { name: "Portaria" })).not.toBeInTheDocument()
+  })
+
+  it("outra pessoa precisa de nome e CPF válidos antes de gerar", async () => {
+    const gerar = renderizarDo("TR")
+
+    await userEvent.click(await screen.findByRole("button", { name: "Informar outra pessoa" }))
+    await userEvent.type(screen.getByPlaceholderText("Ex.: José Pereira"), "José Pereira")
+    await userEvent.type(screen.getByRole("textbox", { name: "CPF de quem elaborou" }), "12345678900")
+    await userEvent.click(screen.getByRole("button", { name: /Finalizar e Gerar/ }))
+    expect(screen.getByText("Informe um CPF válido.")).toBeInTheDocument()
+    expect(gerar).not.toHaveBeenCalled()
+
+    await userEvent.clear(screen.getByRole("textbox", { name: "CPF de quem elaborou" }))
+    await userEvent.type(screen.getByRole("textbox", { name: "CPF de quem elaborou" }), "52998224725")
+    await userEvent.click(screen.getByRole("button", { name: /Finalizar e Gerar/ }))
+    expect(gerar).toHaveBeenCalledWith(false, { responsavel: { nome: "José Pereira", cpf: "52998224725" } })
+  })
+
+  it("no ETP, a portaria é digitada quando não está no acervo", async () => {
+    const gerar = renderizarDo("ETP")
+
+    await userEvent.click(await screen.findByRole("button", { name: "Portaria" }))
+    await userEvent.click(await screen.findByRole("option", { name: /Digitar portaria/ }))
+    await userEvent.type(screen.getByRole("textbox", { name: "Portaria digitada" }), "Portaria nº 77/2026")
+    await userEvent.click(screen.getByRole("button", { name: /Finalizar e Gerar/ }))
+
+    expect(gerar).toHaveBeenCalledWith(false, { ato: { citacao: "Portaria nº 77/2026" } })
+  })
+
+  it("no Edital, o decreto vem do acervo de normas", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/regulations`, () =>
+        HttpResponse.json([
+          {
+            id: "n-dec",
+            kind: "DECREE",
+            kindLabel: "Decreto",
+            number: "10.210",
+            publishedOn: "2025-03-05",
+            title: "Regulamenta a Lei 14.133/21",
+            status: "IN_FORCE",
+            currentFile: {
+              version: 1,
+              fileName: "d.pdf",
+              mediaType: "application/pdf",
+              byteSize: 1,
+              sha256: "a".repeat(64),
+              textAvailable: true,
+              textCharacters: 1,
+              uploadedAt: "2026-10-01T00:00:00Z",
+              current: true,
+            },
+            updatedAt: "2026-10-01T00:00:00Z",
+            version: 0,
+          },
+        ]),
+      ),
+    )
+    const gerar = renderizarDo("Edital")
+
+    await userEvent.click(await screen.findByRole("button", { name: "Decreto" }))
+    await userEvent.click(
+      await screen.findByRole("option", { name: "Decreto nº 10.210, de 05/03/2025 — Regulamenta a Lei 14.133/21" }),
+    )
+    await userEvent.click(screen.getByRole("button", { name: /Finalizar e Gerar/ }))
+
+    expect(gerar).toHaveBeenCalledWith(false, { ato: { normaId: "n-dec" } })
   })
 })

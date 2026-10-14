@@ -3,7 +3,8 @@
 import { useState, type ReactNode } from "react"
 
 import { Button, Input, SectionBlock } from "@/components/ui"
-import { IconCheck, IconFile, IconPencil, IconPlus, IconTrash, IconX } from "@/components/ui/icons"
+import { IconCheck, IconClipboard, IconFile, IconPencil, IconPlus, IconTrash, IconX } from "@/components/ui/icons"
+import { FichaDaSecretariaForm } from "@/components/configuracoes/ficha-da-secretaria"
 import { EmptyState, ErrorState, LoadingState } from "@/components/shared/estados"
 import { useToast } from "@/components/shared/providers"
 import {
@@ -11,8 +12,10 @@ import {
   useCriarSecretaria,
   useRemoverSecretaria,
   useRenomearSecretaria,
+  useSalvarFichaDaSecretaria,
   useSessao,
 } from "@/lib/api/hooks"
+import { pendenciasDaFicha, type FichaEmEdicao } from "@/lib/secretarias/ficha"
 import type { Secretaria } from "@/lib/types"
 import { erroNomeInstitucional } from "@/lib/validacao/campos"
 
@@ -69,6 +72,7 @@ function LinhaDaSecretaria({
   onCancelar,
   onSalvar,
   onRemover,
+  onFicha,
 }: {
   secretaria: Secretaria
   editando: boolean
@@ -78,9 +82,11 @@ function LinhaDaSecretaria({
   onCancelar: () => void
   onSalvar: (nome: string) => void
   onRemover: () => void
+  onFicha: () => void
 }) {
   const [nome, setNome] = useState(secretaria.nome)
   const erro = erroDoNome(nome)
+  const pendencias = pendenciasDaFicha(secretaria.ficha)
 
   if (editando) {
     return (
@@ -120,7 +126,15 @@ function LinhaDaSecretaria({
       <span className="flex size-7 shrink-0 items-center justify-center rounded-sm bg-tint-royal-bg text-royal">
         <IconFile size={14} />
       </span>
-      <span className="flex-1 truncate text-base font-medium text-text-1">{secretaria.nome}</span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-base font-medium text-text-1">{secretaria.nome}</span>
+        <span className="block truncate text-xs text-text-muted">
+          {pendencias.length === 0 ? "Ficha completa" : `Ficha: falta ${pendencias.join(", ")}`}
+        </span>
+      </span>
+      <AcaoDaLinha rotulo={`Ficha de ${secretaria.nome}`} onClick={onFicha}>
+        <IconClipboard size={13} />
+      </AcaoDaLinha>
       <AcaoDaLinha rotulo={`Renomear ${secretaria.nome}`} onClick={onEditar}>
         <IconPencil size={13} />
       </AcaoDaLinha>
@@ -150,6 +164,8 @@ export default function Secretarias() {
   const criarSecretaria = useCriarSecretaria(entidadeId)
   const renomearSecretaria = useRenomearSecretaria(entidadeId)
   const removerSecretaria = useRemoverSecretaria(entidadeId)
+  const salvarFicha = useSalvarFichaDaSecretaria(entidadeId)
+  const [fichaAberta, setFichaAberta] = useState<string | null>(null)
 
   const [novaSecretaria, setNovaSecretaria] = useState("")
   const [emEdicao, setEmEdicao] = useState<string | null>(null)
@@ -219,6 +235,34 @@ export default function Secretarias() {
     )
   }
 
+  const gravarFicha = (secretaria: Secretaria, ficha: FichaEmEdicao) => {
+    salvarFicha.mutate(
+      {
+        id: secretaria.id,
+        ficha: {
+          email: ficha.email,
+          endereco: ficha.endereco,
+          ug: ficha.ug,
+          secretario: ficha.secretario,
+          // Vazio não vai: o servidor mantém o CPF guardado, que a tela só
+          // conhece mascarado.
+          cpfDoSecretario: ficha.cpfNovo.trim() || undefined,
+          decretoDeNomeacao: ficha.decretoDeNomeacao,
+        },
+      },
+      {
+        onSuccess: () => {
+          setFichaAberta(null)
+          showToast("Ficha da secretaria salva.")
+        },
+        onError: (error) =>
+          showToast(error instanceof Error ? error.message : "Não foi possível salvar a ficha."),
+      },
+    )
+  }
+
+  const secretariaDaFicha = tenant.data.secretarias.find((s) => s.id === fichaAberta)
+
   const remover = (id: string) => {
     removerSecretaria.mutate(id, {
       onSuccess: () => showToast("Secretaria desativada."),
@@ -278,9 +322,21 @@ export default function Secretarias() {
                 onCancelar={() => setEmEdicao(null)}
                 onSalvar={(nome) => salvarNome(s, nome)}
                 onRemover={() => remover(s.id)}
+                onFicha={() => setFichaAberta(s.id)}
               />
             ))}
           </div>
+        )}
+        {secretariaDaFicha && (
+          <FichaDaSecretariaForm
+            // A chave remonta o formulário ao trocar de secretaria: senão os
+            // campos continuariam com a ficha da anterior.
+            key={secretariaDaFicha.id}
+            secretaria={secretariaDaFicha}
+            pendente={salvarFicha.isPending}
+            onSalvar={(ficha) => gravarFicha(secretariaDaFicha, ficha)}
+            onCancelar={() => setFichaAberta(null)}
+          />
         )}
       </SectionBlock>
     </div>

@@ -143,7 +143,22 @@ describe("obterTenant", () => {
     const tenant = await obterTenant(organizacao.id)
 
     // Secretaria extinta não pode continuar aparecendo como opção de lotação.
-    expect(tenant.secretarias).toEqual([{ id: departamento.id, nome: "Secretaria de Administração", sigla: "SMA" }])
+    expect(tenant.secretarias).toEqual([
+      {
+        id: departamento.id,
+        nome: "Secretaria de Administração",
+        sigla: "SMA",
+        // Sem ficha no servidor anterior: tudo ausente (ADR-044).
+        ficha: {
+          email: null,
+          endereco: null,
+          ug: null,
+          secretario: null,
+          cpfDoSecretario: null,
+          decretoDeNomeacao: null,
+        },
+      },
+    ])
   })
 })
 
@@ -175,6 +190,104 @@ describe("criarDepartamento", () => {
     const secretaria = await criarDepartamento(organizacao.id, "Secretaria de Saúde")
 
     expect(secretaria.sigla).toBeUndefined()
+  })
+})
+
+describe("salvarFichaDoDepartamento", () => {
+  it("reenvia nome e sigla, manda vazio como ausente e omite o CPF não digitado", async () => {
+    let corpo: { name?: string; acronym?: string; details?: Record<string, unknown> } = {}
+    servidor.use(
+      http.get(`${urlDaApi}/organizations/:id/departments`, () => HttpResponse.json([departamento])),
+      http.patch(`${urlDaApi}/organizations/:id/departments/:dep`, async ({ request }) => {
+        corpo = (await request.json()) as typeof corpo
+        return HttpResponse.json({
+          ...departamento,
+          details: { managementUnit: "020101", secretaryName: "Ana Souza", secretaryCpf: "***.982.247-**" },
+        })
+      }),
+    )
+    const { salvarFichaDoDepartamento } = await carregarClienteLimpo()
+
+    const secretaria = await salvarFichaDoDepartamento(organizacao.id, departamento.id, {
+      email: " ",
+      endereco: "",
+      ug: " 020101 ",
+      secretario: "Ana Souza",
+      decretoDeNomeacao: "",
+    })
+
+    expect(corpo.name).toBe(departamento.name)
+    expect(corpo.acronym).toBe(departamento.acronym)
+    expect(corpo.details).toEqual({
+      institutionalEmail: null,
+      address: null,
+      managementUnit: "020101",
+      secretaryName: "Ana Souza",
+      secretaryAppointment: null,
+    })
+    expect(secretaria.ficha.cpfDoSecretario).toBe("***.982.247-**")
+  })
+
+  it("leva o CPF quando digitado, e a ficha inteira preenchida", async () => {
+    let corpo: { details?: Record<string, unknown> } = {}
+    servidor.use(
+      http.get(`${urlDaApi}/organizations/:id/departments`, () =>
+        HttpResponse.json([{ ...departamento, acronym: null }]),
+      ),
+      http.patch(`${urlDaApi}/organizations/:id/departments/:dep`, async ({ request }) => {
+        corpo = (await request.json()) as typeof corpo
+        return HttpResponse.json(departamento)
+      }),
+    )
+    const { salvarFichaDoDepartamento } = await carregarClienteLimpo()
+
+    await salvarFichaDoDepartamento(organizacao.id, departamento.id, {
+      email: "adm@x.gov.br",
+      endereco: "Rua Central, 10",
+      ug: "020101",
+      secretario: "Ana Souza",
+      cpfDoSecretario: "529.982.247-25",
+      decretoDeNomeacao: "Decreto 1/2025",
+    })
+
+    expect(corpo.details).toEqual({
+      institutionalEmail: "adm@x.gov.br",
+      address: "Rua Central, 10",
+      managementUnit: "020101",
+      secretaryName: "Ana Souza",
+      secretaryCpf: "529.982.247-25",
+      secretaryAppointment: "Decreto 1/2025",
+    })
+  })
+})
+
+describe("salvarFichaDoDepartamento — ficha em branco", () => {
+  it("apagar tudo manda tudo como ausente", async () => {
+    let corpo: { details?: Record<string, unknown> } = {}
+    servidor.use(
+      http.get(`${urlDaApi}/organizations/:id/departments`, () => HttpResponse.json([departamento])),
+      http.patch(`${urlDaApi}/organizations/:id/departments/:dep`, async ({ request }) => {
+        corpo = (await request.json()) as typeof corpo
+        return HttpResponse.json(departamento)
+      }),
+    )
+    const { salvarFichaDoDepartamento } = await carregarClienteLimpo()
+
+    await salvarFichaDoDepartamento(organizacao.id, departamento.id, {
+      email: "",
+      endereco: "",
+      ug: "",
+      secretario: "",
+      decretoDeNomeacao: "",
+    })
+
+    expect(corpo.details).toEqual({
+      institutionalEmail: null,
+      address: null,
+      managementUnit: null,
+      secretaryName: null,
+      secretaryAppointment: null,
+    })
   })
 })
 

@@ -289,3 +289,94 @@ describe("DFDs do processo", () => {
     expect(await screen.findByText(/Nenhum DFD registrado/)).toBeInTheDocument()
   })
 })
+
+/**
+ * Data prevista de conclusão e ficha da secretaria (ADR-044 do back-end).
+ *
+ * <p>A data grava pela rota dos itens, e por isso os itens vão junto como
+ * estão — senão salvar a data apagaria o que a secretaria pediu.
+ */
+describe("dfd: data prevista e ficha da secretaria", () => {
+  const item = { description: "Papel A4", unit: "RESMA", quantity: 100, specification: null, unitPrice: null }
+  const comFicha = {
+    ...dfd("d-1", "DFD 003/2026", "Secretaria de Educação", [item]),
+    expectedCompletionDate: "2026-12-15",
+    department: {
+      institutionalEmail: "educacao@x.gov.br",
+      address: "Rua Central, 10",
+      managementUnit: "020101",
+      secretaryName: "Ana Souza",
+      secretaryCpf: "***.982.247-**",
+      secretaryAppointment: "Decreto nº 1.234/2025",
+    },
+  }
+
+  it("mostra a data e a ficha, com o CPF mascarado", async () => {
+    comSecretarias()
+    comDfds([comFicha])
+    renderizar(<DfdsDoProcesso processoId={PROCESSO} />)
+
+    expect(await screen.findByText("Conclusão prevista: 15/12/2026")).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        "UG 020101 · educacao@x.gov.br · Rua Central, 10 · Secretário(a): Ana Souza (CPF ***.982.247-**) — Decreto nº 1.234/2025",
+      ),
+    ).toBeInTheDocument()
+  })
+
+  it("ficha incompleta diz o que falta e quem completa", async () => {
+    comSecretarias()
+    comDfds([dfd("d-1", "DFD 003/2026", "Secretaria de Educação", [])])
+    renderizar(<DfdsDoProcesso processoId={PROCESSO} />)
+
+    expect(await screen.findByText(/sem e-mail, endereço, UG, secretário — o coordenador completa/)).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /Data prevista de conclusão de DFD 003\/2026/ })).toHaveTextContent(
+      "Informar data prevista",
+    )
+  })
+
+  it("alterar a data reenvia os itens como estão", async () => {
+    comSecretarias()
+    comDfds([comFicha])
+    let enviado: { items?: unknown[]; expectedCompletionDate?: string } = {}
+    servidor.use(
+      http.put(`${urlDaApi}/procurement-processes/:id/dfds/:dfd/items`, async ({ request }) => {
+        enviado = (await request.json()) as typeof enviado
+        return HttpResponse.json({})
+      }),
+    )
+    renderizar(<DfdsDoProcesso processoId={PROCESSO} />)
+
+    await userEvent.click(await screen.findByRole("button", { name: /Data prevista de conclusão de DFD 003\/2026/ }))
+    const campo = screen.getByLabelText("Nova data prevista de DFD 003/2026")
+    await userEvent.clear(campo)
+    await userEvent.type(campo, "2027-01-31")
+    await userEvent.click(screen.getByRole("button", { name: "Salvar" }))
+
+    await waitFor(() => expect(enviado.expectedCompletionDate).toBe("2027-01-31"))
+    expect(enviado.items).toHaveLength(1)
+  })
+
+  it("registrar leva a data prevista informada", async () => {
+    comSecretarias()
+    comDfds([])
+    let dados: Record<string, unknown> = {}
+    servidor.use(
+      http.post(`${urlDaApi}/procurement-processes/:id/dfds`, async ({ request }) => {
+        const corpo = await request.formData()
+        dados = JSON.parse(await (corpo.get("dados") as Blob).text()) as Record<string, unknown>
+        return HttpResponse.json({}, { status: 201 })
+      }),
+    )
+    renderizar(<DfdsDoProcesso processoId={PROCESSO} />)
+
+    await userEvent.click(await screen.findByRole("button", { name: "Registrar DFD" }))
+    await userEvent.click(screen.getByRole("button", { name: "Secretaria que formalizou" }))
+    await userEvent.click(await screen.findByRole("option", { name: "Secretaria de Educação" }))
+    await userEvent.type(screen.getByLabelText("Identificação do DFD"), "DFD 004/2026")
+    await userEvent.type(screen.getByLabelText("Data prevista de conclusão"), "2026-11-30")
+    await userEvent.click(screen.getAllByRole("button", { name: "Registrar DFD" }).at(-1)!)
+
+    await waitFor(() => expect(dados.expectedCompletionDate).toBe("2026-11-30"))
+  })
+})

@@ -511,6 +511,7 @@ describe("registrarDfd", () => {
     expect(capturado.dados.departmentId).toBe(DEPARTAMENTO_ID)
     expect(capturado.dados.fileName).toBe("DFD 003/2026")
     expect(capturado.dados.items).toEqual([])
+    expect(capturado.dados.expectedCompletionDate).toBeNull()
     // Sem arquivo escolhido, nada de parte `file`: o documento assinado chega no
     // tempo dele, às vezes só no fim do processo (ADR-028).
     expect(capturado.arquivo).toBeNull()
@@ -529,6 +530,70 @@ describe("registrarDfd", () => {
 
     expect(capturado.arquivo?.name).toBe("dfd-003.pdf")
     expect(capturado.arquivo?.type).toBe("application/pdf")
+  })
+
+  it("leva a data prevista de conclusão quando informada (ADR-044)", async () => {
+    const capturado = capturar()
+    const { registrarDfd } = await carregarClienteLimpo()
+
+    await registrarDfd(PROCESSO, DEPARTAMENTO_ID, "DFD 003/2026", null, "2026-12-15")
+
+    expect(capturado.dados.expectedCompletionDate).toBe("2026-12-15")
+  })
+})
+
+describe("listarDfds — data prevista e ficha da secretaria", () => {
+  const PROCESSO = "3f2b1a00-1111-4222-8333-444455556666"
+  const base = {
+    id: "d-1",
+    fileName: "DFD 003/2026",
+    departmentId: DEPARTAMENTO_ID,
+    departmentName: "Secretaria de Saúde",
+    submittedAt: "2026-10-01T12:00:00Z",
+    items: [],
+    file: null,
+  }
+
+  it("traz a data e a ficha, com o CPF do secretário mascarado", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id/dfds`, () =>
+        HttpResponse.json([
+          {
+            ...base,
+            expectedCompletionDate: "2026-12-15",
+            department: {
+              institutionalEmail: "saude@x.gov.br",
+              address: "Rua Central, 10",
+              managementUnit: "020101",
+              secretaryName: "Ana Souza",
+              secretaryCpf: "***.982.247-**",
+              secretaryAppointment: "Decreto nº 1.234/2025",
+            },
+          },
+        ]),
+      ),
+    )
+    const { listarDfds } = await carregarClienteLimpo()
+
+    const [dfd] = await listarDfds(PROCESSO)
+    expect(dfd?.dataPrevista).toBe("2026-12-15")
+    expect(dfd?.fichaDaSecretaria).toEqual({
+      email: "saude@x.gov.br",
+      endereco: "Rua Central, 10",
+      ug: "020101",
+      secretario: "Ana Souza",
+      cpfDoSecretario: "***.982.247-**",
+      decretoDeNomeacao: "Decreto nº 1.234/2025",
+    })
+  })
+
+  it("sem os campos novos (servidor anterior), vira ausência", async () => {
+    servidor.use(http.get(`${urlDaApi}/procurement-processes/:id/dfds`, () => HttpResponse.json([base])))
+    const { listarDfds } = await carregarClienteLimpo()
+
+    const [dfd] = await listarDfds(PROCESSO)
+    expect(dfd?.dataPrevista).toBeNull()
+    expect(dfd?.fichaDaSecretaria.secretario).toBeNull()
   })
 })
 
@@ -558,27 +623,31 @@ describe("atualizarItensDoDfd", () => {
     const corpo = capturar()
     const { atualizarItensDoDfd } = await carregarClienteLimpo()
 
-    await atualizarItensDoDfd(PROCESSO, "d-1", [
-      { descricao: "Papel A4", unidade: "RESMA", quantidade: "1.200", valorUnitario: "25,50" },
-    ])
+    await atualizarItensDoDfd(
+      PROCESSO,
+      "d-1",
+      [{ descricao: "Papel A4", unidade: "RESMA", quantidade: "1.200", valorUnitario: "25,50" }],
+      "2026-12-15",
+    )
 
     // "25,50" precisa chegar como 25,5: mandar a string faria o servidor ler
     // outro número — o mesmo defeito que o import do PCA já teve.
     expect(corpo.items?.[0]?.unitPrice).toBe(25.5)
     expect(corpo.items?.[0]?.quantity).toBe(1200)
+    // A data vai sempre junto: a rota troca itens e data, e omiti-la a apagaria.
+    expect((corpo as { expectedCompletionDate?: string }).expectedCompletionDate).toBe("2026-12-15")
   })
 
   it("sem preço informado, manda nulo — e não zero", async () => {
     const corpo = capturar()
     const { atualizarItensDoDfd } = await carregarClienteLimpo()
 
-    await atualizarItensDoDfd(PROCESSO, "d-1", [
-      { descricao: "Papel A4", unidade: "RESMA", quantidade: "1.200" },
-    ])
+    await atualizarItensDoDfd(PROCESSO, "d-1", [{ descricao: "Papel A4", unidade: "RESMA", quantidade: "1.200" }], null)
 
     // Zero é um preço; "ninguém estimou" é outra coisa, e a estimativa do ETP
     // conta os dois de formas diferentes.
     expect(corpo.items?.[0]?.unitPrice).toBeNull()
+    expect((corpo as { expectedCompletionDate?: string | null }).expectedCompletionDate).toBeNull()
   })
 })
 

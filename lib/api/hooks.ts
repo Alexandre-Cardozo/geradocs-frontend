@@ -697,6 +697,18 @@ export function useRenomearSecretaria(entidadeId: string | undefined) {
   })
 }
 
+/** Grava a ficha da secretaria (ADR-044 do back-end). */
+export function useSalvarFichaDaSecretaria(entidadeId: string | undefined) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { id: string; ficha: api.FichaParaSalvar }) => {
+      if (!entidadeId) throw new Error("Entidade não identificada.")
+      return api.salvarFichaDaSecretaria(entidadeId, input.id, input.ficha)
+    },
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: chaves.tenant(entidadeId) }),
+  })
+}
+
 export function useRemoverSecretaria(entidadeId: string | undefined) {
   const queryClient = useQueryClient()
   return useMutation({
@@ -788,7 +800,8 @@ export function useRegistrarDfd(processoId: string) {
       secretariaId: string
       identificacao: string
       arquivo?: File | null
-    }) => registrarDfd(processoId, input.secretariaId, input.identificacao, input.arquivo),
+      dataPrevista?: string
+    }) => registrarDfd(processoId, input.secretariaId, input.identificacao, input.arquivo, input.dataPrevista),
     onSuccess: () => recarregarDemanda(queryClient, processoId),
   })
 }
@@ -816,8 +829,8 @@ function recarregarDemanda(queryClient: QueryClient, processoId: string) {
 export function useAtualizarItensDoDfd(processoId: string) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (input: { dfdId: string; itens: ItemDoDfd[] }) =>
-      atualizarItensDoDfd(processoId, input.dfdId, input.itens),
+    mutationFn: (input: { dfdId: string; itens: ItemDoDfd[]; dataPrevista: string | null }) =>
+      atualizarItensDoDfd(processoId, input.dfdId, input.itens, input.dataPrevista),
     onSuccess: () => recarregarDemanda(queryClient, processoId),
   })
 }

@@ -395,9 +395,9 @@ export default function EditorDocumento() {
               secoes={lista}
               jaGerado={jaGerado}
               pendente={gerarDocumento.isPending}
-              onGerar={(regerar) =>
+              onGerar={(regerar, elaboracao) =>
                 gerarDocumento.mutate(
-                  { processoId, tipo },
+                  { processoId, tipo, elaboracao },
                   {
                     onSuccess: () => {
                       showToast(
