@@ -261,12 +261,13 @@ describe("processo", () => {
     vi.mocked(contratacao.obterProcesso).mockResolvedValue(processo() as never)
     vi.mocked(contratacao.atualizarProcessoReal).mockResolvedValue(processo() as never)
 
-    await api.atualizarProcesso({ id: PROCESSO, objeto: "Aquisição revista" })
+    await api.atualizarProcesso({ id: PROCESSO, objeto: "Aquisição revista", secretariaId: "s-saude" })
 
-    // Motivo em toda edição transformaria a trilha em log de cliques.
+    // Motivo em toda edição transformaria a trilha em log de cliques. A troca
+    // de secretaria segue adiante: é o servidor que a registra na trilha.
     expect(contratacao.atualizarProcessoReal).toHaveBeenCalledWith(
       expect.objectContaining({ id: PROCESSO }),
-      expect.objectContaining({ objeto: "Aquisição revista", motivo: undefined }),
+      expect.objectContaining({ objeto: "Aquisição revista", motivo: undefined, secretariaId: "s-saude" }),
     )
   })
 

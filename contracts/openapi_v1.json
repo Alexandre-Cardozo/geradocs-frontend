@@ -2362,6 +2362,10 @@
             "minLength" : 3,
             "type" : "string"
           },
+          "departmentId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
           "dispensationGround" : {
             "enum" : [ "OTHER", "VALUE_ENGINEERING", "VALUE_GENERAL" ],
             "type" : "string"
