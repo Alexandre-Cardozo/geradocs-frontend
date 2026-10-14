@@ -12,11 +12,16 @@
  * termina quando os documentos estão prontos — `em_revisao`, `aguardando`,
  * `aprovado` e `rejeitado` descreviam etapas que ela não executa mais.
  */
-export type StatusProcesso = "rascunho" | "em_elaboracao" | "concluido"
+/**
+ * O status do processo, calculado pelo servidor a partir dos documentos
+ * obrigatórios da modalidade (ADR-050 do back-end) — ninguém o muda à mão.
+ */
+export type StatusProcesso = "rascunho" | "em_elaboracao" | "pronto_para_encerrar" | "concluido"
 
 export const STATUS_PROCESSO_LABEL: Record<StatusProcesso, string> = {
   rascunho: "Rascunho",
   em_elaboracao: "Em Elaboração",
+  pronto_para_encerrar: "Pronto para Encerrar",
   concluido: "Concluído",
 }
 
@@ -140,6 +145,8 @@ export interface Processo {
   /** O id da secretaria requisitante — é por ele que a edição a troca. */
   secretariaId?: string
   status: StatusProcesso
+  /** Os obrigatórios da modalidade e quantos já foram concluídos (ADR-050). */
+  obrigatorios?: { total: number; concluidos: number }
   /** Quando a plataforma deixou de acompanhar o processo. */
   encerradoEm?: string
   /** Por que foi encerrado com documento faltando — responde ao controle depois. */
@@ -492,8 +499,10 @@ export interface Sessao {
 export interface EstatisticasDashboard {
   processosAtivos: number
   processosNovosMes: number
-  /** Processos que já têm documento em elaboração. */
+  /** Abertos com documento concluído e obrigatório ainda por concluir (ADR-050). */
   processosEmElaboracao: number
+  /** Abertos com todos os obrigatórios da modalidade concluídos (ADR-050). */
+  processosProntosParaEncerrar: number
   /** Documentos escolhidos no processo que ainda não foram gerados. */
   documentosPendentes: number
   documentosGerados: number

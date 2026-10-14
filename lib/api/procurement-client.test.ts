@@ -92,19 +92,45 @@ describe("listarProcessos", () => {
     expect(recebida?.searchParams.get("search")).toBe("material")
   })
 
-  it("filtra por rascunho quando é esse o status pedido", async () => {
-    let recebida: URL | undefined
+  it("todo status da tela filtra pela etapa que o servidor calcula (ADR-050)", async () => {
+    const recebidas: (string | null)[] = []
     servidor.use(
       http.get(`${urlDaApi}/procurement-processes`, ({ request }) => {
-        recebida = new URL(request.url)
+        recebidas.push(new URL(request.url).searchParams.get("stage"))
         return HttpResponse.json(pagina())
       }),
     )
     const { listarProcessos } = await carregarClienteLimpo()
 
-    await listarProcessos({ status: "rascunho" })
+    for (const status of ["rascunho", "em_elaboracao", "pronto_para_encerrar", "concluido"] as const) {
+      await listarProcessos({ status })
+    }
 
-    expect(recebida?.searchParams.get("status")).toBe("DRAFT")
+    expect(recebidas).toEqual(["DRAFT", "IN_PROGRESS", "READY_TO_CLOSE", "CLOSED"])
+  })
+
+  it("a etapa do servidor vira o status, com o progresso dos obrigatórios", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes`, () =>
+        HttpResponse.json(
+          pagina([
+            { ...processoApi, stage: "READY_TO_CLOSE", requiredDocuments: 3, requiredDocumentsDone: 3 },
+            { ...processoApi, stage: "IN_PROGRESS", requiredDocuments: 3 },
+            { ...processoApi, status: "CLOSED" },
+          ]),
+        ),
+      ),
+    )
+    const { listarProcessos } = await carregarClienteLimpo()
+
+    const { itens } = await listarProcessos({})
+
+    expect(itens[0]?.status).toBe("pronto_para_encerrar")
+    expect(itens[0]?.obrigatorios).toEqual({ total: 3, concluidos: 3 })
+    expect(itens[1]?.obrigatorios).toEqual({ total: 3, concluidos: 0 })
+    // Sem a etapa (servidor anterior), vale aberto ou encerrado.
+    expect(itens[2]?.status).toBe("concluido")
+    expect(itens[2]).not.toHaveProperty("obrigatorios")
   })
 
   it("consulta sem filtro de status quando a tela pede todos", async () => {
@@ -119,7 +145,7 @@ describe("listarProcessos", () => {
 
     await listarProcessos({ status: "todos", busca: "   " })
 
-    expect(recebida?.searchParams.has("status")).toBe(false)
+    expect(recebida?.searchParams.has("stage")).toBe(false)
     expect(recebida?.searchParams.has("search")).toBe(false)
   })
 
@@ -138,24 +164,6 @@ describe("listarProcessos", () => {
     expect(recebida?.searchParams.get("page")).toBe("0")
     // Uma lista vazia ainda tem uma página; zero quebraria a paginação da tela.
     expect(resultado.totalPaginas).toBe(1)
-  })
-
-  it("não consulta a API para status que o backend ainda não persiste", async () => {
-    let chamou = false
-    servidor.use(
-      http.get(`${urlDaApi}/procurement-processes`, () => {
-        chamou = true
-        return HttpResponse.json(pagina())
-      }),
-    )
-    const { listarProcessos } = await carregarClienteLimpo()
-
-    // Só 'rascunho' existe no backend hoje. Consultar por 'concluido' traria a
-    // lista inteira e a tela mostraria processos que não casam com o filtro.
-    const resultado = await listarProcessos({ status: "concluido" })
-
-    expect(chamou).toBe(false)
-    expect(resultado.itens).toEqual([])
   })
 
   it("falha alto quando a API devolve modalidade desconhecida", async () => {

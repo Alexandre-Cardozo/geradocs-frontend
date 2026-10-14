@@ -1772,7 +1772,15 @@
             "format" : "int64",
             "type" : "integer"
           },
+          "inProgress" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
           "pendingDocuments" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "readyToClose" : {
             "format" : "int64",
             "type" : "integer"
           },
@@ -1781,7 +1789,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "active", "closed", "completionRate", "createdThisMonth", "pendingDocuments", "started" ],
+        "required" : [ "active", "closed", "completionRate", "createdThisMonth", "inProgress", "pendingDocuments", "readyToClose", "started" ],
         "type" : "object"
       },
       "ProcessTrailEntryResponse" : {
@@ -1866,11 +1874,23 @@
           "processNumber" : {
             "type" : "string"
           },
+          "requiredDocuments" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "requiredDocumentsDone" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
           "responsibleUserId" : {
             "format" : "uuid",
             "type" : "string"
           },
           "responsibleUserName" : {
+            "type" : "string"
+          },
+          "stage" : {
+            "enum" : [ "CLOSED", "DRAFT", "IN_PROGRESS", "READY_TO_CLOSE" ],
             "type" : "string"
           },
           "status" : {
@@ -1889,7 +1909,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "createdAt", "documents", "id", "modality", "objectDescription", "organizationId", "processNumber", "status", "updatedAt", "urgency", "version" ],
+        "required" : [ "createdAt", "documents", "id", "modality", "objectDescription", "organizationId", "processNumber", "requiredDocuments", "requiredDocumentsDone", "stage", "status", "updatedAt", "urgency", "version" ],
         "type" : "object"
       },
       "ProvisionalPasswordResponse" : {
@@ -3761,6 +3781,14 @@
             "default" : 20,
             "format" : "int32",
             "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "stage",
+          "required" : false,
+          "schema" : {
+            "enum" : [ "CLOSED", "DRAFT", "IN_PROGRESS", "READY_TO_CLOSE" ],
+            "type" : "string"
           }
         }, {
           "in" : "query",

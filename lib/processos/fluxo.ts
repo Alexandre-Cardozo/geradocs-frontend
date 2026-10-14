@@ -22,13 +22,17 @@ export interface Transicao {
 }
 
 /**
- * Rascunho → Em Elaboração → Concluído, com reabertura para retificar.
+ * Rascunho → Em Elaboração → Pronto para Encerrar → Concluído, com reabertura
+ * para retificar. Desde a ADR-050 do back-end a etapa é calculada pelo
+ * servidor a partir dos obrigatórios concluídos; esta tabela descreve o grafo.
  *
  * A reabertura existe porque documento gerado pode precisar de correção — e
  * corrigir não pode exigir criar outro processo, que quebraria o histórico.
  */
 export const TRANSICOES: Transicao[] = [
   { evento: "geracao_documento", de: "rascunho", para: "em_elaboracao", papel: "servidor" },
+  { evento: "geracao_documento", de: "em_elaboracao", para: "pronto_para_encerrar", papel: "servidor" },
+  { evento: "encerramento", de: "pronto_para_encerrar", para: "concluido", papel: "servidor" },
   { evento: "encerramento", de: "em_elaboracao", para: "concluido", papel: "servidor" },
   { evento: "reabertura", de: "concluido", para: "em_elaboracao", papel: "servidor" },
 ]

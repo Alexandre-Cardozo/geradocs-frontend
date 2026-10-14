@@ -211,6 +211,8 @@ describe("o painel soma dois assuntos", () => {
       encerrados: 3,
       criadosNoMes: 2,
       iniciados: 5,
+      emElaboracao: 4,
+      prontosParaEncerrar: 1,
       documentosPendentes: 11,
       taxaConclusao: 0.3,
     })
@@ -230,6 +232,9 @@ describe("o painel soma dois assuntos", () => {
     expect(painel.documentosGerados).toBe(141)
     expect(painel.etpsConcluidos).toBe(27)
     expect(painel.taxaConclusao).toBe(0.3)
+    // As etapas vêm do servidor, calculadas pelos obrigatórios (ADR-050).
+    expect(painel.processosEmElaboracao).toBe(4)
+    expect(painel.processosProntosParaEncerrar).toBe(1)
   })
 
   it("o armazenamento é convertido para MB só na apresentação", async () => {

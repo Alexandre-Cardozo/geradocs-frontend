@@ -35,6 +35,7 @@ import { DotacoesDoProcesso } from "@/components/processos/dotacoes-do-processo"
 import { EncerramentoComPendencias } from "@/components/processos/encerramento-com-pendencias"
 import { ItensDaDemanda } from "@/components/processos/itens-da-demanda"
 import { JuntadaDoProcesso } from "@/components/processos/juntada-do-processo"
+import { ProgressoDosObrigatorios } from "@/components/processos/progresso-dos-obrigatorios"
 import { TrilhaDoProcesso } from "@/components/processos/trilha-do-processo"
 import { PainelRetificacao } from "@/components/processos/painel-retificacao"
 import {
@@ -455,6 +456,7 @@ export default function HubProcesso() {
             <div className="flex flex-wrap items-center gap-2.5">
               <span className="font-mono text-xs text-text-muted">{proc.numero}</span>
               <StatusBadge status={proc.status} size="sm" />
+              <ProgressoDosObrigatorios processo={proc} />
               {/*
                 A troca fica **colada na modalidade**, que é o que ela muda, e
                 em ícone: como texto azul solto na linha ela competia com o
