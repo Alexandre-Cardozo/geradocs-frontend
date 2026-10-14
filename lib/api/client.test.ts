@@ -305,6 +305,20 @@ describe("processo", () => {
     expect(mudancas?.motivo).toContain("Dispensa Art. 75")
   })
 
+  it("trocar só a forma da dispensa também é troca, e vai para a trilha", async () => {
+    const api = await fachadaLimpa()
+    vi.mocked(contratacao.obterProcesso).mockResolvedValue(
+      processo({ modalidade: "Dispensa Art. 75", formaDaDispensa: "DIRECT", documentos: ["TR"] }) as never,
+    )
+    vi.mocked(contratacao.atualizarProcessoReal).mockResolvedValue(processo() as never)
+
+    await api.atualizarProcesso({ id: PROCESSO, formaDaDispensa: "DISPUTE", documentos: ["TR", "Aviso"] })
+
+    const [, mudancas] = vi.mocked(contratacao.atualizarProcessoReal).mock.calls.at(-1) ?? []
+    expect(mudancas?.formaDaDispensa).toBe("DISPUTE")
+    expect(mudancas?.motivo).toContain("Dispensa Art. 75 (direta) para Dispensa Art. 75 (com disputa)")
+  })
+
   it("troca de modalidade sem justificativa manda o motivo assim mesmo", async () => {
     const api = await fachadaLimpa()
     vi.mocked(contratacao.obterProcesso).mockResolvedValue(processo() as never)

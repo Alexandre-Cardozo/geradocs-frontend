@@ -64,6 +64,32 @@ export const FUNDAMENTO_DA_DISPENSA: Record<FundamentoDaDispensa, string> = {
 }
 
 /**
+ * A forma da dispensa de licitação (ADR-046 do back-end).
+ *
+ * <p>As duas são contratação direta (Art. 72), mas se instruem de modo
+ * diferente: a direta contrata o fornecedor sem disputa — o ETP entra só "se
+ * for o caso" (Art. 72, I) e não há aviso nem edital —; a com disputa é
+ * precedida de aviso em sítio eletrônico oficial por no mínimo 3 dias úteis e
+ * seleciona a proposta mais vantajosa (Art. 75, § 3º), com documentos como os
+ * do pregão e o Aviso de Contratação Direta no lugar do edital.
+ */
+export type FormaDaDispensa = "DIRECT" | "DISPUTE"
+
+/** O que a tela mostra de cada forma: o nome e quando ela se aplica. */
+export const FORMA_DA_DISPENSA: Record<FormaDaDispensa, { titulo: string; descricao: string }> = {
+  DIRECT: {
+    titulo: "Dispensa Direta",
+    descricao:
+      "Contratação direta do fornecedor, sem disputa — como na emergência (Art. 75, VIII) ou na licitação deserta (Art. 75, III). Instruída pelo Art. 72, com ETP só se for o caso.",
+  },
+  DISPUTE: {
+    titulo: "Dispensa com Disputa",
+    descricao:
+      "Aviso em sítio eletrônico oficial por no mínimo 3 dias úteis e seleção da proposta mais vantajosa (Art. 75, § 3º) — a dispensa eletrônica, preferencial nas dispensas por valor (Art. 75, I e II). Documentos como os do pregão.",
+  },
+}
+
+/**
  * Rótulo de exibição da modalidade — fonte única usada no wizard de Novo
  * Processo e nos filtros. Difere do valor apenas onde o nome usual não é o valor
  * técnico (ex.: "Dispensa Art. 75" é exibida como "Dispensa de Licitação").
@@ -108,6 +134,8 @@ export interface Processo {
   modalidade: Modalidade
   /** O inciso do Art. 75; ausente fora da dispensa e enquanto não for declarado. */
   fundamentoDaDispensa?: FundamentoDaDispensa
+  /** Direta ou com disputa; só na dispensa (ADR-046). */
+  formaDaDispensa?: FormaDaDispensa
   secretaria: string
   /** O id da secretaria requisitante — é por ele que a edição a troca. */
   secretariaId?: string
@@ -144,6 +172,8 @@ export interface NovoProcessoInput {
   modalidade: Modalidade
   /** O inciso do Art. 75, quando a modalidade é a dispensa. */
   fundamentoDaDispensa?: FundamentoDaDispensa
+  /** Direta ou com disputa, quando a modalidade é a dispensa (ADR-046). */
+  formaDaDispensa?: FormaDaDispensa
   secretaria: string
   valorEstimado?: number
   fundamentoLegal?: string

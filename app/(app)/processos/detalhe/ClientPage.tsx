@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useState } from "react"
 
-import { Button, Dropdown, InfoBanner, ProgressBar, StatusBadge, Tag, Textarea } from "@/components/ui"
+import { Button, ChoiceCard, Dropdown, InfoBanner, ProgressBar, StatusBadge, Tag, Textarea } from "@/components/ui"
 import {
   IconArrowRight,
   IconCheckCircle,
@@ -39,13 +39,21 @@ import { AlertaOrientacao } from "@/components/shared/alerta-orientacao"
 import { CATALOGO, agruparAnexos, documentosDaModalidade, ordenar, pendencias } from "@/lib/documentos"
 import {
   documentosPendentes,
+  houveTroca,
   impactoTrocaModalidade,
+  rotuloDaModalidade,
   rotuloDaVersao,
   type Retificacao,
 } from "@/lib/dominio"
 import { formatBRL, formatData } from "@/lib/format"
 import { opcoesDeSecretaria } from "@/lib/secretarias/opcoes"
-import { MODALIDADE_LABEL, type Modalidade, type TipoDocumento } from "@/lib/types"
+import {
+  FORMA_DA_DISPENSA,
+  MODALIDADE_LABEL,
+  type FormaDaDispensa,
+  type Modalidade,
+  type TipoDocumento,
+} from "@/lib/types"
 
 export default function HubProcesso() {
   const searchParams = useSearchParams()
@@ -80,6 +88,9 @@ export default function HubProcesso() {
   // Modalidade escolhida mas ainda não aplicada: fica pendente enquanto o
   // alerta de impacto está na tela.
   const [novaModalidade, setNovaModalidade] = useState<Modalidade | null>(null)
+  // Na dispensa, a forma (direta ou com disputa) decide os documentos tanto
+  // quanto a modalidade — e trocá-la passa pelo mesmo alerta (ADR-046).
+  const [novaForma, setNovaForma] = useState<FormaDaDispensa | "">("")
   const [confirmandoEncerramento, setConfirmandoEncerramento] = useState(false)
   // Documento cuja retificação está sendo declarada. Um por vez: retificar dois
   // ao mesmo tempo esconderia qual histórico está sendo lido.
@@ -126,19 +137,36 @@ export default function HubProcesso() {
   const docsGerados = (documentos.data ?? []).filter((d) => d.processoId === processoId)
   const tiposGeradosAgora = docsGerados.map((d) => d.tipo)
 
+  const paraDispensa = novaModalidade === "Dispensa Art. 75"
+  const formas = { de: proc.formaDaDispensa, para: paraDispensa && novaForma !== "" ? novaForma : undefined }
+  // Sem a forma escolhida, a dispensa ainda não tem regra de documentos para comparar.
+  const trocaDefinida = novaModalidade !== null && (!paraDispensa || novaForma !== "")
   const impacto =
-    novaModalidade === null
+    novaModalidade === null || !trocaDefinida
       ? null
-      : impactoTrocaModalidade(proc.modalidade, novaModalidade, proc.documentos, tiposGeradosAgora)
+      : impactoTrocaModalidade(proc.modalidade, novaModalidade, proc.documentos, tiposGeradosAgora, formas)
+
+  const abrirTrocaDeModalidade = () => {
+    setNovaModalidade(proc.modalidade)
+    setNovaForma(proc.formaDaDispensa ?? "")
+  }
 
   const aplicarModalidade = (documentos: TipoDocumento[], justificativa?: string) => {
     if (!novaModalidade) return
     atualizar.mutate(
-      { id: processoId, modalidade: novaModalidade, documentos, justificativaModalidade: justificativa },
+      {
+        id: processoId,
+        modalidade: novaModalidade,
+        ...(formas.para ? { formaDaDispensa: formas.para } : {}),
+        documentos,
+        justificativaModalidade: justificativa,
+      },
       {
         onSuccess: () => {
           setNovaModalidade(null)
-          showToast(`Modalidade alterada para ${MODALIDADE_LABEL[novaModalidade]}. A troca está na trilha.`)
+          showToast(
+            `Modalidade alterada para ${rotuloDaModalidade(novaModalidade, formas.para)}. A troca está na trilha.`,
+          )
         },
       },
     )
@@ -195,7 +223,7 @@ export default function HubProcesso() {
 
   // Os documentos que ainda cabem acrescentar — limitados aos cabíveis à
   // modalidade (Dispensa não tem Edital).
-  const tiposDisponiveis = documentosDaModalidade(proc.modalidade, proc.fundamentoDaDispensa).filter(
+  const tiposDisponiveis = documentosDaModalidade(proc.modalidade, proc.formaDaDispensa).filter(
     (t) => !proc.documentos.includes(t),
   )
   const tiposGerados = docsGerados.map((d) => d.tipo)
@@ -412,13 +440,13 @@ export default function HubProcesso() {
                 alcance: quem procura trocar a modalidade olha para a modalidade.
               */}
               <span className="inline-flex items-center gap-1">
-                <Tag tone="info">{MODALIDADE_LABEL[proc.modalidade]}</Tag>
+                <Tag tone="info">{rotuloDaModalidade(proc.modalidade, proc.formaDaDispensa)}</Tag>
                 {proc.status !== "concluido" && novaModalidade === null && (
                   <button
                     type="button"
                     aria-label="Trocar modalidade"
                     title="Trocar modalidade"
-                    onClick={() => setNovaModalidade(proc.modalidade)}
+                    onClick={abrirTrocaDeModalidade}
                     className="flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-sm border border-border bg-ice text-text-3 transition-colors hover:bg-border-soft hover:text-royal"
                   >
                     <IconPencil size={12} />
@@ -464,10 +492,25 @@ export default function HubProcesso() {
               />
             </div>
 
+            {paraDispensa && (
+              <div role="group" aria-label="Forma da dispensa" className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
+                {(Object.keys(FORMA_DA_DISPENSA) as FormaDaDispensa[]).map((chave) => (
+                  <ChoiceCard
+                    key={chave}
+                    size="small"
+                    title={FORMA_DA_DISPENSA[chave].titulo}
+                    desc={FORMA_DA_DISPENSA[chave].descricao}
+                    selected={novaForma === chave}
+                    onClick={() => setNovaForma(chave)}
+                  />
+                ))}
+              </div>
+            )}
+
             {impacto?.exigeJustificativa ? (
               <AlertaOrientacao
                 titulo="A troca muda os documentos cabíveis"
-                recomendacao={`Ajustar a lista para o que ${MODALIDADE_LABEL[novaModalidade]} comporta.`}
+                recomendacao={`Ajustar a lista para o que ${rotuloDaModalidade(novaModalidade, formas.para)} comporta.`}
                 detalhes={
                   <ul className="m-0 flex list-disc flex-col gap-1 pl-4">
                     {impacto.jaGeradosQueDeixamDeSerCabiveis.length > 0 && (
@@ -496,10 +539,14 @@ export default function HubProcesso() {
             ) : (
               <div className="flex flex-wrap gap-2.5">
                 <p id="motivo-trocar-modalidade" className="sr-only">
-                  Escolha uma modalidade diferente da atual.
+                  {trocaDefinida
+                    ? "Escolha uma modalidade, ou forma da dispensa, diferente da atual."
+                    : "Escolha a forma da dispensa: direta ou com disputa."}
                 </p>
                 <Button
-                  disabled={atualizar.isPending || novaModalidade === proc.modalidade}
+                  disabled={
+                    atualizar.isPending || !trocaDefinida || !houveTroca(proc.modalidade, novaModalidade, formas)
+                  }
                   ariaDescribedBy="motivo-trocar-modalidade"
                   onClick={() => aplicarModalidade(proc.documentos)}
                 >

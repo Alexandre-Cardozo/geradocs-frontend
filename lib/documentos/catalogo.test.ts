@@ -3,12 +3,15 @@ import { describe, expect, it } from "vitest"
 import {
   CATALOGO,
   ORDEM_FLUXO,
+  REGRA_DA_DISPENSA,
   REGRA_MODALIDADE,
   agruparAnexos,
   anexosDoArquivo,
   documentosDaModalidade,
   ehDispensaPorValor,
   ehObrigatorio,
+  orientacaoDosDocumentos,
+  regraDe,
   ordenar,
   pendencias,
   porSlug,
@@ -37,7 +40,7 @@ describe("matriz modalidade × documentos", () => {
   })
 
   it("torna o ETP opcional na contratação direta", () => {
-    // Art. 18, § 2º c/c Art. 72, I — "quando for o caso".
+    // Art. 72, I — "se for o caso".
     expect(ehObrigatorio("Dispensa Art. 75", "ETP")).toBe(false)
     expect(ehObrigatorio("Dispensa Art. 75", "TR")).toBe(true)
   })
@@ -80,24 +83,37 @@ describe("matriz modalidade × documentos", () => {
   })
 })
 
-describe("aviso de contratação direta", () => {
-  it("só a dispensa por valor o oferece", () => {
-    // Art. 75, § 3º: o aviso é das contratações dos incisos I e II.
-    expect(documentosDaModalidade("Dispensa Art. 75", "VALUE_GENERAL")).toContain("Aviso")
-    expect(documentosDaModalidade("Dispensa Art. 75", "VALUE_ENGINEERING")).toContain("Aviso")
-    expect(documentosDaModalidade("Dispensa Art. 75", "OTHER")).not.toContain("Aviso")
-    // Sem inciso declarado não há como saber se é dispensa por valor.
-    expect(documentosDaModalidade("Dispensa Art. 75")).not.toContain("Aviso")
+describe("as duas formas da dispensa (ADR-046 do back-end)", () => {
+  it("a direta não tem aviso nem edital, e marca a cotação", () => {
+    const direta = documentosDaModalidade("Dispensa Art. 75", "DIRECT")
+    expect(direta).toEqual(["Cotação", "ETP", "Mapa", "TR", "Contrato"])
+    expect(regraDe("Dispensa Art. 75", "DIRECT").recomendados).toEqual(["Cotação"])
+    expect(ehObrigatorio("Dispensa Art. 75", "TR", "DIRECT")).toBe(true)
+    expect(ehObrigatorio("Dispensa Art. 75", "ETP", "DIRECT")).toBe(false)
   })
 
-  it("não existe fora da dispensa, qualquer que seja o fundamento", () => {
-    expect(documentosDaModalidade("Pregão Eletrônico", "VALUE_GENERAL")).not.toContain("Aviso")
-    expect(documentosDaModalidade("Inexigibilidade", "VALUE_GENERAL")).not.toContain("Aviso")
+  it("a com disputa tem as opções do pregão, com o aviso no lugar do edital", () => {
+    const disputa = documentosDaModalidade("Dispensa Art. 75", "DISPUTE")
+    const pregao = documentosDaModalidade("Pregão Eletrônico")
+    expect(disputa).toEqual(pregao.map((tipo) => (tipo === "Edital" ? "Aviso" : tipo)))
+    expect(ehObrigatorio("Dispensa Art. 75", "Aviso", "DISPUTE")).toBe(true)
+    // O ETP vem marcado, mas não travado: a lei o faculta na dispensa por valor.
+    expect(ehObrigatorio("Dispensa Art. 75", "ETP", "DISPUTE")).toBe(false)
+    expect(regraDe("Dispensa Art. 75", "DISPUTE").recomendados).toEqual(["ETP", "Contrato"])
   })
 
-  it("vem marcado na dispensa, porque a lei o quer 'preferencialmente'", () => {
-    expect(REGRA_MODALIDADE["Dispensa Art. 75"].recomendados).toEqual(["Aviso"])
-    expect(ehObrigatorio("Dispensa Art. 75", "Aviso")).toBe(false)
+  it("só recomenda o que é opcional na forma", () => {
+    for (const [forma, regra] of Object.entries(REGRA_DA_DISPENSA)) {
+      for (const tipo of regra.recomendados) {
+        expect(regra.opcionais, `${forma} recomenda ${tipo}`).toContain(tipo)
+      }
+    }
+  })
+
+  it("sem forma declarada, a dispensa é a direta; fora da dispensa, a forma não conta", () => {
+    expect(documentosDaModalidade("Dispensa Art. 75")).toEqual(documentosDaModalidade("Dispensa Art. 75", "DIRECT"))
+    expect(documentosDaModalidade("Pregão Eletrônico", "DISPUTE")).toEqual(documentosDaModalidade("Pregão Eletrônico"))
+    expect(documentosDaModalidade("Inexigibilidade", "DISPUTE")).not.toContain("Aviso")
   })
 
   it("reconhece a dispensa por valor pelo inciso", () => {
@@ -107,10 +123,33 @@ describe("aviso de contratação direta", () => {
     expect(ehDispensaPorValor(undefined)).toBe(false)
   })
 
-  it("fica depois do TR, em que se fundamenta, e não é anexo de nada", () => {
+  it("o aviso fica depois do TR, em que se fundamenta, e não é anexo de nada", () => {
     expect(pendencias("Aviso", ["TR", "Aviso"], [])).toEqual(["TR"])
     expect(CATALOGO.Aviso.anexoDe).toBeUndefined()
     expect(agruparAnexos(["TR", "Aviso", "Contrato"]).map((g) => g.tipo)).toEqual(["TR", "Aviso", "Contrato"])
+  })
+})
+
+describe("orientação dos documentos da contratação direta", () => {
+  it("a inexigibilidade cita o Art. 74, e o ETP vem do Art. 72, I", () => {
+    const texto = orientacaoDosDocumentos("Inexigibilidade")
+    expect(texto).toMatch(/Art\. 74 da Lei 14\.133\/21/)
+    expect(texto).toMatch(/ETP apenas se for o caso \(Art\. 72, I\)/)
+  })
+
+  it("a dispensa direta explica a cotação, e na dispensa por valor lembra o aviso", () => {
+    expect(orientacaoDosDocumentos("Dispensa Art. 75", "DIRECT", "OTHER")).toMatch(/Art\. 72, II e VII\)\.$/)
+    expect(orientacaoDosDocumentos("Dispensa Art. 75", "DIRECT", "VALUE_GENERAL")).toMatch(/precedida de aviso \(Art\. 75, § 3º\)/)
+  })
+
+  it("a dispensa com disputa explica o aviso, e fora do valor diz que a disputa é a forma usual do valor", () => {
+    expect(orientacaoDosDocumentos("Dispensa Art. 75", "DISPUTE", "VALUE_GENERAL")).toMatch(/faculta nesta hipótese \(Art\. 72, I\)\.$/)
+    expect(orientacaoDosDocumentos("Dispensa Art. 75", "DISPUTE", "OTHER")).toMatch(/quando o caso comportar\.$/)
+  })
+
+  it("nada a dizer nas licitações, nem na dispensa sem forma declarada", () => {
+    expect(orientacaoDosDocumentos("Pregão Eletrônico")).toBeNull()
+    expect(orientacaoDosDocumentos("Dispensa Art. 75")).toBeNull()
   })
 })
 

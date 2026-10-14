@@ -301,6 +301,27 @@ describe("atualizarProcessoReal", () => {
     expect(corpo.estimatedValue).toBe(485000)
   })
 
+  it("a forma da dispensa vai e volta, e é reenviada quando não muda (ADR-046)", async () => {
+    const corpos: Record<string, unknown>[] = []
+    const dispensa = { ...processoApi, modality: "DIRECT_AWARD_ARTICLE_75", dispensationForm: "DISPUTE" }
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id`, () => HttpResponse.json(dispensa)),
+      http.patch(`${urlDaApi}/procurement-processes/:id`, async ({ request }) => {
+        corpos.push((await request.json()) as Record<string, unknown>)
+        return HttpResponse.json(dispensa)
+      }),
+    )
+    const { atualizarProcessoReal, obterProcesso } = await carregarClienteLimpo()
+    const atual = await obterProcesso(processoApi.id)
+    expect(atual.formaDaDispensa).toBe("DISPUTE")
+
+    await atualizarProcessoReal(atual, { objeto: "Descrição revisada" })
+    await atualizarProcessoReal(atual, { formaDaDispensa: "DIRECT" })
+
+    expect(corpos[0]?.dispensationForm).toBe("DISPUTE")
+    expect(corpos[1]?.dispensationForm).toBe("DIRECT")
+  })
+
   it("a secretaria só vai quando a capa a troca — ausente, o servidor mantém a atual", async () => {
     const corpos: Record<string, unknown>[] = []
     servidor.use(

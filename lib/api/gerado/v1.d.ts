@@ -1330,6 +1330,8 @@ export interface components {
             /** Format: uuid */
             departmentId: string;
             /** @enum {string} */
+            dispensationForm?: "DIRECT" | "DISPUTE";
+            /** @enum {string} */
             dispensationGround?: "OTHER" | "VALUE_ENGINEERING" | "VALUE_GENERAL";
             documents?: ("AVISO" | "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR")[];
             estimatedValue: number;
@@ -1781,6 +1783,8 @@ export interface components {
             departmentId?: string;
             departmentName?: string;
             /** @enum {string} */
+            dispensationForm?: "DIRECT" | "DISPUTE";
+            /** @enum {string} */
             dispensationGround?: "OTHER" | "VALUE_ENGINEERING" | "VALUE_GENERAL";
             documents: ("AVISO" | "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR")[];
             estimatedValue?: number;
@@ -1987,6 +1991,8 @@ export interface components {
             demandObject?: string;
             /** Format: uuid */
             departmentId?: string;
+            /** @enum {string} */
+            dispensationForm?: "DIRECT" | "DISPUTE";
             /** @enum {string} */
             dispensationGround?: "OTHER" | "VALUE_ENGINEERING" | "VALUE_GENERAL";
             documents?: ("AVISO" | "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR")[];

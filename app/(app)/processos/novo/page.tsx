@@ -38,17 +38,22 @@ import {
 } from "@/lib/api/hooks";
 import {
   CATALOGO,
-  REGRA_MODALIDADE,
+  REGRA_DA_DISPENSA,
   agruparAnexos,
   documentosDaModalidade,
   ehObrigatorio,
+  orientacaoDosDocumentos,
   ordenar,
+  regraDe,
   totalSecoes,
 } from "@/lib/documentos";
+import { rotuloDaModalidade } from "@/lib/dominio";
 import { formatBRL, parseValorBR } from "@/lib/format";
 import {
+  FORMA_DA_DISPENSA,
   FUNDAMENTO_DA_DISPENSA,
   MODALIDADE_LABEL,
+  type FormaDaDispensa,
   type FundamentoDaDispensa,
   type Modalidade,
   type ModoATA,
@@ -94,13 +99,13 @@ const modalidades: Array<{
   {
     key: "dispensa",
     valor: "Dispensa Art. 75",
-    desc: "Casos previstos no Art. 75 da Lei 14.133/21",
+    desc: "Hipóteses do Art. 75 da Lei 14.133/21 — direta ou com disputa",
     icon: <IconZap size={22} />,
   },
   {
     key: "inexigibilidade",
     valor: "Inexigibilidade",
-    desc: "Quando a competição é inviável",
+    desc: "Quando a competição é inviável (Art. 74 da Lei 14.133/21)",
     icon: <IconLock size={22} />,
   },
   {
@@ -202,6 +207,12 @@ export default function NovoProcesso() {
     sobre valor numa dispensa por emergência, ou cala onde precisa falar (§77).
   */
   const [fundamentoDaDispensa, setFundamentoDaDispensa] = useState<FundamentoDaDispensa | "">("");
+  /*
+    Direta ou com disputa (ADR-046): as duas são contratação direta, mas pedem
+    documentos diferentes — a com disputa tem o Aviso no lugar do edital e as
+    opções do pregão. Sem esta escolha não há como sugerir os documentos certos.
+  */
+  const [formaDaDispensa, setFormaDaDispensa] = useState<FormaDaDispensa | "">("");
   const [isAdesaoATA, setIsAdesaoATA] = useState(false);
   const [ataMode, setATAMode] = useState<ModoATA | "">("");
   const [ataFile, setATAFile] = useState<string | null>(null);
@@ -230,17 +241,21 @@ export default function NovoProcesso() {
   const verificarDFD = includeDFDVerification && temDFD;
 
   // Os documentos cabíveis dependem da modalidade: a contratação direta não gera
-  // edital de licitação e o ETP nela é dispensável (Art. 18, § 2º c/c Art. 72, I).
+  // edital de licitação e o ETP nela entra só "se for o caso" (Art. 72, I).
   const modalidadeSel = modalidades.find((m) => m.key === modalidade);
-  const regra = modalidadeSel ? REGRA_MODALIDADE[modalidadeSel.valor] : null;
-  // O Aviso de Contratação Direta só cabe na dispensa por valor (Art. 75,
-  // § 3º): depende do inciso declarado acima, e some se ele mudar.
-  const tiposCabiveis = modalidadeSel
-    ? documentosDaModalidade(
+  const ehDispensa = modalidadeSel?.valor === "Dispensa Art. 75";
+  // Na dispensa, a regra é a da forma: só a com disputa tem o Aviso de
+  // Contratação Direta (Art. 75, § 3º).
+  const forma = ehDispensa && formaDaDispensa !== "" ? formaDaDispensa : undefined;
+  const regra = modalidadeSel ? regraDe(modalidadeSel.valor, forma) : null;
+  const tiposCabiveis = modalidadeSel ? documentosDaModalidade(modalidadeSel.valor, forma) : [];
+  const orientacao = modalidadeSel
+    ? orientacaoDosDocumentos(
         modalidadeSel.valor,
+        forma,
         fundamentoDaDispensa === "" ? undefined : fundamentoDaDispensa,
       )
-    : [];
+    : null;
   const documentosEscolhidos = regra
     ? ordenar([
         ...regra.obrigatorios,
@@ -257,11 +272,19 @@ export default function NovoProcesso() {
   const escolherModalidade = (key: string) => {
     setModalidade(key);
     const valor = modalidades.find((m) => m.key === key)?.valor;
-    setOpcionaisSelecionados(valor ? REGRA_MODALIDADE[valor].recomendados : []);
+    setOpcionaisSelecionados(
+      valor ? regraDe(valor, formaDaDispensa === "" ? undefined : formaDaDispensa).recomendados : [],
+    );
+  };
+
+  /** Trocar a forma da dispensa troca a sugestão de documentos (ADR-046). */
+  const escolherForma = (nova: FormaDaDispensa) => {
+    setFormaDaDispensa(nova);
+    setOpcionaisSelecionados(REGRA_DA_DISPENSA[nova].recomendados);
   };
 
   const toggleDoc = (tipo: TipoDocumento) => {
-    if (!modalidadeSel || ehObrigatorio(modalidadeSel.valor, tipo)) return;
+    if (!modalidadeSel || ehObrigatorio(modalidadeSel.valor, tipo, forma)) return;
     setOpcionaisSelecionados((prev) =>
       prev.includes(tipo) ? prev.filter((t) => t !== tipo) : [...prev, tipo],
     );
@@ -278,7 +301,7 @@ export default function NovoProcesso() {
     const principal = anexo ? meta.anexoDe : undefined;
     const classes = CLASSES_SELECAO[tipo];
     const obrig = modalidadeSel
-      ? ehObrigatorio(modalidadeSel.valor, tipo)
+      ? ehObrigatorio(modalidadeSel.valor, tipo, forma)
       : false;
     const selected = documentosEscolhidos.includes(tipo);
     return (
@@ -345,6 +368,7 @@ export default function NovoProcesso() {
   const canProceed =
     (step === 1 &&
       modalidade !== "" &&
+      (!ehDispensa || formaDaDispensa !== "") &&
       (!isAdesaoATA || (ataMode !== "" && ataMotivo.trim() !== ""))) ||
     (step === 2 && secretaria !== "" && objeto.trim() !== "" && dfdOuObjeto) ||
     step === 3;
@@ -365,6 +389,7 @@ export default function NovoProcesso() {
         objetoDemanda: objetoDemanda.trim() || undefined,
         modalidade: modalidadeSel.valor,
         ...(fundamentoDaDispensa === "" ? {} : { fundamentoDaDispensa }),
+        ...(forma ? { formaDaDispensa: forma } : {}),
         secretaria,
         valorEstimado: valorNumerico,
         fundamentoLegal: fundamento.trim() || undefined,
@@ -433,7 +458,34 @@ export default function NovoProcesso() {
                 depois — exigi-lo aqui faria inventar fundamento para poder
                 seguir.
               */}
-              {modalidadeSel?.valor === "Dispensa Art. 75" && (
+              {/*
+                A forma vem antes do inciso e é obrigatória: é ela que decide os
+                documentos — a com disputa tem o aviso e as opções do pregão; a
+                direta, não (ADR-046).
+              */}
+              {ehDispensa && (
+                <fieldset className="m-0 mb-5 border-0 p-0">
+                  <legend className="mb-1 text-base font-semibold text-text-2">
+                    Forma da Dispensa <span className="text-danger">*</span>
+                  </legend>
+                  <p className="m-0 mb-3 text-sm text-text-muted">
+                    As duas são contratação direta (Art. 72), mas pedem documentos diferentes.
+                  </p>
+                  <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
+                    {(Object.keys(FORMA_DA_DISPENSA) as FormaDaDispensa[]).map((chave) => (
+                      <ChoiceCard
+                        key={chave}
+                        size="small"
+                        title={FORMA_DA_DISPENSA[chave].titulo}
+                        desc={FORMA_DA_DISPENSA[chave].descricao}
+                        selected={formaDaDispensa === chave}
+                        onClick={() => escolherForma(chave)}
+                      />
+                    ))}
+                  </div>
+                </fieldset>
+              )}
+              {ehDispensa && (
                 <div className="mb-6 max-w-2xl">
                   <FormField
                     label="Fundamento da Dispensa"
@@ -725,22 +777,9 @@ export default function NovoProcesso() {
                     </div>
                   ))}
                 </div>
-                {modalidadeSel && !tiposCabiveis.includes("Edital") && (
+                {orientacao && (
                   <InfoBanner tone="info" className="mt-3">
-                    A modalidade{" "}
-                    <strong>{MODALIDADE_LABEL[modalidadeSel.valor]}</strong> é
-                    contratação direta e não gera edital de licitação — o
-                    processo é instruído na forma do Art. 72 da Lei 14.133/21,
-                    em que o ETP é dispensável (Art. 18, § 2º).
-                    {modalidadeSel.valor === "Dispensa Art. 75" &&
-                      !tiposCabiveis.includes("Aviso") && (
-                        <>
-                          {" "}
-                          O Aviso de Contratação Direta é oferecido na dispensa
-                          por valor (Art. 75, I e II): declare o inciso na etapa
-                          de Modalidade para incluí-lo.
-                        </>
-                      )}
+                    {orientacao}
                   </InfoBanner>
                 )}
               </div>
@@ -854,7 +893,7 @@ export default function NovoProcesso() {
                 {
                   rotulo: "Modalidade",
                   valor: modalidadeSel
-                    ? MODALIDADE_LABEL[modalidadeSel.valor]
+                    ? rotuloDaModalidade(modalidadeSel.valor, forma)
                     : undefined,
                 },
                 { rotulo: "Secretaria", valor: secretariaNome },

@@ -8,7 +8,7 @@
  */
 
 import { secoesPorTipoBase } from "@/lib/documentos/secoes"
-import type { FundamentoDaDispensa, Modalidade, TipoDocumento } from "@/lib/types"
+import type { FormaDaDispensa, FundamentoDaDispensa, Modalidade, TipoDocumento } from "@/lib/types"
 
 export interface MetaDocumento {
   tipo: TipoDocumento
@@ -39,7 +39,7 @@ export interface MetaDocumento {
  * Ordem canônica: a Cotação embasa a estimativa de valor do ETP (Art. 18, § 1º,
  * VI); o Mapa de Riscos é concomitante ao ETP; o TR se fundamenta no ETP
  * (Art. 6º, XXIII, 'b'); o Edital tem o TR entre os seus elementos (Art. 25,
- * § 3º); na dispensa por valor, o Aviso de Contratação Direta faz o papel de
+ * § 3º); na dispensa com disputa, o Aviso de Contratação Direta faz o papel de
  * chamamento (Art. 75, § 3º); e a minuta de contrato consta obrigatoriamente
  * como anexo do edital (Art. 18, VI), vinculada a ele (Art. 92, II).
  */
@@ -109,7 +109,7 @@ export const CATALOGO: Record<TipoDocumento, MetaDocumento> = {
     tipo: "Aviso",
     slug: "aviso",
     titulo: "Aviso de Contratação Direta",
-    descricao: "Divulga a dispensa por valor e busca propostas adicionais por no mínimo 3 dias úteis",
+    descricao: "Divulga a dispensa com disputa e busca propostas adicionais por no mínimo 3 dias úteis",
     ordem: 6,
     fundamento: "Art. 75, § 3º, Lei 14.133/21",
     // As cores do Edital: o aviso faz na dispensa o papel que o edital faz na
@@ -143,10 +143,11 @@ export const ORDEM_FLUXO: TipoDocumento[] = (Object.values(CATALOGO) as MetaDocu
  * Documentos cabíveis a cada modalidade.
  *
  * Contratação direta (Dispensa e Inexigibilidade) não gera edital de licitação:
- * o Art. 72 instrui o processo com DFD, ETP *quando for o caso*, TR, estimativa
- * de despesa, parecer jurídico e autorização. Por isso o ETP é opcional e o
+ * o Art. 72 instrui o processo com DFD, ETP *se for o caso* (I), TR, estimativa
+ * de despesa (II), parecer jurídico e autorização. Por isso o ETP é opcional e o
  * Edital não é oferecido. No Credenciamento (Art. 79), o edital é o de
- * chamamento público.
+ * chamamento público. A dispensa tem regra própria para cada forma — direta ou
+ * com disputa —, em `REGRA_DA_DISPENSA`.
  *
  * `recomendados` são opcionais que já vêm marcados. A minuta de contrato é
  * opcional porque o instrumento pode ser substituído por nota de empenho nas
@@ -156,23 +157,46 @@ export const ORDEM_FLUXO: TipoDocumento[] = (Object.values(CATALOGO) as MetaDocu
  * fica desmarcada: a alienação se resolve na arrematação, e o concurso, no
  * prêmio e na cessão dos direitos.
  *
- * O Aviso de Contratação Direta é da dispensa por valor (Art. 75, I e II): é
- * dela que o § 3º fala, e por isso `documentosDaModalidade` só o oferece quando
- * o processo declara um desses incisos. Vem marcado porque a lei pede que a
- * contratação seja "preferencialmente" precedida dele.
  */
-export const REGRA_MODALIDADE: Record<
-  Modalidade,
-  { obrigatorios: TipoDocumento[]; opcionais: TipoDocumento[]; recomendados: TipoDocumento[] }
-> = {
+export interface RegraDocumental {
+  obrigatorios: TipoDocumento[]
+  opcionais: TipoDocumento[]
+  /** Opcionais que já vêm marcados. */
+  recomendados: TipoDocumento[]
+}
+
+/**
+ * Os documentos de cada forma da dispensa (ADR-046 do back-end).
+ *
+ * - **Direta:** o TR, e a cotação marcada — sem disputa, a estimativa de
+ *   despesa e a justificativa de preço (Art. 72, II e VII) dependem da pesquisa
+ *   de preços. Sem aviso nem edital; ETP só se for o caso (Art. 72, I).
+ * - **Com disputa:** as opções do pregão, com o Aviso de Contratação Direta no
+ *   lugar do edital — é ele que divulga o objeto e chama as propostas (Art. 75,
+ *   § 3º). O ETP vem marcado mas não travado: a lei o faculta nas dispensas por
+ *   valor, que é onde a disputa é a regra.
+ */
+export const REGRA_DA_DISPENSA: Record<FormaDaDispensa, RegraDocumental> = {
+  DIRECT: { obrigatorios: ["TR"], opcionais: ["Cotação", "ETP", "Mapa", "Contrato"], recomendados: ["Cotação"] },
+  DISPUTE: { obrigatorios: ["TR", "Aviso"], opcionais: ["Cotação", "ETP", "Mapa", "Contrato"], recomendados: ["ETP", "Contrato"] },
+}
+
+export const REGRA_MODALIDADE: Record<Modalidade, RegraDocumental> = {
   "Pregão Eletrônico": { obrigatorios: ["ETP", "TR", "Edital"], opcionais: ["Cotação", "Mapa", "Contrato"], recomendados: ["Contrato"] },
   "Concorrência": { obrigatorios: ["ETP", "TR", "Edital"], opcionais: ["Cotação", "Mapa", "Contrato"], recomendados: ["Contrato"] },
   "Diálogo Competitivo": { obrigatorios: ["ETP", "TR", "Edital"], opcionais: ["Cotação", "Mapa", "Contrato"], recomendados: ["Contrato"] },
   "Credenciamento": { obrigatorios: ["ETP", "TR", "Edital"], opcionais: ["Cotação", "Mapa", "Contrato"], recomendados: ["Contrato"] },
   "Concurso": { obrigatorios: ["ETP", "Edital"], opcionais: ["Cotação", "Mapa", "TR", "Contrato"], recomendados: [] },
   "Leilão": { obrigatorios: ["Edital"], opcionais: ["Cotação", "Mapa", "ETP", "TR", "Contrato"], recomendados: [] },
-  "Dispensa Art. 75": { obrigatorios: ["TR"], opcionais: ["ETP", "Cotação", "Mapa", "Aviso", "Contrato"], recomendados: ["Aviso"] },
+  // Sem a forma declarada, a dispensa é a direta: sem aviso, que é o que
+  // caracteriza a disputa. Quem sabe a forma usa `regraDe`.
+  "Dispensa Art. 75": REGRA_DA_DISPENSA.DIRECT,
   "Inexigibilidade": { obrigatorios: ["TR"], opcionais: ["ETP", "Cotação", "Mapa", "Contrato"], recomendados: [] },
+}
+
+/** A regra documental do processo: a da modalidade e, na dispensa, a da forma. */
+export function regraDe(modalidade: Modalidade, forma?: FormaDaDispensa): RegraDocumental {
+  return modalidade === "Dispensa Art. 75" && forma ? REGRA_DA_DISPENSA[forma] : REGRA_MODALIDADE[modalidade]
 }
 
 /** O Art. 75, § 3º fala das contratações dos incisos I e II: a dispensa por valor. */
@@ -183,22 +207,45 @@ export function ehDispensaPorValor(fundamento: FundamentoDaDispensa | undefined)
 /**
  * Tipos cabíveis à modalidade (obrigatórios + opcionais), na ordem do fluxo.
  *
- * @param fundamento o inciso declarado na dispensa; sem ele, o Aviso de
- *                   Contratação Direta não é oferecido, porque só a dispensa
- *                   por valor o prevê (Art. 75, § 3º)
+ * @param forma na dispensa, direta ou com disputa — só a com disputa tem o
+ *              Aviso de Contratação Direta (Art. 75, § 3º)
  */
-export function documentosDaModalidade(
-  modalidade: Modalidade,
-  fundamento?: FundamentoDaDispensa
-): TipoDocumento[] {
-  const regra = REGRA_MODALIDADE[modalidade]
-  return ordenar([...regra.obrigatorios, ...regra.opcionais]).filter(
-    (tipo) => tipo !== "Aviso" || ehDispensaPorValor(fundamento)
-  )
+export function documentosDaModalidade(modalidade: Modalidade, forma?: FormaDaDispensa): TipoDocumento[] {
+  const regra = regraDe(modalidade, forma)
+  return ordenar([...regra.obrigatorios, ...regra.opcionais])
 }
 
-export function ehObrigatorio(modalidade: Modalidade, tipo: TipoDocumento): boolean {
-  return REGRA_MODALIDADE[modalidade].obrigatorios.includes(tipo)
+export function ehObrigatorio(modalidade: Modalidade, tipo: TipoDocumento, forma?: FormaDaDispensa): boolean {
+  return regraDe(modalidade, forma).obrigatorios.includes(tipo)
+}
+
+/**
+ * O que a tela explica sobre os documentos da contratação direta — nada nas
+ * licitações, em que o edital está na lista.
+ *
+ * @param fundamento o inciso do Art. 75 declarado, que muda o conselho: a
+ *                   dispensa por valor prefere a disputa (§ 3º)
+ */
+export function orientacaoDosDocumentos(
+  modalidade: Modalidade,
+  forma?: FormaDaDispensa,
+  fundamento?: FundamentoDaDispensa,
+): string | null {
+  if (modalidade === "Inexigibilidade") {
+    return "A Inexigibilidade é contratação direta por inviabilidade de competição (Art. 74 da Lei 14.133/21) e não gera edital de licitação: o processo é instruído na forma do Art. 72, com o ETP apenas se for o caso (Art. 72, I)."
+  }
+  if (modalidade !== "Dispensa Art. 75" || !forma) return null
+  if (forma === "DIRECT") {
+    const porValor = ehDispensaPorValor(fundamento)
+      ? " Nas dispensas por valor, a lei prefere que a contratação seja precedida de aviso (Art. 75, § 3º) — a forma com disputa: sem ele, registre no processo por que não foi feito."
+      : ""
+    return `A Dispensa Direta é contratação direta (Art. 75 da Lei 14.133/21) e não gera edital nem aviso: o processo é instruído na forma do Art. 72, com o ETP apenas se for o caso (Art. 72, I). A cotação vem marcada porque a estimativa de despesa e a justificativa de preço fazem parte da instrução (Art. 72, II e VII).${porValor}`
+  }
+  const foraDoValor =
+    fundamento === "OTHER"
+      ? " A disputa é a forma usual das dispensas por valor (Art. 75, I e II); nas demais hipóteses, use-a quando o caso comportar."
+      : ""
+  return `Na Dispensa com Disputa, o Aviso de Contratação Direta faz o papel do edital: divulga o objeto por no mínimo 3 dias úteis e seleciona a proposta mais vantajosa (Art. 75, § 3º). Os documentos seguem os do pregão; o ETP vem marcado, mas a lei o faculta nesta hipótese (Art. 72, I).${foraDoValor}`
 }
 
 /** Reordena uma lista de tipos segundo a ordem canônica do fluxo. */

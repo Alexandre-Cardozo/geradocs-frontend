@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest"
 
-import { impactoTrocaModalidade, motivoDaTrocaDeModalidade } from "@/lib/dominio/modalidade"
+import {
+  houveTroca,
+  impactoTrocaModalidade,
+  motivoDaTrocaDeModalidade,
+  rotuloDaModalidade,
+} from "@/lib/dominio/modalidade"
 import { MODALIDADE_LABEL, type Modalidade } from "@/lib/types"
 
 const MODALIDADES = Object.keys(MODALIDADE_LABEL) as Modalidade[]
@@ -155,5 +160,46 @@ describe("motivo registrado na trilha", () => {
     expect(motivoDaTrocaDeModalidade("Pregão Eletrônico", "Concorrência", neutra, "")).toBe(
       "Modalidade alterada de Pregão Eletrônico para Concorrência.",
     )
+  })
+})
+
+/**
+ * Na dispensa, trocar a forma — direta ↔ com disputa — é trocar a regra de
+ * documentos, e passa pelo mesmo alerta (ADR-046 do back-end).
+ */
+describe("troca da forma da dispensa", () => {
+  it("de direta para com disputa, o aviso passa a ser obrigatório", () => {
+    const impacto = impactoTrocaModalidade("Dispensa Art. 75", "Dispensa Art. 75", ["TR", "Cotação"], [], {
+      de: "DIRECT",
+      para: "DISPUTE",
+    })
+
+    expect(impacto.passamASerObrigatorios).toEqual(["Aviso"])
+    expect(impacto.exigeJustificativa).toBe(true)
+    expect(impacto.documentosSugeridos).toEqual(["Cotação", "TR", "Aviso"])
+  })
+
+  it("de com disputa para direta, o aviso deixa de ser cabível — e, gerado, entra na trilha", () => {
+    const formas = { de: "DISPUTE", para: "DIRECT" } as const
+    const impacto = impactoTrocaModalidade("Dispensa Art. 75", "Dispensa Art. 75", ["TR", "Aviso"], ["Aviso"], formas)
+
+    expect(impacto.deixamDeSerCabiveis).toEqual(["Aviso"])
+    expect(motivoDaTrocaDeModalidade("Dispensa Art. 75", "Dispensa Art. 75", impacto, "", formas)).toBe(
+      "Modalidade alterada de Dispensa Art. 75 (com disputa) para Dispensa Art. 75 (direta). Lista de documentos ajustada — removidos por deixarem de ser cabíveis: Aviso. Documento já gerado que deixa de ser cabível: Aviso.",
+    )
+  })
+
+  it("a mesma forma não é troca; fora da dispensa, a forma não conta", () => {
+    expect(houveTroca("Dispensa Art. 75", "Dispensa Art. 75", { de: "DIRECT", para: "DIRECT" })).toBe(false)
+    expect(houveTroca("Dispensa Art. 75", "Dispensa Art. 75", { de: "DIRECT", para: "DISPUTE" })).toBe(true)
+    expect(houveTroca("Pregão Eletrônico", "Pregão Eletrônico", { de: "DIRECT", para: "DISPUTE" })).toBe(false)
+    expect(houveTroca("Pregão Eletrônico", "Concorrência")).toBe(true)
+  })
+
+  it("o rótulo diz a forma na dispensa, e só a modalidade nas demais", () => {
+    expect(rotuloDaModalidade("Dispensa Art. 75", "DISPUTE")).toBe("Dispensa com Disputa")
+    expect(rotuloDaModalidade("Dispensa Art. 75", "DIRECT")).toBe("Dispensa Direta")
+    expect(rotuloDaModalidade("Dispensa Art. 75")).toBe("Dispensa de Licitação")
+    expect(rotuloDaModalidade("Pregão Eletrônico", "DISPUTE")).toBe("Pregão Eletrônico")
   })
 })
