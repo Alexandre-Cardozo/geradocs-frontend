@@ -82,6 +82,15 @@
   --color-status-done-bg: #F0FDF4;
   --color-status-done-fg: #15803D;
   --color-status-done-dot: #22C55E;
+  /* Etapas do processo (ADR-050), na paleta da marca e dos documentos:
+     Rascunho (ardósia) → Em Elaboração (royal) → Pronto para Encerrar (teal,
+     o mesmo do TR) → Concluído (verde). */
+  --color-status-progress-bg: #EFF6FF;
+  --color-status-progress-fg: #1D4ED8;
+  --color-status-progress-dot: #2563EB;
+  --color-status-ready-bg: #F0FDFA;
+  --color-status-ready-fg: #0F766E;
+  --color-status-ready-dot: #0D9488;
 
   /* ── Acentos por tipo de documento ──────────────────────────────────────── */
   --color-doc-etp: #2563EB;
