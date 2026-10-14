@@ -11,181 +11,119 @@ import { MODALIDADE_LABEL, type Modalidade } from "@/lib/types"
 const MODALIDADES = Object.keys(MODALIDADE_LABEL) as Modalidade[]
 
 /**
- * O caso que motivou a regra é o da reunião: um processo montado como Pregão
- * Eletrônico vira Dispensa do Art. 75. O Edital deixa de existir naquela
- * contratação — e, se já tiver sido gerado, fica no acervo contradizendo o
- * próprio processo.
+ * A troca de modalidade acrescenta o que a nova exige e não tira nada
+ * (ADR-047 do back-end): o que já estava marcado ou elaborado fica, e o que a
+ * nova modalidade não prevê só sai se o servidor o retirar.
  */
 describe("impacto da troca de modalidade", () => {
-  it("pregão para dispensa: o Edital deixa de ser cabível", () => {
-    const impacto = impactoTrocaModalidade(
-      "Pregão Eletrônico",
-      "Dispensa Art. 75",
-      ["ETP", "TR", "Edital"],
-    )
+  it("pregão para dispensa: o Edital fica, sem estar previsto", () => {
+    const impacto = impactoTrocaModalidade("Pregão Eletrônico", "Dispensa Art. 75", ["ETP", "TR", "Edital"], ["Edital"], {
+      para: "DIRECT",
+    })
 
-    expect(impacto.deixamDeSerCabiveis).toEqual(["Edital"])
-    expect(impacto.cabiveis).not.toContain("Edital")
-    expect(impacto.exigeJustificativa).toBe(true)
+    expect(impacto.naoPrevistos).toEqual(["Edital"])
+    expect(impacto.jaGeradosNaoPrevistos).toEqual(["Edital"])
+    expect(impacto.entram).toEqual([])
+    expect(impacto.documentos).toEqual(["ETP", "TR", "Edital"])
   })
 
-  it("avisa em separado o que já foi gerado", () => {
-    const impacto = impactoTrocaModalidade(
-      "Pregão Eletrônico",
-      "Dispensa Art. 75",
-      ["ETP", "TR", "Edital"],
-      ["ETP", "Edital"],
-    )
+  it("dispensa para inexigibilidade: nada sai, nada entra — o TR já estava", () => {
+    const impacto = impactoTrocaModalidade("Dispensa Art. 75", "Inexigibilidade", ["Cotação", "TR", "Aviso"], [], {
+      de: "DISPUTE",
+    })
 
-    // Documento gerado não some ao trocar a modalidade. É o aviso mais grave da
-    // lista, e por isso vem separado do que apenas deixa de ser solicitado.
-    expect(impacto.jaGeradosQueDeixamDeSerCabiveis).toEqual(["Edital"])
+    expect(impacto.entram).toEqual([])
+    expect(impacto.naoPrevistos).toEqual(["Aviso"])
+    expect(impacto.documentos).toEqual(["Cotação", "TR", "Aviso"])
   })
 
-  it("aponta o que passa a ser obrigatório", () => {
-    const impacto = impactoTrocaModalidade("Leilão", "Pregão Eletrônico", ["Edital"])
+  it("dispensa para pregão: entram os exigidos, e a minuta vem com o edital", () => {
+    const impacto = impactoTrocaModalidade("Dispensa Art. 75", "Pregão Eletrônico", ["Cotação", "TR"], [], {
+      de: "DIRECT",
+    })
 
-    expect(impacto.passamASerObrigatorios).toEqual(["ETP", "TR"])
-    expect(impacto.exigeJustificativa).toBe(true)
+    expect(impacto.entram).toEqual(["ETP", "Edital", "Contrato"])
+    // A ordem é a do fluxo, não a de digitação.
+    expect(impacto.documentos).toEqual(["Cotação", "ETP", "TR", "Edital", "Contrato"])
   })
 
-  it("a sugestão preserva o que continua cabível", () => {
-    const impacto = impactoTrocaModalidade(
-      "Pregão Eletrônico",
-      "Dispensa Art. 75",
-      ["ETP", "TR", "Edital", "Cotação"],
-    )
+  it("a minuta que já estava não entra de novo", () => {
+    const impacto = impactoTrocaModalidade("Inexigibilidade", "Concorrência", ["TR", "Contrato"])
 
-    // Quem montou o processo escolheu Cotação; a troca de modalidade não é
-    // motivo para descartar a escolha onde ela continua valendo.
-    expect(impacto.documentosSugeridos).toEqual(["Cotação", "ETP", "TR"])
+    expect(impacto.entram).toEqual(["ETP", "Edital"])
+    expect(impacto.documentos).toEqual(["ETP", "TR", "Edital", "Contrato"])
   })
 
-  it("a sugestão vem na ordem do fluxo, não na de digitação", () => {
-    const impacto = impactoTrocaModalidade("Leilão", "Pregão Eletrônico", ["Edital"])
-
-    // Fora de ordem, a lista do hub mostraria o Edital antes do ETP — e o
-    // servidor leria como se fosse essa a sequência do trabalho.
-    expect(impacto.documentosSugeridos).toEqual(["ETP", "TR", "Edital"])
-  })
-
-  it("trocar entre modalidades de mesma exigência não pede justificativa", () => {
-    const impacto = impactoTrocaModalidade(
-      "Pregão Eletrônico",
-      "Concorrência",
-      ["ETP", "TR", "Edital"],
-    )
-
-    // Alerta sem consequência vira ruído que se aprende a fechar sem ler — e aí
-    // o alerta que importa passa junto.
-    expect(impacto.exigeJustificativa).toBe(false)
-    expect(impacto.deixamDeSerCabiveis).toEqual([])
-    expect(impacto.passamASerObrigatorios).toEqual([])
-  })
-
-  it("manter a mesma modalidade nunca exige justificativa", () => {
-    expect(
-      impactoTrocaModalidade("Pregão Eletrônico", "Pregão Eletrônico", []).exigeJustificativa,
-    ).toBe(false)
-  })
-
-  it.each(MODALIDADES)("%s tem impacto calculável a partir de qualquer origem", (modalidade) => {
-    for (const origem of MODALIDADES) {
-      const impacto = impactoTrocaModalidade(origem, modalidade, ["ETP", "TR", "Edital"])
-      // Modalidade nova no catálogo não pode quebrar a tela de troca.
-      expect(impacto.cabiveis.length).toBeGreaterThan(0)
-      expect(impacto.documentosSugeridos).toEqual(expect.arrayContaining([]))
+  it("nenhuma troca entre duas modalidades remove documento", () => {
+    for (const de of MODALIDADES) {
+      for (const para of MODALIDADES) {
+        const solicitados = ["Cotação", "ETP", "Mapa", "TR", "Edital", "Aviso", "Contrato"] as const
+        const impacto = impactoTrocaModalidade(de, para, [...solicitados])
+        expect(impacto.documentos, `${de} → ${para}`).toEqual(expect.arrayContaining([...solicitados]))
+      }
     }
+  })
+
+  it("na mesma modalidade, nada é dado como não previsto", () => {
+    const impacto = impactoTrocaModalidade("Pregão Eletrônico", "Pregão Eletrônico", ["ETP", "TR", "Edital", "Aviso"])
+
+    expect(impacto.naoPrevistos).toEqual([])
   })
 })
 
 describe("motivo registrado na trilha", () => {
-  const impacto = impactoTrocaModalidade(
-    "Pregão Eletrônico",
-    "Dispensa Art. 75",
-    ["ETP", "TR", "Edital"],
-  )
+  it("diz o que entrou e o que ficou sem estar previsto, com os já gerados", () => {
+    const impacto = impactoTrocaModalidade("Pregão Eletrônico", "Dispensa Art. 75", ["ETP", "TR", "Edital"], ["Edital"], {
+      para: "DISPUTE",
+    })
 
-  it("com justificativa, ela entra literal", () => {
-    const motivo = motivoDaTrocaDeModalidade(
-      "Pregão Eletrônico",
-      "Dispensa Art. 75",
-      impacto,
-      "  O edital já foi publicado e será anulado por ato próprio.  ",
+    expect(motivoDaTrocaDeModalidade("Pregão Eletrônico", "Dispensa Art. 75", impacto, { para: "DISPUTE" })).toBe(
+      "Modalidade alterada de Pregão Eletrônico para Dispensa Art. 75 (com disputa). Incluídos para elaboração: Aviso. Mantidos, embora a nova modalidade não os preveja: Edital (já gerados: Edital).",
     )
-
-    // É a justificativa que responde ao controle por que a lista ficou
-    // divergente da recomendação; parafraseá-la perderia o que foi dito.
-    expect(motivo).toContain("O edital já foi publicado e será anulado por ato próprio.")
-    expect(motivo).toContain("Pregão Eletrônico")
-    expect(motivo).toContain("Dispensa Art. 75")
-  })
-
-  it("sem justificativa, registra o ajuste que foi feito", () => {
-    const motivo = motivoDaTrocaDeModalidade("Pregão Eletrônico", "Dispensa Art. 75", impacto, "   ")
-
-    expect(motivo).toContain("removidos por deixarem de ser cabíveis: Edital")
-  })
-
-  it("registra também o que passou a ser obrigatório", () => {
-    const subida = impactoTrocaModalidade("Leilão", "Pregão Eletrônico", ["Edital"])
-
-    expect(motivoDaTrocaDeModalidade("Leilão", "Pregão Eletrônico", subida, "")).toContain(
-      "incluídos por passarem a ser obrigatórios: ETP, TR",
-    )
-  })
-
-  it("documento já gerado que perde cabimento entra na trilha, com ou sem justificativa", () => {
-    const impacto = impactoTrocaModalidade(
-      "Pregão Eletrônico",
-      "Dispensa Art. 75",
-      ["ETP", "TR", "Edital"],
-      ["Edital"],
-    )
-
-    // É o fato mais grave da troca: o arquivo continua no acervo. A tela já
-    // avisava; a trilha, que é quem responde ao controle meses depois, não
-    // dizia nada.
-    expect(motivoDaTrocaDeModalidade("Pregão Eletrônico", "Dispensa Art. 75", impacto, "")).toContain(
-      "Documento já gerado que deixa de ser cabível: Edital",
-    )
-    expect(
-      motivoDaTrocaDeModalidade("Pregão Eletrônico", "Dispensa Art. 75", impacto, "Será anulado."),
-    ).toContain("Documento já gerado que deixa de ser cabível: Edital")
   })
 
   it("sem consequência nenhuma, registra só a troca", () => {
     const neutra = impactoTrocaModalidade("Pregão Eletrônico", "Concorrência", ["ETP", "TR", "Edital"])
 
-    expect(motivoDaTrocaDeModalidade("Pregão Eletrônico", "Concorrência", neutra, "")).toBe(
+    expect(motivoDaTrocaDeModalidade("Pregão Eletrônico", "Concorrência", neutra)).toBe(
       "Modalidade alterada de Pregão Eletrônico para Concorrência.",
+    )
+  })
+
+  it("não previsto que não foi gerado sai sem a observação", () => {
+    const impacto = impactoTrocaModalidade("Pregão Eletrônico", "Dispensa Art. 75", ["ETP", "TR", "Edital"], [], {
+      para: "DIRECT",
+    })
+
+    expect(motivoDaTrocaDeModalidade("Pregão Eletrônico", "Dispensa Art. 75", impacto, { para: "DIRECT" })).toBe(
+      "Modalidade alterada de Pregão Eletrônico para Dispensa Art. 75 (direta). Mantidos, embora a nova modalidade não os preveja: Edital.",
     )
   })
 })
 
 /**
  * Na dispensa, trocar a forma — direta ↔ com disputa — é trocar a regra de
- * documentos, e passa pelo mesmo alerta (ADR-046 do back-end).
+ * documentos, e segue a mesma regra de acrescentar sem tirar (ADR-046).
  */
 describe("troca da forma da dispensa", () => {
-  it("de direta para com disputa, o aviso passa a ser obrigatório", () => {
-    const impacto = impactoTrocaModalidade("Dispensa Art. 75", "Dispensa Art. 75", ["TR", "Cotação"], [], {
+  it("de direta para com disputa, o aviso entra", () => {
+    const impacto = impactoTrocaModalidade("Dispensa Art. 75", "Dispensa Art. 75", ["Cotação", "TR"], [], {
       de: "DIRECT",
       para: "DISPUTE",
     })
 
-    expect(impacto.passamASerObrigatorios).toEqual(["Aviso"])
-    expect(impacto.exigeJustificativa).toBe(true)
-    expect(impacto.documentosSugeridos).toEqual(["Cotação", "TR", "Aviso"])
+    expect(impacto.entram).toEqual(["Aviso"])
+    expect(impacto.documentos).toEqual(["Cotação", "TR", "Aviso"])
   })
 
-  it("de com disputa para direta, o aviso deixa de ser cabível — e, gerado, entra na trilha", () => {
+  it("de com disputa para direta, o aviso fica — e, gerado, entra na trilha", () => {
     const formas = { de: "DISPUTE", para: "DIRECT" } as const
     const impacto = impactoTrocaModalidade("Dispensa Art. 75", "Dispensa Art. 75", ["TR", "Aviso"], ["Aviso"], formas)
 
-    expect(impacto.deixamDeSerCabiveis).toEqual(["Aviso"])
-    expect(motivoDaTrocaDeModalidade("Dispensa Art. 75", "Dispensa Art. 75", impacto, "", formas)).toBe(
-      "Modalidade alterada de Dispensa Art. 75 (com disputa) para Dispensa Art. 75 (direta). Lista de documentos ajustada — removidos por deixarem de ser cabíveis: Aviso. Documento já gerado que deixa de ser cabível: Aviso.",
+    expect(impacto.naoPrevistos).toEqual(["Aviso"])
+    expect(impacto.documentos).toEqual(["TR", "Aviso"])
+    expect(motivoDaTrocaDeModalidade("Dispensa Art. 75", "Dispensa Art. 75", impacto, formas)).toBe(
+      "Modalidade alterada de Dispensa Art. 75 (com disputa) para Dispensa Art. 75 (direta). Mantidos, embora a nova modalidade não os preveja: Aviso (já gerados: Aviso).",
     )
   })
 

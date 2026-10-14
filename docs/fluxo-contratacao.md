@@ -71,25 +71,37 @@ A **minuta de contrato** consta obrigatoriamente como anexo do edital (Art. 18, 
 
 Declarada em `REGRA_MODALIDADE` e, na dispensa, em `REGRA_DA_DISPENSA` — `regraDe(modalidade, forma)` escolhe. O wizard só oferece os tipos cabíveis à modalidade escolhida — os obrigatórios já vêm marcados e travados, e os recomendados vêm marcados mas podem ser desmarcados.
 
-| Modalidade | Obrigatórios | Recomendados | Opcionais |
+| Modalidade | Obrigatórios (travados) | Recomendados (marcados) | Opcionais (desmarcados) |
 |---|---|---|---|
-| Pregão Eletrônico · Concorrência · Diálogo Competitivo · Credenciamento | ETP, TR, Edital | Contrato | Cotação, Mapa, Contrato |
-| Concurso | ETP, Edital | — | Cotação, Mapa, TR, Contrato |
-| Leilão | Edital | — | Cotação, Mapa, ETP, TR, Contrato |
-| **Dispensa Direta** (Art. 75) | TR | Cotação | Cotação, ETP, Mapa, Contrato — **sem Edital nem Aviso** |
-| **Dispensa com Disputa** (Art. 75, § 3º) | TR, Aviso | ETP, Contrato | Cotação, ETP, Mapa, Contrato — **o Aviso no lugar do Edital** |
-| **Inexigibilidade** (Art. 74) | TR | — | ETP, Cotação, Mapa, Contrato — **sem Edital** |
+| Pregão Eletrônico · Concorrência · Diálogo Competitivo | ETP, TR, Edital | Cotação, Mapa, Contrato | — |
+| Credenciamento (Art. 79; inexigibilidade do Art. 74, IV) | TR, Edital de chamamento | Cotação, ETP, Contrato | Mapa |
+| Concurso (Art. 30) | ETP, Edital | Contrato | Cotação, Mapa, TR |
+| Leilão (Art. 31) | Edital | Contrato | Cotação, Mapa, ETP, TR |
+| **Dispensa Direta** (Art. 75) | TR | Cotação, Contrato | ETP, Mapa — **sem Edital nem Aviso** |
+| **Dispensa com Disputa** (Art. 75, § 3º) | TR, Aviso | Cotação, ETP, Contrato | Mapa — **o Aviso no lugar do Edital** |
+| **Inexigibilidade** (Art. 74) | TR | Cotação, Contrato | ETP, Mapa — **sem Edital** |
 
-**A minuta de contrato é opcional, mas recomendada nas licitações em que o contrato é a regra.** É opcional porque o instrumento de contrato pode ser substituído por nota de empenho nas compras com entrega imediata e integral (Art. 95, II). Quando existe, porém, ela constará obrigatoriamente como anexo do edital (Art. 18, VI). Por isso vem marcada no Pregão, na Concorrência, no Diálogo Competitivo e no Credenciamento. No Leilão e no Concurso vem desmarcada: a alienação se resolve na arrematação, e o concurso, no prêmio e na cessão dos direitos. Na dispensa direta e na inexigibilidade também vem desmarcada, porque na dispensa por valor o contrato pode ser substituído por nota de empenho (Art. 95, I); na dispensa com disputa vem marcada, como no pregão, de que ela segue as opções.
+Os obrigatórios são os mesmos de `RequiredDocuments` no back-end (ADR-047), que os cobra no encerramento e os protege na retirada. **Obrigatório** é a peça que a lei exige; **recomendado** é o conteúdo que a lei exige mas admite noutra peça ou dispensa no caso concreto:
+
+- **Minuta de contrato — marcada em todas.** O instrumento de contrato é obrigatório, salvo nas exceções do Art. 95 (dispensa por valor; compras com entrega imediata e integral), e, quando há edital, consta como anexo dele (Art. 18, VI). **O anexo que se apresenta sob o principal vem marcado com ele** — quem marca o edital já leva a minuta. No Leilão, desmarque quando a alienação se resolver na arrematação.
+- **Cotação — marcada onde há contratação a estimar.** A estimativa de despesa é exigida (Art. 18, IV; Art. 23; Art. 72, II), e na contratação direta também a justificativa de preço (Art. 72, VII). Desmarcada no Leilão (o valor é o da avaliação do bem, Art. 31, § 2º) e no Concurso (o prêmio é fixado no edital, Art. 30).
+- **Mapa de riscos — marcado nas licitações de contratação.** A análise de riscos integra a fase preparatória (Art. 18, X). Na contratação direta ela entra "se for o caso" (Art. 72, I).
+- **ETP — recomendado na contratação direta onde costuma caber.** No Credenciamento e na Dispensa com Disputa vem marcado; a lei o exige só "se for o caso" (Art. 72, I).
 
 **Contratação direta não gera edital de licitação.** O Art. 72 instrui o processo com DFD, ETP *quando for o caso*, TR, estimativa de despesa, parecer jurídico e autorização — por isso, nessas modalidades, o ETP é opcional (Art. 72, I) e o Edital não é oferecido. No Credenciamento (Art. 79), o "Edital" é o de chamamento público.
 
 **A dispensa é direta ou com disputa (ADR-046 do back-end).** As duas são contratação direta, e quem abre o processo declara a forma — é ela que decide os documentos:
 
 - **Direta:** o fornecedor é contratado sem disputa, nas hipóteses do Art. 75 que a dispensam (emergência, licitação deserta, entre outras). Sem Edital nem Aviso; o ETP só se for o caso (Art. 72, I). A Cotação vem marcada porque a estimativa de despesa e a justificativa de preço fazem parte da instrução (Art. 72, II e VII). Na dispensa por valor, a tela lembra que a lei prefere o aviso (Art. 75, § 3º).
-- **Com disputa:** a contratação é precedida de aviso em sítio eletrônico oficial, por no mínimo 3 dias úteis, e seleciona a proposta mais vantajosa (Art. 75, § 3º) — a dispensa eletrônica. Tem as opções do pregão com o **Aviso de Contratação Direta no lugar do Edital**: TR e Aviso obrigatórios; ETP e Contrato marcados. O ETP não é travado porque a lei o faculta nas dispensas por valor.
+- **Com disputa:** a contratação é precedida de aviso em sítio eletrônico oficial, por no mínimo 3 dias úteis, e seleciona a proposta mais vantajosa (Art. 75, § 3º) — a dispensa eletrônica. Tem as opções do pregão com o **Aviso de Contratação Direta no lugar do Edital**: TR e Aviso obrigatórios; Cotação, ETP e Contrato marcados. O ETP não é travado porque a lei o faculta nas dispensas por valor.
 
-Trocar a forma no hub é troca de modalidade: passa pelo alerta de impacto e vai para a trilha.
+Trocar a forma no hub é troca de modalidade, com a mesma regra abaixo.
+
+## Troca de modalidade, retirada e encerramento (ADR-047)
+
+- **Trocar a modalidade (ou a forma da dispensa) acrescenta e não tira.** Entram para elaboração os obrigatórios da nova modalidade que faltavam — e, com um principal que entra, o anexo que vem marcado com ele (a minuta com o edital). Tudo o que já estava marcado ou elaborado continua no processo; o que a nova modalidade não prevê fica, sem ser cobrado, e sai só se o servidor o retirar. O back-end aplica a mesma regra ao gravar, e a trilha registra o que entrou e o que ficou.
+- **Retirar do processo** só é oferecido ao que não é obrigatório na modalidade atual e não foi concluído. O back-end recusa as duas retiradas.
+- **Encerrar** cobra os obrigatórios da modalidade **atual** — estejam na lista ou não. Faltando algum, pede justificativa (orienta, não trava). Opcional por fazer fica dito na tela e não pede justificativa; documento que a modalidade atual não prevê não é cobrado.
 
 ## Seções obrigatórias e dispensáveis
 
@@ -138,7 +150,7 @@ Rascunho ──gera o primeiro documento──▶ Em Elaboração ──encerra�
 ```
 
 - **Em Elaboração**: o processo ganhou o primeiro documento gerado.
-- **Encerramento**: quando todos os documentos escolhidos estão prontos. Se
+- **Encerramento**: quando os obrigatórios da modalidade atual estão prontos. Se
   faltar algum, **a plataforma não impede** — pede justificativa, que fica
   registrada na trilha. Orientar sem travar é a regra de produto que vale acima
   das outras.

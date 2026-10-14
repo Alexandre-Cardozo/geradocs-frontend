@@ -234,11 +234,6 @@ export interface AtualizarProcessoInput {
   fundamentoDaDispensa?: FundamentoDaDispensa
   /** Direta ou com disputa (ADR-046); trocá-la muda os documentos cabíveis. */
   formaDaDispensa?: FormaDaDispensa
-  /**
-   * Preenchida quando a lista de documentos é mantida divergindo da
-   * recomendação. Vai literal para a trilha — é ela que responde ao controle.
-   */
-  justificativaModalidade?: string
 }
 
 /**
@@ -259,8 +254,7 @@ export async function atualizarProcesso(input: AtualizarProcessoInput): Promise<
   }
   if (houveTroca(atual.modalidade, para, formas)) {
     // Contra a lista que o processo tinha, e não contra a que está sendo salva:
-    // com a lista nova, o que a tela acabou de remover já não estaria lá, e a
-    // trilha registraria "nada removido" exatamente quando algo foi.
+    // é ela que diz o que a troca acrescentou e o que ficou sem estar previsto.
     const impacto = impactoTrocaModalidade(
       atual.modalidade,
       para,
@@ -268,13 +262,7 @@ export async function atualizarProcesso(input: AtualizarProcessoInput): Promise<
       await docsGeradosDo(atual.id),
       formas,
     )
-    motivo = motivoDaTrocaDeModalidade(
-      atual.modalidade,
-      para,
-      impacto,
-      input.justificativaModalidade ?? "",
-      formas,
-    )
+    motivo = motivoDaTrocaDeModalidade(atual.modalidade, para, impacto, formas)
   }
   return atualizarProcessoReal(atual, {
     objeto: input.objeto,

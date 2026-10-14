@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import {
   documentosPendentes,
+  documentosPorFazerSemCobranca,
   statusDoDocumentoNoProcesso,
   motivoDoEncerramento,
   tiposGerados,
@@ -50,26 +51,39 @@ describe("tiposGerados", () => {
   })
 })
 
+/**
+ * O encerramento cobra os obrigatórios da modalidade atual (ADR-047 do
+ * back-end): o opcional por fazer não pede justificativa, e o obrigatório que
+ * nem estava na lista pede.
+ */
 describe("documentosPendentes", () => {
-  it("devolve o que falta na ordem canônica do fluxo", () => {
-    // A ordem importa na tela: o servidor lê a lista como roteiro do que ainda
-    // precisa elaborar.
-    const pendentes = documentosPendentes(processo(["Edital", "ETP", "TR"]), [])
-
-    expect(pendentes).toEqual(["ETP", "TR", "Edital"])
+  it("devolve os obrigatórios que faltam, na ordem canônica do fluxo", () => {
+    // A ordem importa na tela: o servidor lê a lista como roteiro.
+    expect(documentosPendentes(processo(["Edital", "ETP", "TR"]), [])).toEqual(["ETP", "TR", "Edital"])
   })
 
   it("ignora o que já foi gerado", () => {
-    expect(documentosPendentes(processo(["ETP", "TR"]), ["ETP"])).toEqual(["TR"])
+    expect(documentosPendentes(processo(["ETP", "TR", "Edital"]), ["ETP"])).toEqual(["TR", "Edital"])
   })
 
-  it("processo com tudo gerado não tem pendência", () => {
-    expect(documentosPendentes(processo(["ETP"]), ["ETP"])).toEqual([])
+  it("com os obrigatórios gerados não há pendência, mesmo com opcional por fazer", () => {
+    const comMapa = processo(["ETP", "Mapa", "TR", "Edital"])
+
+    expect(documentosPendentes(comMapa, ["ETP", "TR", "Edital"])).toEqual([])
+    expect(documentosPorFazerSemCobranca(comMapa, ["ETP", "TR", "Edital"])).toEqual(["Mapa"])
   })
 
-  it("não conta documento gerado que não pertence ao processo", () => {
-    // O Edital pode existir no repositório de outro processo; aqui ele não conta.
-    expect(documentosPendentes(processo(["ETP"]), ["ETP", "Edital"])).toEqual([])
+  it("cobra o obrigatório que nem está na lista", () => {
+    expect(documentosPendentes(processo(["ETP"]), ["ETP"])).toEqual(["TR", "Edital"])
+  })
+
+  it("é a modalidade de agora que conta: o Edital de quem virou dispensa não é cobrado", () => {
+    const virouDispensa = { ...processo(["ETP", "TR", "Edital"]), modalidade: "Dispensa Art. 75" as const }
+
+    expect(documentosPendentes(virouDispensa, ["TR"])).toEqual([])
+    expect(documentosPorFazerSemCobranca(virouDispensa, ["TR"])).toEqual(["ETP", "Edital"])
+    // A dispensa com disputa cobra o Aviso.
+    expect(documentosPendentes({ ...virouDispensa, formaDaDispensa: "DISPUTE" }, ["TR"])).toEqual(["Aviso"])
   })
 })
 

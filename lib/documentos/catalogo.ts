@@ -140,23 +140,32 @@ export const ORDEM_FLUXO: TipoDocumento[] = (Object.values(CATALOGO) as MetaDocu
   .map((m) => m.tipo)
 
 /**
- * Documentos cabíveis a cada modalidade.
+ * Documentos cabíveis a cada modalidade (ADR-047 do back-end).
  *
- * Contratação direta (Dispensa e Inexigibilidade) não gera edital de licitação:
- * o Art. 72 instrui o processo com DFD, ETP *se for o caso* (I), TR, estimativa
- * de despesa (II), parecer jurídico e autorização. Por isso o ETP é opcional e o
- * Edital não é oferecido. No Credenciamento (Art. 79), o edital é o de
- * chamamento público. A dispensa tem regra própria para cada forma — direta ou
- * com disputa —, em `REGRA_DA_DISPENSA`.
- *
- * `recomendados` são opcionais que já vêm marcados. A minuta de contrato é
- * opcional porque o instrumento pode ser substituído por nota de empenho nas
- * compras com entrega imediata e integral (Art. 95, II) — mas, quando existe,
- * consta obrigatoriamente como anexo do edital (Art. 18, VI), e por isso vem
- * marcada nas licitações em que o contrato é a regra. No Leilão e no Concurso
- * fica desmarcada: a alienação se resolve na arrematação, e o concurso, no
- * prêmio e na cessão dos direitos.
- *
+ * - **Obrigatório** é a peça que a Lei 14.133/21 exige — vem marcada e travada.
+ *   É a mesma tabela de `RequiredDocuments` no back-end, que a cobra no
+ *   encerramento e a protege na retirada.
+ * - **Recomendado** é o que vem marcado e pode ser desmarcado: a lei exige o
+ *   conteúdo, mas admite que ele esteja noutra peça ou que falte no caso
+ *   concreto. Três regras:
+ *   - **Minuta de contrato** vem marcada em toda modalidade: o instrumento de
+ *     contrato é obrigatório, salvo nas exceções do Art. 95 (dispensa por valor,
+ *     entrega imediata), e, quando há edital, consta como anexo dele (Art. 18,
+ *     VI) — o anexo sob o principal vem marcado com ele.
+ *   - **Cotação** vem marcada onde há contratação a estimar: a estimativa de
+ *     despesa é exigida (Art. 18, IV; Art. 23; Art. 72, II), e na contratação
+ *     direta a justificativa de preço também (Art. 72, VII). Fica desmarcada no
+ *     Leilão (o valor é o da avaliação do bem, Art. 31, § 2º) e no Concurso (o
+ *     prêmio é fixado no edital, Art. 30).
+ *   - **Mapa de riscos** vem marcado nas licitações de contratação (Pregão,
+ *     Concorrência, Diálogo): a análise de riscos integra a fase preparatória
+ *     (Art. 18, X). Na contratação direta ela entra "se for o caso" (Art. 72, I).
+ * - **Contratação direta** (Dispensa e Inexigibilidade) não gera edital: o
+ *   Art. 72 instrui o processo com DFD, ETP *se for o caso* (I), TR, estimativa
+ *   de despesa (II), parecer jurídico e autorização. No **Credenciamento**
+ *   (Art. 79), que é inexigibilidade (Art. 74, IV), o edital é o de chamamento e
+ *   o ETP vem marcado sem ser travado. A dispensa tem regra própria para cada
+ *   forma — direta ou com disputa —, em `REGRA_DA_DISPENSA`.
  */
 export interface RegraDocumental {
   obrigatorios: TipoDocumento[]
@@ -168,30 +177,30 @@ export interface RegraDocumental {
 /**
  * Os documentos de cada forma da dispensa (ADR-046 do back-end).
  *
- * - **Direta:** o TR, e a cotação marcada — sem disputa, a estimativa de
- *   despesa e a justificativa de preço (Art. 72, II e VII) dependem da pesquisa
- *   de preços. Sem aviso nem edital; ETP só se for o caso (Art. 72, I).
+ * - **Direta:** o TR; cotação e minuta marcadas. Sem aviso nem edital; ETP só
+ *   se for o caso (Art. 72, I).
  * - **Com disputa:** as opções do pregão, com o Aviso de Contratação Direta no
  *   lugar do edital — é ele que divulga o objeto e chama as propostas (Art. 75,
  *   § 3º). O ETP vem marcado mas não travado: a lei o faculta nas dispensas por
- *   valor, que é onde a disputa é a regra.
+ *   valor, que é onde a disputa é a regra. O mapa de riscos fica desmarcado,
+ *   como em toda contratação direta (Art. 72, I).
  */
 export const REGRA_DA_DISPENSA: Record<FormaDaDispensa, RegraDocumental> = {
-  DIRECT: { obrigatorios: ["TR"], opcionais: ["Cotação", "ETP", "Mapa", "Contrato"], recomendados: ["Cotação"] },
-  DISPUTE: { obrigatorios: ["TR", "Aviso"], opcionais: ["Cotação", "ETP", "Mapa", "Contrato"], recomendados: ["ETP", "Contrato"] },
+  DIRECT: { obrigatorios: ["TR"], opcionais: ["Cotação", "ETP", "Mapa", "Contrato"], recomendados: ["Cotação", "Contrato"] },
+  DISPUTE: { obrigatorios: ["TR", "Aviso"], opcionais: ["Cotação", "ETP", "Mapa", "Contrato"], recomendados: ["Cotação", "ETP", "Contrato"] },
 }
 
 export const REGRA_MODALIDADE: Record<Modalidade, RegraDocumental> = {
-  "Pregão Eletrônico": { obrigatorios: ["ETP", "TR", "Edital"], opcionais: ["Cotação", "Mapa", "Contrato"], recomendados: ["Contrato"] },
-  "Concorrência": { obrigatorios: ["ETP", "TR", "Edital"], opcionais: ["Cotação", "Mapa", "Contrato"], recomendados: ["Contrato"] },
-  "Diálogo Competitivo": { obrigatorios: ["ETP", "TR", "Edital"], opcionais: ["Cotação", "Mapa", "Contrato"], recomendados: ["Contrato"] },
-  "Credenciamento": { obrigatorios: ["ETP", "TR", "Edital"], opcionais: ["Cotação", "Mapa", "Contrato"], recomendados: ["Contrato"] },
-  "Concurso": { obrigatorios: ["ETP", "Edital"], opcionais: ["Cotação", "Mapa", "TR", "Contrato"], recomendados: [] },
-  "Leilão": { obrigatorios: ["Edital"], opcionais: ["Cotação", "Mapa", "ETP", "TR", "Contrato"], recomendados: [] },
+  "Pregão Eletrônico": { obrigatorios: ["ETP", "TR", "Edital"], opcionais: ["Cotação", "Mapa", "Contrato"], recomendados: ["Cotação", "Mapa", "Contrato"] },
+  "Concorrência": { obrigatorios: ["ETP", "TR", "Edital"], opcionais: ["Cotação", "Mapa", "Contrato"], recomendados: ["Cotação", "Mapa", "Contrato"] },
+  "Diálogo Competitivo": { obrigatorios: ["ETP", "TR", "Edital"], opcionais: ["Cotação", "Mapa", "Contrato"], recomendados: ["Cotação", "Mapa", "Contrato"] },
+  "Credenciamento": { obrigatorios: ["TR", "Edital"], opcionais: ["Cotação", "ETP", "Mapa", "Contrato"], recomendados: ["Cotação", "ETP", "Contrato"] },
+  "Concurso": { obrigatorios: ["ETP", "Edital"], opcionais: ["Cotação", "Mapa", "TR", "Contrato"], recomendados: ["Contrato"] },
+  "Leilão": { obrigatorios: ["Edital"], opcionais: ["Cotação", "Mapa", "ETP", "TR", "Contrato"], recomendados: ["Contrato"] },
   // Sem a forma declarada, a dispensa é a direta: sem aviso, que é o que
   // caracteriza a disputa. Quem sabe a forma usa `regraDe`.
   "Dispensa Art. 75": REGRA_DA_DISPENSA.DIRECT,
-  "Inexigibilidade": { obrigatorios: ["TR"], opcionais: ["ETP", "Cotação", "Mapa", "Contrato"], recomendados: [] },
+  "Inexigibilidade": { obrigatorios: ["TR"], opcionais: ["ETP", "Cotação", "Mapa", "Contrato"], recomendados: ["Cotação", "Contrato"] },
 }
 
 /** A regra documental do processo: a da modalidade e, na dispensa, a da forma. */
@@ -251,6 +260,17 @@ export function orientacaoDosDocumentos(
 /** Reordena uma lista de tipos segundo a ordem canônica do fluxo. */
 export function ordenar(tipos: TipoDocumento[]): TipoDocumento[] {
   return [...tipos].sort((a, b) => CATALOGO[a].ordem - CATALOGO[b].ordem)
+}
+
+/**
+ * Os anexos que se apresentam sob o principal — elaborados depois dele e
+ * divulgados com ele (a minuta de contrato sob o edital). O TR também é anexo
+ * do edital, mas é elaborado antes e o fundamenta: mantém o próprio lugar.
+ */
+export function anexosSob(principal: TipoDocumento): TipoDocumento[] {
+  return ORDEM_FLUXO.filter(
+    (tipo) => CATALOGO[tipo].anexoDe?.tipo === principal && CATALOGO[tipo].ordem > CATALOGO[principal].ordem,
+  )
 }
 
 export interface GrupoDeDocumentos {

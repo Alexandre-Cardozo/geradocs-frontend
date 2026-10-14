@@ -35,10 +35,10 @@ import { EncerramentoComPendencias } from "@/components/processos/encerramento-c
 import { ItensDaDemanda } from "@/components/processos/itens-da-demanda"
 import { TrilhaDoProcesso } from "@/components/processos/trilha-do-processo"
 import { PainelRetificacao } from "@/components/processos/painel-retificacao"
-import { AlertaOrientacao } from "@/components/shared/alerta-orientacao"
-import { CATALOGO, agruparAnexos, documentosDaModalidade, ordenar, pendencias } from "@/lib/documentos"
+import { CATALOGO, agruparAnexos, documentosDaModalidade, ehObrigatorio, ordenar, pendencias } from "@/lib/documentos"
 import {
   documentosPendentes,
+  documentosPorFazerSemCobranca,
   houveTroca,
   impactoTrocaModalidade,
   rotuloDaModalidade,
@@ -151,15 +151,15 @@ export default function HubProcesso() {
     setNovaForma(proc.formaDaDispensa ?? "")
   }
 
-  const aplicarModalidade = (documentos: TipoDocumento[], justificativa?: string) => {
-    if (!novaModalidade) return
+  // A troca acrescenta o que a nova modalidade exige e não tira nada (ADR-047).
+  const aplicarModalidade = () => {
+    if (!novaModalidade || !impacto) return
     atualizar.mutate(
       {
         id: processoId,
         modalidade: novaModalidade,
         ...(formas.para ? { formaDaDispensa: formas.para } : {}),
-        documentos,
-        justificativaModalidade: justificativa,
+        documentos: impacto.documentos,
       },
       {
         onSuccess: () => {
@@ -185,7 +185,9 @@ export default function HubProcesso() {
    * <p>Entrava e não saía — nem por engano, nem quando o caso deixava de pedi-lo.
    * Enquanto ficava na lista, contava como pendência no encerramento para
    * sempre. O servidor recusa retirar o que já foi concluído, porque aí ele
-   * virou peça dos autos; a tela nem oferece nesse caso (§80).
+   * virou peça dos autos, e o obrigatório da modalidade atual, que o
+   * encerramento cobraria logo depois (ADR-047); a tela nem oferece nesses
+   * casos.
    */
   const retirarDocumento = (tipo: TipoDocumento) => {
     atualizar.mutate(
@@ -205,6 +207,7 @@ export default function HubProcesso() {
   // A regra é do domínio, e não uma filtragem repetida aqui: o servidor cobra a
   // mesma coisa ao encerrar, e duas cópias da regra é como elas divergem.
   const pendentes = documentosPendentes(proc, tiposGeradosAgora)
+  const semCobranca = documentosPorFazerSemCobranca(proc, tiposGeradosAgora)
   const podeEncerrar = proc.status !== "concluido" && proc.documentos.length > 0
 
   // Pendência não impede: exige justificativa. A plataforma orienta, não trava.
@@ -374,7 +377,7 @@ export default function HubProcesso() {
             enquanto ficasse contava como pendência no encerramento para
             sempre. Concluído não sai: virou peça dos autos (§80).
           */}
-          {!finalizado && (
+          {!finalizado && !ehObrigatorio(proc.modalidade, tipo, proc.formaDaDispensa) && (
             <Button
               size="sm"
               variant="ghost"
@@ -507,56 +510,54 @@ export default function HubProcesso() {
               </div>
             )}
 
-            {impacto?.exigeJustificativa ? (
-              <AlertaOrientacao
-                titulo="A troca muda os documentos cabíveis"
-                recomendacao={`Ajustar a lista para o que ${rotuloDaModalidade(novaModalidade, formas.para)} comporta.`}
-                detalhes={
-                  <ul className="m-0 flex list-disc flex-col gap-1 pl-4">
-                    {impacto.jaGeradosQueDeixamDeSerCabiveis.length > 0 && (
-                      <li>
-                        <strong>Já gerado e deixa de ser cabível:</strong>{" "}
-                        {impacto.jaGeradosQueDeixamDeSerCabiveis.join(", ")} — o arquivo continua no
-                        repositório e passa a contradizer o processo.
-                      </li>
+            {/*
+              A troca não tira nada (ADR-047): diz o que entra para elaboração e
+              o que fica sem estar previsto, e quem não for usar retira depois.
+            */}
+            {impacto && houveTroca(proc.modalidade, novaModalidade, formas) && (
+              <InfoBanner tone="info">
+                <ul className="m-0 flex list-disc flex-col gap-1 pl-4">
+                  <li>
+                    {impacto.entram.length > 0 ? (
+                      <>
+                        <strong>Entram para elaboração:</strong>{" "}
+                        {impacto.entram.map((t) => CATALOGO[t].titulo).join(", ")}.
+                      </>
+                    ) : (
+                      "Nenhum documento novo: o processo já tem os que a modalidade exige."
                     )}
-                    {impacto.deixamDeSerCabiveis.length > 0 && (
-                      <li>Deixa de ser cabível: {impacto.deixamDeSerCabiveis.join(", ")}.</li>
-                    )}
-                    {impacto.passamASerObrigatorios.length > 0 && (
-                      <li>Passa a ser obrigatório: {impacto.passamASerObrigatorios.join(", ")}.</li>
-                    )}
-                  </ul>
-                }
-                rotuloSeguir="Trocar e ajustar os documentos"
-                rotuloDivergir="Trocar e manter a lista"
-                placeholderJustificativa="Explique por que a lista de documentos permanece como está."
-                pendente={atualizar.isPending}
-                onSeguir={() => aplicarModalidade(impacto.documentosSugeridos)}
-                onDivergir={(justificativa) => aplicarModalidade(proc.documentos, justificativa)}
-                onCancelar={() => setNovaModalidade(null)}
-              />
-            ) : (
-              <div className="flex flex-wrap gap-2.5">
-                <p id="motivo-trocar-modalidade" className="sr-only">
-                  {trocaDefinida
-                    ? "Escolha uma modalidade, ou forma da dispensa, diferente da atual."
-                    : "Escolha a forma da dispensa: direta ou com disputa."}
-                </p>
-                <Button
-                  disabled={
-                    atualizar.isPending || !trocaDefinida || !houveTroca(proc.modalidade, novaModalidade, formas)
-                  }
-                  ariaDescribedBy="motivo-trocar-modalidade"
-                  onClick={() => aplicarModalidade(proc.documentos)}
-                >
-                  {atualizar.isPending ? "Trocando..." : "Trocar modalidade"}
-                </Button>
-                <Button variant="ghost" onClick={() => setNovaModalidade(null)}>
-                  Cancelar
-                </Button>
-              </div>
+                  </li>
+                  {impacto.naoPrevistos.length > 0 && (
+                    <li>
+                      <strong>Continuam no processo, embora a nova modalidade não os preveja:</strong>{" "}
+                      {impacto.naoPrevistos.map((t) => CATALOGO[t].titulo).join(", ")}
+                      {impacto.jaGeradosNaoPrevistos.length > 0 && " — os já gerados seguem no acervo"}. Não são
+                      cobrados no encerramento; retire-os se não forem usados.
+                    </li>
+                  )}
+                  <li>Nada do que já está marcado ou elaborado sai do processo.</li>
+                </ul>
+              </InfoBanner>
             )}
+            <div className="flex flex-wrap gap-2.5">
+              <p id="motivo-trocar-modalidade" className="sr-only">
+                {trocaDefinida
+                  ? "Escolha uma modalidade, ou forma da dispensa, diferente da atual."
+                  : "Escolha a forma da dispensa: direta ou com disputa."}
+              </p>
+              <Button
+                disabled={
+                  atualizar.isPending || !trocaDefinida || !houveTroca(proc.modalidade, novaModalidade, formas)
+                }
+                ariaDescribedBy="motivo-trocar-modalidade"
+                onClick={aplicarModalidade}
+              >
+                {atualizar.isPending ? "Trocando..." : "Trocar modalidade"}
+              </Button>
+              <Button variant="ghost" onClick={() => setNovaModalidade(null)}>
+                Cancelar
+              </Button>
+            </div>
           </div>
         )}
 
@@ -745,10 +746,15 @@ export default function HubProcesso() {
             <div className="font-display text-md font-bold text-text-1">Encerrar Processo</div>
             <p id="ajuda-encerrar" className="m-0 mt-1 text-sm text-text-3">
               {pendentes.length === 0
-                ? "Todos os documentos foram gerados. Encerre o processo e protocole os arquivos no sistema administrativo da entidade."
-                : `Ainda faltam: ${pendentes
+                ? "Os documentos obrigatórios da modalidade foram gerados. Encerre o processo e protocole os arquivos no sistema administrativo da entidade."
+                : `Ainda faltam os obrigatórios da modalidade: ${pendentes
                     .map((t) => CATALOGO[t].titulo)
                     .join(", ")}. É possível encerrar assim mesmo, mediante justificativa.`}
+              {/* O opcional por fazer não é cobrado, mas fica dito: encerrar sem ele é escolha. */}
+              {semCobranca.length > 0 &&
+                ` Ficam sem elaborar, sem necessidade de justificativa: ${semCobranca
+                  .map((t) => CATALOGO[t].titulo)
+                  .join(", ")}.`}
             </p>
           </div>
           <Button

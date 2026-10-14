@@ -271,7 +271,7 @@ describe("processo", () => {
     )
   })
 
-  it("trocar a modalidade manda o motivo junto, com a justificativa", async () => {
+  it("trocar a modalidade manda o motivo junto, com o já gerado que fica", async () => {
     const api = await fachadaLogada()
     vi.mocked(contratacao.obterProcesso).mockResolvedValue(
       processo({ documentos: ["ETP", "TR", "Edital"] }) as never,
@@ -291,16 +291,12 @@ describe("processo", () => {
       processo({ modalidade: "Dispensa Art. 75" }) as never,
     )
 
-    await api.atualizarProcesso({
-      id: PROCESSO,
-      modalidade: "Dispensa Art. 75",
-      justificativaModalidade: "Valor abaixo do limite do inciso II.",
-    })
+    await api.atualizarProcesso({ id: PROCESSO, modalidade: "Dispensa Art. 75" })
 
     // O motivo acompanha a edição: quem registra é o servidor, e é ele que
     // sabe quem agiu e quando (ADR-024).
     const [, mudancas] = vi.mocked(contratacao.atualizarProcessoReal).mock.calls.at(-1) ?? []
-    expect(mudancas?.motivo).toContain("Valor abaixo do limite do inciso II.")
+    expect(mudancas?.motivo).toContain("Mantidos, embora a nova modalidade não os preveja: Edital")
     expect(mudancas?.motivo).toContain("Pregão Eletrônico")
     expect(mudancas?.motivo).toContain("Dispensa Art. 75")
   })
