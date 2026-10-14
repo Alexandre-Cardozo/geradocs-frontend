@@ -228,42 +228,6 @@ export async function obterTenant(id: string): Promise<Tenant> {
   return tenantDa(organization, departments.filter((item) => item.active).map(secretariaDa))
 }
 
-export async function criarDepartamento(organizationId: string, name: string, acronym = ""): Promise<Secretaria> {
-  const department = await requisicaoProtegida<BackendDepartment>(`/organizations/${organizationId}/departments`, {
-    method: "POST",
-    body: JSON.stringify({ name: name.trim(), acronym: acronym.trim() }),
-  })
-  return secretariaDa(department)
-}
-
-/**
- * Renomeia a secretaria.
- *
- * <p>Só o nome: é o que a tela deixa editar, e a sigla é reenviada como está —
- * a API troca o recurso inteiro, e omiti-la apagaria de passagem um campo que
- * ninguém pediu para mudar.
- *
- * <p>A versão vem da listagem porque não há GET de uma secretaria só; é o mesmo
- * caminho da desativação, e é ele que carrega o `If-Match` que impede
- * sobrescrever a edição de outra pessoa.
- */
-export async function renomearDepartamento(
-  organizationId: string,
-  departmentId: string,
-  name: string,
-): Promise<Secretaria> {
-  const atual = await departamentoDa(organizationId, departmentId)
-  const department = await requisicaoProtegida<BackendDepartment>(
-    `/organizations/${organizationId}/departments/${departmentId}`,
-    {
-      method: "PATCH",
-      headers: { "If-Match": ifMatch(atual.version) },
-      body: JSON.stringify({ name: name.trim(), acronym: atual.acronym ?? "" }),
-    },
-  )
-  return secretariaDa(department)
-}
-
 /**
  * A ficha da secretaria, como a tela de Secretarias a edita (ADR-044 do back-end).
  *
@@ -280,11 +244,46 @@ export interface FichaParaSalvar {
   decretoDeNomeacao: string
 }
 
-/** Grava a ficha, reenviando nome e sigla como estão — a API troca o recurso inteiro. */
-export async function salvarFichaDoDepartamento(
+/** O nome e a ficha, gravados juntos: a tela cadastra e edita os dois no mesmo formulário. */
+export interface SecretariaParaSalvar {
+  nome: string
+  ficha: FichaParaSalvar
+}
+
+function detalhesDa(ficha: FichaParaSalvar) {
+  return {
+    institutionalEmail: ficha.email.trim() || null,
+    address: ficha.endereco.trim() || null,
+    managementUnit: ficha.ug.trim() || null,
+    secretaryName: ficha.secretario.trim() || null,
+    secretaryCpf: ficha.cpfDoSecretario,
+    secretaryAppointment: ficha.decretoDeNomeacao.trim() || null,
+  }
+}
+
+/** Cria a secretaria já com a ficha — quem cadastra não precisa voltar a ela para completar o DFD. */
+export async function criarDepartamento(organizationId: string, secretaria: SecretariaParaSalvar): Promise<Secretaria> {
+  const department = await requisicaoProtegida<BackendDepartment>(`/organizations/${organizationId}/departments`, {
+    method: "POST",
+    body: JSON.stringify({ name: secretaria.nome.trim(), acronym: "", details: detalhesDa(secretaria.ficha) }),
+  })
+  return secretariaDa(department)
+}
+
+/**
+ * Grava o nome e a ficha da secretaria numa requisição só.
+ *
+ * <p>A sigla é reenviada como está: a tela não a edita, e a API troca o recurso
+ * inteiro — omiti-la apagaria de passagem um campo que ninguém pediu para mudar.
+ *
+ * <p>A versão vem da listagem porque não há GET de uma secretaria só; é o mesmo
+ * caminho da desativação, e é ele que carrega o `If-Match` que impede
+ * sobrescrever a edição de outra pessoa.
+ */
+export async function atualizarDepartamento(
   organizationId: string,
   departmentId: string,
-  ficha: FichaParaSalvar,
+  secretaria: SecretariaParaSalvar,
 ): Promise<Secretaria> {
   const atual = await departamentoDa(organizationId, departmentId)
   const department = await requisicaoProtegida<BackendDepartment>(
@@ -293,16 +292,9 @@ export async function salvarFichaDoDepartamento(
       method: "PATCH",
       headers: { "If-Match": ifMatch(atual.version) },
       body: JSON.stringify({
-        name: atual.name,
+        name: secretaria.nome.trim(),
         acronym: atual.acronym ?? "",
-        details: {
-          institutionalEmail: ficha.email.trim() || null,
-          address: ficha.endereco.trim() || null,
-          managementUnit: ficha.ug.trim() || null,
-          secretaryName: ficha.secretario.trim() || null,
-          secretaryCpf: ficha.cpfDoSecretario,
-          secretaryAppointment: ficha.decretoDeNomeacao.trim() || null,
-        },
+        details: detalhesDa(secretaria.ficha),
       }),
     },
   )

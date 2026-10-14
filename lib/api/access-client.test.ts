@@ -162,21 +162,34 @@ describe("obterTenant", () => {
   })
 })
 
+const FICHA_VAZIA = { email: "", endereco: "", ug: "", secretario: "", decretoDeNomeacao: "" }
+
 describe("criarDepartamento", () => {
-  it("apara nome e sigla", async () => {
-    let corpo: Record<string, unknown> = {}
+  it("apara o nome e já leva a ficha, sem CPF quando não digitado", async () => {
+    let corpo: { name?: string; acronym?: string; details?: Record<string, unknown> } = {}
     servidor.use(
       http.post(`${urlDaApi}/organizations/:id/departments`, async ({ request }) => {
-        corpo = (await request.json()) as Record<string, unknown>
+        corpo = (await request.json()) as typeof corpo
         return HttpResponse.json(departamento)
       }),
     )
     const { criarDepartamento } = await carregarClienteLimpo()
 
-    await criarDepartamento(organizacao.id, "  Secretaria de Educação  ", "  SME  ")
+    await criarDepartamento(organizacao.id, {
+      nome: "  Secretaria de Educação  ",
+      ficha: { ...FICHA_VAZIA, email: " sme@x.gov.br ", ug: "020101", secretario: "Ana Souza" },
+    })
 
     expect(corpo.name).toBe("Secretaria de Educação")
-    expect(corpo.acronym).toBe("SME")
+    expect(corpo.acronym).toBe("")
+    // Vazio vai como ausente, e o CPF não digitado nem aparece no corpo.
+    expect(corpo.details).toEqual({
+      institutionalEmail: "sme@x.gov.br",
+      address: null,
+      managementUnit: "020101",
+      secretaryName: "Ana Souza",
+      secretaryAppointment: null,
+    })
   })
 
   it("aceita secretaria sem sigla", async () => {
@@ -187,49 +200,60 @@ describe("criarDepartamento", () => {
     )
     const { criarDepartamento } = await carregarClienteLimpo()
 
-    const secretaria = await criarDepartamento(organizacao.id, "Secretaria de Saúde")
+    const secretaria = await criarDepartamento(organizacao.id, { nome: "Secretaria de Saúde", ficha: FICHA_VAZIA })
 
     expect(secretaria.sigla).toBeUndefined()
   })
 })
 
-describe("salvarFichaDoDepartamento", () => {
-  it("reenvia nome e sigla, manda vazio como ausente e omite o CPF não digitado", async () => {
+describe("atualizarDepartamento", () => {
+  it("grava nome e ficha juntos, mantém a sigla e carrega a versão em If-Match", async () => {
     let corpo: { name?: string; acronym?: string; details?: Record<string, unknown> } = {}
+    let ifMatch: string | null = null
     servidor.use(
       http.get(`${urlDaApi}/organizations/:id/departments`, () => HttpResponse.json([departamento])),
       http.patch(`${urlDaApi}/organizations/:id/departments/:dep`, async ({ request }) => {
         corpo = (await request.json()) as typeof corpo
+        ifMatch = request.headers.get("If-Match")
         return HttpResponse.json({
           ...departamento,
+          name: "Secretaria de Educação",
           details: { managementUnit: "020101", secretaryName: "Ana Souza", secretaryCpf: "***.982.247-**" },
         })
       }),
     )
-    const { salvarFichaDoDepartamento } = await carregarClienteLimpo()
+    const { atualizarDepartamento } = await carregarClienteLimpo()
 
-    const secretaria = await salvarFichaDoDepartamento(organizacao.id, departamento.id, {
-      email: " ",
-      endereco: "",
-      ug: " 020101 ",
-      secretario: "Ana Souza",
-      decretoDeNomeacao: "",
+    const secretaria = await atualizarDepartamento(organizacao.id, departamento.id, {
+      nome: "  Secretaria de Educação  ",
+      ficha: {
+        email: "adm@x.gov.br",
+        endereco: " Rua Central, 10 ",
+        ug: "020101",
+        secretario: "Ana Souza",
+        cpfDoSecretario: "529.982.247-25",
+        decretoDeNomeacao: "Decreto 1/2025",
+      },
     })
 
-    expect(corpo.name).toBe(departamento.name)
+    expect(corpo.name).toBe("Secretaria de Educação")
+    // A API troca o recurso inteiro: omitir a sigla a apagaria de passagem.
     expect(corpo.acronym).toBe(departamento.acronym)
     expect(corpo.details).toEqual({
-      institutionalEmail: null,
-      address: null,
+      institutionalEmail: "adm@x.gov.br",
+      address: "Rua Central, 10",
       managementUnit: "020101",
       secretaryName: "Ana Souza",
-      secretaryAppointment: null,
+      secretaryCpf: "529.982.247-25",
+      secretaryAppointment: "Decreto 1/2025",
     })
+    expect(ifMatch).toContain("2")
+    expect(secretaria.nome).toBe("Secretaria de Educação")
     expect(secretaria.ficha.cpfDoSecretario).toBe("***.982.247-**")
   })
 
-  it("leva o CPF quando digitado, e a ficha inteira preenchida", async () => {
-    let corpo: { details?: Record<string, unknown> } = {}
+  it("secretaria sem sigla segue sem sigla, e a ficha apagada vai toda como ausente", async () => {
+    let corpo: { acronym?: string; details?: Record<string, unknown> } = {}
     servidor.use(
       http.get(`${urlDaApi}/organizations/:id/departments`, () =>
         HttpResponse.json([{ ...departamento, acronym: null }]),
@@ -239,48 +263,11 @@ describe("salvarFichaDoDepartamento", () => {
         return HttpResponse.json(departamento)
       }),
     )
-    const { salvarFichaDoDepartamento } = await carregarClienteLimpo()
+    const { atualizarDepartamento } = await carregarClienteLimpo()
 
-    await salvarFichaDoDepartamento(organizacao.id, departamento.id, {
-      email: "adm@x.gov.br",
-      endereco: "Rua Central, 10",
-      ug: "020101",
-      secretario: "Ana Souza",
-      cpfDoSecretario: "529.982.247-25",
-      decretoDeNomeacao: "Decreto 1/2025",
-    })
+    await atualizarDepartamento(organizacao.id, departamento.id, { nome: departamento.name, ficha: FICHA_VAZIA })
 
-    expect(corpo.details).toEqual({
-      institutionalEmail: "adm@x.gov.br",
-      address: "Rua Central, 10",
-      managementUnit: "020101",
-      secretaryName: "Ana Souza",
-      secretaryCpf: "529.982.247-25",
-      secretaryAppointment: "Decreto 1/2025",
-    })
-  })
-})
-
-describe("salvarFichaDoDepartamento — ficha em branco", () => {
-  it("apagar tudo manda tudo como ausente", async () => {
-    let corpo: { details?: Record<string, unknown> } = {}
-    servidor.use(
-      http.get(`${urlDaApi}/organizations/:id/departments`, () => HttpResponse.json([departamento])),
-      http.patch(`${urlDaApi}/organizations/:id/departments/:dep`, async ({ request }) => {
-        corpo = (await request.json()) as typeof corpo
-        return HttpResponse.json(departamento)
-      }),
-    )
-    const { salvarFichaDoDepartamento } = await carregarClienteLimpo()
-
-    await salvarFichaDoDepartamento(organizacao.id, departamento.id, {
-      email: "",
-      endereco: "",
-      ug: "",
-      secretario: "",
-      decretoDeNomeacao: "",
-    })
-
+    expect(corpo.acronym).toBe("")
     expect(corpo.details).toEqual({
       institutionalEmail: null,
       address: null,
@@ -289,42 +276,14 @@ describe("salvarFichaDoDepartamento — ficha em branco", () => {
       secretaryAppointment: null,
     })
   })
-})
 
-describe("renomearDepartamento", () => {
-  it("manda o nome aparado, mantém a sigla e carrega a versão em If-Match", async () => {
-    let corpo: Record<string, unknown> = {}
-    let ifMatch: string | null = null
-    servidor.use(
-      http.get(`${urlDaApi}/organizations/:id/departments`, () => HttpResponse.json([departamento])),
-      http.patch(`${urlDaApi}/organizations/:id/departments/:dep`, async ({ request }) => {
-        corpo = (await request.json()) as Record<string, unknown>
-        ifMatch = request.headers.get("If-Match")
-        return HttpResponse.json({ ...departamento, name: "Secretaria de Educação" })
-      }),
-    )
-    const { renomearDepartamento } = await carregarClienteLimpo()
-
-    const secretaria = await renomearDepartamento(
-      organizacao.id,
-      departamento.id,
-      "  Secretaria de Educação  ",
-    )
-
-    expect(corpo.name).toBe("Secretaria de Educação")
-    // A API troca o recurso inteiro: omitir a sigla a apagaria de passagem.
-    expect(corpo.acronym).toBe(departamento.acronym)
-    expect(ifMatch).toContain("2")
-    expect(secretaria.nome).toBe("Secretaria de Educação")
-  })
-
-  it("recusa renomear secretaria que não está na organização", async () => {
+  it("recusa alterar secretaria que não está na organização", async () => {
     servidor.use(http.get(`${urlDaApi}/organizations/:id/departments`, () => HttpResponse.json([departamento])))
-    const { renomearDepartamento } = await carregarClienteLimpo()
+    const { atualizarDepartamento } = await carregarClienteLimpo()
 
     // O escopo é o que impede alcançar a secretaria de outro órgão por id.
     await expect(
-      renomearDepartamento(organizacao.id, "de-outra-entidade", "Secretaria de Educação"),
+      atualizarDepartamento(organizacao.id, "de-outra-entidade", { nome: "Secretaria de Educação", ficha: FICHA_VAZIA }),
     ).rejects.toThrow(/Secretaria não encontrada/i)
   })
 })

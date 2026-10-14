@@ -32,6 +32,10 @@ vi.mock("@/lib/api/audit-client")
 const ARQUIVO_PCA = new File(["1;P"], "p.csv", { type: "text/csv" })
 const PROCESSO = "3f2b1a00-1111-4222-8333-444455556666"
 const ENTIDADE = "1b7c8e10-2d3f-4a5b-8c9d-0e1f2a3b4c5d"
+const SECRETARIA = {
+  nome: "Secretaria de Compras",
+  ficha: { email: "", endereco: "", ug: "020101", secretario: "", decretoDeNomeacao: "" },
+}
 
 function usuario(sobrescrever: Record<string, unknown> = {}) {
   return {
@@ -133,8 +137,8 @@ describe("a fachada liga cada chamada no lugar certo", () => {
     ],
     ["getAuditoria", (a) => a.getAuditoria(), auditoria.consultarAuditoria, [{}]],
     ["getAuditoria com filtro", (a) => a.getAuditoria({ tipoRecurso: "USER" }), auditoria.consultarAuditoria, [{ tipoRecurso: "USER" }]],
-    ["criarSecretaria", (a) => a.criarSecretaria(ENTIDADE, "Compras"), acesso.criarDepartamento, [ENTIDADE, "Compras"]],
-    ["renomearSecretaria", (a) => a.renomearSecretaria(ENTIDADE, "s1", "Educação"), acesso.renomearDepartamento, [ENTIDADE, "s1", "Educação"]],
+    ["criarSecretaria", (a) => a.criarSecretaria(ENTIDADE, SECRETARIA), acesso.criarDepartamento, [ENTIDADE, SECRETARIA]],
+    ["atualizarSecretaria", (a) => a.atualizarSecretaria(ENTIDADE, "s1", SECRETARIA), acesso.atualizarDepartamento, [ENTIDADE, "s1", SECRETARIA]],
     ["removerSecretaria", (a) => a.removerSecretaria(ENTIDADE, "s1"), acesso.desativarDepartamento, [ENTIDADE, "s1"]],
     ["recuperarSenha", (a) => a.recuperarSenha("  a@b.gov.br  "), autenticacao.solicitarRedefinicao, ["a@b.gov.br"]],
     ["resetarSenha", (a) => a.resetarSenha("t", "s"), autenticacao.redefinirSenha, ["t", "s"]],

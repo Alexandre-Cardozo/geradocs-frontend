@@ -1,160 +1,124 @@
 "use client"
 
-import { useState, type ReactNode } from "react"
+import { useState } from "react"
 
-import { Button, Input, SectionBlock } from "@/components/ui"
-import { IconCheck, IconClipboard, IconFile, IconPencil, IconPlus, IconTrash, IconX } from "@/components/ui/icons"
-import { FichaDaSecretariaForm } from "@/components/configuracoes/ficha-da-secretaria"
+import { Button, SectionBlock, Tag } from "@/components/ui"
+import { IconBuilding, IconPencil, IconPlus, IconTrash } from "@/components/ui/icons"
+import { FormularioDaSecretaria } from "@/components/configuracoes/formulario-da-secretaria"
 import { EmptyState, ErrorState, LoadingState } from "@/components/shared/estados"
 import { useToast } from "@/components/shared/providers"
 import {
+  useAtualizarSecretaria,
   useConfigTenant,
   useCriarSecretaria,
   useRemoverSecretaria,
-  useRenomearSecretaria,
-  useSalvarFichaDaSecretaria,
   useSessao,
 } from "@/lib/api/hooks"
-import { pendenciasDaFicha, type FichaEmEdicao } from "@/lib/secretarias/ficha"
+import { fichaParaSalvar, nadaMudou, pendenciasDaFicha, type FichaEmEdicao } from "@/lib/secretarias/ficha"
 import type { Secretaria } from "@/lib/types"
-import { erroNomeInstitucional } from "@/lib/validacao/campos"
 
-/** O nome é o que aparece como Secretaria Requisitante no processo e no documento. */
-const erroDoNome = (nome: string) => erroNomeInstitucional(nome, "O nome da secretaria")
-
-/** Botão de ícone das ações da linha — editar, salvar, cancelar, remover. */
-function AcaoDaLinha({
-  rotulo,
-  tom = "neutro",
-  disabled,
-  onClick,
-  children,
-}: {
-  rotulo: string
-  tom?: "neutro" | "perigo" | "confirma"
-  disabled?: boolean
-  onClick: () => void
-  children: ReactNode
-}) {
-  const cor =
-    tom === "perigo"
-      ? "text-danger hover:bg-tint-danger-bg"
-      : tom === "confirma"
-        ? "text-success hover:bg-tint-success-bg"
-        : "text-text-3 hover:bg-border-soft"
+/** Um dado da ficha no cartão; o que falta aparece como falta, e não como espaço vazio. */
+function Dado({ rotulo, valor, className = "" }: { rotulo: string; valor: string | null; className?: string }) {
   return (
-    <button
-      type="button"
-      aria-label={rotulo}
-      title={rotulo}
-      disabled={disabled}
-      onClick={onClick}
-      className={`flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-sm border border-border bg-ice transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${cor}`}
-    >
-      {children}
-    </button>
+    <div className={`min-w-0 ${className}`}>
+      <dt className="text-2xs font-semibold tracking-caps text-text-muted uppercase">{rotulo}</dt>
+      <dd className={`m-0 truncate text-sm ${valor ? "text-text-2" : "text-text-muted italic"}`} title={valor ?? undefined}>
+        {valor ?? "Não informado"}
+      </dd>
+    </div>
   )
 }
 
 /**
- * Uma secretaria da lista: em leitura, ou em edição do nome.
+ * Uma secretaria da lista, com a ficha à vista.
  *
- * <p>A edição acontece **na própria linha**, e não num diálogo: o que muda é uma
- * palavra do nome, e tirar a pessoa da lista para isso a faria perder de vista o
- * que já existe — que é justamente o que evita cadastrar duas parecidas.
+ * <p>Mostrar a ficha no próprio cartão é o que deixa ver, sem abrir nada, qual
+ * secretaria ainda sairia com o DFD incompleto.
  */
-function LinhaDaSecretaria({
+function CartaoDaSecretaria({
   secretaria,
-  editando,
-  salvando,
-  removendo,
+  pendente,
   onEditar,
-  onCancelar,
-  onSalvar,
   onRemover,
-  onFicha,
 }: {
   secretaria: Secretaria
-  editando: boolean
-  salvando: boolean
-  removendo: boolean
+  /** A desativação em andamento. */
+  pendente: boolean
   onEditar: () => void
-  onCancelar: () => void
-  onSalvar: (nome: string) => void
   onRemover: () => void
-  onFicha: () => void
 }) {
-  const [nome, setNome] = useState(secretaria.nome)
-  const erro = erroDoNome(nome)
-  const pendencias = pendenciasDaFicha(secretaria.ficha)
-
-  if (editando) {
-    return (
-      <div>
-      <div className="flex min-h-13 items-center gap-2 rounded-md border border-royal bg-surface px-2 py-1">
-        <Input
-          value={nome}
-          onChange={(e) => setNome(e.target.value)}
-          ariaLabel={`Novo nome de ${secretaria.nome}`}
-          autoFocus
-          disabled={salvando}
-          onKeyDown={(e) => {
-            // Enter confirma e Esc desiste — o mesmo par do cadastro logo acima.
-            if (e.key === "Enter" && erro === undefined) onSalvar(nome)
-            if (e.key === "Escape") onCancelar()
-          }}
-        />
-        <AcaoDaLinha
-          rotulo={`Salvar o nome de ${secretaria.nome}`}
-          tom="confirma"
-          disabled={salvando || nome.trim() === "" || erro !== undefined}
-          onClick={() => onSalvar(nome)}
-        >
-          <IconCheck size={14} strokeWidth={2.5} />
-        </AcaoDaLinha>
-        <AcaoDaLinha rotulo="Cancelar a edição" disabled={salvando} onClick={onCancelar}>
-          <IconX size={14} />
-        </AcaoDaLinha>
-      </div>
-      {erro && <p className="m-0 mt-1 text-xs text-danger">{erro}</p>}
-      </div>
-    )
-  }
+  const [confirmando, setConfirmando] = useState(false)
+  const { ficha } = secretaria
+  const completa = pendenciasDaFicha(ficha).length === 0
+  const tituloId = `secretaria-${secretaria.id}`
+  const secretario = ficha.secretario
+    ? [ficha.secretario, ficha.cpfDoSecretario && `CPF ${ficha.cpfDoSecretario}`].filter(Boolean).join(" · ")
+    : null
 
   return (
-    <div className="flex min-h-13 items-center gap-3 rounded-md border border-border-soft px-3 py-2.5">
-      <span className="flex size-7 shrink-0 items-center justify-center rounded-sm bg-tint-royal-bg text-royal">
-        <IconFile size={14} />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-base font-medium text-text-1">{secretaria.nome}</span>
-        <span className="block truncate text-xs text-text-muted">
-          {pendencias.length === 0 ? "Ficha completa" : `Ficha: falta ${pendencias.join(", ")}`}
+    <article aria-labelledby={tituloId} className="rounded-card border border-border bg-surface p-4">
+      <header className="flex flex-wrap items-start gap-3">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-sm bg-tint-royal-bg text-royal">
+          <IconBuilding size={15} />
         </span>
-      </span>
-      <AcaoDaLinha rotulo={`Ficha de ${secretaria.nome}`} onClick={onFicha}>
-        <IconClipboard size={13} />
-      </AcaoDaLinha>
-      <AcaoDaLinha rotulo={`Renomear ${secretaria.nome}`} onClick={onEditar}>
-        <IconPencil size={13} />
-      </AcaoDaLinha>
-      <AcaoDaLinha
-        rotulo={`Remover ${secretaria.nome}`}
-        tom="perigo"
-        disabled={removendo}
-        onClick={onRemover}
-      >
-        <IconTrash size={13} />
-      </AcaoDaLinha>
-    </div>
+        <div className="flex min-w-48 flex-1 flex-wrap items-center gap-x-2.5 gap-y-1 pt-1">
+          <h4 id={tituloId} className="m-0 text-base leading-snug font-semibold text-text-1">
+            {secretaria.nome}
+          </h4>
+          {completa ? <Tag tone="success">Ficha Completa</Tag> : <Tag tone="warning">Ficha Incompleta</Tag>}
+        </div>
+        {!confirmando && (
+          <div className="ml-auto flex items-center gap-1.5">
+            <Button variant="secondary" size="sm" icon={<IconPencil size={13} />} onClick={onEditar}>
+              {completa ? "Editar" : "Completar Ficha"}
+            </Button>
+            <button
+              type="button"
+              aria-label={`Remover ${secretaria.nome}`}
+              title="Remover"
+              onClick={() => setConfirmando(true)}
+              className="flex size-8 cursor-pointer items-center justify-center rounded-md text-text-muted transition-colors hover:bg-tint-danger-bg hover:text-danger"
+            >
+              <IconTrash size={14} />
+            </button>
+          </div>
+        )}
+      </header>
+
+      <dl className="m-0 mt-3 grid grid-cols-1 gap-x-6 gap-y-2.5 sm:grid-cols-2 lg:grid-cols-3 lg:pl-11">
+        <Dado rotulo="E-mail institucional" valor={ficha.email} />
+        <Dado rotulo="UG" valor={ficha.ug} />
+        <Dado rotulo="Endereço" valor={ficha.endereco} className="sm:col-span-2 lg:col-span-1" />
+        <Dado rotulo="Secretário" valor={secretario} />
+        <Dado rotulo="Decreto de nomeação" valor={ficha.decretoDeNomeacao} className="lg:col-span-2" />
+      </dl>
+
+      {confirmando && (
+        <div className="mt-3 flex flex-wrap items-center justify-end gap-2 rounded-md bg-tint-danger-bg px-3 py-2">
+          <span className="mr-auto text-sm text-text-2">
+            Desativar esta secretaria? Ela deixa de aparecer em novos processos.
+          </span>
+          <Button variant="secondary" size="sm" onClick={() => setConfirmando(false)}>
+            Manter
+          </Button>
+          <Button variant="danger-soft" size="sm" disabled={pendente} onClick={onRemover}>
+            {pendente ? "Desativando..." : "Desativar"}
+          </Button>
+        </div>
+      )}
+    </article>
   )
 }
+
+type Modo = { tipo: "lista" } | { tipo: "nova" } | { tipo: "editando"; id: string }
 
 /**
  * Secretarias do órgão.
  *
  * <p>É o cadastro que alimenta a Secretaria Requisitante do processo — sem ele o
  * wizard de novo processo não tem o que oferecer, e é para cá que ele aponta.
+ * Cada secretaria nasce já com a ficha que o DFD usa, e se edita no mesmo
+ * formulário, no lugar do próprio cartão.
  */
 export default function Secretarias() {
   const showToast = useToast()
@@ -162,13 +126,9 @@ export default function Secretarias() {
   const entidadeId = sessao?.entidade?.id
   const tenant = useConfigTenant(entidadeId)
   const criarSecretaria = useCriarSecretaria(entidadeId)
-  const renomearSecretaria = useRenomearSecretaria(entidadeId)
+  const atualizarSecretaria = useAtualizarSecretaria(entidadeId)
   const removerSecretaria = useRemoverSecretaria(entidadeId)
-  const salvarFicha = useSalvarFichaDaSecretaria(entidadeId)
-  const [fichaAberta, setFichaAberta] = useState<string | null>(null)
-
-  const [novaSecretaria, setNovaSecretaria] = useState("")
-  const [emEdicao, setEmEdicao] = useState<string | null>(null)
+  const [modo, setModo] = useState<Modo>({ tipo: "lista" })
 
   if (tenant.isPending) {
     return (
@@ -187,156 +147,112 @@ export default function Secretarias() {
     )
   }
 
-  const erroNovaSecretaria = erroDoNome(novaSecretaria)
+  const secretarias = tenant.data.secretarias
+  const incompletas = secretarias.filter((s) => pendenciasDaFicha(s.ficha).length > 0).length
+  const voltar = () => setModo({ tipo: "lista" })
+  const mensagem = (error: unknown, padrao: string) => (error instanceof Error ? error.message : padrao)
 
-  const adicionar = () => {
-    const nome = novaSecretaria.trim()
-    if (nome === "") {
-      showToast("Informe o nome da secretaria para adicionar.")
-      return
-    }
-    if (erroNovaSecretaria) return
-    criarSecretaria.mutate(nome, {
-      onSuccess: () => {
-        setNovaSecretaria("")
-        showToast("Secretaria adicionada.")
-      },
-      onError: (error) =>
-        showToast(
-          error instanceof Error ? error.message : "Não foi possível adicionar a secretaria.",
-        ),
-    })
-  }
-
-  const salvarNome = (secretaria: Secretaria, nome: string) => {
-    const novo = nome.trim()
-    if (novo === "") {
-      showToast("O nome da secretaria não pode ficar em branco.")
-      return
-    }
-    // Nome igual não vira requisição: gravar o que não mudou subiria a versão do
-    // registro e apareceria na trilha do órgão como uma edição que não houve.
-    if (novo === secretaria.nome) {
-      setEmEdicao(null)
-      return
-    }
-    renomearSecretaria.mutate(
-      { id: secretaria.id, nome: novo },
+  const cadastrar = (nome: string, ficha: FichaEmEdicao) => {
+    criarSecretaria.mutate(
+      { nome: nome.trim(), ficha: fichaParaSalvar(ficha) },
       {
         onSuccess: () => {
-          setEmEdicao(null)
-          showToast("Nome atualizado.")
+          voltar()
+          showToast("Secretaria cadastrada.")
         },
-        onError: (error) =>
-          showToast(
-            error instanceof Error ? error.message : "Não foi possível renomear a secretaria.",
-          ),
+        onError: (error) => showToast(mensagem(error, "Não foi possível cadastrar a secretaria.")),
       },
     )
   }
 
-  const gravarFicha = (secretaria: Secretaria, ficha: FichaEmEdicao) => {
-    salvarFicha.mutate(
-      {
-        id: secretaria.id,
-        ficha: {
-          email: ficha.email,
-          endereco: ficha.endereco,
-          ug: ficha.ug,
-          secretario: ficha.secretario,
-          // Vazio não vai: o servidor mantém o CPF guardado, que a tela só
-          // conhece mascarado.
-          cpfDoSecretario: ficha.cpfNovo.trim() || undefined,
-          decretoDeNomeacao: ficha.decretoDeNomeacao,
-        },
-      },
+  const atualizar = (secretaria: Secretaria, nome: string, ficha: FichaEmEdicao) => {
+    if (nadaMudou(secretaria, nome, ficha)) {
+      voltar()
+      return
+    }
+    atualizarSecretaria.mutate(
+      { id: secretaria.id, nome: nome.trim(), ficha: fichaParaSalvar(ficha) },
       {
         onSuccess: () => {
-          setFichaAberta(null)
-          showToast("Ficha da secretaria salva.")
+          voltar()
+          showToast("Secretaria atualizada.")
         },
-        onError: (error) =>
-          showToast(error instanceof Error ? error.message : "Não foi possível salvar a ficha."),
+        onError: (error) => showToast(mensagem(error, "Não foi possível salvar a secretaria.")),
       },
     )
   }
-
-  const secretariaDaFicha = tenant.data.secretarias.find((s) => s.id === fichaAberta)
 
   const remover = (id: string) => {
     removerSecretaria.mutate(id, {
       onSuccess: () => showToast("Secretaria desativada."),
-      onError: (error) =>
-        showToast(
-          error instanceof Error ? error.message : "Não foi possível desativar a secretaria.",
-        ),
+      onError: (error) => showToast(mensagem(error, "Não foi possível desativar a secretaria.")),
     })
   }
+
+  const novaSecretaria = (
+    <Button icon={<IconPlus size={14} strokeWidth={2.5} />} onClick={() => setModo({ tipo: "nova" })}>
+      Nova Secretaria
+    </Button>
+  )
 
   return (
     <div className="w-full p-4 sm:p-5 lg:p-7">
       <SectionBlock
         title="Secretarias do Órgão"
-        hint="As secretarias cadastradas aqui aparecem como opções de Secretaria Requisitante na criação de novos processos."
+        hint="As secretarias cadastradas aqui aparecem como Secretaria Requisitante nos novos processos, e a ficha de cada uma preenche o DFD automaticamente."
       >
-        <div className="mb-4 flex flex-wrap gap-2.5">
-          <div className="flex-[1_1_220px]">
-            <Input
-              value={novaSecretaria}
-              onChange={(e) => setNovaSecretaria(e.target.value)}
-              ariaLabel="Nome da nova secretaria"
-              placeholder="Ex: Secretaria de Cultura e Turismo"
-              disabled={criarSecretaria.isPending}
-              onKeyDown={(e) => {
-                // Enter cadastra sem tirar a mão do teclado. Quem prefere o
-                // botão chega nele com Tab, e o Enter de lá é o do próprio
-                // botão — cadastra do mesmo jeito.
-                if (e.key === "Enter") adicionar()
-              }}
-            />
-            {erroNovaSecretaria && <p className="m-0 mt-1 text-xs text-danger">{erroNovaSecretaria}</p>}
-          </div>
-          <Button
-            icon={<IconPlus size={14} strokeWidth={2.5} />}
-            onClick={adicionar}
-            disabled={criarSecretaria.isPending || novaSecretaria.trim() === "" || erroNovaSecretaria !== undefined}
-            className="h-9.5"
-          >
-            {criarSecretaria.isPending ? "Adicionando..." : "Adicionar Nova Secretaria"}
-          </Button>
-        </div>
-        {tenant.data.secretarias.length === 0 ? (
-          <EmptyState message="Nenhuma secretaria cadastrada neste órgão" />
-        ) : (
-          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-            {tenant.data.secretarias.map((s) => (
-              <LinhaDaSecretaria
-                // A chave leva o nome: trocá-lo remonta a linha, e o campo de
-                // edição da próxima vez nasce com o valor novo, não com o antigo.
-                key={`${s.id}:${s.nome}`}
-                secretaria={s}
-                editando={emEdicao === s.id}
-                salvando={renomearSecretaria.isPending}
-                removendo={removerSecretaria.isPending}
-                onEditar={() => setEmEdicao(s.id)}
-                onCancelar={() => setEmEdicao(null)}
-                onSalvar={(nome) => salvarNome(s, nome)}
-                onRemover={() => remover(s.id)}
-                onFicha={() => setFichaAberta(s.id)}
-              />
-            ))}
+        {modo.tipo !== "nova" && secretarias.length > 0 && (
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <p className="m-0 text-sm text-text-3">
+              {secretarias.length === 1 ? "1 secretaria" : `${secretarias.length} secretarias`}
+              {incompletas > 0 &&
+                ` · ${incompletas === 1 ? "1 com ficha incompleta" : `${incompletas} com ficha incompleta`}`}
+            </p>
+            {novaSecretaria}
           </div>
         )}
-        {secretariaDaFicha && (
-          <FichaDaSecretariaForm
-            // A chave remonta o formulário ao trocar de secretaria: senão os
-            // campos continuariam com a ficha da anterior.
-            key={secretariaDaFicha.id}
-            secretaria={secretariaDaFicha}
-            pendente={salvarFicha.isPending}
-            onSalvar={(ficha) => gravarFicha(secretariaDaFicha, ficha)}
-            onCancelar={() => setFichaAberta(null)}
-          />
+
+        {modo.tipo === "nova" && (
+          <div className="mb-4">
+            <FormularioDaSecretaria
+              outras={secretarias}
+              pendente={criarSecretaria.isPending}
+              onSalvar={cadastrar}
+              onCancelar={voltar}
+            />
+          </div>
+        )}
+
+        {secretarias.length === 0 ? (
+          modo.tipo !== "nova" && (
+            <EmptyState message="Nenhuma secretaria cadastrada neste órgão" icon={<IconBuilding size={40} strokeWidth={1.5} />}>
+              {novaSecretaria}
+            </EmptyState>
+          )
+        ) : (
+          <div className="flex flex-col gap-3">
+            {secretarias.map((s) =>
+              modo.tipo === "editando" && modo.id === s.id ? (
+                <div key={s.id}>
+                  <FormularioDaSecretaria
+                    secretaria={s}
+                    outras={secretarias.filter((outra) => outra.id !== s.id)}
+                    pendente={atualizarSecretaria.isPending}
+                    onSalvar={(nome, ficha) => atualizar(s, nome, ficha)}
+                    onCancelar={voltar}
+                  />
+                </div>
+              ) : (
+                <CartaoDaSecretaria
+                  key={s.id}
+                  secretaria={s}
+                  pendente={removerSecretaria.isPending}
+                  onEditar={() => setModo({ tipo: "editando", id: s.id })}
+                  onRemover={() => remover(s.id)}
+                />
+              ),
+            )}
+          </div>
         )}
       </SectionBlock>
     </div>

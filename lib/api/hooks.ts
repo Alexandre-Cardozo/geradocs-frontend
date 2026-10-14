@@ -669,41 +669,30 @@ export function useTransferirUsuario() {
   })
 }
 
+/** Cria a secretaria já com a ficha (ADR-044 do back-end). */
 export function useCriarSecretaria(entidadeId: string | undefined) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (nome: string) => {
+    mutationFn: (secretaria: api.SecretariaParaSalvar) => {
       if (!entidadeId) throw new Error("Entidade não identificada.")
-      return api.criarSecretaria(entidadeId, nome)
+      return api.criarSecretaria(entidadeId, secretaria)
     },
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: chaves.tenant(entidadeId) }),
   })
 }
 
 /**
- * Renomeia a secretaria.
+ * Grava o nome e a ficha da secretaria.
  *
- * <p>Invalida o tenant, que é de onde a lista vem: a tela mostra o nome novo
+ * <p>Invalida o tenant, que é de onde a lista vem: a tela mostra o que mudou
  * porque o servidor confirmou, e não porque a tela adiantou.
  */
-export function useRenomearSecretaria(entidadeId: string | undefined) {
+export function useAtualizarSecretaria(entidadeId: string | undefined) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (input: { id: string; nome: string }) => {
+    mutationFn: (input: { id: string } & api.SecretariaParaSalvar) => {
       if (!entidadeId) throw new Error("Entidade não identificada.")
-      return api.renomearSecretaria(entidadeId, input.id, input.nome)
-    },
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: chaves.tenant(entidadeId) }),
-  })
-}
-
-/** Grava a ficha da secretaria (ADR-044 do back-end). */
-export function useSalvarFichaDaSecretaria(entidadeId: string | undefined) {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (input: { id: string; ficha: api.FichaParaSalvar }) => {
-      if (!entidadeId) throw new Error("Entidade não identificada.")
-      return api.salvarFichaDaSecretaria(entidadeId, input.id, input.ficha)
+      return api.atualizarSecretaria(entidadeId, input.id, { nome: input.nome, ficha: input.ficha })
     },
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: chaves.tenant(entidadeId) }),
   })

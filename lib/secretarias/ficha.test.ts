@@ -1,7 +1,15 @@
 import { describe, expect, it } from "vitest"
 
-import { emEdicao, errosDaFicha, pendenciasDaFicha, type FichaEmEdicao } from "@/lib/secretarias/ficha"
-import type { FichaDaSecretaria } from "@/lib/types"
+import {
+  emEdicao,
+  erroDoNome,
+  errosDaFicha,
+  fichaParaSalvar,
+  nadaMudou,
+  pendenciasDaFicha,
+  type FichaEmEdicao,
+} from "@/lib/secretarias/ficha"
+import type { FichaDaSecretaria, Secretaria } from "@/lib/types"
 
 const vazia: FichaDaSecretaria = {
   email: null,
@@ -73,5 +81,39 @@ describe("ficha da secretaria", () => {
   it("diz o que falta para o DFD sair completo", () => {
     expect(pendenciasDaFicha(vazia)).toEqual(["e-mail", "endereço", "UG", "secretário"])
     expect(pendenciasDaFicha(completa)).toEqual([])
+  })
+})
+
+describe("salvar a secretaria", () => {
+  const saude: Secretaria = { id: "s1", nome: "Secretaria de Saúde", ficha: completa }
+
+  it("CPF em branco não vai, e o guardado continua; digitado, vai", () => {
+    expect(fichaParaSalvar(emEdicao(completa))).toEqual({
+      email: "saude@ecoporanga.es.gov.br",
+      endereco: "Rua Central, 10",
+      ug: "020101",
+      secretario: "Ana Souza",
+      decretoDeNomeacao: "Decreto nº 1.234/2025",
+    })
+    expect(fichaParaSalvar({ ...emEdicao(completa), cpfNovo: " 529.982.247-25 " }).cpfDoSecretario).toBe(
+      "529.982.247-25",
+    )
+  })
+
+  it("o nome é obrigatório, precisa ter letras e não pode repetir outra secretaria", () => {
+    expect(erroDoNome("  ", [])).toBe("Informe o nome da secretaria.")
+    expect(erroDoNome("123", [])).toMatch(/precisa ter letras/)
+    // Acento, caixa e espaço sobrando não fazem outra secretaria.
+    expect(erroDoNome("  secretaria  de SAUDE ", [saude])).toBe(
+      "Já existe uma secretaria com este nome: Secretaria de Saúde.",
+    )
+    expect(erroDoNome("Secretaria de Obras", [saude])).toBeUndefined()
+  })
+
+  it("sem mudança no nome, na ficha ou no CPF, não há o que gravar", () => {
+    expect(nadaMudou(saude, " Secretaria de Saúde ", emEdicao(completa))).toBe(true)
+    expect(nadaMudou(saude, "Secretaria Municipal de Saúde", emEdicao(completa))).toBe(false)
+    expect(nadaMudou(saude, saude.nome, { ...emEdicao(completa), ug: "020199" })).toBe(false)
+    expect(nadaMudou(saude, saude.nome, { ...emEdicao(completa), cpfNovo: "529.982.247-25" })).toBe(false)
   })
 })
