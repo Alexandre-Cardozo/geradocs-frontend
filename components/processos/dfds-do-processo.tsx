@@ -9,6 +9,7 @@ import { ErrorState, LoadingState } from "@/components/shared/estados";
 import { useToast } from "@/components/shared/providers";
 import {
   useAnexarArquivoAoDfd,
+  useAtualizarItensDoDfd,
   useRegistrarDfd,
   useConfigTenant,
   useDfdsDoProcesso,
@@ -17,6 +18,7 @@ import {
 } from "@/lib/api/hooks";
 import type { DfdAnexado, VersaoDoArquivoDfd } from "@/lib/api/procurement-client";
 import { formatData, formatarBytes } from "@/lib/format";
+import { pendenciasDaFicha } from "@/lib/secretarias/ficha";
 
 /**
  * O cadastro de DFDs do processo.
@@ -112,6 +114,7 @@ function RegistrarDfd({
   const [secretaria, setSecretaria] = useState("");
   const [identificacao, setIdentificacao] = useState("");
   const [arquivo, setArquivo] = useState<File | null>(null);
+  const [dataPrevista, setDataPrevista] = useState("");
   const campoDeArquivo = useRef<HTMLInputElement>(null);
 
   const secretarias = tenant.data?.secretarias ?? [];
@@ -125,11 +128,11 @@ function RegistrarDfd({
   return (
     <div className="mb-3 rounded-lg border border-royal bg-surface p-4">
       {/*
-        Grade de três colunas, e não flex com `basis`: as colunas têm largura
+        Grade de quatro colunas, e não flex com `basis`: as colunas têm largura
         fixa e o topo alinhado, então a dica de um campo não empurra os outros
         para baixo — o formulário não muda de forma enquanto é preenchido.
       */}
-      <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="min-w-0">
           <FormField label="Secretaria que formalizou" required hint="Quem pediu a contratação.">
             <Dropdown
@@ -184,6 +187,16 @@ function RegistrarDfd({
             </div>
           </FormField>
         </div>
+        <div className="min-w-0">
+          <FormField label="Data prevista de conclusão" hint="Da contratação, como o DFD informa.">
+            <Input
+              type="date"
+              value={dataPrevista}
+              onChange={(e) => setDataPrevista(e.target.value)}
+              ariaLabel="Data prevista de conclusão"
+            />
+          </FormField>
+        </div>
       </div>
 
       {/*
@@ -200,7 +213,7 @@ function RegistrarDfd({
             registrar.mutate(
               // O DFD nasce sem item: informar o que ele pede é a outra
               // operação, e é lá que o vínculo entre item e DFD é declarado.
-              { secretariaId: secretaria, identificacao: identificacao.trim(), arquivo },
+              { secretariaId: secretaria, identificacao: identificacao.trim(), arquivo, dataPrevista },
               {
                 onSuccess: () => {
                   showToast(`${identificacao.trim()} registrado no processo.`);
@@ -262,6 +275,7 @@ function LinhaDoDfd({ processoId, dfd }: { processoId: string; dfd: DfdAnexado }
           {dfd.arquivo ? ` · ${formatarBytes(dfd.arquivo.bytes)}` : ""}
         </span>
       </span>
+      <DataPrevista processoId={processoId} dfd={dfd} />
       {/*
         Quantos itens estão vinculados a este DFD. "Sem itens" não é pendência:
         o documento pode ser registrado antes de o detalhamento chegar.
@@ -328,8 +342,96 @@ function LinhaDoDfd({ processoId, dfd }: { processoId: string; dfd: DfdAnexado }
           Remover
         </Button>
       )}
+      <FichaNoDfd dfd={dfd} />
       {historicoAberto && <HistoricoDoArquivo processoId={processoId} dfdId={dfd.id} />}
     </li>
+  );
+}
+
+/**
+ * A data prevista de conclusão da contratação, com edição na própria linha
+ * (ADR-044). Grava pela mesma rota dos itens, reenviando-os como estão.
+ */
+function DataPrevista({ processoId, dfd }: { processoId: string; dfd: DfdAnexado }) {
+  const [editando, setEditando] = useState(false);
+  const [data, setData] = useState(dfd.dataPrevista ?? "");
+  const gravar = useAtualizarItensDoDfd(processoId);
+  const showToast = useToast();
+
+  if (!editando) {
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          setData(dfd.dataPrevista ?? "");
+          setEditando(true);
+        }}
+        aria-label={`Data prevista de conclusão de ${dfd.nomeDoArquivo}`}
+        className="cursor-pointer rounded-sm border border-border bg-surface px-2 py-1 text-xs text-text-2 hover:bg-border-soft"
+      >
+        {dfd.dataPrevista ? `Conclusão prevista: ${formatData(dfd.dataPrevista)}` : "Informar data prevista"}
+      </button>
+    );
+  }
+  return (
+    <span className="flex items-center gap-1.5">
+      <Input
+        type="date"
+        value={data}
+        onChange={(e) => setData(e.target.value)}
+        ariaLabel={`Nova data prevista de ${dfd.nomeDoArquivo}`}
+      />
+      <Button
+        size="sm"
+        disabled={gravar.isPending}
+        onClick={() =>
+          gravar.mutate(
+            { dfdId: dfd.id, itens: dfd.itens, dataPrevista: data || null },
+            {
+              onSuccess: () => {
+                setEditando(false);
+                showToast("Data prevista atualizada.");
+              },
+              onError: (erro) =>
+                showToast(erro instanceof Error ? erro.message : "Não foi possível salvar a data."),
+            },
+          )
+        }
+      >
+        Salvar
+      </Button>
+      <Button size="sm" variant="secondary" onClick={() => setEditando(false)}>
+        Cancelar
+      </Button>
+    </span>
+  );
+}
+
+/**
+ * A ficha da secretaria de origem, como o DFD a mostra — sem que se digite de
+ * novo a cada processo (ADR-044). O CPF do secretário vem mascarado.
+ */
+function FichaNoDfd({ dfd }: { dfd: DfdAnexado }) {
+  const ficha = dfd.fichaDaSecretaria;
+  const faltam = pendenciasDaFicha(ficha);
+  const partes = [
+    ficha.ug && `UG ${ficha.ug}`,
+    ficha.email,
+    ficha.endereco,
+    ficha.secretario &&
+      `Secretário(a): ${ficha.secretario}${ficha.cpfDoSecretario ? ` (CPF ${ficha.cpfDoSecretario})` : ""}${
+        ficha.decretoDeNomeacao ? ` — ${ficha.decretoDeNomeacao}` : ""
+      }`,
+  ].filter(Boolean);
+  return (
+    <span className="basis-full text-xs text-text-3">
+      {partes.length > 0 && <span className="block">{partes.join(" · ")}</span>}
+      {faltam.length > 0 && (
+        <span className="block text-text-muted">
+          Ficha da secretaria sem {faltam.join(", ")} — o coordenador completa em Configurações › Secretarias.
+        </span>
+      )}
+    </span>
   );
 }
 

@@ -11,6 +11,7 @@ import {
   tituloComRotuloDeVersao,
   tituloDoDocumento,
 } from "@/lib/dominio"
+import type { Elaboracao } from "@/lib/documentos/elaboracao"
 import type { BlocoDoDocumento, Retificacao } from "@/lib/dominio"
 import {
   autenticar,
@@ -28,6 +29,8 @@ import {
   criarUsuario as criarUsuarioNaApi,
   desativarDepartamento as desativarDepartamentoNaApi,
   renomearDepartamento as renomearDepartamentoNaApi,
+  salvarFichaDoDepartamento,
+  type FichaParaSalvar,
   desativarEntidade as desativarEntidadeNaApi,
   desativarUsuario as desativarUsuarioNaApi,
   transferirUsuario as transferirUsuarioNaApi,
@@ -76,6 +79,7 @@ import { baixarArquivo, gerarArquivos } from "@/lib/api/generation-client"
 import { consultarAuditoria, type ConsultaAuditoria, type PaginaAuditoria } from "@/lib/api/audit-client"
 
 export type { ConsultaAuditoria } from "@/lib/api/audit-client"
+export type { FichaParaSalvar } from "@/lib/api/access-client"
 import { dataHoraBrasiliaISO } from "@/lib/format"
 import type {
   FundamentoDaDispensa,
@@ -545,6 +549,8 @@ export interface GerarDocumentoInput {
    * esvaziaria a palavra justamente onde ela tem peso.
    */
   retificacao?: Retificacao
+  /** Quem elaborou e o ato normativo (ADR-044); ausentes, vale o padrão do servidor. */
+  elaboracao?: Elaboracao
 }
 
 /**
@@ -562,7 +568,7 @@ export interface GerarDocumentoInput {
  */
 
 export async function gerarDocumento(input: GerarDocumentoInput): Promise<DocumentoGerado> {
-  const concluido = await concluirDocumento(input.processoId, input.tipo, input.retificacao)
+  const concluido = await concluirDocumento(input.processoId, input.tipo, input.retificacao, input.elaboracao)
   const processo = await obterProcesso(input.processoId)
 
   // O arquivo é impresso pelo servidor, a partir da versão que acabou de ser
@@ -742,6 +748,15 @@ export async function transferirUsuario(input: TransferirUsuarioInput): Promise<
 
 export async function criarSecretaria(entidadeId: string, nome: string): Promise<Secretaria> {
   return criarDepartamentoNaApi(entidadeId, nome)
+}
+
+/** A ficha da secretaria: e-mail, endereço, UG e o secretário (ADR-044 do back-end). */
+export async function salvarFichaDaSecretaria(
+  entidadeId: string,
+  secretariaId: string,
+  ficha: FichaParaSalvar,
+): Promise<Secretaria> {
+  return salvarFichaDoDepartamento(entidadeId, secretariaId, ficha)
 }
 
 export async function renomearSecretaria(

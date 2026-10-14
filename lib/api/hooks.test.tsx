@@ -528,6 +528,7 @@ describe("cadastros", () => {
       () => hooks.useCriarSecretaria(undefined),
       () => hooks.useRenomearSecretaria(undefined),
       () => hooks.useRemoverSecretaria(undefined),
+      () => hooks.useSalvarFichaDaSecretaria(undefined),
     ]) {
       const { wrapper } = ambiente()
       const { result } = renderHook(comoMutacao(usar), { wrapper })
@@ -551,6 +552,11 @@ describe("cadastros", () => {
         api.renomearSecretaria,
       ],
       [() => hooks.useRemoverSecretaria(ENTIDADE), "s1", api.removerSecretaria],
+      [
+        () => hooks.useSalvarFichaDaSecretaria(ENTIDADE),
+        { id: "s1", ficha: { email: "", endereco: "", ug: "020101", secretario: "", decretoDeNomeacao: "" } },
+        api.salvarFichaDaSecretaria,
+      ],
     ] as const) {
       const { wrapper, invalidou } = ambiente()
       mockDaApi(funcao).mockResolvedValue({})

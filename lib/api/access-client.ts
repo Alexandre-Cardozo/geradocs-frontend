@@ -37,6 +37,14 @@ interface BackendDepartment {
   acronym: string | null
   active: boolean
   version: number
+  details?: {
+    institutionalEmail?: string | null
+    address?: string | null
+    managementUnit?: string | null
+    secretaryName?: string | null
+    secretaryCpf?: string | null
+    secretaryAppointment?: string | null
+  }
 }
 
 interface BackendMembership {
@@ -120,7 +128,20 @@ function lotacaoDe(user: BackendUser) {
 }
 
 function secretariaDa(department: BackendDepartment): Secretaria {
-  return { id: department.id, nome: department.name, sigla: department.acronym ?? undefined }
+  const ficha = department.details ?? {}
+  return {
+    id: department.id,
+    nome: department.name,
+    sigla: department.acronym ?? undefined,
+    ficha: {
+      email: ficha.institutionalEmail ?? null,
+      endereco: ficha.address ?? null,
+      ug: ficha.managementUnit ?? null,
+      secretario: ficha.secretaryName ?? null,
+      cpfDoSecretario: ficha.secretaryCpf ?? null,
+      decretoDeNomeacao: ficha.secretaryAppointment ?? null,
+    },
+  }
 }
 
 export interface NovaEntidadeInput {
@@ -238,6 +259,51 @@ export async function renomearDepartamento(
       method: "PATCH",
       headers: { "If-Match": ifMatch(atual.version) },
       body: JSON.stringify({ name: name.trim(), acronym: atual.acronym ?? "" }),
+    },
+  )
+  return secretariaDa(department)
+}
+
+/**
+ * A ficha da secretaria, como a tela de Secretarias a edita (ADR-044 do back-end).
+ *
+ * @param cpfDoSecretario o CPF digitado agora. Ausente, o servidor mantém o que
+ *                        está guardado — a tela só o tem mascarado e não tem como
+ *                        reenviá-lo; vazio, remove
+ */
+export interface FichaParaSalvar {
+  email: string
+  endereco: string
+  ug: string
+  secretario: string
+  cpfDoSecretario?: string
+  decretoDeNomeacao: string
+}
+
+/** Grava a ficha, reenviando nome e sigla como estão — a API troca o recurso inteiro. */
+export async function salvarFichaDoDepartamento(
+  organizationId: string,
+  departmentId: string,
+  ficha: FichaParaSalvar,
+): Promise<Secretaria> {
+  const atual = await departamentoDa(organizationId, departmentId)
+  const department = await requisicaoProtegida<BackendDepartment>(
+    `/organizations/${organizationId}/departments/${departmentId}`,
+    {
+      method: "PATCH",
+      headers: { "If-Match": ifMatch(atual.version) },
+      body: JSON.stringify({
+        name: atual.name,
+        acronym: atual.acronym ?? "",
+        details: {
+          institutionalEmail: ficha.email.trim() || null,
+          address: ficha.endereco.trim() || null,
+          managementUnit: ficha.ug.trim() || null,
+          secretaryName: ficha.secretario.trim() || null,
+          secretaryCpf: ficha.cpfDoSecretario,
+          secretaryAppointment: ficha.decretoDeNomeacao.trim() || null,
+        },
+      }),
     },
   )
   return secretariaDa(department)

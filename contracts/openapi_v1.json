@@ -149,6 +149,10 @@
             "format" : "uuid",
             "type" : "string"
           },
+          "expectedCompletionDate" : {
+            "format" : "date",
+            "type" : "string"
+          },
           "fileName" : {
             "maxLength" : 255,
             "minLength" : 1,
@@ -437,6 +441,9 @@
             "pattern" : "^[A-Za-z0-9-]*$",
             "type" : "string"
           },
+          "details" : {
+            "$ref" : "#/components/schemas/DepartmentDetailsRequest"
+          },
           "name" : {
             "maxLength" : 160,
             "minLength" : 0,
@@ -694,6 +701,41 @@
         "required" : [ "departmentName", "quantity", "unit" ],
         "type" : "object"
       },
+      "DepartmentDetailsRequest" : {
+        "properties" : {
+          "address" : {
+            "maxLength" : 300,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "institutionalEmail" : {
+            "maxLength" : 160,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "managementUnit" : {
+            "maxLength" : 40,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "secretaryAppointment" : {
+            "maxLength" : 160,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "secretaryCpf" : {
+            "maxLength" : 20,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "secretaryName" : {
+            "maxLength" : 160,
+            "minLength" : 0,
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
       "DepartmentResponse" : {
         "properties" : {
           "acronym" : {
@@ -705,6 +747,9 @@
           "createdAt" : {
             "format" : "date-time",
             "type" : "string"
+          },
+          "details" : {
+            "$ref" : "#/components/schemas/DetailsView"
           },
           "id" : {
             "format" : "uuid",
@@ -726,7 +771,53 @@
             "type" : "integer"
           }
         },
-        "required" : [ "active", "createdAt", "id", "name", "organizationId", "updatedAt", "version" ],
+        "required" : [ "active", "createdAt", "details", "id", "name", "organizationId", "updatedAt", "version" ],
+        "type" : "object"
+      },
+      "DepartmentView" : {
+        "properties" : {
+          "address" : {
+            "type" : "string"
+          },
+          "institutionalEmail" : {
+            "type" : "string"
+          },
+          "managementUnit" : {
+            "type" : "string"
+          },
+          "secretaryAppointment" : {
+            "type" : "string"
+          },
+          "secretaryCpf" : {
+            "type" : "string"
+          },
+          "secretaryName" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "DetailsView" : {
+        "properties" : {
+          "address" : {
+            "type" : "string"
+          },
+          "institutionalEmail" : {
+            "type" : "string"
+          },
+          "managementUnit" : {
+            "type" : "string"
+          },
+          "secretaryAppointment" : {
+            "type" : "string"
+          },
+          "secretaryCpf" : {
+            "type" : "string"
+          },
+          "secretaryName" : {
+            "type" : "string"
+          }
+        },
         "type" : "object"
       },
       "DfdFileVersionResponse" : {
@@ -954,8 +1045,14 @@
             "format" : "date-time",
             "type" : "string"
           },
+          "legalActCitation" : {
+            "type" : "string"
+          },
           "note" : {
             "type" : "string"
+          },
+          "preparedBy" : {
+            "$ref" : "#/components/schemas/PreparedByView"
           },
           "version" : {
             "format" : "int32",
@@ -985,6 +1082,25 @@
       },
       "FinalizeDocumentRequest" : {
         "properties" : {
+          "legalActCitation" : {
+            "maxLength" : 400,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "legalActRegulationId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "preparedByCpf" : {
+            "maxLength" : 20,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "preparedByName" : {
+            "maxLength" : 160,
+            "minLength" : 0,
+            "type" : "string"
+          },
           "rectificationDescribed" : {
             "type" : "boolean"
           },
@@ -1441,6 +1557,18 @@
         "required" : [ "citable", "exerciseYear", "findings", "foreseen" ],
         "type" : "object"
       },
+      "PreparedByView" : {
+        "properties" : {
+          "cpf" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "cpf", "name" ],
+        "type" : "object"
+      },
       "PriceQuoteRequest" : {
         "properties" : {
           "collectedAt" : {
@@ -1529,11 +1657,18 @@
       },
       "ProcessDfdResponse" : {
         "properties" : {
+          "department" : {
+            "$ref" : "#/components/schemas/DepartmentView"
+          },
           "departmentId" : {
             "format" : "uuid",
             "type" : "string"
           },
           "departmentName" : {
+            "type" : "string"
+          },
+          "expectedCompletionDate" : {
+            "format" : "date",
             "type" : "string"
           },
           "file" : {
@@ -1557,7 +1692,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "departmentId", "departmentName", "fileName", "id", "items", "submittedAt" ],
+        "required" : [ "department", "departmentId", "departmentName", "fileName", "id", "items", "submittedAt" ],
         "type" : "object"
       },
       "ProcessStatisticsResponse" : {
@@ -2118,6 +2253,9 @@
             "pattern" : "^[A-Za-z0-9-]*$",
             "type" : "string"
           },
+          "details" : {
+            "$ref" : "#/components/schemas/DepartmentDetailsRequest"
+          },
           "name" : {
             "maxLength" : 160,
             "minLength" : 0,
@@ -2130,6 +2268,10 @@
       },
       "UpdateDfdItemsRequest" : {
         "properties" : {
+          "expectedCompletionDate" : {
+            "format" : "date",
+            "type" : "string"
+          },
           "items" : {
             "items" : {
               "$ref" : "#/components/schemas/DemandItemRequest"

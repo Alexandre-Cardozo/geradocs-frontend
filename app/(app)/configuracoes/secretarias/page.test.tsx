@@ -217,3 +217,70 @@ describe("teclado e edição do nome", () => {
     expect(screen.getByRole("button", { name: "Salvar o nome de Secretaria de Obras" })).toBeDisabled()
   })
 })
+
+/**
+ * A ficha da secretaria (ADR-044 do back-end): o que o DFD mostra sem que se
+ * digite de novo. O CPF do secretário só existe mascarado aqui.
+ */
+describe("ficha da secretaria", () => {
+  const saude = {
+    id: "02753761-6201-45f7-a9d9-2a1abf6d4f3c",
+    name: "Secretaria de Saúde",
+    acronym: "SMS",
+    active: true,
+    version: 4,
+    details: {
+      institutionalEmail: "saude@ecoporanga.es.gov.br",
+      address: "Rua Central, 10",
+      managementUnit: "020101",
+      secretaryName: "Ana Souza",
+      secretaryCpf: "***.982.247-**",
+      secretaryAppointment: "Decreto nº 1.234/2025",
+    },
+  }
+
+  it("diz o que falta na ficha, na própria lista", async () => {
+    comSecretarias([{ id: saude.id, name: saude.name, active: true }])
+    renderizar(<Secretarias />)
+
+    expect(await screen.findByText("Ficha: falta e-mail, endereço, UG, secretário")).toBeInTheDocument()
+  })
+
+  it("salva a ficha sem reenviar o CPF guardado, que a tela só conhece mascarado", async () => {
+    comSecretarias([saude])
+    let enviado: { name?: string; details?: Record<string, unknown> } = {}
+    let ifMatch: string | null = null
+    servidor.use(
+      http.patch(`${urlDaApi}/organizations/:id/departments/:dep`, async ({ request }) => {
+        ifMatch = request.headers.get("If-Match")
+        enviado = (await request.json()) as typeof enviado
+        return HttpResponse.json({ ...saude, version: 5 })
+      }),
+    )
+    renderizar(<Secretarias />)
+
+    expect(await screen.findByText("Ficha completa")).toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: "Ficha de Secretaria de Saúde" }))
+    expect(screen.getByPlaceholderText(/Atual: \*\*\*\.982\.247-\*\*/)).toBeInTheDocument()
+    const ug = screen.getByDisplayValue("020101")
+    await userEvent.clear(ug)
+    await userEvent.type(ug, "020199")
+    await userEvent.click(screen.getByRole("button", { name: "Salvar Ficha" }))
+
+    await waitFor(() => expect(enviado.details?.managementUnit).toBe("020199"))
+    expect(enviado.name).toBe("Secretaria de Saúde")
+    expect(enviado.details).not.toHaveProperty("secretaryCpf")
+    expect(ifMatch).toBe('"4"')
+  })
+
+  it("não envia CPF inválido, e aponta o campo", async () => {
+    comSecretarias([saude])
+    renderizar(<Secretarias />)
+
+    await userEvent.click(await screen.findByRole("button", { name: "Ficha de Secretaria de Saúde" }))
+    await userEvent.type(screen.getByRole("textbox", { name: "CPF do secretário" }), "12345678900")
+    await userEvent.click(screen.getByRole("button", { name: "Salvar Ficha" }))
+
+    expect(screen.getByText("CPF inválido.")).toBeInTheDocument()
+  })
+})

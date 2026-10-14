@@ -1199,6 +1199,8 @@ export interface components {
         AttachDfdRequest: {
             /** Format: uuid */
             departmentId: string;
+            /** Format: date */
+            expectedCompletionDate?: string;
             fileName: string;
             items: components["schemas"]["DemandItemRequest"][];
         };
@@ -1297,6 +1299,7 @@ export interface components {
         };
         CreateDepartmentRequest: {
             acronym?: string;
+            details?: components["schemas"]["DepartmentDetailsRequest"];
             name: string;
         };
         CreateOrganizationRequest: {
@@ -1370,11 +1373,20 @@ export interface components {
             quantity: number;
             unit: string;
         };
+        DepartmentDetailsRequest: {
+            address?: string;
+            institutionalEmail?: string;
+            managementUnit?: string;
+            secretaryAppointment?: string;
+            secretaryCpf?: string;
+            secretaryName?: string;
+        };
         DepartmentResponse: {
             acronym?: string;
             active: boolean;
             /** Format: date-time */
             createdAt: string;
+            details: components["schemas"]["DetailsView"];
             /** Format: uuid */
             id: string;
             name: string;
@@ -1384,6 +1396,22 @@ export interface components {
             updatedAt: string;
             /** Format: int64 */
             version: number;
+        };
+        DepartmentView: {
+            address?: string;
+            institutionalEmail?: string;
+            managementUnit?: string;
+            secretaryAppointment?: string;
+            secretaryCpf?: string;
+            secretaryName?: string;
+        };
+        DetailsView: {
+            address?: string;
+            institutionalEmail?: string;
+            managementUnit?: string;
+            secretaryAppointment?: string;
+            secretaryCpf?: string;
+            secretaryName?: string;
         };
         DfdFileVersionResponse: {
             /** Format: int32 */
@@ -1466,7 +1494,9 @@ export interface components {
             contentHash: string;
             /** Format: date-time */
             generatedAt: string;
+            legalActCitation?: string;
             note: string;
+            preparedBy?: components["schemas"]["PreparedByView"];
             /** Format: int32 */
             version: number;
         };
@@ -1477,6 +1507,11 @@ export interface components {
             title: string;
         };
         FinalizeDocumentRequest: {
+            legalActCitation?: string;
+            /** Format: uuid */
+            legalActRegulationId?: string;
+            preparedByCpf?: string;
+            preparedByName?: string;
             rectificationDescribed?: boolean;
             rectificationDetail?: string;
             /** @enum {string} */
@@ -1648,6 +1683,10 @@ export interface components {
             foreseen: boolean;
             plan?: components["schemas"]["PcaPlanResponse"];
         };
+        PreparedByView: {
+            cpf: string;
+            name: string;
+        };
         PriceQuoteRequest: {
             /** Format: date-time */
             collectedAt: string;
@@ -1678,9 +1717,12 @@ export interface components {
             unitPrice: number;
         };
         ProcessDfdResponse: {
+            department: components["schemas"]["DepartmentView"];
             /** Format: uuid */
             departmentId: string;
             departmentName: string;
+            /** Format: date */
+            expectedCompletionDate?: string;
             file?: components["schemas"]["DfdFileView"];
             fileName: string;
             /** Format: uuid */
@@ -1895,9 +1937,12 @@ export interface components {
         };
         UpdateDepartmentRequest: {
             acronym?: string;
+            details?: components["schemas"]["DepartmentDetailsRequest"];
             name: string;
         };
         UpdateDfdItemsRequest: {
+            /** Format: date */
+            expectedCompletionDate?: string;
             items: components["schemas"]["DemandItemRequest"][];
         };
         UpdateLetterheadRequest: {

@@ -1,6 +1,7 @@
 import "client-only";
 
 import { requisicaoProtegida } from "@/lib/api/auth-client";
+import type { Elaboracao } from "@/lib/documentos/elaboracao";
 import { painelDaSecao } from "@/lib/documentos";
 import type { BlocoDoDocumento } from "@/lib/dominio";
 import type { MotivoRetificacao, Retificacao } from "@/lib/dominio"
@@ -212,18 +213,26 @@ export async function concluirDocumento(
   processoId: string,
   tipo: TipoDocumento,
   retificacao?: Retificacao,
+  /** Quem elaborou e o ato normativo (ADR-044); ausentes, vale o padrão do servidor. */
+  elaboracao?: Elaboracao,
 ): Promise<DocumentoEmElaboracao> {
+  const ato = elaboracao?.ato;
   return mapear(
     await requisicaoProtegida<DocumentoApi>(`${rota(processoId, tipo)}/finalize`, {
       method: "POST",
-      body: JSON.stringify(
-        retificacao
+      body: JSON.stringify({
+        ...(retificacao
           ? {
               rectificationKind: naturezas[retificacao.motivo],
               rectificationDetail: retificacao.detalhe,
             }
-          : {},
-      ),
+          : {}),
+        ...(elaboracao?.responsavel
+          ? { preparedByName: elaboracao.responsavel.nome, preparedByCpf: elaboracao.responsavel.cpf }
+          : {}),
+        ...(ato && "normaId" in ato ? { legalActRegulationId: ato.normaId } : {}),
+        ...(ato && "citacao" in ato ? { legalActCitation: ato.citacao } : {}),
+      }),
     }),
     tipo,
   );
@@ -234,6 +243,8 @@ interface VersaoApi {
   note: string;
   generatedAt: string;
   contentHash: string;
+  preparedBy?: { name: string; cpf: string } | null;
+  legalActCitation?: string | null;
   body: { sectionCode: string; title: string; text: string; dispensed: boolean }[];
 }
 
@@ -245,6 +256,10 @@ export interface VersaoComTexto {
   /** SHA-256 do snapshot: prova que o texto guardado é o texto que saiu. */
   hash: string;
   corpo: BlocoDoDocumento[];
+  /** Quem elaborou, com o CPF mascarado; nulo nas versões anteriores à ADR-044. */
+  responsavel: { nome: string; cpf: string } | null;
+  /** A portaria (ETP) ou o decreto (Edital) citado na versão. */
+  atoNormativo: string | null;
 }
 
 function mapearVersao(versao: VersaoApi): VersaoComTexto {
@@ -253,6 +268,8 @@ function mapearVersao(versao: VersaoApi): VersaoComTexto {
     nota: versao.note,
     geradoEm: versao.generatedAt,
     hash: versao.contentHash,
+    responsavel: versao.preparedBy ? { nome: versao.preparedBy.name, cpf: versao.preparedBy.cpf } : null,
+    atoNormativo: versao.legalActCitation ?? null,
     corpo: versao.body.map((bloco) => ({
       id: bloco.sectionCode,
       titulo: bloco.title,

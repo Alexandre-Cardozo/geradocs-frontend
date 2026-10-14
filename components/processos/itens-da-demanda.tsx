@@ -63,14 +63,14 @@ export function ItensDaDemanda({ processoId }: { processoId: string }) {
     mensagem: string,
   ) => {
     trocarItens.mutate(
-      { dfdId: destino.id, itens: itensDoDestino },
+      { dfdId: destino.id, itens: itensDoDestino, dataPrevista: destino.dataPrevista },
       {
         onSuccess: () => {
           if (origem && origem.id !== destino.id) {
             // Mudar o vínculo é tirar de um DFD e pôr no outro: sem a segunda
             // gravação o item ficaria contado duas vezes na consolidação.
             trocarItens.mutate(
-              { dfdId: origem.id, itens: itensDaOrigem },
+              { dfdId: origem.id, itens: itensDaOrigem, dataPrevista: origem.dataPrevista },
               { onSuccess: () => showToast(mensagem), onError: aviso },
             )
             return
@@ -115,7 +115,11 @@ export function ItensDaDemanda({ processoId }: { processoId: string }) {
 
   const remover = (alvo: ItemVinculado) =>
     trocarItens.mutate(
-      { dfdId: alvo.dfd.id, itens: alvo.dfd.itens.filter((_, i) => i !== alvo.indice) },
+      {
+        dfdId: alvo.dfd.id,
+        itens: alvo.dfd.itens.filter((_, i) => i !== alvo.indice),
+        dataPrevista: alvo.dfd.dataPrevista,
+      },
       {
         onSuccess: () => {
           showToast(`${alvo.item.descricao} removido de ${alvo.dfd.nomeDoArquivo}.`)
