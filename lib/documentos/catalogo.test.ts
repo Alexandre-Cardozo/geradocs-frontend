@@ -7,6 +7,7 @@ import {
   REGRA_MODALIDADE,
   agruparAnexos,
   anexosDoArquivo,
+  anexosSob,
   documentosDaModalidade,
   ehDispensaPorValor,
   ehObrigatorio,
@@ -55,18 +56,47 @@ describe("matriz modalidade × documentos", () => {
     expect(REGRA_MODALIDADE.Leilão.obrigatorios).toEqual(["Edital"])
   })
 
-  it("já marca a minuta de contrato nas licitações em que o contrato é a regra", () => {
-    // Art. 18, VI: quando necessária, a minuta consta obrigatoriamente como
-    // anexo do edital.
-    for (const modalidade of ["Pregão Eletrônico", "Concorrência", "Diálogo Competitivo", "Credenciamento"] as Modalidade[]) {
-      expect(REGRA_MODALIDADE[modalidade].recomendados, modalidade).toEqual(["Contrato"])
-    }
+  /**
+   * A matriz inteira, de uma vez (ADR-047 do back-end): os obrigatórios são os
+   * mesmos de `RequiredDocuments`, e os recomendados seguem três regras — a
+   * minuta sempre (Art. 95), a cotação onde há contratação a estimar (Art. 23)
+   * e o mapa de riscos nas licitações de contratação (Art. 18, X).
+   */
+  it("obrigatórios e recomendados de cada modalidade", () => {
+    const matriz = (Object.keys(REGRA_MODALIDADE) as Modalidade[]).map((m) => [
+      m,
+      REGRA_MODALIDADE[m].obrigatorios,
+      [...REGRA_MODALIDADE[m].recomendados].sort(),
+    ])
+    expect(matriz).toEqual([
+      ["Pregão Eletrônico", ["ETP", "TR", "Edital"], ["Contrato", "Cotação", "Mapa"]],
+      ["Concorrência", ["ETP", "TR", "Edital"], ["Contrato", "Cotação", "Mapa"]],
+      ["Diálogo Competitivo", ["ETP", "TR", "Edital"], ["Contrato", "Cotação", "Mapa"]],
+      ["Credenciamento", ["TR", "Edital"], ["Contrato", "Cotação", "ETP"]],
+      ["Concurso", ["ETP", "Edital"], ["Contrato"]],
+      ["Leilão", ["Edital"], ["Contrato"]],
+      ["Dispensa Art. 75", ["TR"], ["Contrato", "Cotação"]],
+      ["Inexigibilidade", ["TR"], ["Contrato", "Cotação"]],
+    ])
   })
 
-  it("deixa a minuta desmarcada no Leilão, no Concurso e na contratação direta", () => {
-    for (const modalidade of ["Leilão", "Concurso", "Dispensa Art. 75", "Inexigibilidade"] as Modalidade[]) {
-      expect(REGRA_MODALIDADE[modalidade].recomendados, modalidade).not.toContain("Contrato")
+  it("o anexo que se apresenta sob o principal vem marcado com ele", () => {
+    // A minuta sob o edital: quem marca o edital já leva a minuta.
+    for (const [modalidade, regra] of Object.entries(REGRA_MODALIDADE)) {
+      for (const principal of [...regra.obrigatorios, ...regra.recomendados]) {
+        for (const anexo of anexosSob(principal)) {
+          expect(regra.recomendados, `${modalidade}: ${anexo} sob ${principal}`).toContain(anexo)
+        }
+      }
     }
+    expect(anexosSob("Edital")).toEqual(["Contrato"])
+    expect(anexosSob("TR")).toEqual([])
+  })
+
+  it("o Credenciamento é inexigibilidade: o ETP vem marcado, mas não é exigido", () => {
+    // Art. 74, IV c/c Art. 72, I — "se for o caso".
+    expect(ehObrigatorio("Credenciamento", "ETP")).toBe(false)
+    expect(ehObrigatorio("Credenciamento", "Edital")).toBe(true)
   })
 
   it("só recomenda o que é opcional na modalidade", () => {
@@ -84,10 +114,10 @@ describe("matriz modalidade × documentos", () => {
 })
 
 describe("as duas formas da dispensa (ADR-046 do back-end)", () => {
-  it("a direta não tem aviso nem edital, e marca a cotação", () => {
+  it("a direta não tem aviso nem edital, e marca a cotação e a minuta", () => {
     const direta = documentosDaModalidade("Dispensa Art. 75", "DIRECT")
     expect(direta).toEqual(["Cotação", "ETP", "Mapa", "TR", "Contrato"])
-    expect(regraDe("Dispensa Art. 75", "DIRECT").recomendados).toEqual(["Cotação"])
+    expect(regraDe("Dispensa Art. 75", "DIRECT").recomendados).toEqual(["Cotação", "Contrato"])
     expect(ehObrigatorio("Dispensa Art. 75", "TR", "DIRECT")).toBe(true)
     expect(ehObrigatorio("Dispensa Art. 75", "ETP", "DIRECT")).toBe(false)
   })
@@ -99,7 +129,7 @@ describe("as duas formas da dispensa (ADR-046 do back-end)", () => {
     expect(ehObrigatorio("Dispensa Art. 75", "Aviso", "DISPUTE")).toBe(true)
     // O ETP vem marcado, mas não travado: a lei o faculta na dispensa por valor.
     expect(ehObrigatorio("Dispensa Art. 75", "ETP", "DISPUTE")).toBe(false)
-    expect(regraDe("Dispensa Art. 75", "DISPUTE").recomendados).toEqual(["ETP", "Contrato"])
+    expect(regraDe("Dispensa Art. 75", "DISPUTE").recomendados).toEqual(["Cotação", "ETP", "Contrato"])
   })
 
   it("só recomenda o que é opcional na forma", () => {

@@ -11,10 +11,8 @@ import { servidor } from "@/lib/teste/servidor-msw"
  *
  * O processo vive no servidor desde o Bloco 9, e a trilha desde o 12.1. O que
  * continua sendo do front-end — e é o que se testa aqui — é **calcular o porquê**:
- * qual documento deixou de ser cabível, qual passou a ser obrigatório, e a
- * justificativa de quem decidiu manter a lista assim mesmo. Esse texto ia para
- * uma trilha em memória; agora acompanha a edição como `changeNote`, e é o
- * servidor que o registra.
+ * o que a troca acrescentou e o que ficou sem estar previsto (ADR-047). O texto
+ * acompanha a edição como `changeNote`, e é o servidor que o registra.
  */
 async function carregarClienteLimpo() {
   vi.resetModules()
@@ -81,40 +79,24 @@ describe("troca de modalidade", () => {
     expect(ifMatch).toBe('"7"')
   })
 
-  it("o que deixou de ser cabível acompanha a edição, para o servidor registrar", async () => {
+  it("o que ficou sem estar previsto acompanha a edição, para o servidor registrar", async () => {
     const enviado = servidorComProcesso()
     const { atualizarProcesso } = await carregarClienteLimpo()
 
     await atualizarProcesso({
       id: PROCESSO,
       modalidade: "Dispensa Art. 75",
-      documentos: ["ETP", "TR"],
+      formaDaDispensa: "DISPUTE",
+      documentos: ["ETP", "TR", "Edital", "Aviso"],
     })
 
     const motivo = String(enviado.corpo.changeNote)
-    expect(motivo).toContain("Pregão Eletrônico")
-    expect(motivo).toContain("Dispensa Art. 75")
-    expect(motivo).toContain("removidos por deixarem de ser cabíveis: Edital")
+    expect(motivo).toContain("Pregão Eletrônico para Dispensa Art. 75 (com disputa)")
+    expect(motivo).toContain("Incluídos para elaboração: Aviso")
+    expect(motivo).toContain("Mantidos, embora a nova modalidade não os preveja: Edital")
   })
 
-  it("mantendo a lista, a justificativa vai literal para o servidor", async () => {
-    const enviado = servidorComProcesso()
-    const { atualizarProcesso } = await carregarClienteLimpo()
-
-    await atualizarProcesso({
-      id: PROCESSO,
-      modalidade: "Dispensa Art. 75",
-      justificativaModalidade: "O edital já foi publicado e será anulado por ato próprio.",
-    })
-
-    // É a justificativa que responde ao controle por que o processo ficou com um
-    // documento que a modalidade vigente não comporta.
-    expect(String(enviado.corpo.changeNote)).toContain(
-      "O edital já foi publicado e será anulado por ato próprio.",
-    )
-  })
-
-  it("o documento já gerado que perde cabimento vem do servidor, não da memória da aba", async () => {
+  it("o documento já gerado que fica sem estar previsto vem do servidor, não da memória da aba", async () => {
     const enviado = servidorComProcesso()
     servidor.use(
       http.get(`${urlDaApi}/generated-documents`, () =>
@@ -136,16 +118,12 @@ describe("troca de modalidade", () => {
     await atualizarProcesso({
       id: PROCESSO,
       modalidade: "Dispensa Art. 75",
-      documentos: ["ETP", "TR"],
+      formaDaDispensa: "DIRECT",
     })
 
     // Até 26/08/2026 esta lista vinha do acervo em memória do protótipo:
-    // recarregada a página, ela era vazia para todo processo real, e o aviso
-    // dizia que nada gerado era afetado justamente quando havia um Edital
-    // impresso.
-    expect(String(enviado.corpo.changeNote)).toContain(
-      "Documento já gerado que deixa de ser cabível: Edital",
-    )
+    // recarregada a página, ela era vazia para todo processo real.
+    expect(String(enviado.corpo.changeNote)).toContain("(já gerados: Edital)")
   })
 
   it("salvar sem trocar a modalidade não inventa motivo", async () => {

@@ -1,18 +1,17 @@
 /**
  * O que muda no processo quando a modalidade muda.
  *
- * Trocar a modalidade não é trocar um rótulo: cada uma tem a sua lista de
- * documentos cabíveis (Art. 28 e seguintes da Lei 14.133/21). Sair de Pregão
- * Eletrônico para Dispensa do Art. 75 faz o Edital deixar de existir no
- * processo — e se ele já foi gerado, passa a haver um documento no acervo que a
- * modalidade vigente não comporta.
+ * Trocar a modalidade não é trocar um rótulo: cada uma tem os seus documentos
+ * exigidos (Art. 28 e seguintes da Lei 14.133/21). A troca **acrescenta** o que
+ * a nova exige e **não tira nada** (ADR-047 do back-end): sair do Pregão para a
+ * Dispensa deixa o Edital no processo, sem ser cobrado — e se ele já foi gerado,
+ * o arquivo continua no acervo. Quem não for usá-lo o retira depois.
  *
- * A regra vive aqui, e não na tela, porque descreve o produto: quando o back-end
- * assumir a persistência, a palavra final passa a ser dele e esta cópia continua
- * servindo apenas para a interface avisar antes de deixar salvar.
+ * O back-end aplica a mesma regra ao gravar; esta cópia serve para a tela
+ * mostrar o efeito antes de confirmar.
  */
 
-import { documentosDaModalidade, ordenar, regraDe } from "@/lib/documentos"
+import { anexosSob, documentosDaModalidade, ordenar, regraDe } from "@/lib/documentos"
 import { FORMA_DA_DISPENSA, MODALIDADE_LABEL, type FormaDaDispensa, type Modalidade, type TipoDocumento } from "@/lib/types"
 
 /** A forma da dispensa antes e depois da troca; ausente fora da dispensa. */
@@ -35,25 +34,28 @@ function naTrilha(modalidade: Modalidade, forma?: FormaDaDispensa): string {
 export interface ImpactoTrocaModalidade {
   /** Tipos que a nova modalidade comporta, na ordem do fluxo. */
   cabiveis: TipoDocumento[]
-  /** Solicitados hoje que a nova modalidade não comporta. */
-  deixamDeSerCabiveis: TipoDocumento[]
   /**
-   * Os que já existem no acervo e deixam de ser cabíveis.
-   *
-   * É o aviso mais grave da lista: documento gerado não some ao trocar a
-   * modalidade, e um Edital de um processo que virou dispensa fica no acervo
-   * contradizendo o próprio processo.
+   * O que entra no processo para elaboração: os obrigatórios da nova regra que
+   * faltavam e, com cada principal que entra, os anexos que vêm marcados com
+   * ele (a minuta de contrato com o edital).
    */
-  jaGeradosQueDeixamDeSerCabiveis: TipoDocumento[]
-  /** Obrigatórios da nova modalidade que ainda não foram solicitados. */
-  passamASerObrigatorios: TipoDocumento[]
-  /** A lista de documentos que a recomendação propõe. */
-  documentosSugeridos: TipoDocumento[]
-  /** Manter a lista atual diverge da recomendação e precisa de justificativa. */
-  exigeJustificativa: boolean
+  entram: TipoDocumento[]
+  /**
+   * O que já estava no processo e a nova modalidade não prevê. **Continua** —
+   * a troca não tira nada (ADR-047); quem não for usar retira depois.
+   */
+  naoPrevistos: TipoDocumento[]
+  /** Entre os não previstos, os já gerados: o arquivo continua no acervo. */
+  jaGeradosNaoPrevistos: TipoDocumento[]
+  /** A lista que o processo passa a ter: a de hoje mais o que entra. */
+  documentos: TipoDocumento[]
 }
 
 /**
+ * O que a troca faz com a lista de documentos: **acrescenta** o que a nova
+ * modalidade exige e **mantém** tudo o que já estava — marcado ou elaborado
+ * (ADR-047 do back-end).
+ *
  * Trocar a forma da dispensa (direta ↔ com disputa) é troca do mesmo jeito: a
  * regra de documentos é outra (ADR-046).
  *
@@ -68,28 +70,22 @@ export function impactoTrocaModalidade(
   gerados: TipoDocumento[] = [],
   formas: FormasDaTroca = {},
 ): ImpactoTrocaModalidade {
+  const regra = regraDe(para, formas.para)
   const cabiveis = documentosDaModalidade(para, formas.para)
-  const deixamDeSerCabiveis = ordenar(solicitados.filter((tipo) => !cabiveis.includes(tipo)))
-  const passamASerObrigatorios = ordenar(
-    regraDe(para, formas.para).obrigatorios.filter((tipo) => !solicitados.includes(tipo)),
+  const obrigatoriosQueFaltam = regra.obrigatorios.filter((tipo) => !solicitados.includes(tipo))
+  const anexosQueVemJunto = obrigatoriosQueFaltam.flatMap((principal) =>
+    anexosSob(principal).filter((anexo) => regra.recomendados.includes(anexo) && !solicitados.includes(anexo)),
   )
-  // Mantém o que continua cabível e acrescenta o que a modalidade nova exige —
-  // preservar a escolha de quem montou o processo onde ela ainda vale.
-  const documentosSugeridos = ordenar([
-    ...solicitados.filter((tipo) => cabiveis.includes(tipo)),
-    ...passamASerObrigatorios,
-  ])
+  const entram = ordenar([...new Set([...obrigatoriosQueFaltam, ...anexosQueVemJunto])])
+  const naoPrevistos = de === para && formas.de === formas.para
+    ? []
+    : ordenar(solicitados.filter((tipo) => !cabiveis.includes(tipo)))
   return {
     cabiveis,
-    deixamDeSerCabiveis,
-    jaGeradosQueDeixamDeSerCabiveis: deixamDeSerCabiveis.filter((tipo) => gerados.includes(tipo)),
-    passamASerObrigatorios,
-    documentosSugeridos,
-    // Trocar entre modalidades de mesma exigência documental não pede nada: o
-    // alerta precisa aparecer quando há consequência, senão vira ruído que se
-    // aprende a fechar sem ler.
-    exigeJustificativa:
-      houveTroca(de, para, formas) && (deixamDeSerCabiveis.length > 0 || passamASerObrigatorios.length > 0),
+    entram,
+    naoPrevistos,
+    jaGeradosNaoPrevistos: naoPrevistos.filter((tipo) => gerados.includes(tipo)),
+    documentos: ordenar([...solicitados, ...entram]),
   }
 }
 
@@ -98,37 +94,24 @@ export function houveTroca(de: Modalidade, para: Modalidade, formas: FormasDaTro
   return de !== para || (para === "Dispensa Art. 75" && formas.de !== formas.para)
 }
 
-/** O que a trilha registra sobre a troca. */
+/** O que a trilha registra sobre a troca: o que entrou e o que ficou sem estar previsto. */
 export function motivoDaTrocaDeModalidade(
   de: Modalidade,
   para: Modalidade,
   impacto: ImpactoTrocaModalidade,
-  justificativa: string,
   formas: FormasDaTroca = {},
 ): string {
-  const cabecalho = `Modalidade alterada de ${naTrilha(de, formas.de)} para ${naTrilha(para, formas.para)}.`
-  // O fato mais grave da troca, e o que a trilha precisa carregar em qualquer
-  // caminho: documento gerado não some ao trocar a modalidade, e um Edital de um
-  // processo que virou dispensa fica no acervo contradizendo o próprio processo.
-  // Até 26/08/2026 este campo era calculado e descartado aqui — a tela avisava,
-  // e a trilha, que é quem responde ao controle meses depois, não dizia nada.
-  const jaGerados = impacto.jaGeradosQueDeixamDeSerCabiveis.length > 0
-    ? ` Documento já gerado que deixa de ser cabível: ${impacto.jaGeradosQueDeixamDeSerCabiveis.join(", ")}.`
-    : ""
-  if (justificativa.trim()) {
-    // A justificativa entra literal: é ela que responde ao controle por que a
-    // lista de documentos ficou divergente da recomendação.
-    return `${cabecalho} Lista de documentos mantida mediante justificativa: ${justificativa.trim()}${jaGerados}`
+  const partes = [`Modalidade alterada de ${naTrilha(de, formas.de)} para ${naTrilha(para, formas.para)}.`]
+  if (impacto.entram.length > 0) {
+    partes.push(`Incluídos para elaboração: ${impacto.entram.join(", ")}.`)
   }
-  if (impacto.deixamDeSerCabiveis.length === 0 && impacto.passamASerObrigatorios.length === 0) {
-    return `${cabecalho}${jaGerados}`
+  if (impacto.naoPrevistos.length > 0) {
+    // Documento gerado não some ao trocar a modalidade: a trilha, que é quem
+    // responde ao controle meses depois, precisa dizer que ele ficou.
+    const gerados = impacto.jaGeradosNaoPrevistos.length > 0
+      ? ` (já gerados: ${impacto.jaGeradosNaoPrevistos.join(", ")})`
+      : ""
+    partes.push(`Mantidos, embora a nova modalidade não os preveja: ${impacto.naoPrevistos.join(", ")}${gerados}.`)
   }
-  const partes: string[] = []
-  if (impacto.deixamDeSerCabiveis.length > 0) {
-    partes.push(`removidos por deixarem de ser cabíveis: ${impacto.deixamDeSerCabiveis.join(", ")}`)
-  }
-  if (impacto.passamASerObrigatorios.length > 0) {
-    partes.push(`incluídos por passarem a ser obrigatórios: ${impacto.passamASerObrigatorios.join(", ")}`)
-  }
-  return `${cabecalho} Lista de documentos ajustada — ${partes.join("; ")}.${jaGerados}`
+  return partes.join(" ")
 }

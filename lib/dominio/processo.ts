@@ -4,10 +4,10 @@
  * A plataforma entrega os documentos; o protocolo e a aprovação acontecem no
  * sistema de processo administrativo da entidade. Encerrar é, portanto, uma
  * decisão do servidor — e a regra de produto que vale acima das outras se aplica
- * aqui: **documento pendente não impede o encerramento; exige justificativa**.
+ * aqui: **obrigatório pendente não impede o encerramento; exige justificativa**.
  */
 
-import { ordenar } from "@/lib/documentos"
+import { ordenar, regraDe } from "@/lib/documentos"
 import type { DocumentoGerado, Processo, TipoDocumento } from "@/lib/types"
 
 /** Tipos já gerados para um processo. */
@@ -16,11 +16,27 @@ export function tiposGerados(processoId: string, documentos: DocumentoGerado[]):
 }
 
 /**
- * Documentos escolhidos no processo que ainda não foram gerados, na ordem
- * canônica do fluxo. Vazio significa que o processo está pronto para encerrar.
+ * Os obrigatórios da modalidade **atual** que ainda não foram gerados, na
+ * ordem do fluxo — é o que o encerramento cobra (ADR-047 do back-end). Vazio
+ * significa que o processo pode encerrar sem justificativa.
+ *
+ * Conta a modalidade de agora, esteja o documento na lista ou não: o Edital de
+ * um processo que virou dispensa não é cobrado; o Aviso de uma dispensa que
+ * passou a ter disputa é.
  */
-export function documentosPendentes(processo: Processo, gerados: TipoDocumento[]): TipoDocumento[] {
-  return ordenar(processo.documentos.filter((tipo) => !gerados.includes(tipo)))
+export function documentosPendentes(
+  processo: Pick<Processo, "modalidade" | "formaDaDispensa">,
+  gerados: TipoDocumento[],
+): TipoDocumento[] {
+  return ordenar(
+    regraDe(processo.modalidade, processo.formaDaDispensa).obrigatorios.filter((tipo) => !gerados.includes(tipo)),
+  )
+}
+
+/** Os que estão no processo, não foram gerados e não são cobrados: encerrar sem eles é escolha prevista. */
+export function documentosPorFazerSemCobranca(processo: Processo, gerados: TipoDocumento[]): TipoDocumento[] {
+  const cobrados = documentosPendentes(processo, gerados)
+  return ordenar(processo.documentos.filter((tipo) => !gerados.includes(tipo) && !cobrados.includes(tipo)))
 }
 
 /**

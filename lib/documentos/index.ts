@@ -4,6 +4,7 @@ export {
   REGRA_DA_DISPENSA,
   REGRA_MODALIDADE,
   agruparAnexos,
+  anexosSob,
   anexosDoArquivo,
   documentosDaModalidade,
   ehDispensaPorValor,

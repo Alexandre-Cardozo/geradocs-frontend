@@ -27,25 +27,28 @@ test.describe("liberdade no fluxo do processo", () => {
     ).toBeVisible()
   })
 
-  test("documento sai do processo quando entrou por engano", async ({ page }) => {
+  test("documento opcional sai do processo; o obrigatório da modalidade, não", async ({ page }) => {
     await comSessao(page)
     await comProcessoEDocumento(page)
+    const comMapa = { ...processo, documents: [...processo.documents, "MAPA"] }
     let enviado: Record<string, unknown> | null = null
     await page.route(`${API}/procurement-processes/*`, async (rota) => {
       if (rota.request().method() === "PATCH") {
         enviado = rota.request().postDataJSON() as Record<string, unknown>
-        await rota.fulfill({ json: { ...processo, documents: ["ETP"] } })
+        await rota.fulfill({ json: processo })
         return
       }
-      await rota.fulfill({ json: processo })
+      await rota.fulfill({ json: comMapa })
     })
 
     await page.goto(rota(`/processos/detalhe?id=${processo.id}`))
-    await page.getByRole("button", { name: "Retirar do processo" }).last().click()
 
-    // Enquanto ficava na lista, contava como pendência no encerramento para
-    // sempre.
-    await expect.poll(() => enviado).not.toBeNull()
+    // Só o Mapa de Riscos oferece a retirada: o ETP e o TR são exigidos pela
+    // modalidade, e o encerramento os cobraria logo depois (ADR-047).
+    await expect(page.getByRole("button", { name: "Retirar do processo" })).toHaveCount(1)
+    await page.getByRole("button", { name: "Retirar do processo" }).click()
+
+    await expect.poll(() => enviado?.documents).toEqual(["ETP", "TR"])
   })
 
   test("alteração depois da versão gerada aparece no editor", async ({ page }) => {

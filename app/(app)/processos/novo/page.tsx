@@ -332,10 +332,16 @@ export default function NovoProcesso() {
             <span className="font-display text-md font-bold text-text-1">
               {meta.titulo}
             </span>
+            {/*
+              Recomendado é o que vem marcado sem ser exigido como peça: a lei
+              pede o conteúdo, mas admite que falte no caso (ADR-047).
+            */}
             {obrig ? (
               <Tag tone="success">Obrigatório</Tag>
+            ) : regra?.recomendados.includes(tipo) ? (
+              <Tag tone="info">Recomendado</Tag>
             ) : (
-              <Tag tone="info">Opcional</Tag>
+              <Tag tone="neutral">Opcional</Tag>
             )}
             {principal && (
               <Tag tone="neutral">Anexo do {principal.tipo}</Tag>
@@ -755,7 +761,8 @@ export default function NovoProcesso() {
                 </span>
                 <p className="m-0 mb-3 text-sm text-text-3">
                   Listados na ordem do fluxo de contratação. Os obrigatórios da
-                  modalidade já vêm marcados.
+                  modalidade vêm marcados e travados; os recomendados vêm
+                  marcados e podem ser desmarcados.
                 </p>
                 <div className="flex flex-col gap-2.5">
                   {agruparAnexos(tiposCabiveis).map((grupo, i) => (

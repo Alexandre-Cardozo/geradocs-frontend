@@ -156,11 +156,12 @@ describe("novo processo: a minuta de contrato como anexo do edital", () => {
     expect(minuta).toHaveAttribute("aria-pressed", "false")
   })
 
-  it("na Dispensa, sem edital, fica solta e desmarcada", async () => {
+  it("na Dispensa, sem edital, fica solta — e marcada, porque o contrato é a regra (Art. 95)", async () => {
     await irParaDocumentos(/Dispensa de Licitação/, /^Dispensa Direta/)
 
     const minuta = await screen.findByRole("button", { name: /Minuta de Contrato/ })
-    expect(minuta).toHaveAttribute("aria-pressed", "false")
+    expect(minuta).toHaveAttribute("aria-pressed", "true")
+    expect(minuta).toHaveTextContent("Recomendado")
     expect(minuta).not.toHaveTextContent("Anexo do Edital")
   })
 })
