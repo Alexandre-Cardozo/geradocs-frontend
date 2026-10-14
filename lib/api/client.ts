@@ -75,7 +75,7 @@ import {
   planosDoOrgao,
   verificacaoDoProcesso,
 } from "@/lib/api/pca-client"
-import { baixarArquivo, gerarArquivos } from "@/lib/api/generation-client"
+import { baixarArquivo, baixarJuntada, gerarArquivos } from "@/lib/api/generation-client"
 import { consultarAuditoria, type ConsultaAuditoria, type PaginaAuditoria } from "@/lib/api/audit-client"
 
 export type { ConsultaAuditoria } from "@/lib/api/audit-client"
@@ -611,6 +611,15 @@ export async function gerarDocumento(input: GerarDocumentoInput): Promise<Docume
 }
 
 /** Baixa um arquivo gerado, autenticado, e entrega ao navegador. */
+/** A juntada dos documentos gerados do processo, na ordem escolhida (ADR-048). */
+export async function baixarJuntadaDoProcesso(
+  processoId: string,
+  formato: "PDF" | "DOCX",
+  ordem: TipoDocumento[],
+) {
+  return baixarJuntada(processoId, formato, ordem)
+}
+
 export async function baixarArquivoGerado(
   processoId: string,
   tipo: TipoDocumento,

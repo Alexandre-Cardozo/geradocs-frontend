@@ -8,6 +8,7 @@ import { Button, ChoiceCard, Dropdown, InfoBanner, ProgressBar, StatusBadge, Tag
 import {
   IconArrowRight,
   IconCheckCircle,
+  IconDownload,
   IconEye,
   IconFile,
   IconFileText,
@@ -33,6 +34,7 @@ import { DfdsDoProcesso } from "@/components/processos/dfds-do-processo"
 import { DotacoesDoProcesso } from "@/components/processos/dotacoes-do-processo"
 import { EncerramentoComPendencias } from "@/components/processos/encerramento-com-pendencias"
 import { ItensDaDemanda } from "@/components/processos/itens-da-demanda"
+import { JuntadaDoProcesso } from "@/components/processos/juntada-do-processo"
 import { TrilhaDoProcesso } from "@/components/processos/trilha-do-processo"
 import { PainelRetificacao } from "@/components/processos/painel-retificacao"
 import { CATALOGO, agruparAnexos, documentosDaModalidade, ehObrigatorio, ordenar, pendencias } from "@/lib/documentos"
@@ -92,6 +94,7 @@ export default function HubProcesso() {
   // quanto a modalidade — e trocá-la passa pelo mesmo alerta (ADR-046).
   const [novaForma, setNovaForma] = useState<FormaDaDispensa | "">("")
   const [confirmandoEncerramento, setConfirmandoEncerramento] = useState(false)
+  const [montandoJuntada, setMontandoJuntada] = useState(false)
   // Documento cuja retificação está sendo declarada. Um por vez: retificar dois
   // ao mesmo tempo esconderia qual histórico está sendo lido.
   const [retificando, setRetificando] = useState<TipoDocumento | null>(null)
@@ -691,9 +694,31 @@ export default function HubProcesso() {
 
       {/* Documentos do processo — na ordem canônica do fluxo de contratação */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <h2 className="m-0 font-display text-lg font-bold text-text-1">Documentos do Processo</h2>
-        <span className="text-sm text-text-3">Elabore na ordem indicada — cada etapa fundamenta a seguinte.</span>
+        <div className="min-w-0">
+          <h2 className="m-0 font-display text-lg font-bold text-text-1">Documentos do Processo</h2>
+          <span className="text-sm text-text-3">Elabore na ordem indicada — cada etapa fundamenta a seguinte.</span>
+        </div>
+        {/* A juntada só existe com documento gerado: nada é gerado nela (ADR-048). */}
+        {docsGerados.length > 0 && !montandoJuntada && (
+          <Button
+            variant="secondary"
+            size="sm"
+            icon={<IconDownload size={13} />}
+            onClick={() => setMontandoJuntada(true)}
+          >
+            Exportar Juntada
+          </Button>
+        )}
       </div>
+
+      {montandoJuntada && (
+        <JuntadaDoProcesso
+          processoId={processoId}
+          solicitados={proc.documentos}
+          gerados={docsGerados}
+          onFechar={() => setMontandoJuntada(false)}
+        />
+      )}
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         {agruparAnexos(proc.documentos).map((grupo, i) => (

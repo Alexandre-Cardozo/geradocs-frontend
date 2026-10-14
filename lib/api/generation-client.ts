@@ -125,6 +125,24 @@ export async function baixarArquivo(
   );
 }
 
+/**
+ * A juntada dos documentos gerados, na ordem dada, num arquivo só (ADR-048).
+ *
+ * A ordem dos tipos é a ordem na juntada: vai na consulta, repetindo o
+ * parâmetro, e o servidor a respeita.
+ */
+export async function baixarJuntada(
+  processoId: string,
+  formato: FormatoArquivo,
+  ordem: TipoDocumento[],
+) {
+  const consulta = new URLSearchParams({ format: formato });
+  for (const tipo of ordem) consulta.append("documents", tipos[tipo]);
+  return baixarProtegido(
+    `/procurement-processes/${encodeURIComponent(processoId)}/bundle?${consulta.toString()}`,
+  );
+}
+
 /* ── Acervo do órgão (ADR-025) ─────────────────────────────────────────────── */
 
 /** O inverso de `tipos`: o servidor nomeia em maiúsculas sem acento. */

@@ -4628,6 +4628,53 @@
         "tags" : [ "procurement-process-controller" ]
       }
     },
+    "/api/v1/procurement-processes/{processId}/bundle" : {
+      "get" : {
+        "operationId" : "bundle",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "documents",
+          "required" : true,
+          "schema" : {
+            "items" : {
+              "enum" : [ "AVISO", "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+              "type" : "string"
+            },
+            "type" : "array"
+          }
+        }, {
+          "in" : "query",
+          "name" : "format",
+          "required" : true,
+          "schema" : {
+            "enum" : [ "DOCX", "PDF" ],
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "format" : "binary",
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "document-bundle-controller" ]
+      }
+    },
     "/api/v1/procurement-processes/{processId}/documents/{documentType}" : {
       "get" : {
         "operationId" : "open",
