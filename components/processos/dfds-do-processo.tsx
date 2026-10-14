@@ -1,9 +1,19 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
 
-import { Button, Dropdown, FormField, Input, Tag } from "@/components/ui";
-import { IconCheck, IconFileText, IconPlus, IconTrash, IconUpload, IconX } from "@/components/ui/icons";
+import { Button, Dropdown, FormField, Input, Tag, ValidationMsg } from "@/components/ui";
+import {
+  IconBuilding,
+  IconCalendar,
+  IconCheck,
+  IconFileText,
+  IconPencil,
+  IconPlus,
+  IconTrash,
+  IconUpload,
+  IconX,
+} from "@/components/ui/icons";
 import { BaixarDfd } from "@/components/processos/baixar-dfd";
 import { ErrorState, LoadingState } from "@/components/shared/estados";
 import { useToast } from "@/components/shared/providers";
@@ -17,7 +27,13 @@ import {
   useVersoesDoArquivoDfd,
 } from "@/lib/api/hooks";
 import type { DfdAnexado, VersaoDoArquivoDfd } from "@/lib/api/procurement-client";
-import { formatData, formatarBytes } from "@/lib/format";
+import { dataBrasiliaISO, formatData, formatarBytes } from "@/lib/format";
+import {
+  ATALHOS_DE_PRAZO,
+  erroDaDataPrevista,
+  situacaoDoPrazo,
+  somarDias,
+} from "@/lib/processos/prazo-do-dfd";
 import { pendenciasDaFicha } from "@/lib/secretarias/ficha";
 
 /**
@@ -195,6 +211,8 @@ function RegistrarDfd({
               onChange={(e) => setDataPrevista(e.target.value)}
               ariaLabel="Data prevista de conclusão"
             />
+            <AtalhosDePrazo onEscolher={setDataPrevista} />
+            {erroDaDataPrevista(dataPrevista) && <ValidationMsg type="error" msg={erroDaDataPrevista(dataPrevista)!} />}
           </FormField>
         </div>
       </div>
@@ -275,7 +293,6 @@ function LinhaDoDfd({ processoId, dfd }: { processoId: string; dfd: DfdAnexado }
           {dfd.arquivo ? ` · ${formatarBytes(dfd.arquivo.bytes)}` : ""}
         </span>
       </span>
-      <DataPrevista processoId={processoId} dfd={dfd} />
       {/*
         Quantos itens estão vinculados a este DFD. "Sem itens" não é pendência:
         o documento pode ser registrado antes de o detalhamento chegar.
@@ -342,68 +359,140 @@ function LinhaDoDfd({ processoId, dfd }: { processoId: string; dfd: DfdAnexado }
           Remover
         </Button>
       )}
-      <FichaNoDfd dfd={dfd} />
+      <div className="grid basis-full grid-cols-1 gap-3 border-t border-border pt-2.5 md:grid-cols-[minmax(0,21rem)_minmax(0,1fr)]">
+        <DataPrevista processoId={processoId} dfd={dfd} />
+        <FichaNoDfd dfd={dfd} />
+      </div>
       {historicoAberto && <HistoricoDoArquivo processoId={processoId} dfdId={dfd.id} />}
     </li>
   );
 }
 
+/** Rótulo de um bloco de detalhe da linha do DFD. */
+function RotuloDoDetalhe({ icone, children }: { icone: ReactNode; children: ReactNode }) {
+  return (
+    <span className="mb-1 flex items-center gap-1.5 text-2xs font-semibold tracking-caps text-text-muted uppercase">
+      {icone}
+      {children}
+    </span>
+  );
+}
+
+/** "+30 dias", "+60 dias", "+90 dias": o prazo mais comum sem abrir o calendário. */
+function AtalhosDePrazo({ onEscolher, children }: { onEscolher: (iso: string) => void; children?: ReactNode }) {
+  const hoje = dataBrasiliaISO();
+  return (
+    <span className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs text-text-muted">
+      Hoje
+      {ATALHOS_DE_PRAZO.map((dias) => (
+        <button
+          key={dias}
+          type="button"
+          onClick={() => onEscolher(somarDias(hoje, dias))}
+          className="cursor-pointer rounded-sm border border-border bg-surface px-1.75 py-0.5 text-xs font-semibold text-text-2 hover:border-royal hover:text-royal"
+        >
+          +{dias} dias
+        </button>
+      ))}
+      {children}
+    </span>
+  );
+}
+
 /**
- * A data prevista de conclusão da contratação, com edição na própria linha
+ * A data prevista de conclusão da contratação, com edição no próprio bloco
  * (ADR-044). Grava pela mesma rota dos itens, reenviando-os como estão.
+ *
+ * <p>Quanto falta vem ao lado da data: a vencida aparece em vermelho, sem
+ * travar nada — DFD registrado depois da data é caso real.
  */
 function DataPrevista({ processoId, dfd }: { processoId: string; dfd: DfdAnexado }) {
   const [editando, setEditando] = useState(false);
   const [data, setData] = useState(dfd.dataPrevista ?? "");
   const gravar = useAtualizarItensDoDfd(processoId);
   const showToast = useToast();
+  const erro = erroDaDataPrevista(data);
+
+  const salvar = (nova: string | null) =>
+    gravar.mutate(
+      { dfdId: dfd.id, itens: dfd.itens, dataPrevista: nova },
+      {
+        onSuccess: () => {
+          setEditando(false);
+          showToast(nova ? "Data prevista atualizada." : "Data prevista removida.");
+        },
+        onError: (falha) => showToast(falha instanceof Error ? falha.message : "Não foi possível salvar a data."),
+      },
+    );
 
   if (!editando) {
+    const situacao = dfd.dataPrevista ? situacaoDoPrazo(dfd.dataPrevista, dataBrasiliaISO()) : null;
     return (
-      <button
-        type="button"
-        onClick={() => {
-          setData(dfd.dataPrevista ?? "");
-          setEditando(true);
-        }}
-        aria-label={`Data prevista de conclusão de ${dfd.nomeDoArquivo}`}
-        className="cursor-pointer rounded-sm border border-border bg-surface px-2 py-1 text-xs text-text-2 hover:bg-border-soft"
-      >
-        {dfd.dataPrevista ? `Conclusão prevista: ${formatData(dfd.dataPrevista)}` : "Informar data prevista"}
-      </button>
+      <div className="min-w-0">
+        <RotuloDoDetalhe icone={<IconCalendar size={12} />}>Conclusão prevista</RotuloDoDetalhe>
+        <div className="flex flex-wrap items-center gap-2">
+          {dfd.dataPrevista && situacao ? (
+            <>
+              <span className="text-sm font-semibold text-text-1">{formatData(dfd.dataPrevista)}</span>
+              <Tag tone={situacao.tom}>{situacao.rotulo}</Tag>
+            </>
+          ) : (
+            <span className="text-sm text-text-muted italic">Não informada</span>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              setData(dfd.dataPrevista ?? "");
+              setEditando(true);
+            }}
+            aria-label={`Data prevista de conclusão de ${dfd.nomeDoArquivo}`}
+            className="flex cursor-pointer items-center gap-1 rounded-sm border-0 bg-transparent px-1 py-0.5 text-xs font-semibold text-royal hover:bg-tint-royal-bg"
+          >
+            <IconPencil size={11} />
+            {dfd.dataPrevista ? "Alterar" : "Informar"}
+          </button>
+        </div>
+      </div>
     );
   }
+
   return (
-    <span className="flex items-center gap-1.5">
-      <Input
-        type="date"
-        value={data}
-        onChange={(e) => setData(e.target.value)}
-        ariaLabel={`Nova data prevista de ${dfd.nomeDoArquivo}`}
-      />
-      <Button
-        size="sm"
-        disabled={gravar.isPending}
-        onClick={() =>
-          gravar.mutate(
-            { dfdId: dfd.id, itens: dfd.itens, dataPrevista: data || null },
-            {
-              onSuccess: () => {
-                setEditando(false);
-                showToast("Data prevista atualizada.");
-              },
-              onError: (erro) =>
-                showToast(erro instanceof Error ? erro.message : "Não foi possível salvar a data."),
-            },
-          )
-        }
-      >
-        Salvar
-      </Button>
-      <Button size="sm" variant="secondary" onClick={() => setEditando(false)}>
-        Cancelar
-      </Button>
-    </span>
+    <div className="min-w-0">
+      <RotuloDoDetalhe icone={<IconCalendar size={12} />}>Conclusão prevista</RotuloDoDetalhe>
+      <div className="flex flex-wrap items-center gap-1.5">
+        <div className="w-40">
+          <Input
+            type="date"
+            value={data}
+            onChange={(e) => setData(e.target.value)}
+            ariaLabel={`Nova data prevista de ${dfd.nomeDoArquivo}`}
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === "Escape") setEditando(false);
+              if (e.key === "Enter" && data && !erro) salvar(data);
+            }}
+          />
+        </div>
+        <Button size="sm" disabled={gravar.isPending} onClick={() => !erro && salvar(data || null)}>
+          {gravar.isPending ? "Salvando..." : "Salvar"}
+        </Button>
+        <Button size="sm" variant="ghost" onClick={() => setEditando(false)}>
+          Cancelar
+        </Button>
+      </div>
+      <AtalhosDePrazo onEscolher={setData}>
+        {dfd.dataPrevista && (
+          <button
+            type="button"
+            onClick={() => salvar(null)}
+            className="ml-1 cursor-pointer border-0 bg-transparent p-0 text-xs text-text-muted underline hover:text-danger"
+          >
+            Remover a data
+          </button>
+        )}
+      </AtalhosDePrazo>
+      {erro && <ValidationMsg type="error" msg={erro} />}
+    </div>
   );
 }
 
@@ -424,14 +513,15 @@ function FichaNoDfd({ dfd }: { dfd: DfdAnexado }) {
       }`,
   ].filter(Boolean);
   return (
-    <span className="basis-full text-xs text-text-3">
-      {partes.length > 0 && <span className="block">{partes.join(" · ")}</span>}
+    <div className="min-w-0 text-xs text-text-3">
+      <RotuloDoDetalhe icone={<IconBuilding size={12} />}>Secretaria requisitante</RotuloDoDetalhe>
+      {partes.length > 0 && <span className="block leading-normal">{partes.join(" · ")}</span>}
       {faltam.length > 0 && (
         <span className="block text-text-muted">
           Ficha da secretaria sem {faltam.join(", ")} — o coordenador completa em Configurações › Secretarias.
         </span>
       )}
-    </span>
+    </div>
   );
 }
 

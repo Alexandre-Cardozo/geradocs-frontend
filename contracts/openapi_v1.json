@@ -1101,6 +1101,10 @@
             "minLength" : 0,
             "type" : "string"
           },
+          "preparedByUserId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
           "rectificationDescribed" : {
             "type" : "boolean"
           },
@@ -2193,6 +2197,28 @@
             "type" : "boolean"
           }
         },
+        "type" : "object"
+      },
+      "StaffMemberResponse" : {
+        "properties" : {
+          "cpf" : {
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "jobTitle" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "registrationNumber" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "cpf", "id", "name" ],
         "type" : "object"
       },
       "TemplateResponse" : {
@@ -5491,6 +5517,27 @@
           }
         },
         "tags" : [ "regulation-controller" ]
+      }
+    },
+    "/api/v1/staff" : {
+      "get" : {
+        "operationId" : "listStaff",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/StaffMemberResponse"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "staff-controller" ]
       }
     },
     "/api/v1/users" : {

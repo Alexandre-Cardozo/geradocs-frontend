@@ -1,18 +1,20 @@
 /**
  * Quem elaborou o documento e o ato normativo que o embasa (ADR-044 do back-end).
  *
- * O responsável é, por padrão, quem conclui — com os dados do cadastro —, e
- * pode ser outra pessoa (quem redigiu fora da plataforma). O ato só existe no
+ * O responsável é, por padrão, quem conclui — com os dados do cadastro. Pode
+ * ser outro servidor do órgão, escolhido na lista (ADR-045: a tela manda o id, e
+ * o CPF vem do cadastro dele), ou alguém de fora, com nome e CPF digitados. O ato só existe no
  * ETP (a portaria) e no Edital (o decreto): escolhido no acervo de normas do
  * órgão ou digitado. Sem ato informado, o servidor mantém o da versão anterior.
  */
 
+import type { ServidorDoOrgao } from "@/lib/api/access-client"
 import { validaCPF } from "@/lib/auth/cpf"
 import type { TipoDocumento } from "@/lib/types"
 
 /** O que vai na conclusão. Ausente, vale o padrão do servidor. */
 export interface Elaboracao {
-  responsavel?: { nome: string; cpf: string }
+  responsavel?: { servidorId: string } | { nome: string; cpf: string }
   ato?: { normaId: string } | { citacao: string }
 }
 
@@ -30,8 +32,9 @@ export function cpfMascarado(cpf: string): string {
 }
 
 export interface EscolhaDaElaboracao {
-  /** "eu": quem conclui. "outra": nome e CPF informados. */
-  responsavel: "eu" | "outra"
+  /** "eu": quem conclui. "servidor": um colega do órgão. "outra": nome e CPF digitados. */
+  responsavel: "eu" | "servidor" | "outra"
+  servidorId: string
   nome: string
   cpf: string
   /** "padrao": o da versão anterior, ou nenhum. "norma": do acervo. "digitado". */
@@ -42,6 +45,7 @@ export interface EscolhaDaElaboracao {
 
 export const ESCOLHA_INICIAL: EscolhaDaElaboracao = {
   responsavel: "eu",
+  servidorId: "",
   nome: "",
   cpf: "",
   ato: "padrao",
@@ -52,8 +56,9 @@ export const ESCOLHA_INICIAL: EscolhaDaElaboracao = {
 /** O que impede concluir, campo a campo. */
 export function errosDaElaboracao(
   escolha: EscolhaDaElaboracao,
-): Partial<Record<"nome" | "cpf" | "norma" | "citacao", string>> {
-  const erros: Partial<Record<"nome" | "cpf" | "norma" | "citacao", string>> = {}
+): Partial<Record<"servidor" | "nome" | "cpf" | "norma" | "citacao", string>> {
+  const erros: Partial<Record<"servidor" | "nome" | "cpf" | "norma" | "citacao", string>> = {}
+  if (escolha.responsavel === "servidor" && !escolha.servidorId) erros.servidor = "Escolha o servidor que elaborou."
   if (escolha.responsavel === "outra") {
     if (escolha.nome.trim().length < 3) erros.nome = "Informe o nome completo de quem elaborou."
     if (!validaCPF(escolha.cpf)) erros.cpf = "Informe um CPF válido."
@@ -68,10 +73,25 @@ export function errosDaElaboracao(
 /** O que a conclusão envia; o padrão não vai, e o servidor o aplica. */
 export function elaboracaoDe(escolha: EscolhaDaElaboracao, tipo: TipoDocumento): Elaboracao {
   const elaboracao: Elaboracao = {}
+  if (escolha.responsavel === "servidor") elaboracao.responsavel = { servidorId: escolha.servidorId }
   if (escolha.responsavel === "outra") {
     elaboracao.responsavel = { nome: escolha.nome.trim(), cpf: escolha.cpf.replace(/\D/g, "") }
   }
   if (rotuloDoAto(tipo) && escolha.ato === "norma") elaboracao.ato = { normaId: escolha.normaId }
   if (rotuloDoAto(tipo) && escolha.ato === "digitado") elaboracao.ato = { citacao: escolha.citacao.trim() }
   return elaboracao
+}
+
+/** Sem acento e sem caixa: "jose" acha "José". */
+function comparavel(texto: string): string {
+  return texto.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLocaleLowerCase("pt-BR")
+}
+
+/** Os servidores cujo nome, cargo ou matrícula contém o que foi digitado. */
+export function filtrarServidores(servidores: ServidorDoOrgao[], busca: string): ServidorDoOrgao[] {
+  const procurado = comparavel(busca.trim())
+  if (!procurado) return servidores
+  return servidores.filter((s) =>
+    [s.nome, s.cargo, s.matricula].some((campo) => campo !== null && comparavel(campo).includes(procurado)),
+  )
 }
