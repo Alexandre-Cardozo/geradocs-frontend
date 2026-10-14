@@ -292,3 +292,66 @@ describe("acervo do órgão", () => {
     expect(resumo.etpsConcluidos).toBe(27)
   })
 })
+
+/** As juntadas exportadas (ADR-049): a lista e o "baixar de novo". */
+describe("juntadas exportadas", () => {
+  const juntadaApi = {
+    id: "j-1",
+    processId: "p-1",
+    processNumber: "PROC-2026-000001",
+    format: "PDF",
+    fileName: "PROC-2026-000001-JUNTADA-TR-v1-ETP-v2.pdf",
+    createdAt: "2026-10-14T18:44:00Z",
+    createdByName: "Maria Costa",
+    items: [
+      { documentType: "TR", documentVersion: 1 },
+      { documentType: "ETP", documentVersion: 2 },
+      { documentType: "OUTRO", documentVersion: 1 },
+    ],
+  }
+
+  it("lista as do órgão, ou só as do processo, com as peças na ordem", async () => {
+    const consultas: string[] = []
+    servidor.use(
+      http.get(`${urlDaApi}/document-bundles`, ({ request }) => {
+        consultas.push(new URL(request.url).search)
+        return HttpResponse.json([juntadaApi])
+      }),
+    )
+    const { listarJuntadas } = await carregarClienteLimpo()
+
+    const [juntada] = await listarJuntadas("p-1")
+    await listarJuntadas()
+
+    expect(juntada).toEqual({
+      id: "j-1",
+      processoId: "p-1",
+      processoNumero: "PROC-2026-000001",
+      formato: "PDF",
+      nomeDoArquivo: "PROC-2026-000001-JUNTADA-TR-v1-ETP-v2.pdf",
+      exportadaEm: "2026-10-14T18:44:00Z",
+      exportadaPor: "Maria Costa",
+      // Tipo que a interface não conhece não vira item sem rótulo.
+      itens: [
+        { tipo: "TR", versao: 1 },
+        { tipo: "ETP", versao: 2 },
+      ],
+    })
+    expect(consultas).toEqual(["?processId=p-1", ""])
+  })
+
+  it("baixa de novo pela rota da juntada, com o nome que o servidor manda", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/document-bundles/:id/file`, () =>
+        HttpResponse.arrayBuffer(new TextEncoder().encode("%PDF").buffer as ArrayBuffer, {
+          headers: { "Content-Disposition": 'attachment; filename="PROC-2026-000001-JUNTADA-TR-v1.pdf"' },
+        }),
+      ),
+    )
+    const { baixarJuntadaDeNovo } = await carregarClienteLimpo()
+
+    const { nomeSugerido } = await baixarJuntadaDeNovo("j-1")
+
+    expect(nomeSugerido).toBe("PROC-2026-000001-JUNTADA-TR-v1.pdf")
+  })
+})

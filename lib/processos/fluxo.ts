@@ -51,6 +51,7 @@ export const EVENTO_LABEL: Record<EventoProcesso, string> = {
   secao_dispensada: "Seção Dispensada",
   documento_concluido: "Documento Concluído",
   documento_baixado: "Documento Baixado",
+  juntada_exportada: "Juntada Exportada",
   dfd_anexado: "DFD Anexado",
 }
 

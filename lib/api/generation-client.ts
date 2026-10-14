@@ -196,6 +196,8 @@ export async function acervoDoNome(): Promise<DocumentoGerado[]> {
       id: `${documento.processId}:${tipo}`,
       entidadeId: "",
       processoId: documento.processId,
+      processoNumero: documento.processNumber,
+      processoObjeto: documento.processObject,
       titulo: `${documento.processNumber} — ${documento.processObject}`,
       tipo,
       geradoEm: documento.generatedAt,
@@ -210,6 +212,56 @@ export async function acervoDoNome(): Promise<DocumentoGerado[]> {
       })),
     }]
   })
+}
+
+/* ── Juntadas exportadas (ADR-049) ─────────────────────────────────────────── */
+
+interface JuntadaDaApi {
+  id: string
+  processId: string
+  processNumber: string
+  format: FormatoArquivo
+  fileName: string
+  createdAt: string
+  createdByName: string
+  items: { documentType: string; documentVersion: number }[]
+}
+
+/** Uma juntada exportada: o que entrou, na ordem, quem exportou e quando. */
+export interface Juntada {
+  id: string
+  processoId: string
+  processoNumero: string
+  formato: FormatoArquivo
+  nomeDoArquivo: string
+  exportadaEm: string
+  exportadaPor: string
+  itens: { tipo: TipoDocumento; versao: number }[]
+}
+
+/** As juntadas do órgão, da mais recente para a mais antiga; com o processo, só as dele. */
+export async function listarJuntadas(processoId?: string): Promise<Juntada[]> {
+  const consulta = processoId ? `?processId=${encodeURIComponent(processoId)}` : ""
+  const juntadas = await requisicaoProtegida<JuntadaDaApi[]>(`/document-bundles${consulta}`)
+  return juntadas.map((juntada) => ({
+    id: juntada.id,
+    processoId: juntada.processId,
+    processoNumero: juntada.processNumber,
+    formato: juntada.format,
+    nomeDoArquivo: juntada.fileName,
+    exportadaEm: juntada.createdAt,
+    exportadaPor: juntada.createdByName,
+    // Tipo que a interface não conhece não vira item sem rótulo.
+    itens: juntada.items.flatMap((item) => {
+      const tipo = tiposDoServidor[item.documentType]
+      return tipo === undefined ? [] : [{ tipo, versao: item.documentVersion }]
+    }),
+  }))
+}
+
+/** Baixa de novo uma juntada: as mesmas peças, na mesma ordem (ADR-049). */
+export async function baixarJuntadaDeNovo(juntadaId: string) {
+  return baixarProtegido(`/document-bundles/${encodeURIComponent(juntadaId)}/file`)
 }
 
 export async function resumoDoAcervo(): Promise<ResumoDoAcervo> {

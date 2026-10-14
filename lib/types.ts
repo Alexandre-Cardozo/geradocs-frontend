@@ -290,6 +290,7 @@ export type EventoProcesso =
   | "secao_dispensada"
   | "documento_concluido"
   | "documento_baixado"
+  | "juntada_exportada"
   | "dfd_anexado"
 
 /**
@@ -335,6 +336,10 @@ export interface DocumentoGerado {
   id: string
   entidadeId: string
   processoId: string
+  /** O número do processo (PROC-2026-000001) — é por ele que a pessoa o encontra. */
+  processoNumero?: string
+  /** O objeto do processo, como a capa o descreve. */
+  processoObjeto?: string
   titulo: string
   tipo: TipoDocumento
   geradoEm: string

@@ -145,6 +145,7 @@ describe("a fachada liga cada chamada no lugar certo", () => {
     ["logout", (a) => a.logout(), autenticacao.encerrarSessao, []],
     ["trocarPropriaSenha", (a) => a.trocarPropriaSenha("atual", "nova"), autenticacao.trocarPropriaSenha, ["atual", "nova"]],
     ["baixarArquivoGerado", (a) => a.baixarArquivoGerado(PROCESSO, "ETP", "arq-1"), impressao.baixarArquivo, [PROCESSO, "ETP", "arq-1"]],
+    ["baixarJuntadaExportada", (a) => a.baixarJuntadaExportada("j-1"), impressao.baixarJuntadaDeNovo, ["j-1"]],
   ] as Array<[string, (a: typeof import("@/lib/api/client")) => Promise<unknown>, unknown, unknown[]]>)(
     "%s",
     async (_nome, chamar, destino, argumentos) => {

@@ -25,6 +25,7 @@ import {
   removerFotoDePerfil,
 } from "@/lib/api/avatar-client"
 import { iaDisponivel } from "@/lib/api/ai-client"
+import { geracoesDoDocumento, listarJuntadas } from "@/lib/api/generation-client"
 import {
   anexarArquivoAoDfd,
   listarVersoesDoArquivoDfd,
@@ -90,6 +91,8 @@ export const chaves = {
   trilha: (processoId: string) => ["trilha", processoId] as const,
   auditoria: (params: api.ConsultaAuditoria) => ["auditoria", params] as const,
   servidoresDoOrgao: ["servidores-do-orgao"] as const,
+  juntadas: (processoId?: string) => ["juntadas", processoId ?? "todas"] as const,
+  geracoes: (processoId: string, tipo: TipoDocumento) => ["geracoes", processoId, tipo] as const,
 }
 
 /* ── Sessão / autenticação ─────────────────────────────────────────────────── */
@@ -538,7 +541,38 @@ export function useGerarDocumento() {
       void queryClient.invalidateQueries({ queryKey: ["versoes"] })
       void queryClient.invalidateQueries({ queryKey: ["corpo-documento"] })
       void queryClient.invalidateQueries({ queryKey: ["versoes-com-texto"] })
+      void queryClient.invalidateQueries({ queryKey: ["geracoes"] })
       void queryClient.invalidateQueries({ queryKey: chaves.processo(input.processoId) })
+    },
+  })
+}
+
+/** As gerações do documento, cada uma com os seus arquivos — a mais recente primeiro. */
+export function useGeracoesDoDocumento(processoId: string, tipo: TipoDocumento) {
+  return useQuery({
+    queryKey: chaves.geracoes(processoId, tipo),
+    queryFn: () => geracoesDoDocumento(processoId, tipo),
+    enabled: processoId !== "",
+  })
+}
+
+/** As juntadas exportadas (ADR-049); com o processo, só as dele. */
+export function useJuntadas(processoId?: string) {
+  return useQuery({ queryKey: chaves.juntadas(processoId), queryFn: () => listarJuntadas(processoId) })
+}
+
+/**
+ * Exporta a juntada e devolve o arquivo. Recarrega as juntadas e a trilha: a
+ * exportação fica registrada e entra no histórico do processo (ADR-049).
+ */
+export function useExportarJuntada() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { processoId: string; formato: "PDF" | "DOCX"; ordem: TipoDocumento[] }) =>
+      api.baixarJuntadaDoProcesso(input.processoId, input.formato, input.ordem),
+    onSuccess: (_arquivo, input) => {
+      void queryClient.invalidateQueries({ queryKey: ["juntadas"] })
+      void queryClient.invalidateQueries({ queryKey: chaves.trilha(input.processoId) })
     },
   })
 }

@@ -19,6 +19,7 @@ import {
   useSecoes,
 } from "@/lib/api/hooks"
 import { CATALOGO, porSlug } from "@/lib/documentos"
+import { rotaDoDocumentoGerado } from "@/lib/documentos/rotas"
 import { CaminhosDaSecao } from "@/components/documentos/caminhos-da-secao"
 import { DispensaDeSecao } from "@/components/documentos/dispensa-de-secao"
 import { EtapaFinal } from "@/components/documentos/etapa-final"
@@ -399,11 +400,11 @@ export default function EditorDocumento() {
                 gerarDocumento.mutate(
                   { processoId, tipo, elaboracao },
                   {
+                    // Vai ao documento gerado, e não de volta à capa: é ele
+                    // que a pessoa quer ver e baixar (ADR-049).
                     onSuccess: () => {
-                      showToast(
-                        `${tipo} ${regerar ? "regerado" : "gerado"} e disponível em Documentos.`,
-                      )
-                      router.push(`/processos/detalhe?id=${encodeURIComponent(processoId)}`)
+                      showToast(`${tipo} ${regerar ? "regerado" : "gerado"}.`)
+                      router.push(rotaDoDocumentoGerado(processoId, tipo, true))
                     },
                     // Sem isto a falha era muda: o botão voltava ao estado
                     // inicial e nenhum documento aparecia, sem dizer por quê.
@@ -416,7 +417,7 @@ export default function EditorDocumento() {
                   },
                 )
               }
-              onVisualizar={() => router.push("/documentos")}
+              onVisualizar={() => router.push(rotaDoDocumentoGerado(processoId, tipo))}
             />
           )}
 
