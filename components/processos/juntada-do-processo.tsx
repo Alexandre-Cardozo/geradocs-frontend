@@ -5,7 +5,7 @@ import { useId, useState } from "react"
 import { Button, FilterTabs, InfoBanner } from "@/components/ui"
 import { IconCheck, IconChevronDown, IconDownload } from "@/components/ui/icons"
 import { useToast } from "@/components/shared/providers"
-import { baixarJuntadaDoProcesso } from "@/lib/api/client"
+import { useExportarJuntada } from "@/lib/api/hooks"
 import { CATALOGO } from "@/lib/documentos"
 import {
   aindaNaoGerados,
@@ -14,6 +14,7 @@ import {
   mover,
   type FormatoDaJuntada,
 } from "@/lib/documentos/juntada"
+import { salvarArquivo } from "@/lib/navegador/salvar-arquivo"
 import type { DocumentoGerado, TipoDocumento } from "@/lib/types"
 
 /** Botão de ícone para subir ou descer um documento na ordem. */
@@ -62,7 +63,8 @@ export function JuntadaDoProcesso({
   // A ordem começa a do fluxo; tudo o que tem o formato começa marcado.
   const [ordem, setOrdem] = useState<TipoDocumento[]>(() => itens.map((item) => item.tipo))
   const [fora, setFora] = useState<TipoDocumento[]>([])
-  const [baixando, setBaixando] = useState(false)
+  const exportar = useExportarJuntada()
+  const baixando = exportar.isPending
 
   const disponivel = (tipo: TipoDocumento) => itens.some((item) => item.tipo === tipo && item.disponivel)
   const selecionados = ordem.filter((tipo) => disponivel(tipo) && !fora.includes(tipo))
@@ -72,24 +74,18 @@ export function JuntadaDoProcesso({
   const alternar = (tipo: TipoDocumento) =>
     setFora((atual) => (atual.includes(tipo) ? atual.filter((t) => t !== tipo) : [...atual, tipo]))
 
-  const baixar = async () => {
-    setBaixando(true)
-    try {
-      const { conteudo, nomeSugerido } = await baixarJuntadaDoProcesso(processoId, formato, selecionados)
-      const endereco = URL.createObjectURL(conteudo)
-      const ancora = document.createElement("a")
-      ancora.href = endereco
-      ancora.download = nomeSugerido ?? `juntada.${formato.toLowerCase()}`
-      ancora.click()
-      // Sem revogar, cada download deixa o arquivo inteiro preso em memória.
-      URL.revokeObjectURL(endereco)
-      showToast(`Juntada em ${formato} baixada.`)
-    } catch (erro) {
-      showToast(erro instanceof Error ? erro.message : "Não foi possível montar a juntada.")
-    } finally {
-      setBaixando(false)
-    }
-  }
+  const baixar = () =>
+    exportar.mutate(
+      { processoId, formato, ordem: selecionados },
+      {
+        // O nome vem do servidor: processo, documentos e versões, na ordem.
+        onSuccess: ({ conteudo, nomeSugerido }) => {
+          salvarArquivo(conteudo, nomeSugerido ?? `juntada.${formato.toLowerCase()}`)
+          showToast(`Juntada em ${formato} exportada. Ela fica registrada em Documentos.`)
+        },
+        onError: (erro) => showToast(erro instanceof Error ? erro.message : "Não foi possível montar a juntada."),
+      },
+    )
 
   return (
     <section aria-labelledby={tituloId} className="mb-4 rounded-card border border-royal bg-surface p-5">
@@ -205,7 +201,7 @@ export function JuntadaDoProcesso({
           icon={<IconDownload size={14} />}
           disabled={baixando || selecionados.length === 0}
           ariaDescribedBy={`${tituloId}-motivo`}
-          onClick={() => void baixar()}
+          onClick={baixar}
         >
           {baixando
             ? "Montando a juntada..."

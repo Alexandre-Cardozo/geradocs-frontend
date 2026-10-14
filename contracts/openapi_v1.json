@@ -171,7 +171,7 @@
       "AuditEntryResponse" : {
         "properties" : {
           "action" : {
-            "enum" : [ "BUDGET_APPROPRIATION_DECLARED", "BUDGET_APPROPRIATION_REMOVED", "BUDGET_APPROPRIATION_UPDATED", "DEPARTMENT_CREATED", "DEPARTMENT_DEACTIVATED", "DEPARTMENT_UPDATED", "DFD_ATTACHED", "DFD_REMOVED", "DFD_UPDATED", "DOCUMENT_DOWNLOADED", "DOCUMENT_FINALIZED", "DOCUMENT_GENERATED", "LOGIN_FAILED", "LOGIN_SUCCEEDED", "ORGANIZATION_CREATED", "ORGANIZATION_DEACTIVATED", "ORGANIZATION_LETTERHEAD_UPDATED", "ORGANIZATION_UPDATED", "PASSWORD_RESET_COMPLETED", "PASSWORD_RESET_REQUESTED", "PCA_IMPORTED", "PRICE_QUOTE_RECORDED", "PRICE_QUOTE_REMOVED", "PRICE_QUOTE_UPDATED", "PROCUREMENT_PROCESS_CLOSED", "PROCUREMENT_PROCESS_CREATED", "PROCUREMENT_PROCESS_REOPENED", "PROCUREMENT_PROCESS_UPDATED", "REGULATION_ADDED", "REGULATION_FILE_REPLACED", "REGULATION_REINSTATED", "REGULATION_REMOVED", "REGULATION_REVOKED", "REGULATION_UPDATED", "SECTION_DISPENSED", "SECTION_WRITTEN", "TEMPLATE_PUBLISHED", "USER_CPF_REVEALED", "USER_CREATED", "USER_DEACTIVATED", "USER_ORGANIZATION_TRANSFERRED", "USER_PASSWORD_RESET", "USER_UPDATED" ],
+            "enum" : [ "BUDGET_APPROPRIATION_DECLARED", "BUDGET_APPROPRIATION_REMOVED", "BUDGET_APPROPRIATION_UPDATED", "BUNDLE_EXPORTED", "DEPARTMENT_CREATED", "DEPARTMENT_DEACTIVATED", "DEPARTMENT_UPDATED", "DFD_ATTACHED", "DFD_REMOVED", "DFD_UPDATED", "DOCUMENT_DOWNLOADED", "DOCUMENT_FINALIZED", "DOCUMENT_GENERATED", "LOGIN_FAILED", "LOGIN_SUCCEEDED", "ORGANIZATION_CREATED", "ORGANIZATION_DEACTIVATED", "ORGANIZATION_LETTERHEAD_UPDATED", "ORGANIZATION_UPDATED", "PASSWORD_RESET_COMPLETED", "PASSWORD_RESET_REQUESTED", "PCA_IMPORTED", "PRICE_QUOTE_RECORDED", "PRICE_QUOTE_REMOVED", "PRICE_QUOTE_UPDATED", "PROCUREMENT_PROCESS_CLOSED", "PROCUREMENT_PROCESS_CREATED", "PROCUREMENT_PROCESS_REOPENED", "PROCUREMENT_PROCESS_UPDATED", "REGULATION_ADDED", "REGULATION_FILE_REPLACED", "REGULATION_REINSTATED", "REGULATION_REMOVED", "REGULATION_REVOKED", "REGULATION_UPDATED", "SECTION_DISPENSED", "SECTION_WRITTEN", "TEMPLATE_PUBLISHED", "USER_CPF_REVEALED", "USER_CREATED", "USER_DEACTIVATED", "USER_ORGANIZATION_TRANSFERRED", "USER_PASSWORD_RESET", "USER_UPDATED" ],
             "type" : "string"
           },
           "actorId" : {
@@ -935,6 +935,43 @@
         "required" : [ "departmentName", "value" ],
         "type" : "object"
       },
+      "DocumentBundleResponse" : {
+        "properties" : {
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "createdByName" : {
+            "type" : "string"
+          },
+          "fileName" : {
+            "type" : "string"
+          },
+          "format" : {
+            "enum" : [ "DOCX", "PDF" ],
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "items" : {
+            "items" : {
+              "$ref" : "#/components/schemas/Item"
+            },
+            "type" : "array"
+          },
+          "processId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "processNumber" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "createdAt", "createdByName", "fileName", "format", "id", "items", "processId", "processNumber" ],
+        "type" : "object"
+      },
       "DocumentResponse" : {
         "properties" : {
           "body" : {
@@ -1288,6 +1325,20 @@
           }
         },
         "required" : [ "itemDescription", "kind", "values" ],
+        "type" : "object"
+      },
+      "Item" : {
+        "properties" : {
+          "documentType" : {
+            "enum" : [ "AVISO", "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+            "type" : "string"
+          },
+          "documentVersion" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "documentType", "documentVersion" ],
         "type" : "object"
       },
       "LetterheadResponse" : {
@@ -2633,7 +2684,7 @@
           "name" : "action",
           "required" : false,
           "schema" : {
-            "enum" : [ "BUDGET_APPROPRIATION_DECLARED", "BUDGET_APPROPRIATION_REMOVED", "BUDGET_APPROPRIATION_UPDATED", "DEPARTMENT_CREATED", "DEPARTMENT_DEACTIVATED", "DEPARTMENT_UPDATED", "DFD_ATTACHED", "DFD_REMOVED", "DFD_UPDATED", "DOCUMENT_DOWNLOADED", "DOCUMENT_FINALIZED", "DOCUMENT_GENERATED", "LOGIN_FAILED", "LOGIN_SUCCEEDED", "ORGANIZATION_CREATED", "ORGANIZATION_DEACTIVATED", "ORGANIZATION_LETTERHEAD_UPDATED", "ORGANIZATION_UPDATED", "PASSWORD_RESET_COMPLETED", "PASSWORD_RESET_REQUESTED", "PCA_IMPORTED", "PRICE_QUOTE_RECORDED", "PRICE_QUOTE_REMOVED", "PRICE_QUOTE_UPDATED", "PROCUREMENT_PROCESS_CLOSED", "PROCUREMENT_PROCESS_CREATED", "PROCUREMENT_PROCESS_REOPENED", "PROCUREMENT_PROCESS_UPDATED", "REGULATION_ADDED", "REGULATION_FILE_REPLACED", "REGULATION_REINSTATED", "REGULATION_REMOVED", "REGULATION_REVOKED", "REGULATION_UPDATED", "SECTION_DISPENSED", "SECTION_WRITTEN", "TEMPLATE_PUBLISHED", "USER_CPF_REVEALED", "USER_CREATED", "USER_DEACTIVATED", "USER_ORGANIZATION_TRANSFERRED", "USER_PASSWORD_RESET", "USER_UPDATED" ],
+            "enum" : [ "BUDGET_APPROPRIATION_DECLARED", "BUDGET_APPROPRIATION_REMOVED", "BUDGET_APPROPRIATION_UPDATED", "BUNDLE_EXPORTED", "DEPARTMENT_CREATED", "DEPARTMENT_DEACTIVATED", "DEPARTMENT_UPDATED", "DFD_ATTACHED", "DFD_REMOVED", "DFD_UPDATED", "DOCUMENT_DOWNLOADED", "DOCUMENT_FINALIZED", "DOCUMENT_GENERATED", "LOGIN_FAILED", "LOGIN_SUCCEEDED", "ORGANIZATION_CREATED", "ORGANIZATION_DEACTIVATED", "ORGANIZATION_LETTERHEAD_UPDATED", "ORGANIZATION_UPDATED", "PASSWORD_RESET_COMPLETED", "PASSWORD_RESET_REQUESTED", "PCA_IMPORTED", "PRICE_QUOTE_RECORDED", "PRICE_QUOTE_REMOVED", "PRICE_QUOTE_UPDATED", "PROCUREMENT_PROCESS_CLOSED", "PROCUREMENT_PROCESS_CREATED", "PROCUREMENT_PROCESS_REOPENED", "PROCUREMENT_PROCESS_UPDATED", "REGULATION_ADDED", "REGULATION_FILE_REPLACED", "REGULATION_REINSTATED", "REGULATION_REMOVED", "REGULATION_REVOKED", "REGULATION_UPDATED", "SECTION_DISPENSED", "SECTION_WRITTEN", "TEMPLATE_PUBLISHED", "USER_CPF_REVEALED", "USER_CREATED", "USER_DEACTIVATED", "USER_ORGANIZATION_TRANSFERRED", "USER_PASSWORD_RESET", "USER_UPDATED" ],
             "type" : "string"
           }
         }, {
@@ -2856,6 +2907,64 @@
           }
         },
         "tags" : [ "authentication-controller" ]
+      }
+    },
+    "/api/v1/document-bundles" : {
+      "get" : {
+        "operationId" : "listBundles",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "processId",
+          "required" : false,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/DocumentBundleResponse"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "document-bundles-controller" ]
+      }
+    },
+    "/api/v1/document-bundles/{bundleId}/file" : {
+      "get" : {
+        "operationId" : "downloadBundle",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "bundleId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "format" : "binary",
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "document-bundles-controller" ]
       }
     },
     "/api/v1/document-templates/{documentType}" : {

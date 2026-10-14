@@ -388,6 +388,7 @@ const EVENTOS_DA_TRILHA: Record<string, EventoProcesso> = {
   DOCUMENT_FINALIZED: "documento_concluido",
   DOCUMENT_GENERATED: "geracao_documento",
   DOCUMENT_DOWNLOADED: "documento_baixado",
+  BUNDLE_EXPORTED: "juntada_exportada",
   DFD_ATTACHED: "dfd_anexado",
 }
 

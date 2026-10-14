@@ -37,7 +37,16 @@ import { ItensDaDemanda } from "@/components/processos/itens-da-demanda"
 import { JuntadaDoProcesso } from "@/components/processos/juntada-do-processo"
 import { TrilhaDoProcesso } from "@/components/processos/trilha-do-processo"
 import { PainelRetificacao } from "@/components/processos/painel-retificacao"
-import { CATALOGO, agruparAnexos, documentosDaModalidade, ehObrigatorio, ordenar, pendencias } from "@/lib/documentos"
+import {
+  CATALOGO,
+  agruparAnexos,
+  documentosDaModalidade,
+  ehObrigatorio,
+  ordenar,
+  pendencias,
+  porSlug,
+} from "@/lib/documentos"
+import { rotaDoDocumentoGerado, rotaDosDocumentosDoProcesso } from "@/lib/documentos/rotas"
 import {
   documentosPendentes,
   documentosPorFazerSemCobranca,
@@ -97,7 +106,10 @@ export default function HubProcesso() {
   const [montandoJuntada, setMontandoJuntada] = useState(false)
   // Documento cuja retificação está sendo declarada. Um por vez: retificar dois
   // ao mesmo tempo esconderia qual histórico está sendo lido.
-  const [retificando, setRetificando] = useState<TipoDocumento | null>(null)
+  // A página do documento gerado leva até aqui para retificar: o painel já abre.
+  const [retificando, setRetificando] = useState<TipoDocumento | null>(
+    () => porSlug(searchParams.get("retificar") ?? "") ?? null,
+  )
 
   const abrirEdicao = () => {
     if (!processo.data) return
@@ -333,7 +345,12 @@ export default function HubProcesso() {
           )}
           {finalizado ? (
             <>
-              <Button size="sm" variant="secondary" icon={<IconEye size={13} />} onClick={() => router.push("/documentos")}>
+              <Button
+                size="sm"
+                variant="secondary"
+                icon={<IconEye size={13} />}
+                onClick={() => router.push(rotaDoDocumentoGerado(processoId, tipo))}
+              >
                 Visualizar Documento
               </Button>
               <Button size="sm" variant="ghost" onClick={() => router.push(editorHref)}>
@@ -698,16 +715,26 @@ export default function HubProcesso() {
           <h2 className="m-0 font-display text-lg font-bold text-text-1">Documentos do Processo</h2>
           <span className="text-sm text-text-3">Elabore na ordem indicada — cada etapa fundamenta a seguinte.</span>
         </div>
-        {/* A juntada só existe com documento gerado: nada é gerado nela (ADR-048). */}
-        {docsGerados.length > 0 && !montandoJuntada && (
-          <Button
-            variant="secondary"
-            size="sm"
-            icon={<IconDownload size={13} />}
-            onClick={() => setMontandoJuntada(true)}
-          >
-            Exportar Juntada
-          </Button>
+        {/*
+          A juntada só existe com documento gerado: nada é gerado nela (ADR-048).
+          E os documentos do processo também moram em Documentos (ADR-049).
+        */}
+        {docsGerados.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {!montandoJuntada && (
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={<IconDownload size={13} />}
+                onClick={() => setMontandoJuntada(true)}
+              >
+                Exportar Juntada
+              </Button>
+            )}
+            <Button size="sm" variant="ghost" onClick={() => router.push(rotaDosDocumentosDoProcesso(processoId))}>
+              Ver em Documentos
+            </Button>
+          </div>
         )}
       </div>
 

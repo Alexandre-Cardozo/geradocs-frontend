@@ -75,7 +75,7 @@ import {
   planosDoOrgao,
   verificacaoDoProcesso,
 } from "@/lib/api/pca-client"
-import { baixarArquivo, baixarJuntada, gerarArquivos } from "@/lib/api/generation-client"
+import { baixarArquivo, baixarJuntada, baixarJuntadaDeNovo, gerarArquivos } from "@/lib/api/generation-client"
 import { consultarAuditoria, type ConsultaAuditoria, type PaginaAuditoria } from "@/lib/api/audit-client"
 
 export type { ConsultaAuditoria } from "@/lib/api/audit-client"
@@ -618,6 +618,11 @@ export async function baixarJuntadaDoProcesso(
   ordem: TipoDocumento[],
 ) {
   return baixarJuntada(processoId, formato, ordem)
+}
+
+/** Baixa de novo uma juntada exportada: as mesmas peças, na mesma ordem (ADR-049). */
+export async function baixarJuntadaExportada(juntadaId: string) {
+  return baixarJuntadaDeNovo(juntadaId)
 }
 
 export async function baixarArquivoGerado(

@@ -122,6 +122,8 @@ export async function comSessao(page: Page, sessao: Sessao = sessaoServidor) {
     }),
   )
   await page.route(`${API}/generated-documents`, (rota) => rota.fulfill({ json: [] }))
+  // As juntadas exportadas (ADR-049): o órgão sem nenhuma é o caminho feliz.
+  await page.route(`${API}/document-bundles**`, (rota) => rota.fulfill({ json: [] }))
   await page.route(`${API}/generated-documents/summary`, (rota) =>
     rota.fulfill({
       json: { total: 0, thisMonth: 0, lastSevenDays: 0, storageBytes: 0, finishedEtps: 0 },
