@@ -86,7 +86,9 @@
   /* ── Acentos por tipo de documento ──────────────────────────────────────── */
   --color-doc-etp: #2563EB;
   --color-doc-etp-bg: #EFF6FF;
-  --color-doc-tr: #0D9488;
+  /* TR é teal-700, e não teal-600: o #0D9488 dava 3,59:1 sobre o próprio tint,
+     abaixo do AA (4,5:1) no texto de 11px do chip. Mesmo matiz, 5,25:1. */
+  --color-doc-tr: #0F766E;
   --color-doc-tr-bg: #F0FDFA;
   --color-doc-cotacao: #7C3AED;
   --color-doc-cotacao-bg: #F5F3FF;

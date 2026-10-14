@@ -4,7 +4,7 @@
  * processo têm endereço próprio dentro de Documentos.
  */
 
-import { CATALOGO } from "@/lib/documentos/catalogo"
+import { CATALOGO, ordenar } from "@/lib/documentos/catalogo"
 import type { DocumentoGerado, TipoDocumento } from "@/lib/types"
 
 /**
@@ -57,4 +57,10 @@ export function agruparPorProcesso(documentos: DocumentoGerado[]): DocumentosDoP
       documentos: [...grupo.documentos].sort((a, b) => CATALOGO[a.tipo].ordem - CATALOGO[b.tipo].ordem),
     }))
     .sort((a, b) => b.ultimaGeracao.localeCompare(a.ultimaGeracao))
+}
+
+/** Os tipos que existem no acervo, na ordem do fluxo, com quantos documentos de cada. */
+export function tiposNoAcervo(documentos: DocumentoGerado[]): { tipo: TipoDocumento; quantidade: number }[] {
+  const tipos = ordenar([...new Set(documentos.map((documento) => documento.tipo))])
+  return tipos.map((tipo) => ({ tipo, quantidade: documentos.filter((documento) => documento.tipo === tipo).length }))
 }
