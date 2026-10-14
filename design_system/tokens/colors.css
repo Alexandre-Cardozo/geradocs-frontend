@@ -32,6 +32,8 @@
   --status-approved-bg: #ECFDF5;   --status-approved-fg: #065F46;   --status-approved-dot: #10B981;
   --status-rejected-bg: #FEF2F2;   --status-rejected-fg: #991B1B;   --status-rejected-dot: #EF4444;
   --status-done-bg: #F0FDF4;       --status-done-fg: #15803D;       --status-done-dot: #22C55E;
+  --status-progress-bg: #EFF6FF;   --status-progress-fg: #1D4ED8;   --status-progress-dot: #2563EB;
+  --status-ready-bg: #F0FDFA;      --status-ready-fg: #0F766E;      --status-ready-dot: #0D9488;
 
   /* Document accent tints (doc type cards) */
   --doc-etp: #2563EB;     --doc-etp-bg: #EFF6FF;

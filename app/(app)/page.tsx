@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/icons";
 import { ErrorState, SkeletonRows } from "@/components/shared/estados";
 import { Th } from "@/components/shared/tabela";
+import { ProgressoDosObrigatorios } from "@/components/processos/progresso-dos-obrigatorios";
 import { useEstatisticas, useProcessos, useSessao } from "@/lib/api/hooks";
 import { dataPorExtenso, formatBRL, formatData, saudacao } from "@/lib/format";
 import PainelAdmin from "@/app/(app)/admin/PainelAdmin";
@@ -69,25 +70,25 @@ export default function Dashboard() {
                   label="Processos Ativos"
                   value={String(estatisticas.data.processosAtivos)}
                   icon={IconFile}
-                  tone="royal"
+                  tone="slate"
                 />
                 <StatCard
                   label="Em Elaboração"
                   value={String(estatisticas.data.processosEmElaboracao)}
                   icon={IconClock}
-                  tone="warning"
+                  tone="royal"
                 />
                 <StatCard
                   label="Prontos para Encerrar"
                   value={String(estatisticas.data.processosProntosParaEncerrar)}
                   icon={IconCheckCircle}
-                  tone="success"
+                  tone="teal"
                 />
                 <StatCard
                   label="Documentos Gerados"
                   value={String(estatisticas.data.documentosGerados)}
                   icon={IconDownload}
-                  tone="teal"
+                  tone="success"
                 />
               </>
             )}
@@ -114,10 +115,10 @@ export default function Dashboard() {
         {processos.isError && <ErrorState onRetry={() => void processos.refetch()} />}
         {processos.isSuccess && (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[560px] border-collapse">
+            <table className="w-full min-w-[680px] border-collapse">
               <thead>
                 <tr className="bg-ice">
-                  {["Processo", "Secretaria", "Valor Est.", "Status", "Data"].map((h) => (
+                  {["Processo", "Secretaria", "Valor Est.", "Documentos", "Status", "Data"].map((h) => (
                     <Th key={h} className="border-b border-border-soft">
                       {h}
                     </Th>
@@ -138,6 +139,9 @@ export default function Dashboard() {
                     <td className="px-4 py-3.25 text-sm text-text-3">{p.secretaria}</td>
                     <td className="px-4 py-3.25 font-mono text-base font-semibold text-petroleum">
                       {formatBRL(p.valorEstimado)}
+                    </td>
+                    <td className="px-4 py-3.25">
+                      <ProgressoDosObrigatorios processo={p} barra />
                     </td>
                     <td className="px-4 py-3.25">
                       <StatusBadge status={p.status} size="sm" />
