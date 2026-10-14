@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter, useSearchParams } from "next/navigation"
-import { useMemo, useState } from "react"
+import { useMemo, useState, type ReactNode } from "react"
 
 import { Button, DocPill, Dropdown, FilterTabs, Input, StatCard } from "@/components/ui"
 import {
@@ -20,10 +20,11 @@ import { EmptyState, ErrorState, SkeletonRows } from "@/components/shared/estado
 import { Th } from "@/components/shared/tabela"
 import { useDocumentos, useJuntadas, useResumoDocumentos } from "@/lib/api/hooks"
 import type { Juntada } from "@/lib/api/generation-client"
-import { CATALOGO, ORDEM_FLUXO, porSlug } from "@/lib/documentos"
+import { CATALOGO, porSlug } from "@/lib/documentos"
 import {
   agruparPorProcesso,
   rotaDoDocumentoGerado,
+  tiposNoAcervo,
   type DocumentosDoProcesso,
 } from "@/lib/documentos/rotas"
 import { foiRetificado, rotuloDaVersao, totalDeBytes } from "@/lib/dominio"
@@ -31,6 +32,33 @@ import { formatarBytes, formatDataHora } from "@/lib/format"
 import type { DocumentoGerado } from "@/lib/types"
 
 type Visao = "processo" | "arquivos"
+
+/** Chip de filtro: marcado em royal, com o nome completo do tipo na dica. */
+function ChipDeFiltro({
+  ativo,
+  titulo,
+  onClick,
+  children,
+}: {
+  ativo: boolean
+  titulo?: string
+  onClick: () => void
+  children: ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={ativo}
+      title={titulo}
+      onClick={onClick}
+      className={`flex cursor-pointer items-center gap-1.5 rounded-sm px-2.5 py-1 text-sm font-semibold transition-colors ${
+        ativo ? "border border-royal bg-tint-royal-bg text-royal" : "border border-border bg-ice text-text-3"
+      }`}
+    >
+      {children}
+    </button>
+  )
+}
 
 /** Os documentos gerados de um processo, com a juntada e as juntadas exportadas. */
 function ProcessoNoAcervo({
@@ -172,6 +200,11 @@ export default function Documentos() {
         (d.processoObjeto ?? "").toLowerCase().includes(termo)),
   )
   const grupos = agruparPorProcesso(docs)
+  const temFiltro = busca.trim() !== "" || tipoFiltrado !== null || versaoFiltrada !== "" || processoFiltrado !== ""
+  const limparFiltros = () => {
+    setBusca("")
+    router.replace(visao === "arquivos" ? "/documentos?visao=arquivos" : "/documentos")
+  }
   const processoDoFiltro = processoFiltrado
     ? todos.find((d) => d.processoId === processoFiltrado)?.processoNumero ?? "processo selecionado"
     : null
@@ -186,53 +219,75 @@ export default function Documentos() {
         <StatCard label="Armazenamento Usado" value={r ? `${r.armazenamentoMB} MB` : "—"} icon={IconDatabase} tone="success" />
       </div>
 
-      <div className="mb-4 flex flex-wrap items-center gap-2.5 rounded-card border border-border bg-surface px-5 py-4">
-        <div role="group" aria-label="Visão dos documentos">
-          <FilterTabs
-            options={[
-              { key: "processo", label: "Por processo" },
-              { key: "arquivos", label: "Todos os arquivos" },
-            ]}
-            active={visao}
-            onChange={(chave) => filtrar("visao", chave === "arquivos" ? "arquivos" : null)}
-          />
+      {/*
+        Duas linhas: primeiro como ver e o que procurar; depois o que refinar.
+        Os tipos são só os que existem no acervo — chip de tipo sem documento
+        era clique que dava em lista vazia —, cada um com quantos há.
+      */}
+      <div className="mb-4 flex flex-col gap-3 rounded-card border border-border bg-surface px-5 py-4">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <div role="group" aria-label="Visão dos documentos">
+            <FilterTabs
+              options={[
+                { key: "processo", label: "Por processo" },
+                { key: "arquivos", label: "Todos os arquivos" },
+              ]}
+              active={visao}
+              onChange={(chave) => filtrar("visao", chave === "arquivos" ? "arquivos" : null)}
+            />
+          </div>
+          <div className="min-w-0 flex-[1_1_280px]">
+            <Input
+              placeholder="Buscar por número ou objeto do processo"
+              ariaLabel="Buscar por processo"
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+            />
+          </div>
         </div>
-        <div className="w-full sm:w-64">
-          <Input
-            placeholder="Buscar por número ou objeto do processo"
-            ariaLabel="Buscar por processo"
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-          />
-        </div>
-        <div className="w-full sm:w-40">
-          <Dropdown
-            value={versaoFiltrada}
-            onChange={(valor) => filtrar("versao", valor)}
-            ariaLabel="Filtrar por versão"
-            options={opcoesVersao}
-          />
-        </div>
-        <div className="flex flex-wrap gap-2 sm:ml-auto">
-          {ORDEM_FLUXO.map((f) => {
-            const ativo = tipoFiltrado === f
-            return (
+        <div className="flex flex-wrap items-center gap-2 border-t border-border-soft pt-3">
+          <span className="mr-1 text-xs font-semibold tracking-caps text-text-muted uppercase">Tipo</span>
+          <div role="group" aria-label="Filtrar por tipo de documento" className="flex flex-wrap gap-1.5">
+            <ChipDeFiltro ativo={tipoFiltrado === null} onClick={() => filtrar("tipo", null)}>
+              Todos <span className="font-mono text-2xs">{todos.length}</span>
+            </ChipDeFiltro>
+            {tiposNoAcervo(todos).map(({ tipo, quantidade }) => {
+              const ativo = tipoFiltrado === tipo
+              return (
+                <ChipDeFiltro
+                  key={tipo}
+                  ativo={ativo}
+                  titulo={CATALOGO[tipo].titulo}
+                  onClick={() => filtrar("tipo", ativo ? null : CATALOGO[tipo].slug)}
+                >
+                  {tipo} <span className="font-mono text-2xs">{quantidade}</span>
+                </ChipDeFiltro>
+              )
+            })}
+          </div>
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            <div className="w-44">
+              <Dropdown
+                value={versaoFiltrada}
+                onChange={(valor) => filtrar("versao", valor)}
+                ariaLabel="Filtrar por versão"
+                options={opcoesVersao}
+              />
+            </div>
+            {temFiltro && (
               <button
-                key={f}
                 type="button"
-                aria-pressed={ativo}
-                onClick={() => filtrar("tipo", ativo ? null : CATALOGO[f].slug)}
-                className={`cursor-pointer rounded-sm px-3 py-1.25 text-sm font-semibold transition-colors ${
-                  ativo ? "border border-royal bg-tint-royal-bg text-royal" : "border border-border bg-ice text-text-3"
-                }`}
+                onClick={limparFiltros}
+                className="flex cursor-pointer items-center gap-1 border-0 bg-transparent px-1 text-sm font-semibold text-royal"
               >
-                {f}
+                <IconX size={12} />
+                Limpar filtros
               </button>
-            )
-          })}
+            )}
+          </div>
         </div>
         {processoDoFiltro && (
-          <div className="flex w-full items-center gap-2 text-sm text-text-3">
+          <div className="flex flex-wrap items-center gap-2 text-sm text-text-3">
             Mostrando os documentos de <span className="font-mono font-semibold text-text-1">{processoDoFiltro}</span>
             <button
               type="button"

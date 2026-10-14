@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest"
 
-import { agruparPorProcesso, rotaDoDocumentoGerado, rotaDosDocumentosDoProcesso } from "@/lib/documentos/rotas"
+import {
+  agruparPorProcesso,
+  rotaDoDocumentoGerado,
+  rotaDosDocumentosDoProcesso,
+  tiposNoAcervo,
+} from "@/lib/documentos/rotas"
 import type { DocumentoGerado, TipoDocumento } from "@/lib/types"
 
 function gerado(processoId: string, tipo: TipoDocumento, geradoEm: string, numero?: string): DocumentoGerado {
@@ -43,5 +48,19 @@ describe("rotas entre o processo e os documentos", () => {
     expect(grupos[0]?.objeto).toBe("Objeto PROC-1")
     expect(grupos[0]?.ultimaGeracao).toBe("2026-10-13T10:00:00Z")
     expect(grupos[2]?.objeto).toBe("")
+  })
+
+  it("o filtro de tipo oferece só os tipos do acervo, na ordem do fluxo, com a quantidade", () => {
+    const acervo = [
+      gerado("p-1", "TR", "2026-10-10T10:00:00Z"),
+      gerado("p-2", "ETP", "2026-10-12T10:00:00Z"),
+      gerado("p-1", "ETP", "2026-10-13T10:00:00Z"),
+    ]
+
+    expect(tiposNoAcervo(acervo)).toEqual([
+      { tipo: "ETP", quantidade: 2 },
+      { tipo: "TR", quantidade: 1 },
+    ])
+    expect(tiposNoAcervo([])).toEqual([])
   })
 })
