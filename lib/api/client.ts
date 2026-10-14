@@ -182,7 +182,8 @@ export async function getEstatisticas(): Promise<EstatisticasDashboard> {
   return {
     processosAtivos: processos.ativos,
     processosNovosMes: processos.criadosNoMes,
-    processosEmElaboracao: processos.iniciados,
+    processosEmElaboracao: processos.emElaboracao,
+    processosProntosParaEncerrar: processos.prontosParaEncerrar,
     documentosPendentes: processos.documentosPendentes,
     documentosGerados: acervo.total,
     documentosSemana: acervo.ultimosSeteDias,

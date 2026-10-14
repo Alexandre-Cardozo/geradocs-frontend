@@ -48,6 +48,10 @@ interface ProcessoApi {
   urgency: boolean;
   documents: TipoDocumento[];
   status: "DRAFT" | "CLOSED";
+  /** A etapa calculada pelos documentos (ADR-050). */
+  stage?: "DRAFT" | "IN_PROGRESS" | "READY_TO_CLOSE" | "CLOSED";
+  requiredDocuments?: number;
+  requiredDocumentsDone?: number;
   closedAt?: string;
   closureNote?: string;
   createdAt: string;
@@ -92,7 +96,10 @@ function mapear(item: ProcessoApi): Processo {
     modalidade,
     secretaria: item.departmentName,
     secretariaId: item.departmentId,
-    status: item.status === "CLOSED" ? "concluido" : "rascunho",
+    status: item.stage ? ETAPAS[item.stage] : item.status === "CLOSED" ? "concluido" : "rascunho",
+    ...(item.requiredDocuments === undefined
+      ? {}
+      : { obrigatorios: { total: item.requiredDocuments, concluidos: item.requiredDocumentsDone ?? 0 } }),
     encerradoEm: item.closedAt,
     justificativaEncerramento: item.closureNote,
     valorEstimado: Number(item.estimatedValue),
@@ -114,6 +121,22 @@ function mapear(item: ProcessoApi): Processo {
   };
 }
 
+/** A etapa do servidor (ADR-050) é o status que a tela mostra. */
+const ETAPAS: Record<NonNullable<ProcessoApi["stage"]>, StatusProcesso> = {
+  DRAFT: "rascunho",
+  IN_PROGRESS: "em_elaboracao",
+  READY_TO_CLOSE: "pronto_para_encerrar",
+  CLOSED: "concluido",
+};
+
+/** O inverso: o filtro da lista pede a etapa pelo nome do servidor. */
+const ETAPA_DO_STATUS: Record<StatusProcesso, NonNullable<ProcessoApi["stage"]>> = {
+  rascunho: "DRAFT",
+  em_elaboracao: "IN_PROGRESS",
+  pronto_para_encerrar: "READY_TO_CLOSE",
+  concluido: "CLOSED",
+};
+
 export async function listarProcessos(params: {
   busca?: string;
   status?: StatusProcesso | "todos";
@@ -121,16 +144,13 @@ export async function listarProcessos(params: {
   porPagina?: number;
 }) {
   const status = params.status;
-  if (status && status !== "todos" && status !== "rascunho") {
-    return { itens: [], total: 0, pagina: 1, totalPaginas: 1 };
-  }
-
   const query = new URLSearchParams({
     page: String(Math.max((params.pagina ?? 1) - 1, 0)),
     size: String(params.porPagina ?? 8),
   });
   if (params.busca?.trim()) query.set("search", params.busca.trim());
-  if (status === "rascunho") query.set("status", "DRAFT");
+  // A etapa é calculada pelo servidor: todo status da tela tem filtro (ADR-050).
+  if (status && status !== "todos") query.set("stage", ETAPA_DO_STATUS[status]);
 
   const pagina = await requisicaoProtegida<PaginaApi>(
     `/procurement-processes?${query}`,
@@ -431,6 +451,10 @@ export interface EstatisticasDeProcesso {
   encerrados: number
   criadosNoMes: number
   iniciados: number
+  /** Abertos com obrigatório por concluir (ADR-050). */
+  emElaboracao: number
+  /** Abertos com todos os obrigatórios concluídos (ADR-050). */
+  prontosParaEncerrar: number
   documentosPendentes: number
   taxaConclusao: number
 }
@@ -442,6 +466,8 @@ interface EstatisticasDaApi {
   started: number
   pendingDocuments: number
   completionRate: number
+  inProgress?: number
+  readyToClose?: number
 }
 
 export async function estatisticasDeProcesso(): Promise<EstatisticasDeProcesso> {
@@ -453,6 +479,8 @@ export async function estatisticasDeProcesso(): Promise<EstatisticasDeProcesso> 
     encerrados: numeros.closed,
     criadosNoMes: numeros.createdThisMonth,
     iniciados: numeros.started,
+    emElaboracao: numeros.inProgress ?? 0,
+    prontosParaEncerrar: numeros.readyToClose ?? 0,
     documentosPendentes: numeros.pendingDocuments,
     taxaConclusao: numeros.completionRate,
   }

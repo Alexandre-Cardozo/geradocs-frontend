@@ -1829,7 +1829,11 @@ export interface components {
             /** Format: int64 */
             createdThisMonth: number;
             /** Format: int64 */
+            inProgress: number;
+            /** Format: int64 */
             pendingDocuments: number;
+            /** Format: int64 */
+            readyToClose: number;
             /** Format: int64 */
             started: number;
         };
@@ -1865,9 +1869,15 @@ export interface components {
             /** Format: uuid */
             organizationId: string;
             processNumber: string;
+            /** Format: int32 */
+            requiredDocuments: number;
+            /** Format: int32 */
+            requiredDocumentsDone: number;
             /** Format: uuid */
             responsibleUserId?: string;
             responsibleUserName?: string;
+            /** @enum {string} */
+            stage: "CLOSED" | "DRAFT" | "IN_PROGRESS" | "READY_TO_CLOSE";
             /** @enum {string} */
             status: "CLOSED" | "DRAFT";
             /** Format: date-time */
@@ -2990,6 +3000,7 @@ export interface operations {
                 page?: number;
                 search?: string;
                 size?: number;
+                stage?: "CLOSED" | "DRAFT" | "IN_PROGRESS" | "READY_TO_CLOSE";
                 status?: "CLOSED" | "DRAFT";
             };
             header?: never;

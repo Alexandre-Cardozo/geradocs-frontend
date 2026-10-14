@@ -78,16 +78,16 @@ export default function Dashboard() {
                   tone="warning"
                 />
                 <StatCard
+                  label="Prontos para Encerrar"
+                  value={String(estatisticas.data.processosProntosParaEncerrar)}
+                  icon={IconCheckCircle}
+                  tone="success"
+                />
+                <StatCard
                   label="Documentos Gerados"
                   value={String(estatisticas.data.documentosGerados)}
                   icon={IconDownload}
                   tone="teal"
-                />
-                <StatCard
-                  label="ETPs Concluídos"
-                  value={String(estatisticas.data.etpsConcluidos)}
-                  icon={IconCheckCircle}
-                  tone="success"
                 />
               </>
             )}

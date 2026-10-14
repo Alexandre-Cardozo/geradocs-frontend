@@ -3,14 +3,16 @@
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 
-import { Button, DocPill, FilterTabs, SearchInput, StatusBadge, Tag } from "@/components/ui"
+import { Button, FilterTabs, SearchInput, StatusBadge, Tag } from "@/components/ui"
+import { ProgressoDosObrigatorios } from "@/components/processos/progresso-dos-obrigatorios"
+import { rotuloDaModalidade } from "@/lib/dominio"
 import { IconDownload, IconFilter } from "@/components/ui/icons"
 import { EmptyState, ErrorState, SkeletonRows } from "@/components/shared/estados"
 import { Th } from "@/components/shared/tabela"
 import { useToast } from "@/components/shared/providers"
 import { useProcessos } from "@/lib/api/hooks"
 import { formatBRL } from "@/lib/format"
-import { MODALIDADE_LABEL, STATUS_PROCESSO_LABEL, type StatusProcesso } from "@/lib/types"
+import { STATUS_PROCESSO_LABEL, type StatusProcesso } from "@/lib/types"
 
 /**
  * Os rótulos saem de `STATUS_PROCESSO_LABEL`, não de uma lista paralela: o
@@ -97,7 +99,7 @@ export default function Processos() {
             <table className="w-full min-w-[780px] border-collapse">
               <thead>
                 <tr className="border-b border-border bg-ice">
-                  {["Processo / Objeto", "Secretaria", "Modalidade", "Valor Est.", "ETP", "TR", "Responsável", "Status"].map((h) => (
+                  {["Processo / Objeto", "Secretaria", "Modalidade", "Valor Est.", "Documentos", "Responsável", "Status"].map((h) => (
                     <Th key={h}>{h}</Th>
                   ))}
                 </tr>
@@ -129,16 +131,15 @@ export default function Processos() {
                     </td>
                     <td className="max-w-40 px-4 py-3.5 text-sm text-text-3">{p.secretaria}</td>
                     <td className="px-4 py-3.5">
-                      <Tag tone="info">{MODALIDADE_LABEL[p.modalidade]}</Tag>
+                      <Tag tone="info">{rotuloDaModalidade(p.modalidade, p.formaDaDispensa)}</Tag>
                     </td>
                     <td className="px-4 py-3.5 font-mono text-base font-semibold whitespace-nowrap text-petroleum">
                       {formatBRL(p.valorEstimado)}
                     </td>
                     <td className="px-4 py-3.5">
-                      <DocPill status={p.etpStatus} />
-                    </td>
-                    <td className="px-4 py-3.5">
-                      <DocPill status={p.trStatus} />
+                      {/* Os obrigatórios da modalidade, e não ETP e TR fixos:
+                          Leilão não tem TR, e a Dispensa direta não tem ETP. */}
+                      <ProgressoDosObrigatorios processo={p} barra />
                     </td>
                     <td className="px-4 py-3.5 text-sm text-text-3">{p.responsavel}</td>
                     <td className="px-4 py-3.5">
