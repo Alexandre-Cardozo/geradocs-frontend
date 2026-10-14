@@ -301,6 +301,26 @@ describe("atualizarProcessoReal", () => {
     expect(corpo.estimatedValue).toBe(485000)
   })
 
+  it("a secretaria só vai quando a capa a troca — ausente, o servidor mantém a atual", async () => {
+    const corpos: Record<string, unknown>[] = []
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id`, () => HttpResponse.json(processoApi)),
+      http.patch(`${urlDaApi}/procurement-processes/:id`, async ({ request }) => {
+        corpos.push((await request.json()) as Record<string, unknown>)
+        return HttpResponse.json(processoApi)
+      }),
+    )
+    const { atualizarProcessoReal, obterProcesso } = await carregarClienteLimpo()
+    const atual = await obterProcesso(processoApi.id)
+    expect(atual.secretariaId).toBe(DEPARTAMENTO_ID)
+
+    await atualizarProcessoReal(atual, { objeto: "Descrição revisada" })
+    await atualizarProcessoReal(atual, { secretariaId: "outra-secretaria" })
+
+    expect(corpos[0]).not.toHaveProperty("departmentId")
+    expect(corpos[1]?.departmentId).toBe("outra-secretaria")
+  })
+
   it("a conciliação adota o valor da demanda, no formato do formulário", async () => {
     let corpo: Record<string, unknown> = {}
     servidor.use(

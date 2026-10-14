@@ -220,7 +220,8 @@ export async function criarProcesso(input: NovoProcessoInput): Promise<Processo>
 
 export interface AtualizarProcessoInput {
   id: string
-  secretaria?: string
+  /** O id da secretaria requisitante, quando a capa a troca. */
+  secretariaId?: string
   objeto?: string
   objetoDemanda?: string
   documentos?: Array<TipoDocumento>
@@ -270,6 +271,7 @@ export async function atualizarProcesso(input: AtualizarProcessoInput): Promise<
     documentos: input.documentos,
     valorEstimado: input.valorEstimado,
     fundamentoDaDispensa: input.fundamentoDaDispensa,
+    secretariaId: input.secretariaId,
     motivo,
   })
 }

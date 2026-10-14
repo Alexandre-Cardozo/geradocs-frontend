@@ -44,6 +44,7 @@ import {
   type Retificacao,
 } from "@/lib/dominio"
 import { formatBRL, formatData } from "@/lib/format"
+import { opcoesDeSecretaria } from "@/lib/secretarias/opcoes"
 import { MODALIDADE_LABEL, type Modalidade, type TipoDocumento } from "@/lib/types"
 
 export default function HubProcesso() {
@@ -88,7 +89,7 @@ export default function HubProcesso() {
     if (!processo.data) return
     setObjeto(processo.data.objeto)
     setObjetoDemanda(processo.data.objetoDemanda ?? "")
-    setSecretaria(processo.data.secretaria)
+    setSecretaria(processo.data.secretariaId ?? "")
     setEditando(true)
   }
 
@@ -98,7 +99,8 @@ export default function HubProcesso() {
         id: processoId,
         objeto: objeto.trim() || undefined,
         objetoDemanda: objetoDemanda.trim(),
-        secretaria,
+        // A troca de secretaria vai para a trilha; mantida, nem é enviada.
+        secretariaId: secretaria && secretaria !== processo.data?.secretariaId ? secretaria : undefined,
       },
       {
         onSuccess: () => {
@@ -522,7 +524,7 @@ export default function HubProcesso() {
                   value={secretaria}
                   onChange={setSecretaria}
                   ariaLabel="Secretaria requisitante"
-                  options={(tenant?.secretarias ?? []).map((s) => ({ value: s.nome, label: s.nome }))}
+                  options={opcoesDeSecretaria(tenant?.secretarias ?? [], proc)}
                 />
               </dd>
             )}

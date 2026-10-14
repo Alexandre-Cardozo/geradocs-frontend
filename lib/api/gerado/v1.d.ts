@@ -1985,6 +1985,8 @@ export interface components {
         UpdateProcurementProcessRequest: {
             changeNote?: string;
             demandObject?: string;
+            /** Format: uuid */
+            departmentId?: string;
             /** @enum {string} */
             dispensationGround?: "OTHER" | "VALUE_ENGINEERING" | "VALUE_GENERAL";
             documents?: ("AVISO" | "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR")[];

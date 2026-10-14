@@ -89,6 +89,7 @@ function mapear(item: ProcessoApi): Processo {
     objetoDemanda: item.demandObject,
     modalidade,
     secretaria: item.departmentName,
+    secretariaId: item.departmentId,
     status: item.status === "CLOSED" ? "concluido" : "rascunho",
     encerradoEm: item.closedAt,
     justificativaEncerramento: item.closureNote,
@@ -206,6 +207,8 @@ export async function atualizarProcessoReal(
     fundamentoDaDispensa?: FundamentoDaDispensa | null;
     /** Por que mudou; vai literal para a trilha do servidor (ADR-024). */
     motivo?: string;
+    /** A secretaria requisitante; ausente, o servidor mantém a atual. */
+    secretariaId?: string;
   },
 ): Promise<Processo> {
   const processo = await requisicaoProtegida<ProcessoApi>(
@@ -235,6 +238,8 @@ export async function atualizarProcessoReal(
         urgency: Boolean(atual.urgente),
         documents: (mudancas.documentos ?? atual.documentos).map((tipo) => tipos[tipo]),
         changeNote: mudancas.motivo ?? null,
+        // Só quando muda: a troca vai para a trilha, e reenviar a mesma não diz nada.
+        ...(mudancas.secretariaId ? { departmentId: mudancas.secretariaId } : {}),
       }),
     },
   );

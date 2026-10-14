@@ -109,6 +109,8 @@ export interface Processo {
   /** O inciso do Art. 75; ausente fora da dispensa e enquanto não for declarado. */
   fundamentoDaDispensa?: FundamentoDaDispensa
   secretaria: string
+  /** O id da secretaria requisitante — é por ele que a edição a troca. */
+  secretariaId?: string
   status: StatusProcesso
   /** Quando a plataforma deixou de acompanhar o processo. */
   encerradoEm?: string
