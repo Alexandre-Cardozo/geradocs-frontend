@@ -490,6 +490,10 @@
             "format" : "uuid",
             "type" : "string"
           },
+          "dispensationForm" : {
+            "enum" : [ "DIRECT", "DISPUTE" ],
+            "type" : "string"
+          },
           "dispensationGround" : {
             "enum" : [ "OTHER", "VALUE_ENGINEERING", "VALUE_GENERAL" ],
             "type" : "string"
@@ -1771,6 +1775,10 @@
           "departmentName" : {
             "type" : "string"
           },
+          "dispensationForm" : {
+            "enum" : [ "DIRECT", "DISPUTE" ],
+            "type" : "string"
+          },
           "dispensationGround" : {
             "enum" : [ "OTHER", "VALUE_ENGINEERING", "VALUE_GENERAL" ],
             "type" : "string"
@@ -2364,6 +2372,10 @@
           },
           "departmentId" : {
             "format" : "uuid",
+            "type" : "string"
+          },
+          "dispensationForm" : {
+            "enum" : [ "DIRECT", "DISPUTE" ],
             "type" : "string"
           },
           "dispensationGround" : {

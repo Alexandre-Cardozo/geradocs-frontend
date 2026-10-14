@@ -67,7 +67,7 @@ export default function VerificacaoDFD() {
   const intervalo = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // Documento que sucede o DFD no fluxo. Em regra é o ETP, mas na contratação
-  // direta ele é dispensável (Art. 18, § 2º) e o processo começa por outro.
+  // direta ele entra só "se for o caso" (Art. 72, I) e o processo começa por outro.
   const proximo = ordenar(processo.data?.documentos ?? [])[0]
   const proximoTitulo = proximo ? CATALOGO[proximo].titulo : "processo"
   const irParaProximo = () =>

@@ -12,8 +12,25 @@
  * servindo apenas para a interface avisar antes de deixar salvar.
  */
 
-import { REGRA_MODALIDADE, documentosDaModalidade, ordenar } from "@/lib/documentos"
-import type { Modalidade, TipoDocumento } from "@/lib/types"
+import { documentosDaModalidade, ordenar, regraDe } from "@/lib/documentos"
+import { FORMA_DA_DISPENSA, MODALIDADE_LABEL, type FormaDaDispensa, type Modalidade, type TipoDocumento } from "@/lib/types"
+
+/** A forma da dispensa antes e depois da troca; ausente fora da dispensa. */
+export interface FormasDaTroca {
+  de?: FormaDaDispensa
+  para?: FormaDaDispensa
+}
+
+/** "Dispensa com Disputa" na dispensa de forma declarada; o rótulo da modalidade nas demais. */
+export function rotuloDaModalidade(modalidade: Modalidade, forma?: FormaDaDispensa): string {
+  return modalidade === "Dispensa Art. 75" && forma ? FORMA_DA_DISPENSA[forma].titulo : MODALIDADE_LABEL[modalidade]
+}
+
+/** Como a trilha nomeia a modalidade: o valor técnico, e a forma entre parênteses na dispensa. */
+function naTrilha(modalidade: Modalidade, forma?: FormaDaDispensa): string {
+  if (modalidade !== "Dispensa Art. 75" || !forma) return modalidade
+  return `${modalidade} (${forma === "DIRECT" ? "direta" : "com disputa"})`
+}
 
 export interface ImpactoTrocaModalidade {
   /** Tipos que a nova modalidade comporta, na ordem do fluxo. */
@@ -37,19 +54,24 @@ export interface ImpactoTrocaModalidade {
 }
 
 /**
+ * Trocar a forma da dispensa (direta ↔ com disputa) é troca do mesmo jeito: a
+ * regra de documentos é outra (ADR-046).
+ *
  * @param solicitados documentos escolhidos no processo hoje
  * @param gerados     documentos que já existem no acervo do processo
+ * @param formas      a forma da dispensa antes e depois, quando há dispensa
  */
 export function impactoTrocaModalidade(
   de: Modalidade,
   para: Modalidade,
   solicitados: TipoDocumento[],
   gerados: TipoDocumento[] = [],
+  formas: FormasDaTroca = {},
 ): ImpactoTrocaModalidade {
-  const cabiveis = documentosDaModalidade(para)
+  const cabiveis = documentosDaModalidade(para, formas.para)
   const deixamDeSerCabiveis = ordenar(solicitados.filter((tipo) => !cabiveis.includes(tipo)))
   const passamASerObrigatorios = ordenar(
-    REGRA_MODALIDADE[para].obrigatorios.filter((tipo) => !solicitados.includes(tipo)),
+    regraDe(para, formas.para).obrigatorios.filter((tipo) => !solicitados.includes(tipo)),
   )
   // Mantém o que continua cabível e acrescenta o que a modalidade nova exige —
   // preservar a escolha de quem montou o processo onde ela ainda vale.
@@ -67,8 +89,13 @@ export function impactoTrocaModalidade(
     // alerta precisa aparecer quando há consequência, senão vira ruído que se
     // aprende a fechar sem ler.
     exigeJustificativa:
-      de !== para && (deixamDeSerCabiveis.length > 0 || passamASerObrigatorios.length > 0),
+      houveTroca(de, para, formas) && (deixamDeSerCabiveis.length > 0 || passamASerObrigatorios.length > 0),
   }
+}
+
+/** Mudou a modalidade ou, na dispensa, a forma. */
+export function houveTroca(de: Modalidade, para: Modalidade, formas: FormasDaTroca = {}): boolean {
+  return de !== para || (para === "Dispensa Art. 75" && formas.de !== formas.para)
 }
 
 /** O que a trilha registra sobre a troca. */
@@ -77,8 +104,9 @@ export function motivoDaTrocaDeModalidade(
   para: Modalidade,
   impacto: ImpactoTrocaModalidade,
   justificativa: string,
+  formas: FormasDaTroca = {},
 ): string {
-  const cabecalho = `Modalidade alterada de ${de} para ${para}.`
+  const cabecalho = `Modalidade alterada de ${naTrilha(de, formas.de)} para ${naTrilha(para, formas.para)}.`
   // O fato mais grave da troca, e o que a trilha precisa carregar em qualquer
   // caminho: documento gerado não some ao trocar a modalidade, e um Edital de um
   // processo que virou dispensa fica no acervo contradizendo o próprio processo.

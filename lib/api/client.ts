@@ -5,6 +5,7 @@ import "client-only"
 
 import { parecerDFDBase } from "@/lib/mocks/fixtures"
 import {
+  houveTroca,
   impactoTrocaModalidade,
   motivoDaTrocaDeModalidade,
   statusAposEditar,
@@ -81,6 +82,7 @@ export type { ConsultaAuditoria } from "@/lib/api/audit-client"
 export type { FichaParaSalvar, SecretariaParaSalvar } from "@/lib/api/access-client"
 import { dataHoraBrasiliaISO } from "@/lib/format"
 import type {
+  FormaDaDispensa,
   FundamentoDaDispensa,
   DocumentoGerado,
   EstatisticasDashboard,
@@ -230,6 +232,8 @@ export interface AtualizarProcessoInput {
   valorEstimado?: string
   /** O inciso do Art. 75, declarado depois da abertura (§77). */
   fundamentoDaDispensa?: FundamentoDaDispensa
+  /** Direta ou com disputa (ADR-046); trocá-la muda os documentos cabíveis. */
+  formaDaDispensa?: FormaDaDispensa
   /**
    * Preenchida quando a lista de documentos é mantida divergindo da
    * recomendação. Vai literal para a trilha — é ela que responde ao controle.
@@ -247,21 +251,29 @@ export interface AtualizarProcessoInput {
 export async function atualizarProcesso(input: AtualizarProcessoInput): Promise<Processo> {
   const atual = await obterProcesso(input.id)
   let motivo: string | undefined
-  if (input.modalidade !== undefined && input.modalidade !== atual.modalidade) {
+  const para = input.modalidade ?? atual.modalidade
+  // A forma da dispensa conta como troca: a regra de documentos é outra (ADR-046).
+  const formas = {
+    de: atual.formaDaDispensa,
+    para: input.formaDaDispensa === undefined ? atual.formaDaDispensa : input.formaDaDispensa,
+  }
+  if (houveTroca(atual.modalidade, para, formas)) {
     // Contra a lista que o processo tinha, e não contra a que está sendo salva:
     // com a lista nova, o que a tela acabou de remover já não estaria lá, e a
     // trilha registraria "nada removido" exatamente quando algo foi.
     const impacto = impactoTrocaModalidade(
       atual.modalidade,
-      input.modalidade,
+      para,
       atual.documentos,
       await docsGeradosDo(atual.id),
+      formas,
     )
     motivo = motivoDaTrocaDeModalidade(
       atual.modalidade,
-      input.modalidade,
+      para,
       impacto,
       input.justificativaModalidade ?? "",
+      formas,
     )
   }
   return atualizarProcessoReal(atual, {
@@ -271,6 +283,7 @@ export async function atualizarProcesso(input: AtualizarProcessoInput): Promise<
     documentos: input.documentos,
     valorEstimado: input.valorEstimado,
     fundamentoDaDispensa: input.fundamentoDaDispensa,
+    formaDaDispensa: input.formaDaDispensa,
     secretariaId: input.secretariaId,
     motivo,
   })

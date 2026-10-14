@@ -42,7 +42,7 @@ Ordem declarada em `CATALOGO[tipo].ordem`. O hub do processo numera e ordena os 
 | 4 | **TR** | Art. 6º, XXIII | Fundamenta-se no ETP (alínea "b") |
 | 5 | **Edital** | Art. 25 | Tem o TR entre os seus elementos (Art. 25, § 3º) |
 | 5.1 | **Contrato** (minuta) | Art. 89 a 95; cláusulas do Art. 92 | Consta obrigatoriamente como anexo do edital (Art. 18, VI), vinculado a ele e à proposta (Art. 92, II). Sem Edital no processo, vem por último, solta |
-| 6 | **Aviso de Contratação Direta** | Art. 75, § 3º | Só na dispensa por valor; faz o papel de chamamento que o edital faz na licitação, e se fundamenta no TR |
+| 6 | **Aviso de Contratação Direta** | Art. 75, § 3º | Só na dispensa com disputa; faz o papel de chamamento que o edital faz na licitação, e se fundamenta no TR |
 
 ### Dependências
 
@@ -69,23 +69,27 @@ A **minuta de contrato** consta obrigatoriamente como anexo do edital (Art. 18, 
 
 ## Matriz modalidade × documentos
 
-Declarada em `REGRA_MODALIDADE`. O wizard só oferece os tipos cabíveis à modalidade escolhida — os obrigatórios já vêm marcados e travados, e os recomendados vêm marcados mas podem ser desmarcados.
+Declarada em `REGRA_MODALIDADE` e, na dispensa, em `REGRA_DA_DISPENSA` — `regraDe(modalidade, forma)` escolhe. O wizard só oferece os tipos cabíveis à modalidade escolhida — os obrigatórios já vêm marcados e travados, e os recomendados vêm marcados mas podem ser desmarcados.
 
 | Modalidade | Obrigatórios | Recomendados | Opcionais |
 |---|---|---|---|
 | Pregão Eletrônico · Concorrência · Diálogo Competitivo · Credenciamento | ETP, TR, Edital | Contrato | Cotação, Mapa, Contrato |
 | Concurso | ETP, Edital | — | Cotação, Mapa, TR, Contrato |
 | Leilão | Edital | — | Cotação, Mapa, ETP, TR, Contrato |
-| **Dispensa Art. 75** | TR | Aviso¹ | ETP, Cotação, Mapa, Aviso¹, Contrato — **sem Edital** |
-| **Inexigibilidade** | TR | — | ETP, Cotação, Mapa, Contrato — **sem Edital** |
+| **Dispensa Direta** (Art. 75) | TR | Cotação | Cotação, ETP, Mapa, Contrato — **sem Edital nem Aviso** |
+| **Dispensa com Disputa** (Art. 75, § 3º) | TR, Aviso | ETP, Contrato | Cotação, ETP, Mapa, Contrato — **o Aviso no lugar do Edital** |
+| **Inexigibilidade** (Art. 74) | TR | — | ETP, Cotação, Mapa, Contrato — **sem Edital** |
 
-¹ Só na dispensa por valor (Art. 75, I e II), declarada no fundamento da dispensa.
+**A minuta de contrato é opcional, mas recomendada nas licitações em que o contrato é a regra.** É opcional porque o instrumento de contrato pode ser substituído por nota de empenho nas compras com entrega imediata e integral (Art. 95, II). Quando existe, porém, ela constará obrigatoriamente como anexo do edital (Art. 18, VI). Por isso vem marcada no Pregão, na Concorrência, no Diálogo Competitivo e no Credenciamento. No Leilão e no Concurso vem desmarcada: a alienação se resolve na arrematação, e o concurso, no prêmio e na cessão dos direitos. Na dispensa direta e na inexigibilidade também vem desmarcada, porque na dispensa por valor o contrato pode ser substituído por nota de empenho (Art. 95, I); na dispensa com disputa vem marcada, como no pregão, de que ela segue as opções.
 
-**A minuta de contrato é opcional, mas recomendada nas licitações em que o contrato é a regra.** É opcional porque o instrumento de contrato pode ser substituído por nota de empenho nas compras com entrega imediata e integral (Art. 95, II). Quando existe, porém, ela constará obrigatoriamente como anexo do edital (Art. 18, VI). Por isso vem marcada no Pregão, na Concorrência, no Diálogo Competitivo e no Credenciamento. No Leilão e no Concurso vem desmarcada: a alienação se resolve na arrematação, e o concurso, no prêmio e na cessão dos direitos. Na contratação direta também vem desmarcada, porque na dispensa por valor o contrato pode ser substituído por nota de empenho (Art. 95, I).
+**Contratação direta não gera edital de licitação.** O Art. 72 instrui o processo com DFD, ETP *quando for o caso*, TR, estimativa de despesa, parecer jurídico e autorização — por isso, nessas modalidades, o ETP é opcional (Art. 72, I) e o Edital não é oferecido. No Credenciamento (Art. 79), o "Edital" é o de chamamento público.
 
-**Contratação direta não gera edital de licitação.** O Art. 72 instrui o processo com DFD, ETP *quando for o caso*, TR, estimativa de despesa, parecer jurídico e autorização — por isso, nessas modalidades, o ETP é opcional (Art. 18, § 2º c/c Art. 72, I) e o Edital não é oferecido. No Credenciamento (Art. 79), o "Edital" é o de chamamento público.
+**A dispensa é direta ou com disputa (ADR-046 do back-end).** As duas são contratação direta, e quem abre o processo declara a forma — é ela que decide os documentos:
 
-**Na dispensa por valor, o chamamento é o Aviso de Contratação Direta.** As contratações dos incisos I e II do Art. 75 "serão preferencialmente precedidas de divulgação de aviso em sítio eletrônico oficial, pelo prazo mínimo de 3 (três) dias úteis" (Art. 75, § 3º). Por isso `documentosDaModalidade()` só oferece o Aviso quando o processo declara um desses incisos, e ele vem marcado — "preferencialmente" é recomendação, não obrigação, e por isso continua opcional. Sem o inciso declarado, o wizard explica como incluí-lo; declarado depois, o Aviso passa a aparecer em "Adicionar documento" no hub.
+- **Direta:** o fornecedor é contratado sem disputa, nas hipóteses do Art. 75 que a dispensam (emergência, licitação deserta, entre outras). Sem Edital nem Aviso; o ETP só se for o caso (Art. 72, I). A Cotação vem marcada porque a estimativa de despesa e a justificativa de preço fazem parte da instrução (Art. 72, II e VII). Na dispensa por valor, a tela lembra que a lei prefere o aviso (Art. 75, § 3º).
+- **Com disputa:** a contratação é precedida de aviso em sítio eletrônico oficial, por no mínimo 3 dias úteis, e seleciona a proposta mais vantajosa (Art. 75, § 3º) — a dispensa eletrônica. Tem as opções do pregão com o **Aviso de Contratação Direta no lugar do Edital**: TR e Aviso obrigatórios; ETP e Contrato marcados. O ETP não é travado porque a lei o faculta nas dispensas por valor.
+
+Trocar a forma no hub é troca de modalidade: passa pelo alerta de impacto e vai para a trilha.
 
 ## Seções obrigatórias e dispensáveis
 
