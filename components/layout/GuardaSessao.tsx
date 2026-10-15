@@ -45,7 +45,7 @@ export default function GuardaSessao({ children }: { children: ReactNode }) {
         <div className="flex max-w-md flex-col items-center gap-3 text-center">
           <h1 className="m-0 font-display text-lg font-extrabold text-text-1">Servidor Indisponível</h1>
           <p className="m-0 text-sm text-text-3">
-            Não foi possível validar sua sessão. Verifique se o backend está em execução e tente novamente.
+            Não foi possível validar sua sessão. Tente novamente.
           </p>
           <Button variant="secondary" onClick={() => void sessao.refetch()}>Tentar Novamente</Button>
         </div>

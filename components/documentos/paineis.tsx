@@ -108,21 +108,7 @@ function PainelNecessidade({
   return (
     <SectionBlock title={secao.titulo} hint={secao.hint ?? ""}>
       <div className="flex flex-col gap-3">
-        {temBase && (
-          <p className="m-0 text-sm text-text-muted">
-            O processo já registra o objeto da demanda e{" "}
-            {registrados.length === 1
-              ? "o DFD de uma secretaria"
-              : `os DFDs de ${registrados.length} secretarias`}
-            . O rascunho parte daí — o problema a resolver continua sendo seu para escrever.
-          </p>
-        )}
-
-        <FormField
-          label="Descrição da Necessidade"
-          required
-          hint="O problema sob a perspectiva do interesse público — quem assina responde pelo texto."
-        >
+        <FormField label="Descrição da Necessidade" required>
           <Textarea
             value={rascunho}
             onChange={(e) => setRascunho(e.target.value)}
@@ -221,13 +207,11 @@ function PainelQuantidades({
         <InlineSpinner label="Somando o que as secretarias pediram..." />
       ) : consolidacao.isError ? (
         <InfoBanner tone="warning">
-          Não foi possível ler a demanda consolidada agora. Você pode escrever a memória de
-          cálculo mesmo assim.
+          Não foi possível carregar a demanda consolidada.
         </InfoBanner>
       ) : itens.length === 0 ? (
         <InfoBanner tone="warning">
-          Nenhum item informado nos DFDs deste processo. As quantidades saem de lá — informe-as
-          na demanda consolidada do processo, e elas aparecem aqui somadas por secretaria.
+          Nenhum item nos DFDs. Cadastre-os na Demanda Consolidada do processo.
         </InfoBanner>
       ) : (
         <div className="flex flex-col gap-3">
@@ -236,11 +220,7 @@ function PainelQuantidades({
       )}
 
       <div className="mt-4">
-        <FormField
-          label="Memória de Cálculo"
-          required
-          hint="A lei exige a memória de cálculo e os documentos que lhe dão suporte. O rascunho acima é ponto de partida — quem assina responde pelo texto."
-        >
+        <FormField label="Memória de Cálculo" required>
           <Textarea
             value={rascunho}
             onChange={(e) => setRascunho(e.target.value)}
@@ -431,8 +411,7 @@ function PainelValor({
         <InlineSpinner label="Somando os itens precificados..." />
       ) : itens.length === 0 ? (
         <InfoBanner tone="warning">
-          Nenhum item informado nos DFDs deste processo. O valor sai da quantidade e do preço
-          unitário de cada item — informe-os na demanda consolidada do processo.
+          Nenhum item nos DFDs. Cadastre-os na Demanda Consolidada do processo.
         </InfoBanner>
       ) : (
         <div className="flex flex-col gap-3">
@@ -460,20 +439,15 @@ function PainelValor({
           {daPesquisa.length < precificados.length && (
             <InfoBanner tone="info">
               {daPesquisa.length === 0
-                ? "Nenhum item tem preço apurado na pesquisa: o total abaixo usa a estimativa preliminar dos DFDs"
-                : `${precificados.length - daPesquisa.length} item(ns) ainda usam a estimativa preliminar dos DFDs`}{" "}
-              — que o <strong>Decreto 10.947/2022, Art. 8º, IV</strong> define como obtida por
-              procedimento simplificado, para o PCA. O valor da contratação é o do{" "}
-              <strong>Art. 23 da Lei 14.133/21</strong> e sai da pesquisa de preços: registre as
-              coletas na Cotação do processo.
+                ? "Sem pesquisa de preços: o total usa o preço preliminar dos DFDs."
+                : `${precificados.length - daPesquisa.length} item(ns) ainda com o preço preliminar do DFD.`}{" "}
+              Registre a pesquisa na Cotação.
             </InfoBanner>
           )}
 
           {semPreco.length > 0 && (
             <InfoBanner tone="warning">
-              {semPreco.length === 1 ? "Um item ainda não tem" : `${semPreco.length} itens ainda não têm`}{" "}
-              preço unitário informado: {semPreco.map((i) => i.descricao).join(", ")}. Enquanto
-              faltarem, o total apurado fica abaixo do que a contratação custa.
+              Sem preço unitário: {semPreco.map((i) => i.descricao).join(", ")}.
             </InfoBanner>
           )}
 
@@ -491,11 +465,7 @@ function PainelValor({
       </div>
 
       <div className="mt-4">
-        <FormField
-          label="Memória de Cálculo"
-          required
-          hint="Registre como o valor foi apurado, com os preços unitários referenciais e os documentos de suporte."
-        >
+        <FormField label="Memória de Cálculo" required>
           <Textarea
             value={rascunho}
             onChange={(e) => setRascunho(e.target.value)}
@@ -514,8 +484,7 @@ function PainelValor({
 
       {precificados.length > 0 && fonte.trim() === "" && (
         <p className="mt-4 m-0 text-xs text-text-muted">
-          Escolha a fonte de pesquisa de preços para a plataforma escrever a memória de cálculo —
-          é ela que diz de onde saiu o preço.
+          Escolha a fonte para escrever a memória a partir dos itens.
         </p>
       )}
 
@@ -707,8 +676,6 @@ export function PainelATA() {
       {aberto && (
         <div className="mt-2.5 rounded-card border border-border bg-surface px-5.5 py-5">
           <h4 className="m-0 mb-1 font-display text-md font-bold text-text-1">Gestão da Ata de Registro de Preços</h4>
-          <p className="m-0 mb-4 text-base text-text-3">Escolha como deseja proceder com a ATA para este processo.</p>
-
           <div className="mb-4 flex flex-col gap-2">
             {modosATA.map((opt) => (
               <ChoiceCard
@@ -775,8 +742,7 @@ export function PainelATA() {
 
           {ataMode === "delegar" && (
             <InfoBanner tone="info" icon={<IconCheck size={14} strokeWidth={2.5} />}>
-              O modelo realizará a busca de ATAs compatíveis após a confirmação. Os resultados — com origem, órgão
-              gerenciador e validade — ficarão disponíveis neste processo para sua seleção.
+              A busca de ATAs compatíveis roda após a confirmação; os resultados aparecem neste processo.
             </InfoBanner>
           )}
 

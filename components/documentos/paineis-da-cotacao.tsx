@@ -92,9 +92,7 @@ export function PainelDasFontes(props: PropsDoPainel) {
       <div className="flex flex-col gap-3.5">
         {serie.length === 0 ? (
           <InfoBanner tone="info">
-            Nenhum preço coletado ainda. Registre as coletas na seção{" "}
-            <strong>Preços Coletados</strong> — as fontes consultadas saem de lá, e não de uma lista
-            digitada à parte.
+            Nenhum preço coletado. Registre-os em <strong>Preços Coletados</strong>.
           </InfoBanner>
         ) : (
           <>
@@ -120,10 +118,8 @@ export function PainelDasFontes(props: PropsDoPainel) {
             </ul>
             {!usouPrioritaria && (
               <InfoBanner tone="warning">
-                Nenhuma das fontes usadas é um dos parâmetros prioritários — sistemas oficiais de
-                preços e contratações similares da Administração. O{" "}
-                <strong>Art. 5º, § 1º da IN SEGES/ME nº 65/2021</strong> manda priorizá-los e
-                justificar quando não for possível; a justificativa precisa constar desta seção.
+                Nenhuma fonte prioritária usada: justifique nesta seção (Art. 5º, § 1º, IN SEGES/ME
+                nº 65/2021).
               </InfoBanner>
             )}
             {fornecedores.length > 0 && (
@@ -218,8 +214,7 @@ export function PainelDasColetas(props: PropsDoPainel) {
         {serie.length === 0 ? (
           !registrando && (
             <p className="m-0 rounded-lg border border-dashed border-border bg-surface px-3.5 py-3 text-sm text-text-muted">
-              Nenhum preço coletado. É daqui que saem as fontes consultadas, a análise crítica e o
-              preço de referência — e, adiante, a estimativa de valor do ETP.
+              Nenhum preço coletado.
             </p>
           )
         ) : (
@@ -448,7 +443,7 @@ function FormularioDaColeta({
     <div className="rounded-lg border border-royal bg-surface p-4">
       <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2">
         <div className="min-w-0">
-          <FormField label="Item Pesquisado" required hint="O item a que este preço se refere.">
+          <FormField label="Item Pesquisado" required>
             {itensDaDemanda.length > 0 && !coleta ? (
               <Dropdown
                 value={dados.item}
@@ -470,7 +465,7 @@ function FormularioDaColeta({
           </FormField>
         </div>
         <div className="min-w-0">
-          <FormField label="Fonte Consultada" required hint="Um dos parâmetros do Art. 23, § 1º.">
+          <FormField label="Fonte Consultada" required hint="Art. 23, § 1º.">
             <CampoDeFonteDePreco
               value={dados.fonte}
               onChange={(fonte) => trocar("fonte", fonte)}
@@ -479,7 +474,7 @@ function FormularioDaColeta({
           </FormField>
         </div>
         <div className="min-w-0">
-          <FormField label="Preço Obtido" required hint="O preço unitário desta fonte.">
+          <FormField label="Preço Obtido" required>
             <MoneyInput
               value={dados.valorUnitario}
               onChange={(valor) => trocar("valorUnitario", valor)}
@@ -490,7 +485,7 @@ function FormularioDaColeta({
           <FormField
             label="Data e Hora da Coleta"
             required
-            hint="A hora é exigida para mídia e sítio eletrônico."
+            hint="Hora exigida para mídia e sítio eletrônico."
           >
             <Input
               type="datetime-local"
@@ -501,7 +496,7 @@ function FormularioDaColeta({
           </FormField>
         </div>
         <div className="min-w-0">
-          <FormField label="Fornecedor ou Origem" hint="Quem deu o preço, quando identificável.">
+          <FormField label="Fornecedor ou Origem">
             <Input
               value={dados.fornecedor ?? ""}
               onChange={(e) => trocar("fornecedor", e.target.value)}
@@ -511,7 +506,7 @@ function FormularioDaColeta({
           </FormField>
         </div>
         <div className="min-w-0">
-          <FormField label="CNPJ ou CPF" hint="Exigido na pesquisa direta com fornecedores.">
+          <FormField label="CNPJ ou CPF" hint="Exigido na pesquisa direta.">
             <Input
               value={dados.documentoDoFornecedor ?? ""}
               onChange={(e) => trocar("documentoDoFornecedor", e.target.value)}
@@ -521,7 +516,7 @@ function FormularioDaColeta({
           </FormField>
         </div>
         <div className="min-w-0">
-          <FormField label="Proposta Válida Até" hint="Na pesquisa direta com fornecedores.">
+          <FormField label="Proposta Válida Até" hint="Na pesquisa direta.">
             <Input
               type="date"
               value={dados.validaAte ?? ""}
@@ -531,7 +526,7 @@ function FormularioDaColeta({
           </FormField>
         </div>
         <div className="min-w-0">
-          <FormField label="Observação" hint="O que mais precise constar dos autos.">
+          <FormField label="Observação">
             <Input
               value={dados.observacao ?? ""}
               onChange={(e) => trocar("observacao", e.target.value)}
@@ -590,8 +585,7 @@ export function PainelDaAnaliseCritica(props: PropsDoPainel) {
       <div className="flex flex-col gap-3.5">
         {itens.length === 0 ? (
           <InfoBanner tone="info">
-            Nenhum preço coletado ainda. A análise crítica compara os preços obtidos — registre-os
-            na seção <strong>Preços Coletados</strong>.
+            Nenhum preço coletado. Registre-os em <strong>Preços Coletados</strong>.
           </InfoBanner>
         ) : (
           <>
@@ -633,17 +627,13 @@ export function PainelDaAnaliseCritica(props: PropsDoPainel) {
             </div>
             {itens.some((i) => i.serieCurta) && (
               <InfoBanner tone="warning">
-                Há item com menos de três preços. O <strong>Art. 6º da IN SEGES/ME nº 65/2021</strong>{" "}
-                exige que o cálculo incida sobre três ou mais, e o § 5º admite menos apenas mediante
-                justificativa do gestor aprovada pela autoridade competente.
+                Item com menos de três preços: justifique (Art. 6º, § 5º, IN SEGES/ME nº 65/2021).
               </InfoBanner>
             )}
             {itens.some((i) => i.paraExame.length > 0) && (
               <InfoBanner tone="info">
-                Há preços que destoam da mediana. A plataforma <strong>não os descarta</strong>: o
-                Art. 6º, § 3º exige critério fundamentado e descrito no processo, e a decisão é de
-                quem responde pelos autos. Mantenha-os ou desconsidere-os, dizendo por quê nesta
-                seção.
+                Há preços que destoam da mediana. Mantenha-os ou desconsidere-os, justificando nesta
+                seção (Art. 6º, § 3º).
               </InfoBanner>
             )}
           </>
@@ -711,8 +701,7 @@ export function PainelDoPrecoDeReferencia(props: PropsDoPainel) {
       <div className="flex flex-col gap-3.5">
         {itens.length === 0 ? (
           <InfoBanner tone="info">
-            Nenhum preço coletado ainda. O preço de referência sai da série da pesquisa — registre
-            as coletas na seção <strong>Preços Coletados</strong>.
+            Nenhum preço coletado. Registre-os em <strong>Preços Coletados</strong>.
           </InfoBanner>
         ) : (
           <>

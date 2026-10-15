@@ -270,9 +270,7 @@ export default function EditorDocumento() {
             */}
             {documento.data?.alteradoDesdeAVersao && (
               <div className="mt-1.5 rounded-sm bg-tint-warning-bg px-2 py-1 text-2xs leading-snug text-tint-warning-fg">
-                Há alterações depois da versão gerada. O arquivo que está no
-                processo ainda é o anterior — gere de novo para que ele passe a
-                dizer o que você está lendo aqui.
+                Alterado após a última geração. Gere de novo para atualizar o arquivo.
               </div>
             )}
           </div>

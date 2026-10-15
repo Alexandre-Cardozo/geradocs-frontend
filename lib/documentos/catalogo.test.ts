@@ -167,14 +167,14 @@ describe("orientação dos documentos da contratação direta", () => {
     expect(texto).toMatch(/ETP apenas se for o caso \(Art\. 72, I\)/)
   })
 
-  it("a dispensa direta explica a cotação, e na dispensa por valor lembra o aviso", () => {
-    expect(orientacaoDosDocumentos("Dispensa Art. 75", "DIRECT", "OTHER")).toMatch(/Art\. 72, II e VII\)\.$/)
+  it("a dispensa direta não tem edital nem aviso, e na dispensa por valor lembra o aviso", () => {
+    expect(orientacaoDosDocumentos("Dispensa Art. 75", "DIRECT", "OTHER")).toMatch(/\(Art\. 72, I\)\.$/)
     expect(orientacaoDosDocumentos("Dispensa Art. 75", "DIRECT", "VALUE_GENERAL")).toMatch(/precedida de aviso \(Art\. 75, § 3º\)/)
   })
 
   it("a dispensa com disputa explica o aviso, e fora do valor diz que a disputa é a forma usual do valor", () => {
-    expect(orientacaoDosDocumentos("Dispensa Art. 75", "DISPUTE", "VALUE_GENERAL")).toMatch(/faculta nesta hipótese \(Art\. 72, I\)\.$/)
-    expect(orientacaoDosDocumentos("Dispensa Art. 75", "DISPUTE", "OTHER")).toMatch(/quando o caso comportar\.$/)
+    expect(orientacaoDosDocumentos("Dispensa Art. 75", "DISPUTE", "VALUE_GENERAL")).toMatch(/facultativo \(Art\. 72, I\)\.$/)
+    expect(orientacaoDosDocumentos("Dispensa Art. 75", "DISPUTE", "OTHER")).toMatch(/\(Art\. 75, I e II\)\.$/)
   })
 
   it("nada a dizer nas licitações, nem na dispensa sem forma declarada", () => {

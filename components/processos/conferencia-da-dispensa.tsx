@@ -37,9 +37,6 @@ export function ConferenciaDaDispensa({ processoId }: { processoId: string }) {
     return (
       <div className="flex flex-wrap items-center gap-2">
         <Tag tone="info">Dispensa sem limite de valor</Tag>
-        <span className="text-xs text-text-3">
-          O fundamento declarado não é um dos incisos submetidos a teto (Art. 75, I e II).
-        </span>
       </div>
     )
   }
@@ -47,10 +44,8 @@ export function ConferenciaDaDispensa({ processoId }: { processoId: string }) {
   if (dados.limitePendente) {
     return (
       <InfoBanner tone="info">
-        Os limites de dispensa do exercício de <strong>{dados.exercicio}</strong> ainda não foram
-        cadastrados na plataforma — eles mudam todo ano por decreto (Art. 182 da Lei 14.133/21).
-        Sem eles a conferência do valor não é feita; peça a quem administra a plataforma para
-        informá-los.
+        Limites de dispensa de <strong>{dados.exercicio}</strong> não cadastrados: o valor não foi
+        conferido. Peça ao administrador da plataforma.
       </InfoBanner>
     )
   }
@@ -63,14 +58,9 @@ export function ConferenciaDaDispensa({ processoId }: { processoId: string }) {
   if (!dados.ultrapassa && dados.totalDoExercicioUltrapassa) {
     return (
       <InfoBanner tone="warning">
-        Este processo cabe no limite, mas a entidade já dispensou{" "}
-        <strong>{formatBRL(dados.totalDoExercicio)}</strong> pelo mesmo inciso no exercício de{" "}
-        {dados.exercicio} — acima do limite de{" "}
-        <strong>{formatBRL(dados.limite ?? 0)}</strong>. O{" "}
-        <strong>Art. 75, § 1º</strong> manda considerar o somatório do que for despendido no
-        exercício pela respectiva unidade gestora, e contratações sucessivas do mesmo objeto
-        caracterizam fracionamento indevido. Confira se os objetos são de naturezas distintas — a
-        plataforma soma pelo inciso, e a natureza do objeto é juízo de quem conduz os autos.
+        Possível fracionamento: a entidade já dispensou{" "}
+        <strong>{formatBRL(dados.totalDoExercicio)}</strong> por este inciso em {dados.exercicio},
+        acima do limite de <strong>{formatBRL(dados.limite ?? 0)}</strong> (Art. 75, § 1º).
       </InfoBanner>
     )
   }
@@ -80,10 +70,8 @@ export function ConferenciaDaDispensa({ processoId }: { processoId: string }) {
       <div className="flex flex-wrap items-center gap-2">
         <Tag tone="success">Valor dentro do limite da dispensa</Tag>
         <span className="text-xs text-text-3">
-          {formatBRL(dados.valorEstimado)} de {formatBRL(dados.limite ?? 0)} ·{" "}
-          {dados.fundamentoLegal} · {dados.decretoDoLimite}
-          {dados.limiteDobrado ? " · limite em dobro (Art. 75, § 2º)" : ""} · exercício com{" "}
-          {formatBRL(dados.totalDoExercicio)} dispensados neste inciso
+          {formatBRL(dados.valorEstimado)} de {formatBRL(dados.limite ?? 0)} · {dados.fundamentoLegal}
+          {dados.limiteDobrado ? " · em dobro (Art. 75, § 2º)" : ""}
         </span>
       </div>
     )
@@ -91,13 +79,10 @@ export function ConferenciaDaDispensa({ processoId }: { processoId: string }) {
 
   return (
     <InfoBanner tone="warning">
-      O valor estimado de <strong>{formatBRL(dados.valorEstimado)}</strong> ultrapassa o limite de{" "}
-      <strong>{formatBRL(dados.limite ?? 0)}</strong> da dispensa em razão do valor (
-      {dados.fundamentoLegal}, {dados.decretoDoLimite}, exercício {dados.exercicio}
-      {dados.limiteDobrado ? ", já em dobro pelo Art. 75, § 2º" : ""}). Contratação
-      direta fora das hipóteses legais é causa de nulidade do ato e de responsabilização de quem lhe
-      deu causa. Confira o fundamento declarado, o valor estimado, ou registre nos autos a razão de
-      manter esta contratação como dispensa.
+      O valor de <strong>{formatBRL(dados.valorEstimado)}</strong> ultrapassa o limite de{" "}
+      <strong>{formatBRL(dados.limite ?? 0)}</strong> da dispensa ({dados.fundamentoLegal},{" "}
+      {dados.decretoDoLimite}
+      {dados.limiteDobrado ? ", em dobro" : ""}). Revise o fundamento ou o valor.
     </InfoBanner>
   )
 }
@@ -119,11 +104,7 @@ function DeclararFundamento({ processoId }: { processoId: string }) {
   return (
     <InfoBanner tone="info">
       <div className="flex flex-col gap-2.5">
-        <span>
-          Este processo é uma dispensa de licitação e ainda não diz com que inciso do{" "}
-          <strong>Art. 75</strong>. Só os incisos I e II têm limite de valor — sem a declaração, a
-          plataforma não confere se o valor cabe no limite.
-        </span>
+        <span>Declare o inciso do Art. 75 desta dispensa.</span>
         <div className="flex flex-wrap items-center gap-2.5">
           <div className="min-w-[18rem] flex-1">
             <Dropdown

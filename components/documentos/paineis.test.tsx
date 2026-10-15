@@ -146,7 +146,7 @@ describe("painel de quantidades", () => {
     comConsolidacao([])
     renderizarPainel("quantidades")
 
-    expect(await screen.findByText(/Nenhum item informado nos DFDs/)).toBeInTheDocument()
+    expect(await screen.findByText(/Nenhum item nos DFDs/)).toBeInTheDocument()
   })
 })
 
@@ -180,7 +180,7 @@ describe("painel de valor", () => {
     renderizarPainel("valor")
 
     // Zero é um preço; "ninguém estimou" é outra coisa, e some do total.
-    expect(await screen.findByText(/Um item ainda não tem/)).toBeInTheDocument()
+    expect(await screen.findByText(/Sem preço unitário/)).toBeInTheDocument()
     expect(screen.getByText(/Caneta/)).toBeInTheDocument()
     expect(screen.getByText(/1 de 2 itens com preço informado/)).toBeInTheDocument()
   })
@@ -193,7 +193,7 @@ describe("painel de valor", () => {
     await screen.findByText(/R\$ 2\.500,00/)
     // Sem a fonte não há rascunho: o parágrafo afirma de onde saiu o preço.
     expect(screen.queryByRole("button", { name: /a partir dos itens/ })).not.toBeInTheDocument()
-    expect(screen.getByText(/Escolha a fonte de pesquisa de preços/)).toBeInTheDocument()
+    expect(screen.getByText(/Escolha a fonte para escrever a memória/)).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole("button", { name: /Fonte de pesquisa de preços/ }))
     await userEvent.click(await screen.findByRole("option", { name: /Painel de Preços/ }))
@@ -264,7 +264,7 @@ describe("painel de valor", () => {
       />,
     )
 
-    expect(await screen.findByText(/não diz a fonte de pesquisa de preços/)).toBeInTheDocument()
+    expect(await screen.findByText(/não cita a fonte/)).toBeInTheDocument()
     await userEvent.click(screen.getByRole("button", { name: "Incluir na Memória" }))
 
     expect(setRascunho).toHaveBeenCalledWith(
@@ -291,7 +291,7 @@ describe("painel de valor", () => {
     comDfds([])
     renderizarPainel("valor")
 
-    expect(await screen.findByText(/Nenhum item informado nos DFDs/)).toBeInTheDocument()
+    expect(await screen.findByText(/Nenhum item nos DFDs/)).toBeInTheDocument()
   })
 })
 
@@ -500,7 +500,7 @@ describe("o valor apurado na pesquisa", () => {
     )
 
     expect(await screen.findByText("R$ 2.500,00")).toBeInTheDocument()
-    expect(screen.getByText(/Decreto 10.947\/2022, Art. 8º, IV/)).toBeInTheDocument()
+    expect(screen.getByText(/preço preliminar dos DFDs/)).toBeInTheDocument()
   })
 
   it("a memória diz de onde veio cada preço", async () => {

@@ -108,7 +108,7 @@ describe("painel de dotação", () => {
     comDotacoes([])
     renderizarPainel("Edital", "Da Dotação Orçamentária")
 
-    expect(await screen.findByText(/Art. 150 da Lei 14.133\/21/)).toBeInTheDocument()
+    expect(await screen.findByText(/Art. 150, Lei 14.133\/21/)).toBeInTheDocument()
     // Sem crédito não há rascunho a montar: o parágrafo afirma de onde sai o
     // dinheiro.
     expect(

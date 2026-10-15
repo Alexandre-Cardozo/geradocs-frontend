@@ -192,7 +192,7 @@ test.describe("elaboração do ETP", () => {
     // expectativa. Agora o motivo está escrito antes.
     const gerar = page.getByRole("button", { name: /Gerar com IA/ })
     await expect(gerar).toBeDisabled()
-    await expect(page.getByText(/não tem modelo de IA configurado/)).toBeVisible()
+    await expect(page.getByText(/Nenhum modelo de IA configurado/)).toBeVisible()
 
     // E o caminho manual continua inteiro — sem cartão nenhum a anunciá-lo: o
     // campo está aberto na tela, e escrever nele é o que sempre foi.
@@ -216,7 +216,7 @@ test.describe("elaboração do ETP", () => {
 
     // O que a plataforma encontrou aparece com o item — demonstrar é apontar.
     await expect(page.getByText(/2026-0142/).first()).toBeVisible()
-    await expect(page.getByText(/247 itens indexados/)).toBeVisible()
+    await expect(page.getByText(/PCA 2026/)).toBeVisible()
 
     // O que não está no plano orienta e deixa seguir: o botão continua ativo.
     await expect(page.getByText(/Um item não consta do plano/)).toBeVisible()

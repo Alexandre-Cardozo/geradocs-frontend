@@ -60,7 +60,6 @@ describe("importar o PCA do órgão", () => {
     renderizar(<ImportarPca anos={ANOS} />)
 
     expect(await screen.findByText(/Nenhum PCA importado ainda/)).toBeInTheDocument()
-    expect(screen.getByText(/informar o item à mão/)).toBeInTheDocument()
   })
 
   it("mostra o plano pelo número que importa: itens indexados", async () => {
@@ -95,7 +94,7 @@ describe("importar o PCA do órgão", () => {
     // ano: ter o do ano passado não cobre um processo aberto hoje, e descobrir
     // isso processo a processo, no painel do inciso II, é tarde demais.
     expect(
-      await screen.findByText(new RegExp(`Não há PCA de ${EXERCICIO}`)),
+      await screen.findByText(new RegExp(`Falta o PCA de ${EXERCICIO}`)),
     ).toBeInTheDocument()
   })
 
@@ -106,10 +105,7 @@ describe("importar o PCA do órgão", () => {
     expect(
       await screen.findByText(new RegExp(`Já existe um PCA de ${EXERCICIO}`)),
     ).toBeInTheDocument()
-    expect(screen.getByText(/substitui o plano desse exercício por inteiro/)).toBeInTheDocument()
-    // Substituir é permitido; o que não pode é ser silencioso.
-    expect(screen.getByText(/trilha do órgão com o arquivo que saiu e o que entrou/))
-      .toBeInTheDocument()
+    expect(screen.getByText(/Importar substitui esse plano/)).toBeInTheDocument()
   })
 
   it("o botão só libera com arquivo, e diz o que falta enquanto não há", async () => {
@@ -217,8 +213,7 @@ describe("importar o PCA do órgão", () => {
 
     // A leitura é pelo cabeçalho: o plano municipal chega como planilha de
     // planejamento, e não na ordem de colunas que a plataforma inventaria.
-    expect(await screen.findByText(/cabeçalho da primeira aba/)).toBeInTheDocument()
-    expect(screen.getByText(/PDF não é lido/)).toBeInTheDocument()
+    expect(await screen.findByText(/Colunas lidas na primeira aba/)).toBeInTheDocument()
     expect(screen.getByLabelText("Planilha do PCA").getAttribute("accept"))
       .toContain(".xlsx")
   })

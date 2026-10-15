@@ -88,7 +88,6 @@ describe("painel de previsão no PCA", () => {
     expect(await screen.findByText(/2026-0142/)).toBeInTheDocument()
     expect(screen.getByText(/1200 RESMA/)).toBeInTheDocument()
     expect(screen.getByText(/PCA 2026/)).toBeInTheDocument()
-    expect(screen.getByText(/247 itens indexados/)).toBeInTheDocument()
   })
 
   it("item fora do plano orienta e não trava", async () => {
@@ -104,7 +103,7 @@ describe("painel de previsão no PCA", () => {
     renderizar(painel())
 
     expect(await screen.findByText(/Um item não consta do plano/)).toBeInTheDocument()
-    expect(screen.getByText(/não vai travar aqui/)).toBeInTheDocument()
+    expect(screen.getByText(/Justifique no texto abaixo/)).toBeInTheDocument()
     // Continua citável: o texto sai com a justificativa entre colchetes, e é
     // travar que transformaria orientação em obstáculo.
     expect(screen.getByRole("button", { name: "Citar na seção" })).toBeEnabled()
@@ -128,10 +127,10 @@ describe("painel de previsão no PCA", () => {
     // informar o item, ou escrever a justificativa no campo, que está aberto.
     await screen.findByLabelText(/O que vai para a seção/)
     expect(screen.queryByRole("button", { name: /Citar na seção/ })).not.toBeInTheDocument()
-    expect(screen.getByText(/informe o item na linha da demanda/i)).toBeInTheDocument()
+    expect(screen.getByText(/Sem item do plano a citar/)).toBeInTheDocument()
     // O ano é dito: o plano que falta é o de 2026, e pode existir um de outro
     // exercício — que não demonstra a previsão desta contratação.
-    expect(screen.getByText(/Nenhum PCA de 2026 anexado a este órgão/)).toBeInTheDocument()
+    expect(screen.getByText(/Nenhum PCA de 2026 anexado/)).toBeInTheDocument()
   })
 
   it("o que o servidor informou não se confunde com o que a plataforma encontrou", async () => {
@@ -153,7 +152,7 @@ describe("painel de previsão no PCA", () => {
     renderizar(painel())
 
     expect(await screen.findByText("Informado por você")).toBeInTheDocument()
-    expect(screen.getByText(/A plataforma não conferiu este item/)).toBeInTheDocument()
+    expect(screen.getByText(/Não conferido pela plataforma/)).toBeInTheDocument()
     expect(screen.getByText(/Conferido no portal do município\./)).toBeInTheDocument()
     expect(
       screen.getByRole("button", { name: "Corrigir o item informado" }),
@@ -230,7 +229,7 @@ describe("painel de previsão no PCA", () => {
     )
     renderizar(painel())
 
-    expect(await screen.findByText(/escrever a seção mesmo assim/)).toBeInTheDocument()
+    expect(await screen.findByText(/Não foi possível consultar o PCA/)).toBeInTheDocument()
   })
 
   it("cada item tem a sua declaração — informar um não marca o outro", async () => {

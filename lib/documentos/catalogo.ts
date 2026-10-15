@@ -241,20 +241,20 @@ export function orientacaoDosDocumentos(
   fundamento?: FundamentoDaDispensa,
 ): string | null {
   if (modalidade === "Inexigibilidade") {
-    return "A Inexigibilidade é contratação direta por inviabilidade de competição (Art. 74 da Lei 14.133/21) e não gera edital de licitação: o processo é instruído na forma do Art. 72, com o ETP apenas se for o caso (Art. 72, I)."
+    return "Sem edital (Art. 74 da Lei 14.133/21). ETP apenas se for o caso (Art. 72, I)."
   }
   if (modalidade !== "Dispensa Art. 75" || !forma) return null
   if (forma === "DIRECT") {
     const porValor = ehDispensaPorValor(fundamento)
-      ? " Nas dispensas por valor, a lei prefere que a contratação seja precedida de aviso (Art. 75, § 3º) — a forma com disputa: sem ele, registre no processo por que não foi feito."
+      ? " Por valor, a lei prefere a disputa, precedida de aviso (Art. 75, § 3º)."
       : ""
-    return `A Dispensa Direta é contratação direta (Art. 75 da Lei 14.133/21) e não gera edital nem aviso: o processo é instruído na forma do Art. 72, com o ETP apenas se for o caso (Art. 72, I). A cotação vem marcada porque a estimativa de despesa e a justificativa de preço fazem parte da instrução (Art. 72, II e VII).${porValor}`
+    return `Sem edital nem aviso. ETP apenas se for o caso (Art. 72, I).${porValor}`
   }
   const foraDoValor =
     fundamento === "OTHER"
-      ? " A disputa é a forma usual das dispensas por valor (Art. 75, I e II); nas demais hipóteses, use-a quando o caso comportar."
+      ? " É a forma usual das dispensas por valor (Art. 75, I e II)."
       : ""
-  return `Na Dispensa com Disputa, o Aviso de Contratação Direta faz o papel do edital: divulga o objeto por no mínimo 3 dias úteis e seleciona a proposta mais vantajosa (Art. 75, § 3º). Os documentos seguem os do pregão; o ETP vem marcado, mas a lei o faculta nesta hipótese (Art. 72, I).${foraDoValor}`
+  return `O Aviso de Contratação Direta faz o papel do edital (Art. 75, § 3º). ETP facultativo (Art. 72, I).${foraDoValor}`
 }
 
 /** Reordena uma lista de tipos segundo a ordem canônica do fluxo. */

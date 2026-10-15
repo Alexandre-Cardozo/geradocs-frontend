@@ -178,7 +178,7 @@ export default function VerificacaoDFD() {
           <div className="rounded-card border border-border bg-surface px-6 py-5.5">
             <h3 className="m-0 mb-1 font-display text-lg font-bold text-text-1">Enviar DFD para Verificação</h3>
             <p className="m-0 mb-4.5 text-base text-text-3">
-              Anexe o Documento de Formalização de Demanda que será analisado pela IA. Caso já tenha enviado na criação do processo, o arquivo está disponível abaixo.
+              O DFD será analisado pela IA.
             </p>
 
             {dfdFile ? (
@@ -243,9 +243,7 @@ export default function VerificacaoDFD() {
             <IconHelp size={28} strokeWidth={1.5} />
           </div>
           <h3 className="m-0 mb-2 font-display text-xl font-bold text-text-1">Analisando o DFD...</h3>
-          <p className="m-0 mb-7 text-base text-text-3">
-            O modelo está verificando completude, conformidade e compatibilidade com o PCA vigente.
-          </p>
+          <p className="m-0 mb-7 text-base text-text-3">Completude, conformidade e aderência ao PCA.</p>
           <div className="mx-auto max-w-105">
             <ProgressBar percent={progress} label="Progresso da análise" barClasses="h-2" transition="width 0.3s" />
             <div className="mt-4 flex flex-col gap-2">
@@ -342,8 +340,7 @@ export default function VerificacaoDFD() {
             <div className="flex-[1_1_260px]">
               <div className="mb-1 font-display text-md font-bold text-text-1">Como deseja prosseguir?</div>
               <p className="m-0 text-base text-text-3">
-                O DFD foi aceito com ressalvas. Você pode corrigir os pontos apontados antes de continuar ou prosseguir
-                para o {proximoTitulo} com as informações atuais.
+                DFD aceito com ressalvas. Corrija os pontos ou siga para o {proximoTitulo}.
               </p>
             </div>
             <div className="flex shrink-0 flex-wrap gap-2.5">
@@ -405,7 +402,7 @@ export default function VerificacaoDFD() {
             </ol>
             <div className="mt-4 border-t border-border-soft pt-4">
               <p className="m-0 text-sm text-text-3">
-                A verificação do DFD é opcional. Você pode prosseguir direto ao {proximoTitulo} a qualquer momento.
+                A verificação é opcional.
               </p>
             </div>
           </div>

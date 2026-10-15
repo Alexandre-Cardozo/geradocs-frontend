@@ -41,9 +41,6 @@ export function DispensaDeSecao({
       <InfoBanner tone="info">
         <div className="font-semibold">Seção dispensada</div>
         <p className="m-0 mt-1">{secao.justificativaDispensa}</p>
-        <p className="m-0 mt-1 text-sm">
-          O documento trará esta justificativa no lugar da seção, com o fundamento citado.
-        </p>
         <div className="mt-2.5 flex flex-wrap gap-2.5">
           <Button size="sm" variant="secondary" disabled={pendente} onClick={() => setAberto(true)}>
             Editar justificativa

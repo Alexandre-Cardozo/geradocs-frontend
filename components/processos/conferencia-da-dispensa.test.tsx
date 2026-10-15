@@ -78,7 +78,7 @@ describe("conferência da dispensa", () => {
     comConferencia({ pendingLimit: true, limitAmount: null, limitSource: null, fiscalYear: 2027 })
     renderizar(<ConferenciaDaDispensa processoId={PROCESSO} />)
 
-    expect(await screen.findByText(/ainda não foram cadastrados/)).toBeInTheDocument()
+    expect(await screen.findByText(/não cadastrados/)).toBeInTheDocument()
     expect(screen.getByText(/2027/)).toBeInTheDocument()
   })
 
@@ -112,7 +112,7 @@ describe("conferência da dispensa", () => {
     )
     renderizar(<ConferenciaDaDispensa processoId={PROCESSO} />)
 
-    expect(await screen.findByText(/ainda não diz com que inciso/)).toBeInTheDocument()
+    expect(await screen.findByText(/Declare o inciso do Art. 75/)).toBeInTheDocument()
     const declarar = screen.getByRole("button", { name: "Declarar" })
     // Nasce travado com o motivo à vista.
     expect(declarar).toBeDisabled()
@@ -143,7 +143,7 @@ describe("conferência da dispensa", () => {
     // Aplicar o limite simples a um consórcio apontaria como irregular uma
     // contratação que a lei permite — e não dizer que dobrou faria o número
     // parecer errado.
-    expect(await screen.findByText(/limite em dobro \(Art. 75, § 2º\)/)).toBeInTheDocument()
+    expect(await screen.findByText(/em dobro \(Art. 75, § 2º\)/)).toBeInTheDocument()
   })
 
   it("aponta o fracionamento mesmo com o processo dentro do limite", async () => {
@@ -154,7 +154,5 @@ describe("conferência da dispensa", () => {
     // processo por vez não vê.
     expect(await screen.findByText(/já dispensou/)).toBeInTheDocument()
     expect(screen.getByText(/Art. 75, § 1º/)).toBeInTheDocument()
-    // E diz que a natureza do objeto é juízo de quem conduz os autos.
-    expect(screen.getByText(/naturezas distintas/)).toBeInTheDocument()
   })
 })

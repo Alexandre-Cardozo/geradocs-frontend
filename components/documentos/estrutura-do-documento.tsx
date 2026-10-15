@@ -49,11 +49,6 @@ export function EstruturaDoDocumento({
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-2.5 rounded-xl border border-border bg-ice p-4">
         <div className="font-display text-md font-bold text-text-1">Acrescentar seção</div>
-        <p className="m-0 text-sm text-text-3">
-          Um ETP às vezes precisa de um assunto que a lei não enumera — memória de
-          cálculo, justificativa de fornecedor exclusivo. A seção nova entra
-          ancorada em uma do catálogo, para que a numeração legal não mude.
-        </p>
         <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
           <div>
             <label htmlFor={tituloId} className="mb-1 block text-sm font-semibold text-text-2">

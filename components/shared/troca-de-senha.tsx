@@ -52,8 +52,8 @@ export function TrocaDeSenha({ provisoria }: { provisoria: boolean }) {
       <h2 className="m-0 font-display text-md font-bold text-text-1">Senha</h2>
       <p className="m-0 mt-1.5 mb-5 text-sm text-text-3">
         {provisoria
-          ? "Sua senha atual foi gerada pelo sistema e entregue por quem cadastrou seu acesso. Escolha uma senha só sua."
-          : "Trocar a senha encerra apenas a digitação atual: suas sessões abertas continuam valendo."}
+          ? "Sua senha é provisória. Escolha uma só sua."
+          : "Suas sessões abertas continuam valendo."}
       </p>
 
       <div className="grid max-w-md grid-cols-1 gap-3.5">
