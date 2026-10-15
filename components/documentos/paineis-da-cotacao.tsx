@@ -6,6 +6,7 @@ import { Button, Dropdown, FormField, InfoBanner, Input, MoneyInput, SectionBloc
 import { IconPlus, IconTrash } from "@/components/ui/icons"
 import { CaminhosDaSecao } from "@/components/documentos/caminhos-da-secao"
 import { DocumentoDaColeta } from "@/components/documentos/documento-da-coleta"
+import { AvisoDaMemoria, EstimativaDoProcesso } from "@/components/documentos/estimativa-do-processo"
 import { CampoDeFonteDePreco } from "@/components/shared/campo-de-fonte-de-preco"
 import { InlineSpinner } from "@/components/shared/estados"
 import { useToast } from "@/components/shared/providers"
@@ -15,6 +16,7 @@ import {
   useConsolidacaoDaDemanda,
   useRegistrarColeta,
   useRemoverColeta,
+  useProcesso,
 } from "@/lib/api/hooks"
 import type { ColetaDePreco, DadosDaColeta } from "@/lib/api/procurement-client"
 import { ehFonteCanonica, FONTES_DE_PRECO } from "@/lib/dominio/fontes-de-preco"
@@ -24,7 +26,6 @@ import {
   fornecedoresIdentificados,
   metodoDeclarado,
   porItem,
-  ROTULO_DO_METODO,
   textoDaAnaliseCritica,
   textoDasFontes,
   textoDaSerie,
@@ -682,13 +683,10 @@ export function PainelDoPrecoDeReferencia(props: PropsDoPainel) {
   const coletas = useColetasDoProcesso(props.processoId)
   const consolidacao = useConsolidacaoDaDemanda(props.processoId)
 
-  const declarado = metodoDeclarado(props.rascunho)
-  const [metodo, setMetodo] = useState<MetodoDeApuracao>(declarado ?? "media")
-  const [sincronizado, setSincronizado] = useState(declarado)
-  if (declarado !== sincronizado) {
-    setSincronizado(declarado)
-    if (declarado) setMetodo(declarado)
-  }
+  // O método é do processo (ADR-051 do back-end): o ETP e o TR apuram por ele.
+  const processo = useProcesso(props.processoId)
+  const estimativa = processo.data?.estimativa
+  const metodo: MetodoDeApuracao = estimativa?.metodo ?? "media"
 
   if (coletas.isPending) {
     return (
@@ -718,21 +716,6 @@ export function PainelDoPrecoDeReferencia(props: PropsDoPainel) {
           </InfoBanner>
         ) : (
           <>
-            <FormField
-              label="Método de Apuração"
-              required
-              hint="Os três que o Art. 6º da IN SEGES/ME nº 65/2021 admite."
-            >
-              <Dropdown
-                value={metodo}
-                onChange={(escolha) => setMetodo(escolha as MetodoDeApuracao)}
-                ariaLabel="Método de Apuração"
-                options={(Object.keys(ROTULO_DO_METODO) as MetodoDeApuracao[]).map((m) => ({
-                  value: m,
-                  label: ROTULO_DO_METODO[m],
-                }))}
-              />
-            </FormField>
             <div className="overflow-x-auto">
               <table className="w-full border-collapse text-sm">
                 <thead>
@@ -777,11 +760,23 @@ export function PainelDoPrecoDeReferencia(props: PropsDoPainel) {
           </>
         )}
 
+        <EstimativaDoProcesso
+          processoId={props.processoId}
+          comFonte={false}
+          legado={{ metodo: metodoDeclarado(props.rascunho) }}
+        />
+
         <Textarea
           value={props.rascunho}
           onChange={(e) => props.setRascunho(e.target.value)}
           rows={6}
           placeholder="Preencha o conteúdo desta seção..."
+        />
+        <AvisoDaMemoria
+          rascunho={props.rascunho}
+          setRascunho={props.setRascunho}
+          estimativa={estimativa}
+          comPesquisa={itens.length > 0}
         />
         <CaminhosDaSecao
           gerando={props.gerando}

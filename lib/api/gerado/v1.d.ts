@@ -676,6 +676,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/procurement-processes/{id}/price-estimation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["declarePriceEstimation"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/procurement-processes/{id}/price-quotes": {
         parameters: {
             query?: never;
@@ -1775,6 +1791,11 @@ export interface components {
             cpf: string;
             name: string;
         };
+        PriceEstimationRequest: {
+            /** @enum {string} */
+            method?: "LOWEST" | "MEAN" | "MEDIAN";
+            source?: string;
+        };
         PriceQuoteRequest: {
             /** Format: date-time */
             collectedAt: string;
@@ -1868,6 +1889,9 @@ export interface components {
             objectDescription: string;
             /** Format: uuid */
             organizationId: string;
+            /** @enum {string} */
+            priceEstimationMethod?: "LOWEST" | "MEAN" | "MEDIAN";
+            priceResearchSource?: string;
             processNumber: string;
             /** Format: int32 */
             requiredDocuments: number;
@@ -3480,6 +3504,32 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["DispensationCheckResponse"];
+                };
+            };
+        };
+    };
+    declarePriceEstimation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PriceEstimationRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ProcurementProcessResponse"];
                 };
             };
         };

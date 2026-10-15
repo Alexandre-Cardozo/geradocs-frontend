@@ -59,7 +59,7 @@ import {
   versoesDaNorma,
 } from "@/lib/api/regulation-client"
 import type { ListaProcessosParams } from "@/lib/api/client"
-import type { TipoDocumento, Tenant } from "@/lib/types"
+import type { MetodoDaEstimativa, TipoDocumento, Tenant } from "@/lib/types"
 
 /**
  * Hooks de dados — única porta de entrada das views para a camada de API.
@@ -377,6 +377,24 @@ export function useEncerrarProcesso() {
     mutationFn: (input: { processoId: string; justificativa?: string }) =>
       api.encerrarProcesso(input.processoId, input.justificativa ?? ""),
     onSuccess: (processo) => invalidarProcesso(queryClient, processo.id),
+  })
+}
+
+/**
+ * Declara a estimativa de valor do processo (ADR-051).
+ *
+ * <p>Invalida o processo inteiro: a escolha vale para ETP, TR e Cotação, e a
+ * versão do processo muda — a capa precisa da nova para editar.
+ */
+export function useDeclararEstimativa() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { processoId: string; metodo?: MetodoDaEstimativa; fonte?: string }) =>
+      api.declararEstimativa(input.processoId, { metodo: input.metodo, fonte: input.fonte }),
+    onSuccess: (processo) => {
+      queryClient.setQueryData(chaves.processo(processo.id), processo)
+      invalidarProcesso(queryClient, processo.id)
+    },
   })
 }
 

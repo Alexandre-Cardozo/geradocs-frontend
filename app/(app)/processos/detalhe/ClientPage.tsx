@@ -28,6 +28,7 @@ import {
   useSecoes,
 } from "@/lib/api/hooks"
 import { ConciliacaoDeValores } from "@/components/processos/conciliacao-de-valores"
+import { ResumoDaEstimativa } from "@/components/processos/resumo-da-estimativa"
 import { ConferenciaDaDispensa } from "@/components/processos/conferencia-da-dispensa"
 import { ConsolidacaoDaDemanda } from "@/components/processos/consolidacao-da-demanda"
 import { DfdsDoProcesso } from "@/components/processos/dfds-do-processo"
@@ -648,6 +649,7 @@ export default function HubProcesso() {
           DFD (Decreto 10.947/2022, Art. 8º, IV), declarado na abertura e apurado
           na pesquisa (Art. 23) — e eram três números soltos (§75).
         */}
+        <ResumoDaEstimativa processo={proc} />
         <ConciliacaoDeValores processoId={processoId} valorDeclarado={proc.valorEstimado} />
       </div>
 

@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { notFound, useRouter, useSearchParams } from "next/navigation"
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import { Button, ProgressBar, SectionBlock, Textarea, ValidationMsg } from "@/components/ui"
 import { IconArrowRight, IconCheckCircle, IconCheck, IconHelp, IconSave } from "@/components/ui/icons"
@@ -66,6 +66,8 @@ const ETAPA_FINAL = "__revisao__"
  */
 const PARAMETRO_DA_ETAPA_FINAL = "etapa"
 const VALOR_DA_ETAPA_FINAL = "revisao"
+/** Abre o editor na seção que tem este painel — `?painel=valor`. */
+const PARAMETRO_DO_PAINEL = "painel"
 
 export default function EditorDocumento() {
   const searchParams = useSearchParams()
@@ -104,6 +106,23 @@ export default function EditorDocumento() {
   }
 
   const lista = secoes.data ?? []
+
+  /*
+    `?painel=valor` abre na seção que tem esse painel — é por onde a capa leva
+    à estimativa de valor (ADR-051 do back-end). Só na chegada: depois, quem
+    escolhe a seção é a pessoa.
+  */
+  const painelPedido = searchParams.get(PARAMETRO_DO_PAINEL)
+  const [painelAplicado, setPainelAplicado] = useState(painelPedido == null)
+  if (!painelAplicado && secoes.isSuccess) {
+    setPainelAplicado(true)
+    const alvo = lista.find((secao) => secao.painel === painelPedido)
+    if (alvo) setActiveSection(alvo.id)
+  }
+  useEffect(() => {
+    secaoAtivaRef.current = activeSection
+  }, [activeSection])
+
   const naEtapaFinal = activeSection === ETAPA_FINAL
   const active: SecaoDocumento | undefined = lista.find((s) => s.id === activeSection)
 

@@ -17,6 +17,7 @@
 
 import type { ColetaDePreco } from "@/lib/api/procurement-client"
 import { formatBRL, formatData, parseValorBR } from "@/lib/format"
+import type { MetodoDaEstimativa } from "@/lib/types"
 
 /** O conjunto mínimo que o Art. 6º exige para média, mediana ou menor valor. */
 export const MINIMO_DE_PRECOS = 3
@@ -30,7 +31,8 @@ export const MINIMO_DE_PRECOS = 3
  */
 export const DESVIO_PARA_EXAME = 0.25
 
-export type MetodoDeApuracao = "media" | "mediana" | "menor"
+/** O mesmo tipo da estimativa do processo (ADR-051 do back-end). */
+export type MetodoDeApuracao = MetodoDaEstimativa
 
 export const ROTULO_DO_METODO: Record<MetodoDeApuracao, string> = {
   media: "Média dos preços obtidos",
@@ -287,7 +289,7 @@ export function textoDoPrecoDeReferencia(
 }
 
 /** A linha que a memória de cálculo guarda — e de onde o método volta. */
-const PREFIXO_DO_METODO = "Adotou-se como método de apuração a"
+export const PREFIXO_DO_METODO = "Adotou-se como método de apuração a"
 
 /**
  * O método escolhido, lido da memória de cálculo já gravada.

@@ -1628,6 +1628,20 @@
         "required" : [ "cpf", "name" ],
         "type" : "object"
       },
+      "PriceEstimationRequest" : {
+        "properties" : {
+          "method" : {
+            "enum" : [ "LOWEST", "MEAN", "MEDIAN" ],
+            "type" : "string"
+          },
+          "source" : {
+            "maxLength" : 500,
+            "minLength" : 0,
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
       "PriceQuoteRequest" : {
         "properties" : {
           "collectedAt" : {
@@ -1869,6 +1883,13 @@
           },
           "organizationId" : {
             "format" : "uuid",
+            "type" : "string"
+          },
+          "priceEstimationMethod" : {
+            "enum" : [ "LOWEST", "MEAN", "MEDIAN" ],
+            "type" : "string"
+          },
+          "priceResearchSource" : {
             "type" : "string"
           },
           "processNumber" : {
@@ -4468,6 +4489,43 @@
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/DispensationCheckResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "procurement-process-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{id}/price-estimation" : {
+      "put" : {
+        "operationId" : "declarePriceEstimation",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PriceEstimationRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProcurementProcessResponse"
                 }
               }
             },

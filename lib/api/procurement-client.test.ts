@@ -450,6 +450,70 @@ describe("encerrarProcessoReal", () => {
   })
 })
 
+describe("declararEstimativaReal", () => {
+  it("manda o par inteiro com os nomes do servidor e lê a estimativa de volta", async () => {
+    let corpo: Record<string, unknown> | undefined
+    servidor.use(
+      http.put(
+        `${urlDaApi}/procurement-processes/${processoApi.id}/price-estimation`,
+        async ({ request }) => {
+          corpo = (await request.json()) as Record<string, unknown>
+          return HttpResponse.json({
+            ...processoApi,
+            priceEstimationMethod: "MEDIAN",
+            priceResearchSource: "Painel de Preços",
+          })
+        },
+      ),
+    )
+    const { declararEstimativaReal } = await carregarClienteLimpo()
+
+    const processo = await declararEstimativaReal(processoApi.id, {
+      metodo: "mediana",
+      fonte: "  Painel de Preços ",
+    })
+
+    expect(corpo).toEqual({ method: "MEDIAN", source: "Painel de Preços" })
+    expect(processo.estimativa).toEqual({ metodo: "mediana", fonte: "Painel de Preços" })
+  })
+
+  it("ausente vai como nulo, e o processo sem estimativa não a inventa", async () => {
+    let corpo: Record<string, unknown> | undefined
+    servidor.use(
+      http.put(
+        `${urlDaApi}/procurement-processes/${processoApi.id}/price-estimation`,
+        async ({ request }) => {
+          corpo = (await request.json()) as Record<string, unknown>
+          return HttpResponse.json({ ...processoApi, priceEstimationMethod: null, priceResearchSource: null })
+        },
+      ),
+    )
+    const { declararEstimativaReal } = await carregarClienteLimpo()
+
+    const processo = await declararEstimativaReal(processoApi.id, { fonte: "   " })
+
+    expect(corpo).toEqual({ method: null, source: null })
+    expect(processo.estimativa).toBeUndefined()
+  })
+
+  it("só a fonte, ou só o método, chega como veio", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/${processoApi.id}`, () =>
+        HttpResponse.json({ ...processoApi, priceResearchSource: "Consórcio" }),
+      ),
+    )
+    const { obterProcesso } = await carregarClienteLimpo()
+    expect((await obterProcesso(processoApi.id)).estimativa).toEqual({ fonte: "Consórcio" })
+
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/${processoApi.id}`, () =>
+        HttpResponse.json({ ...processoApi, priceEstimationMethod: "LOWEST" }),
+      ),
+    )
+    expect((await obterProcesso(processoApi.id)).estimativa).toEqual({ metodo: "menor" })
+  })
+})
+
 describe("reabrirProcessoReal", () => {
   it("manda o motivo e o processo volta ao rascunho", async () => {
     let corpo: Record<string, unknown> | undefined

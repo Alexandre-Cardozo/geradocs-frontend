@@ -85,6 +85,22 @@ async function comCotacao(page: import("@playwright/test").Page) {
   })
 }
 
+/** O processo guarda a estimativa: o `PUT` grava e a leitura seguinte a devolve. */
+async function comEstimativaQueGrava(page: import("@playwright/test").Page) {
+  let estimativa: Record<string, unknown> = {}
+  const gravadas: unknown[] = []
+  await page.route(`${API}/procurement-processes/*`, (rota) =>
+    rota.fulfill({ json: { ...processo, ...estimativa } }),
+  )
+  await page.route(`${API}/procurement-processes/*/price-estimation`, async (rota) => {
+    const corpo = rota.request().postDataJSON() as { method: string | null; source: string | null }
+    gravadas.push(corpo)
+    estimativa = { priceEstimationMethod: corpo.method, priceResearchSource: corpo.source }
+    await rota.fulfill({ json: { ...processo, ...estimativa } })
+  })
+  return gravadas
+}
+
 async function abrir(page: import("@playwright/test").Page, secao: string) {
   await page.goto(rota(`/processos/documento?id=${processo.id}&tipo=cotacao`))
   await page.getByRole("button", { name: new RegExp(secao) }).first().click()
@@ -111,9 +127,16 @@ test.describe("pesquisa de preços", () => {
     await expect(page.getByText("R$ 20,00").first()).toBeVisible()
     await expect(page.getByText("R$ 40,00").first()).toBeVisible()
 
-    // Seção 5: o preço de referência sai do método escolhido.
+    // Seção 5: o preço de referência sai da forma de cálculo do processo
+    // (ADR-051 do back-end) — escolhida aqui, vale para o ETP e o TR.
+    const gravadas = await comEstimativaQueGrava(page)
     await page.getByRole("button", { name: /Metodologia e Preço de Referência/ }).first().click()
-    await expect(page.getByRole("button", { name: "Método de Apuração" })).toBeVisible()
+    await page.getByRole("button", { name: "Forma de Cálculo" }).click()
+    await page.getByRole("option", { name: "Mediana dos preços obtidos" }).click()
+    await expect.poll(() => gravadas).toEqual([{ method: "MEDIAN", source: null }])
+    await expect(page.getByRole("button", { name: "Forma de Cálculo" })).toHaveText(
+      /Mediana dos preços obtidos/,
+    )
   })
 
   test("o preço que destoa é apontado, e não descartado", async ({ page }) => {

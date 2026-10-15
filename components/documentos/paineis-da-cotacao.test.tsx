@@ -8,6 +8,8 @@ import {
   PainelDoPrecoDeReferencia,
 } from "@/components/documentos/paineis-da-cotacao"
 import { secoesPorTipoBase } from "@/lib/documentos"
+import { comEstimativaQueGrava } from "@/lib/teste/estimativa"
+import { processoApi } from "@/lib/teste/fixtures-api"
 import { urlDaApi } from "@/lib/teste/handlers"
 import { renderizar, screen, userEvent, waitFor } from "@/lib/teste/renderizar"
 import { servidor } from "@/lib/teste/servidor-msw"
@@ -303,34 +305,94 @@ describe("metodologia e preço de referência", () => {
     { description: "Papel A4", unit: "RESMA", total: 100, summable: true, byDepartment: [] },
   ]
 
-  it("apura pelo método escolhido e multiplica pela quantidade consolidada", async () => {
+  it("apura pela forma de cálculo do processo, e trocá-la aqui grava no processo", async () => {
     comColetas(serie)
     comConsolidacao(consolidado)
+    const gravadas = comEstimativaQueGrava({}, { documents: ["COTACAO", "ETP", "TR"] })
     renderizarPainel(PainelDoPrecoDeReferencia, "Metodologia e Preço de Referência")
 
-    // Média de 20, 30 e 40 = 30; × 100 resmas = 3.000,00 — na linha do item e
-    // no total, que aqui coincidem porque há um item só.
+    // Sem forma declarada, a média: 20, 30 e 40 = 30; × 100 resmas = 3.000,00 —
+    // na linha do item e no total, que aqui coincidem porque há um item só.
     expect(await screen.findAllByText("R$ 3.000,00")).toHaveLength(2)
+    // A escolha vale para os três documentos, e a tela diz isso.
+    expect(await screen.findByText(/Vale para Cotação, ETP e TR deste processo/)).toBeInTheDocument()
 
-    await userEvent.click(screen.getByRole("button", { name: "Método de Apuração" }))
+    await userEvent.click(screen.getByRole("button", { name: "Forma de Cálculo" }))
     await userEvent.click(await screen.findByRole("option", { name: /Menor dos preços/ }))
 
     // Menor = 20; × 100 = 2.000,00.
     expect(await screen.findAllByText("R$ 2.000,00")).toHaveLength(2)
+    expect(gravadas).toEqual([{ method: "LOWEST", source: null }])
   })
 
-  it("o método volta do texto já gravado na seção", async () => {
+  it("o método antigo, que vivia só no texto da seção, vai para o processo", async () => {
     comColetas(serie)
     comConsolidacao(consolidado)
+    const gravadas = comEstimativaQueGrava()
     renderizarPainel(
       PainelDoPrecoDeReferencia,
       "Metodologia e Preço de Referência",
       "Adotou-se como método de apuração a mediana dos preços obtidos, na forma do Art. 6º.",
     )
 
-    // A escolha não vive na memória da aba: ela é a linha do texto da seção.
-    const campo = await screen.findByRole("button", { name: "Método de Apuração" })
-    expect(campo).toHaveTextContent("Mediana dos preços obtidos")
+    const campo = await screen.findByRole("button", { name: "Forma de Cálculo" })
+    await waitFor(() => expect(campo).toHaveTextContent("Mediana dos preços obtidos"))
+    expect(gravadas).toEqual([{ method: "MEDIAN", source: null }])
+  })
+
+  it("com documento já gerado, avisa que a troca pede retificação antes de gravar", async () => {
+    comColetas(serie)
+    comConsolidacao(consolidado)
+    servidor.use(
+      http.get(`${urlDaApi}/generated-documents`, () =>
+        HttpResponse.json([
+          {
+            processId: processoApi.id,
+            processNumber: processoApi.processNumber,
+            processObject: processoApi.objectDescription,
+            documentType: "ETP",
+            documentVersion: 1,
+            generatedAt: "2026-10-01T10:00:00-03:00",
+            files: [],
+          },
+        ]),
+      ),
+    )
+    const gravadas = comEstimativaQueGrava({ priceEstimationMethod: "MEAN" })
+    renderizarPainel(PainelDoPrecoDeReferencia, "Metodologia e Preço de Referência")
+
+    await userEvent.click(await screen.findByRole("button", { name: "Forma de Cálculo" }))
+    await userEvent.click(await screen.findByRole("option", { name: /Mediana dos preços/ }))
+
+    expect(await screen.findByText(/ETP já foi gerado/)).toBeInTheDocument()
+    expect(gravadas).toEqual([])
+
+    await userEvent.click(screen.getByRole("button", { name: "Manter a Atual" }))
+    expect(screen.queryByText(/ETP já foi gerado/)).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole("button", { name: "Forma de Cálculo" }))
+    await userEvent.click(await screen.findByRole("option", { name: /Mediana dos preços/ }))
+    await userEvent.click(await screen.findByRole("button", { name: "Trocar a Forma de Cálculo" }))
+
+    await waitFor(() => expect(gravadas).toEqual([{ method: "MEDIAN", source: null }]))
+  })
+
+  it("a memória que cita outro método é posta em dia", async () => {
+    comColetas(serie)
+    comConsolidacao(consolidado)
+    comEstimativaQueGrava({ priceEstimationMethod: "MEDIAN" })
+    const setRascunho = renderizarPainel(
+      PainelDoPrecoDeReferencia,
+      "Metodologia e Preço de Referência",
+      "Adotou-se como método de apuração a média dos preços obtidos, na forma do Art. 6º.",
+    )
+
+    expect(await screen.findByText(/cita outra forma de cálculo/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: "Atualizar a Memória" }))
+
+    expect(setRascunho).toHaveBeenCalledWith(
+      "Adotou-se como método de apuração a mediana dos preços obtidos, na forma do Art. 6º.",
+    )
   })
 
   it("escreve a memória de cálculo com o método e o total", async () => {
