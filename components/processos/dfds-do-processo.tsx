@@ -71,10 +71,6 @@ export function DfdsDoProcesso({ processoId }: { processoId: string }) {
       <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="m-0 font-display text-base font-bold text-text-1">DFDs do processo ({dfds.data.length})</h3>
-          <p className="m-0 mt-1 text-sm text-text-3">
-            Um por secretaria que formalizou a demanda. Podem ser registrados a qualquer momento do processo, com ou sem
-            o documento assinado em mãos.
-          </p>
         </div>
         {!registrando && (
           <Button
@@ -99,7 +95,7 @@ export function DfdsDoProcesso({ processoId }: { processoId: string }) {
       {dfds.data.length === 0 ? (
         !registrando && (
           <p className="m-0 rounded-lg border border-dashed border-border bg-surface px-3.5 py-3 text-sm text-text-muted">
-            Nenhum DFD registrado. É o primeiro passo: sem um DFD, não há a que vincular os itens da demanda.
+            Nenhum DFD registrado.
           </p>
         )
       ) : (
@@ -150,7 +146,7 @@ function RegistrarDfd({
       */}
       <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="min-w-0">
-          <FormField label="Secretaria que formalizou" required hint="Quem pediu a contratação.">
+          <FormField label="Secretaria que formalizou" required>
             <Dropdown
               value={secretaria}
               onChange={setSecretaria}
@@ -173,7 +169,7 @@ function RegistrarDfd({
           </FormField>
         </div>
         <div className="min-w-0">
-          <FormField label="Arquivo assinado" hint="Opcional — pode ser anexado depois.">
+          <FormField label="Arquivo assinado" hint="Opcional.">
             <div className="flex items-center gap-2.5">
               <input
                 ref={campoDeArquivo}
@@ -204,7 +200,7 @@ function RegistrarDfd({
           </FormField>
         </div>
         <div className="min-w-0">
-          <FormField label="Data prevista de conclusão" hint="Da contratação, como o DFD informa.">
+          <FormField label="Data prevista de conclusão">
             <Input
               type="date"
               value={dataPrevista}

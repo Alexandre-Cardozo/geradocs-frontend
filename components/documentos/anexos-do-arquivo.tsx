@@ -30,7 +30,7 @@ export function AnexosDoArquivo({ processoId, tipo }: { processoId: string; tipo
     <>
       {incluidos.length > 0 && (
         <InfoBanner tone="info">
-          O arquivo do {tipo} sai com os anexos ao final, cada um em folha nova:{" "}
+          Anexos ao final do {tipo}:{" "}
           <strong>
             {incluidos
               .map((a) => `Anexo ${a.numero} — ${CATALOGO[a.tipo].titulo} (v${a.versao})`)
@@ -41,11 +41,8 @@ export function AnexosDoArquivo({ processoId, tipo }: { processoId: string; tipo
       )}
       {faltando.length > 0 && (
         <InfoBanner tone="warning">
-          Ainda sem versão gerada:{" "}
-          <strong>{faltando.map((t) => CATALOGO[t].titulo).join(" e ")}</strong>.{" "}
-          {varios ? "Ficam" : "Fica"} de fora do arquivo do {tipo} — gere{" "}
-          {varios ? "os anexos" : "o anexo"} antes, ou gere o {tipo} de novo depois, para que ele
-          saia completo.
+          Fora do arquivo por ainda não {varios ? "terem" : "ter"} versão gerada:{" "}
+          <strong>{faltando.map((t) => CATALOGO[t].titulo).join(" e ")}</strong>.
         </InfoBanner>
       )}
     </>

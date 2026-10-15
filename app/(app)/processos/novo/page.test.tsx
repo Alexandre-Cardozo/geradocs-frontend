@@ -50,10 +50,10 @@ describe("novo processo: a secretaria requisitante", () => {
     renderizar(<NovoProcesso />)
     await irParaIdentificacao()
 
-    expect(await screen.findByText(/ainda não tem secretaria cadastrada/)).toBeInTheDocument()
+    expect(await screen.findByText(/Nenhuma secretaria cadastrada/)).toBeInTheDocument()
     // Um servidor não cadastra secretaria: mandá-lo a Configurações sozinho
     // seria mandá-lo a uma tela que ele não acessa.
-    expect(screen.getByText(/Peça ao coordenador do órgão/)).toBeInTheDocument()
+    expect(screen.getByText(/Peça ao coordenador/)).toBeInTheDocument()
     expect(screen.queryByText(/Selecione a secretaria requisitante para continuar/))
       .not.toBeInTheDocument()
   })
@@ -86,7 +86,7 @@ describe("novo processo: a secretaria requisitante", () => {
     expect(
       await screen.findByRole("option", { name: "Secretaria de Meio Ambiente" }),
     ).toBeInTheDocument()
-    expect(screen.queryByText(/ainda não tem secretaria cadastrada/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Nenhuma secretaria cadastrada/)).not.toBeInTheDocument()
   })
 
   it("escolhida a secretaria, o resumo lateral deixa de dizer 'Não definido'", async () => {

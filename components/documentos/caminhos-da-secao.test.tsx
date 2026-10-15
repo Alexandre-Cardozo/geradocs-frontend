@@ -35,12 +35,12 @@ describe("caminhos da seção", () => {
 
     const botao = await screen.findByRole("button", { name: /Gerar com IA/ })
     await waitFor(() => expect(botao).toBeDisabled())
-    expect(screen.getByText(/não tem modelo de IA configurado/)).toBeInTheDocument()
+    expect(screen.getByText(/Nenhum modelo de IA configurado/)).toBeInTheDocument()
     // O guarda-corpo nº 7: motivo desenhado, mas não anunciado, é motivo que só
     // existe para quem enxerga a tela.
     const descrito = botao.getAttribute("aria-describedby")
     expect(document.getElementById(descrito as string)).toHaveTextContent(
-      /não tem modelo de IA configurado/,
+      /Nenhum modelo de IA configurado/,
     )
     expect(screen.getByText("Indisponível")).toBeInTheDocument()
   })
@@ -56,13 +56,13 @@ describe("caminhos da seção", () => {
     expect(screen.queryByRole("button", { name: "Escrever agora" })).not.toBeInTheDocument()
   })
 
-  it("com modelo configurado, a IA fica disponível e diz quem responde pelo texto", async () => {
+  it("com modelo configurado, a IA fica disponível e pede revisão", async () => {
     comIa(true)
     const { gerar } = renderizarCaminhos()
 
     const botao = await screen.findByRole("button", { name: /Gerar com IA/ })
     await waitFor(() => expect(botao).toBeEnabled())
-    expect(screen.getByText(/quem responde pelo texto é quem assina/)).toBeInTheDocument()
+    expect(screen.getByText(/Revise antes de salvar/)).toBeInTheDocument()
     expect(screen.queryByText("Indisponível")).not.toBeInTheDocument()
 
     await userEvent.click(botao)
@@ -77,7 +77,7 @@ describe("caminhos da seção", () => {
     // Habilitar por otimismo devolveria exatamente o 503 que este passo existe
     // para evitar.
     expect(screen.getByRole("button", { name: /Gerar com IA/ })).toBeDisabled()
-    expect(screen.getByText(/Verificando se esta instalação/)).toBeInTheDocument()
+    expect(screen.getByText(/Verificando a IA/)).toBeInTheDocument()
   })
 
   it("gerando em andamento, o botão diz isso e não aceita segundo clique", async () => {

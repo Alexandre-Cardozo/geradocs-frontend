@@ -95,14 +95,14 @@ describe("fornecedores e fontes consultadas", () => {
     comColetas([coleta("Papel A4", "Base nacional de notas fiscais eletrônicas", 24)])
     renderizarPainel(PainelDasFontes, "Fornecedores e Fontes Consultadas")
 
-    expect(await screen.findByText(/Art. 5º, § 1º da IN SEGES\/ME nº 65\/2021/)).toBeInTheDocument()
+    expect(await screen.findByText(/Nenhuma fonte prioritária usada/)).toBeInTheDocument()
   })
 
   it("sem coleta, manda registrar em vez de pedir uma lista digitada à parte", async () => {
     comColetas([])
     renderizarPainel(PainelDasFontes, "Fornecedores e Fontes Consultadas")
 
-    expect(await screen.findByText(/Nenhum preço coletado ainda/)).toBeInTheDocument()
+    expect(await screen.findByText(/Nenhum preço coletado/)).toBeInTheDocument()
     expect(
       screen.queryByRole("button", { name: /Escrever a partir das fontes/ }),
     ).not.toBeInTheDocument()
@@ -272,7 +272,7 @@ describe("análise crítica", () => {
     ])
     renderizarPainel(PainelDaAnaliseCritica, "Análise Crítica dos Preços Obtidos")
 
-    expect(await screen.findByText(/não os descarta/)).toBeInTheDocument()
+    expect(await screen.findByText(/Mantenha-os ou desconsidere-os/)).toBeInTheDocument()
   })
 
   it("avisa da série curta e escreve a análise", async () => {
@@ -282,7 +282,7 @@ describe("análise crítica", () => {
       "Análise Crítica dos Preços Obtidos",
     )
 
-    expect(await screen.findByText(/§ 5º admite menos apenas mediante justificativa/)).toBeInTheDocument()
+    expect(await screen.findByText(/Item com menos de três preços/)).toBeInTheDocument()
     await userEvent.click(screen.getByRole("button", { name: /Escrever a análise/ }))
     expect(setRascunho.mock.calls[0]?.[0]).toContain("Art. 6º da IN SEGES/ME nº 65/2021")
   })
@@ -291,7 +291,7 @@ describe("análise crítica", () => {
     comColetas([])
     renderizarPainel(PainelDaAnaliseCritica, "Análise Crítica dos Preços Obtidos")
 
-    expect(await screen.findByText(/A análise crítica compara os preços obtidos/)).toBeInTheDocument()
+    expect(await screen.findByText(/Nenhum preço coletado/)).toBeInTheDocument()
   })
 })
 
@@ -315,7 +315,7 @@ describe("metodologia e preço de referência", () => {
     // na linha do item e no total, que aqui coincidem porque há um item só.
     expect(await screen.findAllByText("R$ 3.000,00")).toHaveLength(2)
     // A escolha vale para os três documentos, e a tela diz isso.
-    expect(await screen.findByText(/Vale para Cotação, ETP e TR deste processo/)).toBeInTheDocument()
+    expect(await screen.findByText(/Vale para Cotação, ETP e TR/)).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole("button", { name: "Forma de Cálculo" }))
     await userEvent.click(await screen.findByRole("option", { name: /Menor dos preços/ }))
@@ -416,6 +416,6 @@ describe("metodologia e preço de referência", () => {
     comColetas([])
     renderizarPainel(PainelDoPrecoDeReferencia, "Metodologia e Preço de Referência")
 
-    expect(await screen.findByText(/O preço de referência sai da série da pesquisa/)).toBeInTheDocument()
+    expect(await screen.findByText(/Nenhum preço coletado/)).toBeInTheDocument()
   })
 })

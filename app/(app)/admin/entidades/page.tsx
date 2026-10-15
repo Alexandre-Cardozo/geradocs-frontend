@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { Button, Dropdown, FormField, Input, InfoBanner, Tag, Toggle } from "@/components/ui";
+import { Button, Dropdown, FormField, Input, Tag, Toggle } from "@/components/ui";
 import { IconBuilding, IconPlus, IconTrash } from "@/components/ui/icons";
 import { EmptyState, ErrorState, SkeletonRows } from "@/components/shared/estados";
 import { Th } from "@/components/shared/tabela";
@@ -83,7 +83,7 @@ export default function AdminEntidades() {
         <div>
           <h1 className="m-0 font-display text-2xl font-extrabold tracking-tight text-text-1">Entidades</h1>
           <p className="m-0 mt-1 text-md text-text-3">
-            Cadastre as entidades clientes do GeraDocs — prefeituras, câmaras, autarquias e consórcios.
+            Prefeituras, câmaras, autarquias e consórcios clientes.
           </p>
         </div>
         <Button icon={<IconPlus size={14} strokeWidth={2.5} />} onClick={() => setNovo((v) => !v)}>
@@ -100,7 +100,7 @@ export default function AdminEntidades() {
               required
               hint={
                 erroDoNome ??
-                "É o que a plataforma precisa para criar a entidade. O restante — secretarias, timbre e PCA — o coordenador configura depois."
+                "O restante o coordenador configura depois."
               }
             >
               <Input
@@ -116,7 +116,7 @@ export default function AdminEntidades() {
             </FormField>
             {/* Perguntado, e não assumido: sem este campo o servidor grava toda
                 entidade como prefeitura. */}
-            <FormField label="Tipo" required hint="O que a entidade é.">
+            <FormField label="Tipo" required>
               <Dropdown
                 value={tipo}
                 onChange={(v) => setTipo(v as TipoEntidade)}
@@ -138,8 +138,7 @@ export default function AdminEntidades() {
                 label="Qualificada como agência executiva"
               />
               <p className="m-0 mt-1 text-xs text-text-3">
-                Dobra os limites de dispensa em razão do valor (Art. 75, § 2º, Lei 14.133/21). Marque apenas se a
-                qualificação existir de fato.
+                Dobra os limites de dispensa por valor (Art. 75, § 2º).
               </p>
             </div>
           )}
@@ -161,10 +160,6 @@ export default function AdminEntidades() {
         </div>
       )}
 
-      <InfoBanner tone="info" className="mb-4">
-        Os servidores de cada entidade são cadastrados em <strong>Servidores</strong>. A configuração da entidade
-        (timbre, secretarias e PCA) é feita pelo respectivo coordenador em Configurações.
-      </InfoBanner>
 
       <div className="overflow-hidden rounded-card border border-border bg-surface">
         {entidades.isPending && <SkeletonRows rows={4} />}

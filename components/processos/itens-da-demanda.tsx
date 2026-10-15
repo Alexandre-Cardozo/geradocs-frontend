@@ -137,10 +137,6 @@ export function ItensDaDemanda({ processoId }: { processoId: string }) {
           <h3 className="m-0 font-display text-base font-bold text-text-1">
             Itens da demanda ({vinculados.length})
           </h3>
-          <p className="m-0 mt-1 text-sm text-text-3">
-            Cada item pertence ao DFD em que a secretaria o pediu. É esse vínculo que responde de
-            onde veio cada quantidade da consolidação.
-          </p>
         </div>
         {registrados.length > 0 && !formularioAberto && (
           <Button
@@ -163,8 +159,7 @@ export function ItensDaDemanda({ processoId }: { processoId: string }) {
           secretaria o pediu, que é a pergunta que a consolidação responde.
         */
         <p className="m-0 rounded-lg border border-dashed border-border bg-surface px-3.5 py-3 text-sm text-text-muted">
-          Registre um DFD acima para poder cadastrar itens — todo item precisa dizer em qual DFD
-          ele foi pedido.
+          Registre um DFD para cadastrar itens.
         </p>
       ) : (
         <>
@@ -344,20 +339,13 @@ function FormularioDoItem({
         <FormField label="Quantidade" required>
           <QuantityInput value={quantidade} onChange={setQuantidade} />
         </FormField>
-        <FormField
-          label="Valor unitário"
-          hint="Opcional. Informado, é dele que a Estimativa do Valor do ETP sai calculada."
-        >
+        <FormField label="Valor unitário" hint="Opcional.">
           <MoneyInput value={valorUnitario} onChange={setValorUnitario} />
         </FormField>
       </div>
 
       <div className="mt-2.5 max-w-md">
-        <FormField
-          label="DFD em que foi pedido"
-          required
-          hint="É o documento assinado que responde por esta quantidade."
-        >
+        <FormField label="DFD em que foi pedido" required>
           <Dropdown
             value={dfdId}
             onChange={setDfdId}

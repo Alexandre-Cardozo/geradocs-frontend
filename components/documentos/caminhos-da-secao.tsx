@@ -38,10 +38,10 @@ export function CaminhosDaSecao({
   // Enquanto a resposta não chega, o botão fica desabilitado com o motivo. O
   // contrário — habilitar por otimismo — devolveria o clique que dá erro.
   const motivo = ia.isPending
-    ? "Verificando se esta instalação tem modelo de IA configurado..."
+    ? "Verificando a IA..."
     : ia.data === true
-      ? "A IA redige um rascunho com base no DFD, no PCA e nos dados do processo. Você revisa, corrige e assina — quem responde pelo texto é quem assina."
-      : "Esta instalação não tem modelo de IA configurado. Peça a quem administra a plataforma para configurar um; até lá, escrever à mão preenche a seção por inteiro."
+      ? "Rascunho com base no DFD, no PCA e no processo. Revise antes de salvar."
+      : "Nenhum modelo de IA configurado nesta instalação."
 
   return (
     <div className="flex flex-col gap-2 rounded-xl border border-border bg-ice px-4 py-3.5">

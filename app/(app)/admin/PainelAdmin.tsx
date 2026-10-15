@@ -116,9 +116,6 @@ export default function PainelAdmin() {
       <div className="mt-6 overflow-hidden rounded-card border border-border bg-surface">
         <div className="border-b border-border-soft px-5 py-4">
           <h3 className="m-0 font-display text-lg font-bold text-text-1">Entidades</h3>
-          <p className="m-0 mt-0.5 text-sm text-text-muted">
-            Clique numa entidade para ver os servidores cadastrados nela.
-          </p>
         </div>
         {entidades.isPending && <SkeletonRows rows={3} />}
         {entidades.isError && <ErrorState onRetry={() => void entidades.refetch()} />}

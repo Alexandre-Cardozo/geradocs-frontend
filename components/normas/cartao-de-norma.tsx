@@ -129,8 +129,8 @@ export function CartaoDeNorma({ norma, coordenador }: { norma: Norma; coordenado
 
       {!norma.arquivo.textoDisponivel && (
         <InfoBanner tone="warning" className="mt-3">
-          Não há texto legível neste arquivo — parece um PDF digitalizado. A IA não vai conseguir lê-lo.
-          {coordenador ? " Envie a versão com texto (ou um TXT) em “Trocar arquivo”." : ""}
+          Arquivo sem texto legível (PDF digitalizado?): a IA não consegue lê-lo.
+          {coordenador ? " Envie uma versão com texto." : ""}
         </InfoBanner>
       )}
 
@@ -205,7 +205,7 @@ export function CartaoDeNorma({ norma, coordenador }: { norma: Norma; coordenado
       {painel === "arquivo" && (
         <div className="mt-4 flex flex-col gap-3 border-t border-border pt-4">
           <p className="m-0 text-sm text-text-3">
-            O arquivo novo passa a ser o vigente. O atual continua guardado como versão {norma.arquivo.versao}.
+            O atual fica guardado como versão {norma.arquivo.versao}.
           </p>
           <FileUpload
             file={nomeDoArquivo}
@@ -229,8 +229,7 @@ export function CartaoDeNorma({ norma, coordenador }: { norma: Norma; coordenado
       {painel === "revogar" && (
         <div className="mt-4 flex flex-col gap-3 border-t border-border pt-4">
           <p className="m-0 text-sm text-text-3">
-            A norma revogada continua no acervo, marcada: um documento gerado antes pode tê-la citado. Ela só
-            deixa de embasar o que vier depois.
+            A norma continua no acervo, marcada como revogada.
           </p>
           <Textarea
             value={texto}
@@ -252,8 +251,7 @@ export function CartaoDeNorma({ norma, coordenador }: { norma: Norma; coordenado
       {painel === "excluir" && (
         <div className="mt-4 flex flex-col gap-3 border-t border-border pt-4">
           <p className="m-0 text-sm text-text-3">
-            Excluir é para o cadastro feito por engano. Se a norma deixou de valer, <strong>revogue</strong>{" "}
-            em vez de excluir. A justificativa fica registrada na trilha.
+            Só para cadastro feito por engano. Se deixou de valer, <strong>revogue</strong>.
           </p>
           <Textarea
             value={texto}

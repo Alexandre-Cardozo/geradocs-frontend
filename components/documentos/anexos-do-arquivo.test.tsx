@@ -40,7 +40,7 @@ describe("anexos do arquivo do Edital", () => {
 
     expect(await screen.findByText(/Anexo I — Termo de Referência \(v2\)/)).toBeInTheDocument()
     expect(screen.getByText("Minuta de Contrato")).toBeInTheDocument()
-    expect(screen.getByText(/Fica de fora do arquivo do Edital/)).toBeInTheDocument()
+    expect(screen.getByText(/Fora do arquivo por ainda não ter versão gerada/)).toBeInTheDocument()
   })
 
   it("com os dois gerados, não há aviso de falta", async () => {
@@ -64,7 +64,7 @@ describe("anexos do arquivo do Edital", () => {
     renderizar(<AnexosDoArquivo processoId={processoApi.id} tipo="Edital" />)
 
     expect(await screen.findByText("Termo de Referência e Minuta de Contrato")).toBeInTheDocument()
-    expect(screen.getByText(/Ficam de fora/)).toBeInTheDocument()
-    expect(screen.queryByText(/sai com os anexos/)).not.toBeInTheDocument()
+    expect(screen.getByText(/não terem versão gerada/)).toBeInTheDocument()
+    expect(screen.queryByText(/Anexos ao final/)).not.toBeInTheDocument()
   })
 })

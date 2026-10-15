@@ -56,10 +56,7 @@ export function PainelRetificacao({
         <div className="font-display text-md font-bold text-text-1">
           Retificar — gera a versão {versaoAtual + 1}
         </div>
-        <p className="m-0 mt-0.5 text-sm text-text-3">
-          A versão atual fica no histórico. O documento novo sai marcado como
-          RETIFICADO, no título e na listagem.
-        </p>
+        <p className="m-0 mt-0.5 text-sm text-text-3">A versão atual fica no histórico.</p>
       </div>
 
       <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">

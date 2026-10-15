@@ -89,7 +89,7 @@ test.describe("liberdade no fluxo do processo", () => {
 
     // O arquivo anexado ao processo diz uma coisa e a tela mostra outra: o que
     // não pode é ninguém avisar.
-    await expect(page.getByText(/Há alterações depois da versão gerada/)).toBeVisible()
+    await expect(page.getByText(/Alterado após a última geração/)).toBeVisible()
   })
 
   test("o atalho de gerar leva à prévia, e não gera na hora", async ({ page }) => {

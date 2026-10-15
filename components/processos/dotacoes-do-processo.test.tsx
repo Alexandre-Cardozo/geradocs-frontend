@@ -42,7 +42,7 @@ describe("dotações do processo", () => {
     comDotacoes([])
     renderizar(<DotacoesDoProcesso processoId={PROCESSO} valorEstimado={1250000} />)
 
-    expect(await screen.findByText(/Art. 150 da Lei 14.133\/21/)).toBeInTheDocument()
+    expect(await screen.findByText(/Art. 150, Lei 14.133\/21/)).toBeInTheDocument()
   })
 
   it("mostra o crédito e o quanto ainda falta para cobrir a despesa", async () => {

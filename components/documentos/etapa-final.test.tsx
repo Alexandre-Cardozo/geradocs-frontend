@@ -60,7 +60,7 @@ describe("etapa final do documento", () => {
 
     const gerar = await screen.findByRole("button", { name: /Finalizar e Gerar/ })
     expect(gerar).toBeDisabled()
-    expect(screen.getByText(/Conclua as seções obrigatórias/)).toBeInTheDocument()
+    expect(screen.getByText(/Seções obrigatórias pendentes/)).toBeInTheDocument()
     expect(screen.getByText(/Seção 13/)).toBeInTheDocument()
     // Guarda-corpo nº 7: motivo desenhado e não anunciado só existe para quem
     // enxerga a tela.
@@ -88,7 +88,7 @@ describe("etapa final do documento", () => {
 
     // Sumir sem registro é o que o Art. 18, § 2º não aceita — mas travar aqui
     // transformaria orientação em obstáculo.
-    expect(await screen.findByText(/ficarão de fora do documento/)).toBeInTheDocument()
+    expect(await screen.findByText(/Em branco e sem dispensa/)).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /Finalizar e Gerar/ })).toBeEnabled()
   })
 
@@ -99,7 +99,7 @@ describe("etapa final do documento", () => {
     )
 
     await userEvent.click(await screen.findByRole("button", { name: /Regerar/ }))
-    expect(screen.getByText(/documento gerado anteriormente será/)).toBeInTheDocument()
+    expect(screen.getByText(/gerado anteriormente/)).toBeInTheDocument()
     expect(gerar).not.toHaveBeenCalled()
 
     await userEvent.click(screen.getByRole("button", { name: /Confirmar e Regerar/ }))

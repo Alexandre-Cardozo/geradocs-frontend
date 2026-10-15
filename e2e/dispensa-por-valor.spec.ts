@@ -107,7 +107,7 @@ test.describe("dispensa em razão do valor", () => {
 
     await page.goto(rota(`/processos/detalhe?id=${processo.id}`))
 
-    await expect(page.getByText(/ainda não diz com que inciso/)).toBeVisible()
+    await expect(page.getByText(/Declare o inciso do Art. 75/)).toBeVisible()
     // Nasce travado: declarar sem escolher seria declarar o quê?
     await expect(page.getByRole("button", { name: "Declarar" })).toBeDisabled()
   })

@@ -1,6 +1,5 @@
 "use client"
 
-import { InfoBanner } from "@/components/ui"
 import { ImportarPca } from "@/components/configuracoes/importar-pca"
 import { anoBrasilia } from "@/lib/format"
 
@@ -25,12 +24,6 @@ export default function Pca() {
       <div className="flex flex-col gap-5">
         <ImportarPca anos={anosPCA} />
 
-        <InfoBanner tone="info">
-          O PCA importado aqui é onde a plataforma procura ao montar a seção do{" "}
-          <strong>inciso II do ETP</strong> (Art. 18, § 1º, II). A busca é por código e por termos
-          do item — determinística, para que quem lê a seção possa conferir por que aquele item foi
-          apontado.
-        </InfoBanner>
       </div>
     </div>
   )

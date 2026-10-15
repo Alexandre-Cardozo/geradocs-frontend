@@ -136,7 +136,7 @@ test.describe("dotação orçamentária", () => {
     await page.goto(rota(`/processos/documento?id=${processo.id}&tipo=edital`))
     await page.getByRole("button", { name: /Da Dotação Orçamentária/ }).first().click()
 
-    await expect(page.getByText(/Art. 150 da Lei 14.133\/21/)).toBeVisible()
+    await expect(page.getByText(/Nenhuma dotação declarada/).first()).toBeVisible()
     // Sem crédito não há rascunho a montar: o parágrafo afirma de onde sai o
     // dinheiro.
     await expect(

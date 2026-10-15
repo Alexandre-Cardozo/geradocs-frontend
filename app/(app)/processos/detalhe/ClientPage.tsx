@@ -485,7 +485,6 @@ export default function HubProcesso() {
             ) : (
               <div className="mt-3 max-w-xl">
                 <label className="mb-1 block text-sm font-semibold text-text-2">Descrição do Processo</label>
-                <p className="mb-1.5 text-xs text-text-muted">Nomenclatura que identifica o processo no painel e nas listagens.</p>
                 <Textarea value={objeto} onChange={(e) => setObjeto(e.target.value)} rows={2} />
               </div>
             )}
@@ -547,18 +546,16 @@ export default function HubProcesso() {
                         {impacto.entram.map((t) => CATALOGO[t].titulo).join(", ")}.
                       </>
                     ) : (
-                      "Nenhum documento novo: o processo já tem os que a modalidade exige."
+                      "Nenhum documento novo."
                     )}
                   </li>
                   {impacto.naoPrevistos.length > 0 && (
                     <li>
-                      <strong>Continuam no processo, embora a nova modalidade não os preveja:</strong>{" "}
-                      {impacto.naoPrevistos.map((t) => CATALOGO[t].titulo).join(", ")}
-                      {impacto.jaGeradosNaoPrevistos.length > 0 && " — os já gerados seguem no acervo"}. Não são
-                      cobrados no encerramento; retire-os se não forem usados.
+                      <strong>Continuam, sem serem exigidos:</strong>{" "}
+                      {impacto.naoPrevistos.map((t) => CATALOGO[t].titulo).join(", ")}. Retire-os se não forem
+                      usados.
                     </li>
                   )}
-                  <li>Nada do que já está marcado ou elaborado sai do processo.</li>
                 </ul>
               </InfoBanner>
             )}
@@ -622,7 +619,6 @@ export default function HubProcesso() {
               </dd>
             ) : (
               <dd className="m-0 mt-1.5 max-w-2xl">
-                <p className="mb-1.5 text-xs text-text-muted">Objeto da contratação em si — trabalha junto com o DFD e alimenta as seções do ETP.</p>
                 <Textarea
                   value={objetoDemanda}
                   onChange={(e) => setObjetoDemanda(e.target.value)}
@@ -684,9 +680,6 @@ export default function HubProcesso() {
       <div className="mb-6">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h2 className="m-0 font-display text-lg font-bold text-text-1">Demanda Consolidada</h2>
-          <span className="text-sm text-text-3">
-            Alimenta o painel de quantidades do ETP e a Cotação.
-          </span>
         </div>
         {/*
           Um cartão só, e não três empilhados. As três partes respondem a uma
@@ -717,7 +710,7 @@ export default function HubProcesso() {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <div className="min-w-0">
           <h2 className="m-0 font-display text-lg font-bold text-text-1">Documentos do Processo</h2>
-          <span className="text-sm text-text-3">Elabore na ordem indicada — cada etapa fundamenta a seguinte.</span>
+          <span className="text-sm text-text-3">Elabore na ordem indicada.</span>
         </div>
         {/*
           A juntada só existe com documento gerado: nada é gerado nela (ADR-048).
@@ -791,7 +784,7 @@ export default function HubProcesso() {
 
       {proc.documentos.length === 0 && (
         <InfoBanner tone="info" className="mt-4">
-          Nenhum documento solicitado para este processo. Adicione um documento acima para começar.
+          Nenhum documento no processo. Adicione um acima.
         </InfoBanner>
       )}
 
@@ -836,8 +829,7 @@ export default function HubProcesso() {
 
       {proc.status === "concluido" && (
         <InfoBanner tone="success" className="mt-6">
-          Processo encerrado. Os documentos estão no repositório, prontos para protocolo no sistema
-          administrativo da entidade.
+          Processo encerrado. Os documentos estão prontos para protocolo.
         </InfoBanner>
       )}
 

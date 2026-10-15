@@ -14,7 +14,6 @@ import {
   obrigatoriasPendentes,
   podeGerar,
 } from "@/lib/dominio"
-import { CATALOGO } from "@/lib/documentos"
 import {
   ESCOLHA_INICIAL,
   elaboracaoDe,
@@ -70,7 +69,6 @@ export function EtapaFinal({
     if (elaboracaoOk) onGerar(regerar, elaboracaoDe(escolha, tipo))
   }
 
-  const meta = CATALOGO[tipo]
   const pendentes = obrigatoriasPendentes(secoes)
   const pronto = podeGerar(secoes)
   const lacunas = dispensadasSemJustificativa(secoes)
@@ -80,14 +78,12 @@ export function EtapaFinal({
     <div className="flex flex-col gap-4">
       {jaGerado && confirmarRegerar && (
         <InfoBanner tone="warning">
-          Ao regerar o {tipo}, o documento gerado anteriormente será <strong>substituído</strong>{" "}
-          por esta nova versão.
+          A nova versão <strong>substitui</strong> o {tipo} gerado anteriormente.
         </InfoBanner>
       )}
       {!jaGerado && !pronto && (
         <InfoBanner tone="warning">
-          Conclua as seções obrigatórias para gerar o {meta.titulo}. Faltam:{" "}
-          <strong>{pendentes.map((s) => s.titulo).join(", ")}</strong>.
+          Seções obrigatórias pendentes: <strong>{pendentes.map((s) => s.titulo).join(", ")}</strong>.
         </InfoBanner>
       )}
 
@@ -104,17 +100,15 @@ export function EtapaFinal({
 
       {lacunas.length > 0 && (
         <InfoBanner tone="info">
-          Estas seções ficarão de fora do documento sem qualquer registro:{" "}
-          <strong>{lacunas.map((s) => s.titulo).join(", ")}</strong>. Dispense-as com justificativa
-          para que o documento diga que foram dispensadas — é o que o Art. 18, § 2º pede.
+          Em branco e sem dispensa: <strong>{lacunas.map((s) => s.titulo).join(", ")}</strong>.
+          Dispense-as com justificativa (Art. 18, § 2º).
         </InfoBanner>
       )}
 
       <div className="flex flex-wrap items-center justify-end gap-2.5">
-        <p id="motivo-da-geracao" className={pronto ? "sr-only" : "m-0 flex-1 text-xs text-text-muted"}>
-          {pronto
-            ? "Tudo certo para gerar."
-            : "Faltam seções obrigatórias: conclua-as ou dispense as dispensáveis com justificativa."}
+        {/* O motivo já está no aviso acima; aqui é só para o leitor de tela. */}
+        <p id="motivo-da-geracao" className="sr-only">
+          {pronto ? "Tudo certo para gerar." : "Faltam seções obrigatórias."}
         </p>
         {jaGerado ? (
           confirmarRegerar ? (

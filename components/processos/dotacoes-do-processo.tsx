@@ -56,10 +56,7 @@ export function DotacoesDoProcesso({
           <h3 className="m-0 font-display text-base font-bold text-text-1">
             Dotação orçamentária ({dotacoes.data.length})
           </h3>
-          <p className="m-0 mt-1 text-sm text-text-3">
-            O crédito que suporta a despesa. Vale para o Termo de Referência, o Edital e o Contrato
-            — declare aqui uma vez.
-          </p>
+          <p className="m-0 mt-1 text-sm text-text-3">Vale para o TR, o Edital e o Contrato.</p>
         </div>
         {!declarando && (
           <Button
@@ -84,8 +81,7 @@ export function DotacoesDoProcesso({
       {dotacoes.data.length === 0 ? (
         !declarando && (
           <p className="m-0 rounded-lg border border-dashed border-border bg-surface px-3.5 py-3 text-sm text-text-muted">
-            Nenhuma dotação declarada. O Art. 150 da Lei 14.133/21 não admite contratação sem a
-            indicação dos créditos orçamentários.
+            Nenhuma dotação declarada (Art. 150, Lei 14.133/21).
           </p>
         )
       ) : (
@@ -242,7 +238,7 @@ function FormularioDaDotacao({
       */}
       <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <div className="min-w-0">
-          <FormField label="Unidade Orçamentária" required hint="Órgão ou unidade do crédito.">
+          <FormField label="Unidade Orçamentária" required>
             <Input
               value={dados.unidadeOrcamentaria}
               onChange={(e) => trocar("unidadeOrcamentaria", e.target.value)}
@@ -255,7 +251,6 @@ function FormularioDaDotacao({
           <FormField
             label="Programa de Trabalho"
             required
-            hint="A classificação funcional programática."
           >
             <Input
               value={dados.programaDeTrabalho}
@@ -266,7 +261,7 @@ function FormularioDaDotacao({
           </FormField>
         </div>
         <div className="min-w-0">
-          <FormField label="Natureza da Despesa" required hint="De onde sai a categoria econômica.">
+          <FormField label="Natureza da Despesa" required>
             <Input
               value={dados.naturezaDaDespesa}
               onChange={(e) => trocar("naturezaDaDespesa", e.target.value)}
@@ -276,7 +271,7 @@ function FormularioDaDotacao({
           </FormField>
         </div>
         <div className="min-w-0">
-          <FormField label="Fonte de Recurso" required hint="Fonte ou destinação do recurso.">
+          <FormField label="Fonte de Recurso" required>
             <Input
               value={dados.fonteDeRecurso}
               onChange={(e) => trocar("fonteDeRecurso", e.target.value)}
@@ -286,7 +281,7 @@ function FormularioDaDotacao({
           </FormField>
         </div>
         <div className="min-w-0">
-          <FormField label="Ficha" hint="Opcional — nem todo ente a utiliza.">
+          <FormField label="Ficha" hint="Opcional.">
             <Input
               value={dados.ficha ?? ""}
               onChange={(e) => trocar("ficha", e.target.value)}
@@ -296,7 +291,7 @@ function FormularioDaDotacao({
           </FormField>
         </div>
         <div className="min-w-0">
-          <FormField label="Exercício" required hint="O ano do crédito.">
+          <FormField label="Exercício" required>
             <Input
               value={String(dados.exercicio)}
               onChange={(e) => trocar("exercicio", Number(e.target.value.replace(/\D/g, "")) || 0)}
@@ -306,7 +301,7 @@ function FormularioDaDotacao({
           </FormField>
         </div>
         <div className="min-w-0">
-          <FormField label="Valor Previsto" required hint="O que este crédito suporta no exercício.">
+          <FormField label="Valor Previsto" required>
             <MoneyInput value={dados.valor} onChange={(valor) => trocar("valor", valor)} />
           </FormField>
         </div>

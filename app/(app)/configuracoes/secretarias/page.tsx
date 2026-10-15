@@ -199,7 +199,7 @@ export default function Secretarias() {
     <div className="w-full p-4 sm:p-5 lg:p-7">
       <SectionBlock
         title="Secretarias do Órgão"
-        hint="As secretarias cadastradas aqui aparecem como Secretaria Requisitante nos novos processos, e a ficha de cada uma preenche o DFD automaticamente."
+        hint="A ficha de cada uma preenche o DFD."
       >
         {modo.tipo !== "nova" && secretarias.length > 0 && (
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">

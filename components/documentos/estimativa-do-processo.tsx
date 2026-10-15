@@ -6,7 +6,6 @@ import { Button, Dropdown, FormField, InfoBanner } from "@/components/ui"
 import { CampoDeFonteDePreco } from "@/components/shared/campo-de-fonte-de-preco"
 import { useToast } from "@/components/shared/providers"
 import {
-  useColetasDoProcesso,
   useDeclararEstimativa,
   useDocumentos,
   useProcesso,
@@ -51,7 +50,6 @@ export function EstimativaDoProcesso({
 }) {
   const processo = useProcesso(processoId)
   const documentos = useDocumentos()
-  const coletas = useColetasDoProcesso(processoId)
   const declarar = useDeclararEstimativa()
   const { mutate } = declarar
   const showToast = useToast()
@@ -112,14 +110,12 @@ export function EstimativaDoProcesso({
       .filter((documento) => documento.processoId === processoId)
       .map((documento) => documento.tipo),
   )
-  const semPesquisa = coletas.isSuccess && coletas.data.length === 0
 
   if (!aberto) {
     return (
       <div className="rounded-lg border border-border bg-ice px-4 py-3 text-sm text-text-3">
         <strong className="text-text-1">Estimativa do processo:</strong>{" "}
-        {resumoDaEstimativa(estimativa) ?? "não declarada"}. O processo está encerrado; reabra-o
-        para alterá-la.
+        {resumoDaEstimativa(estimativa) ?? "não declarada"}.
       </div>
     )
   }
@@ -141,21 +137,21 @@ export function EstimativaDoProcesso({
         <span className="text-xs text-text-muted">
           {declarar.isPending
             ? "Gravando..."
-            : `Vale para ${alcancados.length > 0 ? enumerar(alcancados) : "os documentos"} deste processo`}
+            : `Vale para ${alcancados.length > 0 ? enumerar(alcancados) : "todo o processo"}`}
         </span>
       </div>
       <div className={`grid grid-cols-1 gap-3 ${comFonte ? "md:grid-cols-2" : ""}`}>
         <FormField
           label="Forma de Cálculo"
           required
-          hint="Os três métodos que o Art. 6º da IN SEGES/ME nº 65/2021 admite."
+          hint="Art. 6º, IN SEGES/ME nº 65/2021."
         >
           <Dropdown
             value={metodoPendente ?? estimativa?.metodo ?? ""}
             onChange={escolherMetodo}
             ariaLabel="Forma de Cálculo"
             options={[
-              { value: "", label: "Selecione a forma..." },
+              { value: "", label: "Média (padrão)" },
               ...(Object.keys(ROTULO_DO_METODO) as MetodoDaEstimativa[]).map((metodo) => ({
                 value: metodo,
                 label: ROTULO_DO_METODO[metodo],
@@ -167,7 +163,7 @@ export function EstimativaDoProcesso({
           <FormField
             label="Fonte de Pesquisa de Preços"
             required
-            hint="Os parâmetros do Art. 23, § 1º, Lei 14.133/21, na ordem de preferência da IN SEGES 65/2021 — a pesquisa direta com fornecedores é a última alternativa."
+            hint="Art. 23, § 1º, Lei 14.133/21."
           >
             <CampoDeFonteDePreco
               value={fonte}
@@ -185,10 +181,9 @@ export function EstimativaDoProcesso({
         <InfoBanner tone="warning">
           <div className="flex flex-col gap-2">
             <span>
-              {enumerar(gerados)} {gerados.length === 1 ? "já foi gerado" : "já foram gerados"}. Trocar
-              para a {ROTULO_DO_METODO[metodoPendente].toLowerCase()} não altera{" "}
-              {gerados.length === 1 ? "o arquivo gerado" : "os arquivos gerados"}: para refletir a troca,
-              retifique {gerados.length === 1 ? "o documento" : "os documentos"}.
+              {enumerar(gerados)} {gerados.length === 1 ? "já foi gerado" : "já foram gerados"} e não
+              muda{gerados.length === 1 ? "" : "m"} sozinho{gerados.length === 1 ? "" : "s"}: retifique
+              depois da troca.
             </span>
             <div className="flex flex-wrap gap-2">
               <Button
@@ -208,17 +203,6 @@ export function EstimativaDoProcesso({
         </InfoBanner>
       )}
 
-      {!estimativa?.metodo && !metodoPendente && (
-        <p className="m-0 text-xs text-text-muted">
-          Sem forma declarada, os totais desta tela usam a média.
-        </p>
-      )}
-      {semPesquisa && (
-        <p className="m-0 text-xs text-text-muted">
-          A forma de cálculo só altera o valor quando houver preços coletados na Cotação. Até lá, o
-          valor vem da estimativa preliminar dos DFDs, que é um preço só por item.
-        </p>
-      )}
     </div>
   )
 }
@@ -247,12 +231,12 @@ export function AvisoDaMemoria({
   if (!estimativa || (!divergencias.fonte && !divergencias.metodo)) return null
 
   const avisos: string[] = []
-  if (divergencias.metodo === "diferente" && estimativa.metodo) {
-    avisos.push(`cita outra forma de cálculo, e o processo usa a ${ROTULO_DO_METODO[estimativa.metodo].toLowerCase()}`)
+  if (divergencias.metodo === "diferente") {
+    avisos.push("cita outra forma de cálculo")
   }
-  if (divergencias.metodo === "ausente") avisos.push("não diz a forma de cálculo")
-  if (divergencias.fonte === "diferente") avisos.push("cita outra fonte de pesquisa de preços")
-  if (divergencias.fonte === "ausente") avisos.push("não diz a fonte de pesquisa de preços")
+  if (divergencias.metodo === "ausente") avisos.push("não cita a forma de cálculo")
+  if (divergencias.fonte === "diferente") avisos.push("cita outra fonte")
+  if (divergencias.fonte === "ausente") avisos.push("não cita a fonte")
   const soAcrescenta = divergencias.metodo !== "diferente" && divergencias.fonte !== "diferente"
 
   return (
@@ -265,7 +249,7 @@ export function AvisoDaMemoria({
             variant="secondary"
             onClick={() => {
               setRascunho(memoriaEmDia(rascunho, estimativa, divergencias))
-              showToast("Memória de cálculo posta em dia com a estimativa do processo. Revise e salve a seção.")
+              showToast("Memória atualizada. Revise e salve a seção.")
             }}
           >
             {soAcrescenta ? "Incluir na Memória" : "Atualizar a Memória"}

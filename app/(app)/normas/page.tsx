@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 
-import { Button, InfoBanner } from "@/components/ui"
+import { Button } from "@/components/ui"
 import { IconPlus, IconScale } from "@/components/ui/icons"
 import { EmptyState, ErrorState, LoadingState } from "@/components/shared/estados"
 import { useToast } from "@/components/shared/providers"
@@ -34,8 +34,7 @@ export default function NormasDoOrgao() {
       <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <p className="m-0 max-w-3xl text-md text-text-3">
-            Decretos, portarias e instruções com que o órgão regulamenta a Lei nº 14.133/2021. Elas vão
-            embasar a IA na redação dos documentos, junto com a lei geral.
+            Decretos, portarias e instruções do órgão que regulamentam a Lei nº 14.133/2021.
           </p>
         </div>
         {coordenador && !cadastrando && (
@@ -106,10 +105,6 @@ export default function NormasDoOrgao() {
         </>
       )}
 
-      <InfoBanner tone="info" className="mt-5">
-        Os arquivos são conferidos na entrada: só PDF, DOCX e TXT, sem macro, script ou arquivo embutido. A
-        norma revogada continua aqui, marcada, porque um documento gerado antes pode tê-la citado.
-      </InfoBanner>
     </div>
   )
 }
