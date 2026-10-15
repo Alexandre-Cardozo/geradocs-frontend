@@ -113,8 +113,7 @@ export function ErrataDoDocumento({
 
       {(de === null || para === null) && (
         <p className="m-0 text-sm text-text-muted">
-          Escolha as duas versões para montar a errata. Ela é facultativa — a
-          retificação já está registrada no histórico.
+          Escolha as duas versões para comparar.
         </p>
       )}
 

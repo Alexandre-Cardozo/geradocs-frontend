@@ -90,7 +90,7 @@ export function FormularioDaSecretaria({
         {secretaria ? "Editar Secretaria" : "Nova Secretaria"}
       </h4>
       <p className="m-0 mt-1 mb-4 text-sm text-text-3">
-        Só o nome é obrigatório. Os demais dados aparecem automaticamente no DFD — preencha agora ou depois.
+        Só o nome é obrigatório. Os demais aparecem no DFD.
       </p>
 
       <div className="mb-5">

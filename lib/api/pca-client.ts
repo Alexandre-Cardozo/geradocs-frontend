@@ -21,21 +21,19 @@ const formas: Record<string, FormaDaPrevisao> = {
 export const FORMA_DA_PREVISAO: Record<FormaDaPrevisao, { rotulo: string; explicacao: string }> = {
   EXATA: {
     rotulo: "Encontrado no PCA",
-    explicacao: "A descrição do item bate com a do plano anexado.",
+    explicacao: "",
   },
   TERMOS: {
     rotulo: "Encontrado no PCA",
-    explicacao: "Os termos que distinguem este item aparecem no item do plano.",
+    explicacao: "",
   },
   ALARGADA: {
     rotulo: "Encontrado no PCA",
-    explicacao:
-      "A busca por termos não alcançou, e o item foi apontado por aproximação — confira se é mesmo este.",
+    explicacao: "Apontado por aproximação — confira se é este.",
   },
   DECLARADA: {
     rotulo: "Informado por você",
-    explicacao:
-      "A plataforma não conferiu este item: quem afirma a previsão aqui é você, e é assim que ela entra no documento.",
+    explicacao: "Não conferido pela plataforma.",
   },
 };
 

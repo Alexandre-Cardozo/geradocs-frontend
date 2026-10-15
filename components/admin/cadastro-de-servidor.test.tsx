@@ -61,7 +61,7 @@ describe("cadastro de servidor", () => {
     expect(campo).toHaveValue(ENTIDADE.nome)
     expect(campo).toBeDisabled()
     // Campo travado sem dizer por quê é beco: a explicação fica à vista.
-    expect(screen.getByText(/entra na sua entidade/)).toBeInTheDocument()
+    expect(screen.getByText(/Fixa: a sua entidade/)).toBeInTheDocument()
   })
 
   it("com a entidade travada, cadastra nela sem pedir escolha", async () => {

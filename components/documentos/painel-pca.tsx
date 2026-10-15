@@ -62,7 +62,7 @@ export function PainelPca({
     return (
       <SectionBlock title={secao.titulo} hint={secao.hint ?? ""}>
         <InfoBanner tone="warning">
-          Não foi possível consultar o PCA agora. Você pode escrever a seção mesmo assim.
+          Não foi possível consultar o PCA.
         </InfoBanner>
       </SectionBlock>
     )
@@ -76,8 +76,7 @@ export function PainelPca({
       <div className="flex flex-col gap-4">
         {dados.plano ? (
           <p className="m-0 text-sm text-text-muted">
-            Confrontado com o <strong>PCA {dados.plano.ano}</strong> ({dados.plano.arquivo}),{" "}
-            {dados.plano.itensIndexados} itens indexados.
+            Conferido no <strong>PCA {dados.plano.ano}</strong> ({dados.plano.arquivo}).
           </p>
         ) : (
           /*
@@ -88,17 +87,11 @@ export function PainelPca({
             só que de outro ano.
           */
           <InfoBanner tone="info">
-            <div className="font-semibold">
-              Nenhum PCA de {dados.exercicio} anexado a este órgão.
-            </div>
-            <p className="m-0 mt-1">
-              Este processo é do exercício de {dados.exercicio}, e é no plano desse ano que a
-              previsão se demonstra.{" "}
-              <Link href="/configuracoes/pca" className="underline">
-                Anexe o PCA de {dados.exercicio} em Configurações
-              </Link>{" "}
-              ou informe abaixo o item em que a contratação está prevista.
-            </p>
+            Nenhum PCA de {dados.exercicio} anexado.{" "}
+            <Link href="/configuracoes/pca" className="underline">
+              Anexe em Configurações
+            </Link>{" "}
+            ou informe o item abaixo.
           </InfoBanner>
         )}
 
@@ -166,11 +159,7 @@ export function PainelPca({
                 ? "Um item não consta do plano."
                 : `${semPrevisao.length} itens não constam do plano.`}
             </div>
-            <p className="m-0 mt-1">
-              Isso não impede a contratação, e a plataforma não vai travar aqui. O que o Art. 18,
-              § 1º, II pede é que a seção diga isso e justifique — a citação abaixo já deixa o
-              espaço da justificativa aberto, entre colchetes.
-            </p>
+            <p className="m-0 mt-1">Justifique no texto abaixo (Art. 18, § 1º, II).</p>
           </InfoBanner>
         )}
 
@@ -180,11 +169,7 @@ export function PainelPca({
           revisa, ajusta e grava. Antes ela era escrita direto no documento —
           texto de processo administrativo entrando sem ninguém ler (ADR-039).
         */}
-        <FormField
-          label="O que vai para a seção"
-          required
-          hint="Revise antes de salvar: é este texto que entra no ETP, e quem assina responde por ele."
-        >
+        <FormField label="O que vai para a seção" required>
           <Textarea
             value={rascunho}
             onChange={(e) => setRascunho(e.target.value)}
@@ -210,9 +195,7 @@ export function PainelPca({
         />
         {!dados.citavel && (
           <p className="m-0 text-xs text-text-muted">
-            Não há item do plano a citar: informe o item na linha da demanda, ou escreva aqui a
-            justificativa da contratação não prevista — que é o que o inciso II pede quando ela
-            não consta do PCA.
+            Sem item do plano a citar: justifique a contratação não prevista.
           </p>
         )}
       </div>
@@ -240,7 +223,7 @@ function ItemDoPca({ achado }: { achado: AchadoDoPca }) {
           ` · ${achado.quantidade}${achado.unidade ? ` ${achado.unidade}` : ""}`}
         {achado.valorEstimado != null && ` · ${formatBRL(achado.valorEstimado)}`}
       </p>
-      <p className="m-0 mt-0.5 text-xs text-text-muted">{forma.explicacao}</p>
+      {forma.explicacao && <p className="m-0 mt-0.5 text-xs text-text-muted">{forma.explicacao}</p>}
       {achado.notaDeclarada && (
         <p className="m-0 mt-0.5 text-xs text-text-muted">
           Sua anotação: <em>{achado.notaDeclarada}</em>

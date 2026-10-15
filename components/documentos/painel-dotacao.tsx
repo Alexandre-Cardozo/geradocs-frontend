@@ -70,16 +70,14 @@ export function PainelDotacao({
       <div className="flex flex-col gap-3.5">
         {creditos.length === 0 ? (
           <InfoBanner tone="warning">
-            Nenhuma dotação declarada neste processo. O <strong>Art. 150 da Lei 14.133/21</strong>{" "}
-            não admite contratação sem a indicação dos créditos orçamentários — a ausência é causa
-            de nulidade do ato.{" "}
+            Nenhuma dotação declarada (Art. 150, Lei 14.133/21).{" "}
             <Link
               href={`/processos/detalhe?id=${encodeURIComponent(processoId)}`}
               className="font-semibold underline"
             >
-              Declare a dotação no processo
+              Declare no processo
             </Link>
-            ; ela vale para o TR, o Edital e o Contrato de uma vez.
+            .
           </InfoBanner>
         ) : (
           <>

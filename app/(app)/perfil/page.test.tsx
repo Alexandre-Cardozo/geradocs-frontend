@@ -50,7 +50,7 @@ describe("meu perfil", () => {
     // O nome aparece duas vezes: no cartão de identidade e na lista de dados.
     expect(await screen.findAllByText("Maria Costa Andrade")).toHaveLength(2)
     expect(screen.getByText("MAT-4471")).toBeInTheDocument()
-    expect(screen.getByText(/Quem os altera é a administração/)).toBeInTheDocument()
+    expect(screen.getByText(/Alterados pela administração/)).toBeInTheDocument()
     // Sem campo editável de cadastro: prometer edição que não existe foi o
     // defeito da versão anterior.
     expect(screen.queryByRole("button", { name: /Salvar Alterações/ })).not.toBeInTheDocument()
@@ -148,7 +148,7 @@ describe("meu perfil", () => {
     )
     renderizar(<MeuPerfil />)
 
-    expect(await screen.findByText(/Escolha uma senha só sua abaixo/)).toBeInTheDocument()
+    expect(await screen.findByText(/Sua senha é provisória/)).toBeInTheDocument()
     expect(screen.getByLabelText(/Senha recebida/)).toBeInTheDocument()
   })
 

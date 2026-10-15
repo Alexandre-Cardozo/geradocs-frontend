@@ -59,7 +59,7 @@ describe("juntada dos documentos do processo", () => {
     expect(ordemNaTela()[0]).toContain("1.Estudo Técnico Preliminarv2")
     expect(ordemNaTela()[2]).toContain("3.Edital de Licitação")
     expect(screen.getByRole("button", { name: /Baixar Juntada em PDF \(3 documentos\)/ })).toBeEnabled()
-    expect(screen.getByText(/Ainda não gerados, e por isso fora da juntada: Minuta de Contrato/)).toBeInTheDocument()
+    expect(screen.getByText(/Fora da juntada \(não gerados\): Minuta de Contrato/)).toBeInTheDocument()
     // O Edital já traz o TR como anexo: avisa, sem impedir.
     expect(screen.getByText(/O Edital já traz Termo de Referência como anexo/)).toBeInTheDocument()
   })
@@ -130,6 +130,6 @@ describe("juntada dos documentos do processo", () => {
       <JuntadaDoProcesso processoId={PROCESSO} solicitados={["ETP"]} gerados={[]} onFechar={vi.fn()} />,
     )
 
-    expect(screen.getByText(/Nenhum documento deste processo foi gerado ainda/)).toBeInTheDocument()
+    expect(screen.getByText(/Nenhum documento gerado ainda/)).toBeInTheDocument()
   })
 })

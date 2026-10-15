@@ -83,7 +83,7 @@ describe("itens da demanda", () => {
     renderizar(<ItensDaDemanda processoId={PROCESSO} />)
 
     // Um item solto não teria como dizer qual secretaria o pediu.
-    expect(await screen.findByText(/Registre um DFD acima/)).toBeInTheDocument()
+    expect(await screen.findByText(/Registre um DFD para cadastrar itens/)).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: /Adicionar item/ })).not.toBeInTheDocument()
   })
 

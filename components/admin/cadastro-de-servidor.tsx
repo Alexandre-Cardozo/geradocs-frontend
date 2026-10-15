@@ -143,13 +143,13 @@ export function CadastroDeServidor({
         </FormField>
         <FormField
           label="Matrícula"
-          hint={errosDoFormato.registrationNumber ?? recusa("registrationNumber") ?? "Número funcional no RH. Pode ser a chave de login (ADR-015)."}
+          hint={errosDoFormato.registrationNumber ?? recusa("registrationNumber") ?? "Número funcional no RH."}
         >
           <Input value={matricula} onChange={(e) => alterar("registrationNumber", setMatricula)(e.target.value)} placeholder="Ex: MAT-4471" />
         </FormField>
         <FormField
           label="Decreto de Nomeação"
-          hint={errosDoFormato.appointmentDecree ?? recusa("appointmentDecree") ?? "Para comissionados, é o número que a pessoa costuma lembrar."}
+          hint={errosDoFormato.appointmentDecree ?? recusa("appointmentDecree") ?? undefined}
         >
           <Input value={decreto} onChange={(e) => alterar("appointmentDecree", setDecreto)(e.target.value)} placeholder="Ex: Decreto 1.234/2026" />
         </FormField>
@@ -165,7 +165,7 @@ export function CadastroDeServidor({
           />
         </FormField>
         {"fixa" in entidade ? (
-          <FormField label="Entidade" required hint="Quem você cadastra aqui entra na sua entidade.">
+          <FormField label="Entidade" required hint="Fixa: a sua entidade.">
             <div className="relative">
               <Input value={entidade.fixa.nome} disabled className="pr-9" />
               <span className="pointer-events-none absolute top-1/2 right-3 flex -translate-y-1/2 text-text-muted">

@@ -47,7 +47,7 @@ export function ImportarPca({ anos }: { anos: { value: string; label: string }[]
     <div className="flex flex-col gap-5">
       <SectionBlock
         title="Importar plano"
-        hint="Anexe o Plano de Contratações Anual em XLSX ou CSV para que a plataforma possa procurar nele. A busca é o que permite demonstrar a previsão no inciso II do ETP."
+        hint="XLSX ou CSV. Usado no inciso II do ETP."
       >
         <div className="flex flex-col gap-4">
           <div className="flex flex-wrap items-end gap-4">
@@ -95,20 +95,15 @@ export function ImportarPca({ anos }: { anos: { value: string; label: string }[]
               <p className="m-0 mt-1">
                 {substituira.arquivo} · {substituira.itensIndexados} itens · importado por{" "}
                 {substituira.importadoPor} em {formatData(substituira.importadoEm)}. Importar
-                substitui o plano desse exercício por inteiro, e a substituição fica registrada na
-                trilha do órgão com o arquivo que saiu e o que entrou.
+                substitui esse plano.
               </p>
             </InfoBanner>
           )}
 
           <p className="m-0 text-xs text-text-muted">
-            A leitura é pelo <strong>cabeçalho da primeira aba</strong>: a plataforma procura as
-            colunas de <code>código</code>, <code>descrição</code> (ou <code>objeto</code>),{" "}
-            <code>unidade</code>, <code>quantidade</code> e <code>valor</code> (ou{" "}
-            <code>totais</code>), e ignora as demais. Sem cabeçalho reconhecível, valem essas cinco
-            colunas nessa ordem — em CSV, separadas por ponto e vírgula. Linha sem objeto, como a de
-            totais, não vira contratação. PDF não é lido, e o XLS antigo precisa ser salvo como
-            XLSX.
+            Colunas lidas na primeira aba: <code>código</code>, <code>descrição</code>,{" "}
+            <code>unidade</code>, <code>quantidade</code> e <code>valor</code>. CSV separado por
+            ponto e vírgula.
           </p>
           {importar.isError && (
             <InfoBanner tone="warning">
@@ -147,14 +142,13 @@ export function ImportarPca({ anos }: { anos: { value: string; label: string }[]
       </SectionBlock>
       <SectionBlock
         title="Planos anexados"
-        hint="Um plano por exercício. Cada processo demonstra a previsão no PCA do ano em que foi aberto — por isso os exercícios anteriores continuam aqui."
+        hint="Um plano por exercício."
       >
         {planos.isPending ? (
           <InlineSpinner label="Consultando os planos do órgão..." />
         ) : lista.length === 0 ? (
           <InfoBanner tone="info">
-            Nenhum PCA importado ainda. Enquanto não houver plano, a seção do inciso II depende de o
-            servidor informar o item à mão, processo a processo.
+            Nenhum PCA importado ainda.
           </InfoBanner>
         ) : (
           <div className="flex flex-col gap-2.5">
@@ -174,15 +168,7 @@ export function ImportarPca({ anos }: { anos: { value: string; label: string }[]
         {!planos.isPending && lista.length > 0 && !doExercicio && (
           <div className="mt-4">
             <InfoBanner tone="warning">
-              <div className="font-semibold">
-                Não há PCA de {exercicioCorrente} — o exercício corrente.
-              </div>
-              <p className="m-0 mt-1">
-                Os processos abertos este ano demonstram a previsão no plano de{" "}
-                {exercicioCorrente}, e não no de {lista[0]?.ano}: o PCA de um exercício descreve o
-                que o órgão pretende contratar <strong>naquele</strong> ano. Enquanto ele não for
-                importado, cada processo deste ano depende de o servidor informar o item à mão.
-              </p>
+              Falta o PCA de {exercicioCorrente}, usado pelos processos deste ano.
             </InfoBanner>
           </div>
         )}

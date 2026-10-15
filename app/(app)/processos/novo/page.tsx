@@ -423,7 +423,6 @@ export default function NovoProcesso() {
     );
   };
 
-  const destinoAposCriar = "à lista de processos como rascunho";
 
   return (
     <div className="w-full p-4 sm:p-5 lg:p-7">
@@ -474,9 +473,6 @@ export default function NovoProcesso() {
                   <legend className="mb-1 text-base font-semibold text-text-2">
                     Forma da Dispensa <span className="text-danger">*</span>
                   </legend>
-                  <p className="m-0 mb-3 text-sm text-text-muted">
-                    As duas são contratação direta (Art. 72), mas pedem documentos diferentes.
-                  </p>
                   <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
                     {(Object.keys(FORMA_DA_DISPENSA) as FormaDaDispensa[]).map((chave) => (
                       <ChoiceCard
@@ -495,7 +491,7 @@ export default function NovoProcesso() {
                 <div className="mb-6 max-w-2xl">
                   <FormField
                     label="Fundamento da Dispensa"
-                    hint="Só os incisos I e II têm limite de valor. Pode ser declarado depois."
+                    hint="Pode ser declarado depois."
                   >
                     <Dropdown
                       value={fundamentoDaDispensa}
@@ -533,9 +529,7 @@ export default function NovoProcesso() {
                       Registro de Preços
                     </div>
                     <p className="m-0 mt-1 text-base text-text-3">
-                      Ative caso a solução já seja previamente definida como
-                      Adesão de ATA. O modelo será orientado a gerar o ETP com
-                      essa conclusão.
+                      Quando a solução já está definida antes do ETP.
                     </p>
                   </div>
                 </div>
@@ -545,7 +539,6 @@ export default function NovoProcesso() {
                     <FormField
                       label="Motivo da decisão prévia pela Adesão de ATA"
                       required
-                      hint="Justifique por que a Adesão de ATA já foi definida antes do ETP"
                     >
                       <Textarea
                         value={ataMotivo}
@@ -574,7 +567,7 @@ export default function NovoProcesso() {
                     {(ataMode === "anexar" || ataMode === "combinado") && (
                       <FormField
                         label="Anexar ATA"
-                        hint="Formatos aceitos: PDF, DOCX"
+                        hint="PDF ou DOCX."
                       >
                         <FileUpload
                           file={ataFile}
@@ -587,9 +580,8 @@ export default function NovoProcesso() {
 
                     {ataMode === "delegar" && (
                       <InfoBanner tone="info">
-                        O modelo realizará a busca de ATAs após o processo ser
-                        criado. Os resultados ficarão disponíveis na aba de
-                        Processos para sua análise e seleção.
+                        A busca de ATAs roda após a criação; os resultados aparecem
+                        no processo.
                       </InfoBanner>
                     )}
                   </div>
@@ -631,8 +623,7 @@ export default function NovoProcesso() {
                   {semSecretariaCadastrada ? (
                     <div className="mt-2">
                       <InfoBanner tone="warning">
-                        Este órgão ainda não tem secretaria cadastrada, e todo processo
-                        pertence a uma.{" "}
+                        Nenhuma secretaria cadastrada.{" "}
                         {perfil === "coordenador" ? (
                           <>
                             Cadastre a primeira em{" "}
@@ -642,7 +633,7 @@ export default function NovoProcesso() {
                             .
                           </>
                         ) : (
-                          "Peça ao coordenador do órgão para cadastrá-la em Configurações."
+                          "Peça ao coordenador para cadastrar uma."
                         )}
                       </InfoBanner>
                     </div>
@@ -661,7 +652,6 @@ export default function NovoProcesso() {
                 <FormField
                   label="Descrição do Processo"
                   required
-                  hint="Nomenclatura que identifica o processo no painel, nas listagens e nos documentos gerados."
                 >
                   <Textarea
                     value={objeto}
@@ -687,8 +677,7 @@ export default function NovoProcesso() {
                       <Tag tone="warning">Recomendado</Tag>
                     </span>
                     <p className="m-0 mt-1 text-sm text-text-3">
-                      O DFD alimentará automaticamente as seções do ETP. Caso
-                      não possua, informe o Objeto da Demanda abaixo.
+                      Sem DFD, informe o Objeto da Demanda abaixo.
                     </p>
                   </div>
                   <FileUpload
@@ -704,7 +693,7 @@ export default function NovoProcesso() {
                       icon={<IconCheck size={14} strokeWidth={2.5} />}
                       className="mt-2.5"
                     >
-                      DFD anexado — o ETP será gerado com base neste documento.
+                      DFD anexado.
                     </InfoBanner>
                   )}
                 </div>
@@ -712,7 +701,7 @@ export default function NovoProcesso() {
                 <FormField
                   label="Objeto da Demanda"
                   required={!dfdFile}
-                  hint="Objeto da contratação em si — trabalha junto com o DFD e alimenta as seções do ETP. Obrigatório caso não anexe o DFD."
+                  hint={dfdFile ? undefined : "Obrigatório sem DFD."}
                 >
                   <Textarea
                     value={objetoDemanda}
@@ -760,9 +749,7 @@ export default function NovoProcesso() {
                   Documentos a Gerar
                 </span>
                 <p className="m-0 mb-3 text-sm text-text-3">
-                  Listados na ordem do fluxo de contratação. Os obrigatórios da
-                  modalidade vêm marcados e travados; os recomendados vêm
-                  marcados e podem ser desmarcados.
+                  Obrigatórios vêm travados; recomendados podem ser desmarcados.
                 </p>
                 <div className="flex flex-col gap-2.5">
                   {agruparAnexos(tiposCabiveis).map((grupo, i) => (
@@ -818,9 +805,7 @@ export default function NovoProcesso() {
                           <Tag tone="info">Etapa Inicial</Tag>
                         </div>
                         <p className="m-0 mt-1 text-base text-text-3">
-                          Antes de elaborar os documentos, o DFD anexado será
-                          analisado pela IA, que emitirá parecer sobre qualidade,
-                          completude e conformidade com a legislação e o PCA.
+                          A IA emite parecer sobre o DFD antes da elaboração.
                         </p>
                       </div>
                     </div>
@@ -834,16 +819,14 @@ export default function NovoProcesso() {
                       <Tag tone="neutral">Requer DFD</Tag>
                     </div>
                     <p className="m-0 mt-1 text-base text-text-3">
-                      A verificação analisa o DFD anexado. Anexe o DFD na etapa de
-                      Identificação para habilitar esta análise.
+                      Anexe o DFD na Identificação para habilitar.
                     </p>
                   </div>
                 )}
               </div>
 
               <InfoBanner tone="warning">
-                O número do processo é gerado na criação. Depois dela você será
-                direcionado {destinoAposCriar}.
+                O número é gerado ao criar o processo.
               </InfoBanner>
             </div>
           )}

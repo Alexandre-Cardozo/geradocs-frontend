@@ -94,10 +94,7 @@ export function JuntadaDoProcesso({
           <h3 id={tituloId} className="m-0 font-display text-md font-bold text-text-1">
             Juntada dos Documentos
           </h3>
-          <p className="m-0 mt-1 text-sm text-text-3">
-            Junta num arquivo só os documentos já gerados, na ordem que você escolher. Nada é gerado de novo: entra o
-            arquivo de cada documento, como ele foi baixado.
-          </p>
+          <p className="m-0 mt-1 text-sm text-text-3">Os documentos gerados num arquivo só, na ordem escolhida.</p>
         </div>
         <div role="group" aria-label="Formato da juntada">
           <FilterTabs
@@ -113,7 +110,7 @@ export function JuntadaDoProcesso({
 
       {itens.length === 0 ? (
         <p className="m-0 mt-4 rounded-md bg-ice px-3.5 py-3 text-sm text-text-3">
-          Nenhum documento deste processo foi gerado ainda. Gere-os para montar a juntada.
+          Nenhum documento gerado ainda.
         </p>
       ) : (
         <ol className="m-0 mt-4 flex list-none flex-col gap-2 p-0" aria-label="Documentos da juntada, na ordem">
@@ -180,13 +177,13 @@ export function JuntadaDoProcesso({
 
       {faltam.length > 0 && (
         <p className="m-0 mt-3 text-sm text-text-3">
-          Ainda não gerados, e por isso fora da juntada: {faltam.map((tipo) => CATALOGO[tipo].titulo).join(", ")}.
+          Fora da juntada (não gerados): {faltam.map((tipo) => CATALOGO[tipo].titulo).join(", ")}.
         </p>
       )}
       {repetidos.length > 0 && (
         <InfoBanner tone="warning" className="mt-3">
-          O Edital já traz {repetidos.map((tipo) => CATALOGO[tipo].titulo).join(" e ")} como anexo — incluí-los também
-          repete o conteúdo na juntada.
+          O Edital já traz {repetidos.map((tipo) => CATALOGO[tipo].titulo).join(" e ")} como anexo: incluí-los
+          repete o conteúdo.
         </InfoBanner>
       )}
 

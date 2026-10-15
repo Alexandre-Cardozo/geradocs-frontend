@@ -2,7 +2,7 @@
 
 import { useRef } from "react"
 
-import { Button, InfoBanner, Tag } from "@/components/ui"
+import { Button, Tag } from "@/components/ui"
 import { IconCamera, IconTrash } from "@/components/ui/icons"
 import { FotoDePerfil } from "@/components/shared/foto-de-perfil"
 import { LoadingState } from "@/components/shared/estados"
@@ -124,10 +124,7 @@ export default function MeuPerfil() {
             <h2 className="m-0 mb-1.5 font-display text-md font-bold text-text-1">
               Dados cadastrais
             </h2>
-            <p className="m-0 mb-5 text-sm text-text-3">
-              Estes dados compõem o registro dos processos que você assina. Quem os altera é a
-              administração, em Servidores.
-            </p>
+            <p className="m-0 mb-5 text-sm text-text-3">Alterados pela administração.</p>
 
             <dl className="m-0 grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2">
               <Dado rotulo="Nome completo" valor={usuario.nome} />
@@ -141,12 +138,6 @@ export default function MeuPerfil() {
             </dl>
           </div>
 
-          {usuario.precisaTrocarSenha && (
-            <InfoBanner tone="warning">
-              Sua senha foi gerada pelo sistema e é conhecida por quem cadastrou seu acesso.
-              Escolha uma senha só sua abaixo.
-            </InfoBanner>
-          )}
           <TrocaDeSenha provisoria={usuario.precisaTrocarSenha ?? false} />
         </div>
       </div>

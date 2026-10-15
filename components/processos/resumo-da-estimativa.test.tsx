@@ -29,7 +29,6 @@ describe("estimativa de valor na capa", () => {
     )
 
     expect(screen.getByText(/Mediana · Painel de Preços/)).toBeInTheDocument()
-    expect(screen.getByText(/Art. 23, § 1º, I, Lei 14.133\/21/)).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Alterar no ETP" })).toHaveAttribute(
       "href",
       expect.stringContaining("tipo=etp&painel=valor"),
@@ -66,7 +65,7 @@ describe("estimativa de valor na capa", () => {
     )
     renderizar(<EstimativaDoProcesso processoId={processoApi.id} />)
 
-    expect(await screen.findByText(/Menor\. O processo está encerrado/)).toBeInTheDocument()
+    expect(await screen.findByText(/Estimativa do processo:/)).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: "Forma de Cálculo" })).not.toBeInTheDocument()
   })
 })

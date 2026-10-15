@@ -83,8 +83,8 @@ describe("normas do órgão", () => {
     comNormas([{ ...decreto, currentFile: { ...decreto.currentFile, textAvailable: false, textCharacters: 0 } }])
     renderizar(<NormasDoOrgao />)
 
-    expect(await screen.findByText(/A IA não vai conseguir lê-lo/)).toBeInTheDocument()
-    expect(screen.getByText(/Envie a versão com texto/)).toBeInTheDocument()
+    expect(await screen.findByText(/a IA não consegue lê-lo/)).toBeInTheDocument()
+    expect(screen.getByText(/Envie uma versão com texto/)).toBeInTheDocument()
   })
 
   it("a revogada continua listada, com a observação", async () => {

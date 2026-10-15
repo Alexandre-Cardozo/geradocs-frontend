@@ -3,7 +3,6 @@
 import Link from "next/link"
 
 import { documentosDaEstimativa, resumoDaEstimativa } from "@/lib/dominio/estimativa"
-import { fundamentoDaFonte } from "@/lib/dominio/fontes-de-preco"
 import { CATALOGO } from "@/lib/documentos"
 import type { Processo } from "@/lib/types"
 
@@ -20,7 +19,6 @@ export function ResumoDaEstimativa({ processo }: { processo: Processo }) {
   if (!destino) return null
 
   const resumo = resumoDaEstimativa(processo.estimativa)
-  const fundamento = processo.estimativa?.fonte ? fundamentoDaFonte(processo.estimativa.fonte) : null
   const painel = destino === "Cotação" ? "referencia" : "valor"
   const href = `/processos/documento?id=${encodeURIComponent(processo.id)}&tipo=${CATALOGO[destino].slug}&painel=${painel}`
 
@@ -29,7 +27,6 @@ export function ResumoDaEstimativa({ processo }: { processo: Processo }) {
       <div className="min-w-0 text-sm text-text-3">
         <span className="font-semibold text-text-1">Estimativa de valor:</span>{" "}
         {resumo ?? "forma de cálculo e fonte ainda não declaradas"}
-        {fundamento && <span className="text-text-muted"> ({fundamento})</span>}
       </div>
       {processo.status !== "concluido" && (
         <Link href={href} className="text-sm font-semibold text-royal no-underline hover:text-royal-hover">

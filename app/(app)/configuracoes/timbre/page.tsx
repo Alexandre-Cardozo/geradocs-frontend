@@ -98,7 +98,7 @@ export default function Timbre() {
         <div className="flex flex-col gap-5">
           <SectionBlock
             title="Logotipo / Brasão da Entidade"
-            hint="Sai no cabeçalho de todo documento gerado — DOCX e PDF. PNG ou JPEG, até 512 KB."
+            hint="PNG ou JPEG, até 512 KB."
           >
             <input
               ref={seletorDeBrasao}
@@ -176,7 +176,7 @@ export default function Timbre() {
 
           <SectionBlock
             title="Cabeçalho dos Documentos"
-            hint={`Texto exibido no topo de cada página dos documentos gerados. Use quebras de linha para organizar as informações. Variáveis disponíveis: ${LISTA_DE_VARIAVEIS}.`}
+            hint={`Variáveis: ${LISTA_DE_VARIAVEIS}.`}
           >
             <Textarea value={cabecalho} onChange={(e) => setCabecalho(e.target.value)} rows={4} />
             {erroDoCabecalho && <p className="m-0 mt-1.5 text-xs text-danger">{erroDoCabecalho}</p>}
@@ -184,7 +184,7 @@ export default function Timbre() {
 
           <SectionBlock
             title="Rodapé dos Documentos"
-            hint={`Texto exibido na parte inferior de cada página. Variáveis disponíveis: ${LISTA_DE_VARIAVEIS}. Sem {pagina}, o número da página sai no fim do rodapé.`}
+            hint={`Variáveis: ${LISTA_DE_VARIAVEIS}.`}
           >
             <Textarea value={rodape} onChange={(e) => setRodape(e.target.value)} rows={3} />
             {erroDoRodape && <p className="m-0 mt-1.5 text-xs text-danger">{erroDoRodape}</p>}

@@ -1181,3 +1181,13 @@ Revê o §70 e o §74, que guardavam a fonte de pesquisa e o método de apuraç�
 - **A memória continua sendo texto da pessoa.** Quando ela cita outra fonte ou outro método — ou não cita —, a tela avisa e oferece "Atualizar a Memória" (ou "Incluir na Memória"), que troca só essas linhas.
 - **Processos anteriores:** a fonte e o método que o texto já declara vão para o processo na primeira abertura.
 - A conciliação de valores da capa passa a apurar pelo mesmo método.
+
+## 84. Menos texto na tela
+
+As funcionalidades foram chegando cada uma com a sua explicação, e as telas ficaram carregadas: avisos de quatro linhas, dicas de campo que repetiam o rótulo, parágrafos que justificavam o produto ("a plataforma não descarta…", "quem assina responde…"). A revisão passou por todos os avisos, dicas e textos de apoio, com três regras:
+
+- **Sai** o que repete o que a tela já mostra (o rótulo, o botão, o próprio dado), o que explica por que a plataforma age de certo jeito e o que só antecipa um passo seguinte óbvio.
+- **Fica, em uma frase,** o que pede ação ou decisão — pendência, divergência, limite ultrapassado, documento que precisa ser retificado.
+- **A referência legal continua literal**, mas entre parênteses ao fim da frase, e não como explicação do artigo.
+
+O porquê de cada regra continua nos comentários do código e neste documento — que é onde quem mantém o produto o procura, e não na tela de quem preenche o processo.
