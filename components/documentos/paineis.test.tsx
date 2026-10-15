@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest"
 
 import { PainelDaSecao } from "@/components/documentos/paineis"
 import { secoesPorTipoBase } from "@/lib/documentos"
+import { comEstimativaQueGrava } from "@/lib/teste/estimativa"
 import { urlDaApi } from "@/lib/teste/handlers"
 import { renderizar, screen, userEvent } from "@/lib/teste/renderizar"
 import { servidor } from "@/lib/teste/servidor-msw"
@@ -186,6 +187,7 @@ describe("painel de valor", () => {
 
   it("a memória de cálculo sai dos itens, com a fonte escolhida e a diferença marcada", async () => {
     comDfds([dfd("DFD 003/2026", "Educação", [papel])])
+    const gravadas = comEstimativaQueGrava()
     const { setRascunho } = renderizarPainel("valor")
 
     await screen.findByText(/R\$ 2\.500,00/)
@@ -195,7 +197,11 @@ describe("painel de valor", () => {
 
     await userEvent.click(screen.getByRole("button", { name: /Fonte de pesquisa de preços/ }))
     await userEvent.click(await screen.findByRole("option", { name: /Painel de Preços/ }))
-    await userEvent.click(screen.getByRole("button", { name: /a partir dos itens/ }))
+    // A escolha grava no processo na hora — antes ela só existia na aba.
+    await userEvent.click(await screen.findByRole("button", { name: /a partir dos itens/ }))
+    expect(gravadas).toEqual([
+      { method: null, source: "Painel de Preços do Governo Federal (Compras.gov.br)" },
+    ])
 
     const texto = setRascunho.mock.calls[0]?.[0] as string
     expect(texto).toContain("Papel A4")
@@ -205,50 +211,80 @@ describe("painel de valor", () => {
     expect(texto).toContain("[Justificar a diferença")
   })
 
-  it("a fonte volta marcada do texto já gravado na seção", async () => {
+  it("a fonte vem do processo, e não do texto da seção", async () => {
     comDfds([dfd("DFD 003/2026", "Secretaria de Educação", [papel])])
-    const setRascunho = vi.fn()
-    const memoria = [
-      "O valor estimado resulta dos preços unitários referenciais.",
-      "Fonte de pesquisa de preços: Base nacional de notas fiscais eletrônicas"
-        + " (Art. 23, § 1º, V, Lei 14.133/21).",
-    ].join("\n\n")
-    renderizar(
-      <PainelDaSecao
-        secao={secao(TITULOS.valor, "valor")}
-        processoId={PROCESSO}
-        rascunho={memoria}
-        setRascunho={setRascunho}
-        gerando={false}
-        onGerarComIa={vi.fn()}
-      />,
-    )
+    comEstimativaQueGrava({
+      priceEstimationMethod: "MEDIAN",
+      priceResearchSource: "Base nacional de notas fiscais eletrônicas",
+    })
+    renderizarPainel("valor")
 
-    // A escolha não vive na memória da aba: ela é a linha do texto que a seção
-    // guarda, e é de lá que volta ao trocar de seção ou recarregar (§70).
-    // O nome acessível do dropdown é o rótulo do campo; o que mostra a escolha
-    // é o texto dentro dele — junto do fundamento, que é como a lista o exibe.
+    // O defeito que isto corrige: a memória escrita à mão não tinha a linha da
+    // fonte, e a escolha sumia ao salvar e recarregar.
     const campo = await screen.findByRole("button", { name: "Fonte de pesquisa de preços" })
     expect(campo).toHaveTextContent("Base nacional de notas fiscais eletrônicas")
     expect(campo).toHaveTextContent("Art. 23, § 1º, V, Lei 14.133/21")
+    expect(screen.getByRole("button", { name: "Forma de Cálculo" })).toHaveTextContent(
+      "Mediana dos preços obtidos",
+    )
   })
 
-  it("fonte fora da lista volta no campo livre, e não some", async () => {
+  it("a escolha antiga, que vivia só no texto, vai para o processo", async () => {
     comDfds([dfd("DFD 003/2026", "Secretaria de Educação", [papel])])
+    const gravadas = comEstimativaQueGrava()
     renderizar(
       <PainelDaSecao
         secao={secao(TITULOS.valor, "valor")}
         processoId={PROCESSO}
-        rascunho="Fonte de pesquisa de preços: Cotação do consórcio intermunicipal."
+        rascunho={"Texto.\n\nFonte de pesquisa de preços: Cotação do consórcio intermunicipal."}
         setRascunho={vi.fn()}
         gerando={false}
         onGerarComIa={vi.fn()}
       />,
     )
 
-    // Contratação municipal tem exceção; recusá-la seria transformar orientação
-    // em obstáculo.
+    // Fonte fora da lista volta no campo livre: contratação municipal tem
+    // exceção, e recusá-la seria transformar orientação em obstáculo.
     expect(await screen.findByDisplayValue("Cotação do consórcio intermunicipal")).toBeInTheDocument()
+    expect(gravadas).toEqual([{ method: null, source: "Cotação do consórcio intermunicipal" }])
+  })
+
+  it("a memória que ficou para trás da estimativa é posta em dia sem perder o resto", async () => {
+    comDfds([dfd("DFD 003/2026", "Secretaria de Educação", [papel])])
+    comEstimativaQueGrava({ priceResearchSource: "Painel de Preços do Governo Federal (Compras.gov.br)" })
+    const setRascunho = vi.fn()
+    renderizar(
+      <PainelDaSecao
+        secao={secao(TITULOS.valor, "valor")}
+        processoId={PROCESSO}
+        rascunho="Memória escrita à mão."
+        setRascunho={setRascunho}
+        gerando={false}
+        onGerarComIa={vi.fn()}
+      />,
+    )
+
+    expect(await screen.findByText(/não diz a fonte de pesquisa de preços/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: "Incluir na Memória" }))
+
+    expect(setRascunho).toHaveBeenCalledWith(
+      "Memória escrita à mão.\n\nFonte de pesquisa de preços: Painel de Preços do Governo Federal"
+        + " (Compras.gov.br) (Art. 23, § 1º, I, Lei 14.133/21).",
+    )
+  })
+
+  it("a fonte digitada à mão grava quando a pessoa para de digitar", async () => {
+    comDfds([dfd("DFD 003/2026", "Secretaria de Educação", [papel])])
+    const gravadas = comEstimativaQueGrava()
+    renderizarPainel("valor")
+
+    await userEvent.click(await screen.findByRole("button", { name: /Fonte de pesquisa de preços/ }))
+    await userEvent.click(await screen.findByRole("option", { name: /Outra/ }))
+    await userEvent.type(screen.getByRole("textbox", { name: /informe qual/ }), "Consórcio")
+
+    await vi.waitFor(() => expect(gravadas).toEqual([{ method: null, source: "Consórcio" }]), {
+      timeout: 2000,
+    })
   })
 
   it("sem item nenhum, não oferece uma estimativa que não existe", async () => {
@@ -317,10 +353,11 @@ describe("rascunho e IA convivem", () => {
     comDfds([dfd("DFD 003/2026", "Secretaria de Educação", [papel])])
     renderizarPainel("valor")
 
+    comEstimativaQueGrava()
     await userEvent.click(await screen.findByRole("button", { name: /Fonte de pesquisa de preços/ }))
     await userEvent.click(await screen.findByRole("option", { name: /Painel de Preços/ }))
 
-    expect(screen.getByRole("button", { name: /a partir dos itens/ })).toBeInTheDocument()
+    expect(await screen.findByRole("button", { name: /a partir dos itens/ })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /Gerar com IA/ })).toBeInTheDocument()
   })
 })
@@ -371,7 +408,7 @@ describe("o mesmo painel em outros documentos", () => {
     // pode anunciar o inciso do ETP.
     expect(await screen.findByText(titulo)).toBeInTheDocument()
     expect(
-      screen.getByRole("button", { name: "Fonte de pesquisa de preços" }),
+      await screen.findByRole("button", { name: "Fonte de pesquisa de preços" }),
     ).toBeInTheDocument()
   })
 
@@ -481,11 +518,12 @@ describe("o valor apurado na pesquisa", () => {
       />,
     )
 
+    comEstimativaQueGrava()
     await userEvent.click(
       await screen.findByRole("button", { name: /Fonte de pesquisa de preços/ }),
     )
     await userEvent.click(await screen.findByRole("option", { name: /Painel de Preços/ }))
-    await userEvent.click(screen.getByRole("button", { name: /a partir dos itens/ }))
+    await userEvent.click(await screen.findByRole("button", { name: /a partir dos itens/ }))
 
     const texto = setRascunho.mock.calls[0]?.[0] as string
     // Apresentar preço pesquisado e preço preliminar como a mesma coisa faria a

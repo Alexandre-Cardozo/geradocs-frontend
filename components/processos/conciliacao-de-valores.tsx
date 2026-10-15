@@ -1,7 +1,7 @@
 "use client"
 
 import { Button, Tag } from "@/components/ui"
-import { useAtualizarProcesso, useColetasDoProcesso, useDfdsDoProcesso } from "@/lib/api/hooks"
+import { useAtualizarProcesso, useColetasDoProcesso, useDfdsDoProcesso, useProcesso } from "@/lib/api/hooks"
 import { useToast } from "@/components/shared/providers"
 import { apurar, chaveDoItem, porItem } from "@/lib/dominio/pesquisa-de-precos"
 import { formatBRL, formatNumeroBR, parseValorBR } from "@/lib/format"
@@ -36,6 +36,9 @@ export function ConciliacaoDeValores({
 }) {
   const dfds = useDfdsDoProcesso(processoId)
   const coletas = useColetasDoProcesso(processoId)
+  // O apurado segue a forma de cálculo do processo (ADR-051 do back-end) — a
+  // mesma que o ETP, o TR e a Cotação usam.
+  const metodo = useProcesso(processoId).data?.estimativa?.metodo ?? "media"
   const atualizar = useAtualizarProcesso()
   const showToast = useToast()
 
@@ -58,7 +61,7 @@ export function ConciliacaoDeValores({
     const pesquisa = apuradoDe(item.descricao)
     return pesquisa == null
       ? soma
-      : soma + parseValorBR(item.quantidade) * apurar(pesquisa, "media")
+      : soma + parseValorBR(item.quantidade) * apurar(pesquisa, metodo)
   }, 0)
 
   /** O valor que a demanda sustenta hoje: o apurado quando a pesquisa cobre tudo. */

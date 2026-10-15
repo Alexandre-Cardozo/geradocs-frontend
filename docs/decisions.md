@@ -1168,3 +1168,16 @@ Relato (08/10/2026): no celular, em homologação, a pessoa entrava com a creden
 **A config do repositório não chegava à produção.** O primeiro deploy da correção passou no CI e não mudou nada no Pages. O `actions/configure-pages`, com `static_site_generator: next`, não reconhece `next.config.ts`: cria um `next.config.js` em branco, injeta `output`, `basePath` e `images`, e o Next lê esse no lugar do nosso. Até aqui a config injetada era equivalente e ninguém notou. A opção saiu do `deploy.yml`, que agora reprova a publicação se `out/login/index.html` — fruto do `trailingSlash` — não existir.
 
 **O que continua em aberto.** Recarregar a página (F5, nova aba) ainda perde a sessão no iPhone, porque o cookie de renovação segue sendo de terceiros. A saída é a da ADR-013 do backend: front e API sob o mesmo domínio registrável.
+
+## 83. A forma de cálculo e a fonte da estimativa passam a ser do processo
+
+Revê o §70 e o §74, que guardavam a fonte de pesquisa e o método de apuração **só no texto** da memória de cálculo. Dois defeitos saíram disso. Quem escrevia a memória à mão — ou não tinha itens para a plataforma escrevê-la — escolhia a fonte, salvava e a perdia, porque a linha nunca entrava no texto. E o ETP não tinha seletor de método: seguia o que a Cotação escrevera, com a média como padrão silencioso; um parceiro pediu a escolha entre média e mediana no ETP.
+
+**A escolha é do processo** (ADR-051 do back-end): ETP, TR e Cotação estimam a mesma contratação, e cada um apurar por um método diferente faria as peças do mesmo processo apresentarem valores diferentes.
+
+- **Onde se escolhe:** nas seções de valor — Estimativa do Valor do ETP e do TR, e Metodologia e Preço de Referência da Cotação —, que é onde o efeito no total aparece na hora. O seletor diz "Vale para Cotação, ETP e TR deste processo" e grava ao escolher; a fonte digitada à mão grava quando a pessoa para de digitar.
+- **Na capa:** um resumo só de leitura ("Estimativa de valor: Mediana · Painel de Preços"), com o caminho até a seção (`?painel=valor` abre o editor nela). Seletor na capa trocaria o método sem mostrar o efeito.
+- **Documento já gerado:** trocar o método pede confirmação, dizendo que o arquivo gerado não muda e que refletir a troca é retificar.
+- **A memória continua sendo texto da pessoa.** Quando ela cita outra fonte ou outro método — ou não cita —, a tela avisa e oferece "Atualizar a Memória" (ou "Incluir na Memória"), que troca só essas linhas.
+- **Processos anteriores:** a fonte e o método que o texto já declara vão para o processo na primeira abertura.
+- A conciliação de valores da capa passa a apurar pelo mesmo método.

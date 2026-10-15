@@ -7,6 +7,7 @@ import type {
   FichaDaSecretaria,
   FormaDaDispensa,
   FundamentoDaDispensa,
+  MetodoDaEstimativa,
   Modalidade,
   NovoProcessoInput,
   Processo,
@@ -52,6 +53,9 @@ interface ProcessoApi {
   stage?: "DRAFT" | "IN_PROGRESS" | "READY_TO_CLOSE" | "CLOSED";
   requiredDocuments?: number;
   requiredDocumentsDone?: number;
+  /** A estimativa de valor do processo (ADR-051). */
+  priceEstimationMethod?: MetodoApi | null;
+  priceResearchSource?: string | null;
   closedAt?: string;
   closureNote?: string;
   createdAt: string;
@@ -100,6 +104,14 @@ function mapear(item: ProcessoApi): Processo {
     ...(item.requiredDocuments === undefined
       ? {}
       : { obrigatorios: { total: item.requiredDocuments, concluidos: item.requiredDocumentsDone ?? 0 } }),
+    ...(item.priceEstimationMethod || item.priceResearchSource
+      ? {
+          estimativa: {
+            ...(item.priceEstimationMethod ? { metodo: METODOS[item.priceEstimationMethod] } : {}),
+            ...(item.priceResearchSource ? { fonte: item.priceResearchSource } : {}),
+          },
+        }
+      : {}),
     encerradoEm: item.closedAt,
     justificativaEncerramento: item.closureNote,
     valorEstimado: Number(item.estimatedValue),
@@ -120,6 +132,21 @@ function mapear(item: ProcessoApi): Processo {
     versao: item.version,
   };
 }
+
+type MetodoApi = "MEAN" | "MEDIAN" | "LOWEST";
+
+/** A forma de cálculo como o servidor a nomeia (ADR-051). */
+const METODOS: Record<MetodoApi, MetodoDaEstimativa> = {
+  MEAN: "media",
+  MEDIAN: "mediana",
+  LOWEST: "menor",
+};
+
+const METODO_DA_API: Record<MetodoDaEstimativa, MetodoApi> = {
+  media: "MEAN",
+  mediana: "MEDIAN",
+  menor: "LOWEST",
+};
 
 /** A etapa do servidor (ADR-050) é o status que a tela mostra. */
 const ETAPAS: Record<NonNullable<ProcessoApi["stage"]>, StatusProcesso> = {
@@ -293,6 +320,31 @@ export async function encerrarProcessoReal(
         method: "POST",
         body: JSON.stringify({
           justification: justificativa.trim() === "" ? null : justificativa.trim(),
+        }),
+      },
+    ),
+  );
+}
+
+/**
+ * Declara a forma de cálculo e a fonte da estimativa de valor (ADR-051).
+ *
+ * <p>O par inteiro: ausente é "não declarado". Vale para o processo — ETP, TR
+ * e Cotação apuram pela mesma escolha.
+ */
+export async function declararEstimativaReal(
+  id: string,
+  estimativa: { metodo?: MetodoDaEstimativa; fonte?: string },
+): Promise<Processo> {
+  const fonte = estimativa.fonte?.trim() ?? "";
+  return mapear(
+    await requisicaoProtegida<ProcessoApi>(
+      `/procurement-processes/${encodeURIComponent(id)}/price-estimation`,
+      {
+        method: "PUT",
+        body: JSON.stringify({
+          method: estimativa.metodo ? METODO_DA_API[estimativa.metodo] : null,
+          source: fonte === "" ? null : fonte,
         }),
       },
     ),

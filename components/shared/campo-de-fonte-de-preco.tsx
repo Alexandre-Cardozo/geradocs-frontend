@@ -31,8 +31,10 @@ export function CampoDeFonteDePreco({
   onChange: (fonte: string) => void
   ariaLabel?: string
 }) {
-  const canonica = value === "" || ehFonteCanonica(value)
-  const [livre, setLivre] = useState(!canonica)
+  // Fonte fora da lista é campo livre — inclusive a que chega depois, gravada
+  // no processo (ADR-051 do back-end), e não só a que estava lá na montagem.
+  const [escolheuOutra, setEscolheuOutra] = useState(false)
+  const livre = escolheuOutra || (value !== "" && !ehFonteCanonica(value))
 
   return (
     <div className="flex flex-col gap-2">
@@ -41,11 +43,11 @@ export function CampoDeFonteDePreco({
         ariaLabel={ariaLabel}
         onChange={(escolha) => {
           if (escolha === OUTRA_FONTE) {
-            setLivre(true)
+            setEscolheuOutra(true)
             onChange("")
             return
           }
-          setLivre(false)
+          setEscolheuOutra(false)
           onChange(escolha)
         }}
         options={[

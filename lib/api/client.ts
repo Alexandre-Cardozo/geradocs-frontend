@@ -60,6 +60,7 @@ import {
   atualizarProcessoReal,
   consolidacaoDaDemanda,
   criarProcessoReal,
+  declararEstimativaReal,
   encerrarProcessoReal,
   listarProcessos,
   obterProcesso,
@@ -87,6 +88,7 @@ import type {
   DocumentoGerado,
   EstatisticasDashboard,
   EventoDoProcesso,
+  MetodoDaEstimativa,
   Modalidade,
   NovoProcessoInput,
   ParecerDFD,
@@ -406,6 +408,14 @@ export async function encerrarProcesso(processoId: string, justificativa = ""): 
   // Sem registro paralelo: o servidor grava o encerramento com a justificativa,
   // e a trilha da tela lê de lá (ADR-024).
   return encerrarProcessoReal(processoId, justificativa)
+}
+
+/** Declara a forma de cálculo e a fonte da estimativa de valor do processo (ADR-051). */
+export async function declararEstimativa(
+  processoId: string,
+  estimativa: { metodo?: MetodoDaEstimativa; fonte?: string },
+): Promise<Processo> {
+  return declararEstimativaReal(processoId, estimativa)
 }
 
 /** Reabre um processo encerrado para retificar documento. */

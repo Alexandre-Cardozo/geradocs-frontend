@@ -119,6 +119,9 @@ export interface ConfigATA {
   arquivo?: string | null
 }
 
+/** Como o preço de referência sai da série de preços coletados (IN SEGES 65/2021, Art. 6º). */
+export type MetodoDaEstimativa = "media" | "mediana" | "menor"
+
 export interface Processo {
   /** UUID do processo no servidor. Não aparece em tela: ninguém o digita. */
   id: string
@@ -145,6 +148,13 @@ export interface Processo {
   /** O id da secretaria requisitante — é por ele que a edição a troca. */
   secretariaId?: string
   status: StatusProcesso
+  /**
+   * A forma de cálculo e a fonte da estimativa de valor (ADR-051 do back-end).
+   *
+   * <p>Uma por processo: ETP, TR e Cotação apuram pela mesma escolha. Ausentes
+   * enquanto não declaradas.
+   */
+  estimativa?: { metodo?: MetodoDaEstimativa; fonte?: string }
   /** Os obrigatórios da modalidade e quantos já foram concluídos (ADR-050). */
   obrigatorios?: { total: number; concluidos: number }
   /** Quando a plataforma deixou de acompanhar o processo. */

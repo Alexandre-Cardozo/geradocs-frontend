@@ -15,7 +15,7 @@ import { IconCheck, IconCheckCircle, IconFileText } from "@/components/ui/icons"
 import { CaminhosDaSecao } from "@/components/documentos/caminhos-da-secao"
 import { InlineSpinner } from "@/components/shared/estados"
 import { useToast } from "@/components/shared/providers"
-import { CampoDeFonteDePreco } from "@/components/shared/campo-de-fonte-de-preco"
+import { AvisoDaMemoria, EstimativaDoProcesso } from "@/components/documentos/estimativa-do-processo"
 import { Th } from "@/components/shared/tabela"
 import {
   useColetasDoProcesso,
@@ -25,11 +25,11 @@ import {
   useSecoes,
 } from "@/lib/api/hooks"
 import type { DfdAnexado, ItemConsolidado } from "@/lib/api/procurement-client"
+import { metodoCitado } from "@/lib/dominio/estimativa"
 import { fonteDeclarada, fundamentoDaFonte, PREFIXO_DA_FONTE } from "@/lib/dominio/fontes-de-preco"
 import {
   apurar,
   chaveDoItem,
-  metodoDeclarado,
   porItem,
   ROTULO_DO_METODO,
   type MetodoDeApuracao,
@@ -371,31 +371,20 @@ function PainelValor({
   const processo = useProcesso(processoId)
   const coletas = useColetasDoProcesso(processoId)
   /*
-    O método de apuração é o que a **Cotação** declarou, e não um padrão desta
-    tela: se o ETP somasse pela média enquanto a Cotação adotou a mediana, as
-    duas peças do mesmo processo apresentariam valores diferentes para a mesma
-    contratação. Só se consulta quando a Cotação é um dos documentos escolhidos.
+    A forma de cálculo e a fonte são do processo (ADR-051 do back-end): ETP, TR
+    e Cotação apuram pela mesma escolha. Antes o ETP seguia o método que a
+    Cotação escreveu no texto dela, e a fonte vivia numa linha da memória —
+    escrita à mão, a memória não a tinha, e a escolha se perdia ao salvar.
   */
+  const estimativa = processo.data?.estimativa
+  const metodo = estimativa?.metodo ?? "media"
+  const fonte = estimativa?.fonte ?? ""
+  // Só para trazer ao processo a escolha antiga, que vivia no texto da Cotação.
   const temCotacao = processo.data?.documentos.includes("Cotação") ?? false
   const secoesDaCotacao = useSecoes(temCotacao ? processoId : "", "Cotação")
-  const metodo =
-    metodoDeclarado(
-      (secoesDaCotacao.data ?? []).find((secao) => secao.painel === "referencia")?.conteudo
-        ?? "",
-    ) ?? "media"
+  const memoriaDaCotacao =
+    (secoesDaCotacao.data ?? []).find((secao) => secao.painel === "referencia")?.conteudo ?? ""
   const showToast = useToast()
-  /*
-    A fonte vive na memória de cálculo, e é de lá que ela volta. Antes era só
-    estado da aba: a marcação sumia ao trocar de seção, e a escolha que o
-    controle vai procurar no documento não estava em lugar nenhum (§70).
-  */
-  const declarada = fonteDeclarada(rascunho)
-  const [fonte, setFonte] = useState(declarada ?? "")
-  const [sincronizada, setSincronizada] = useState(declarada)
-  if (declarada !== sincronizada) {
-    setSincronizada(declarada)
-    if (declarada) setFonte(declarada)
-  }
 
   /*
     O preço vem da pesquisa quando ela existe.
@@ -491,14 +480,14 @@ function PainelValor({
         </div>
       )}
 
-      <div className="mt-4 max-w-3xl">
-        <FormField
-          label="Fonte de Pesquisa de Preços"
-          required
-          hint="Os parâmetros do Art. 23, § 1º, Lei 14.133/21, na ordem de preferência da IN SEGES 65/2021 — a pesquisa direta com fornecedores é a última alternativa. A escolha entra na memória de cálculo, que é o que a seção guarda."
-        >
-          <CampoDeFonteDePreco value={fonte} onChange={setFonte} />
-        </FormField>
+      <div className="mt-4">
+        <EstimativaDoProcesso
+          processoId={processoId}
+          legado={{
+            metodo: metodoCitado(memoriaDaCotacao) ?? metodoCitado(rascunho),
+            fonte: fonteDeclarada(rascunho),
+          }}
+        />
       </div>
 
       <div className="mt-4">
@@ -515,6 +504,13 @@ function PainelValor({
           />
         </FormField>
       </div>
+
+      <AvisoDaMemoria
+        rascunho={rascunho}
+        setRascunho={setRascunho}
+        estimativa={estimativa}
+        comPesquisa={daPesquisa.length > 0}
+      />
 
       {precificados.length > 0 && fonte.trim() === "" && (
         <p className="mt-4 m-0 text-xs text-text-muted">
