@@ -45,4 +45,17 @@ describe("prévia do documento", () => {
     )
     expect(screen.getByText("Conteúdo gerado")).toBeInTheDocument()
   })
+
+  it("mostra o número da minuta, e nenhum no preâmbulo (§85)", () => {
+    renderizar(
+      <PreviaDoDocumento
+        blocos={[
+          { id: "PC00", titulo: "Preâmbulo", texto: "Torna-se público.", dispensada: false, numero: "" },
+          { id: "PC03", titulo: "Da Participação", texto: "Ampla.", dispensada: false, numero: "3" },
+        ]}
+      />,
+    )
+    expect(screen.queryByText("PC00.")).not.toBeInTheDocument()
+    expect(screen.getByText("3.")).toBeInTheDocument()
+  })
 })

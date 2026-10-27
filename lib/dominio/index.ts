@@ -21,7 +21,7 @@ export {
   tituloComRotuloDeVersao,
 } from "./versionamento"
 export type { MotivoRetificacao, Retificacao } from "./versionamento"
-export { corpoDoDocumento } from "./corpo"
+export { corpoDoDocumento, numeroImpresso } from "./corpo"
 export type { BlocoDoDocumento } from "./corpo"
 export {
   dispensadasSemJustificativa,
