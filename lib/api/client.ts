@@ -398,6 +398,21 @@ export async function gerarSecao(
   return { ...secao, conteudo: texto, status: statusAposEditar(texto) }
 }
 
+/**
+ * Pede ao servidor a revisão do texto da seção (§87).
+ *
+ * Devolve o texto revisado e não grava nada: a sugestão só entra se quem
+ * assina aceitar.
+ */
+export async function revisarSecao(
+  processoId: string,
+  tipo: TipoDocumento,
+  secaoId: string,
+  texto: string,
+): Promise<string> {
+  return gerarTextoDaSecao(processoId, tipo, secaoId, texto, "revisao")
+}
+
 /* ── Ciclo do processo ─────────────────────────────────────────────────────── */
 
 /**

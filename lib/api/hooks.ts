@@ -387,6 +387,14 @@ export function useGerarSecao(processoId: string, tipo: TipoDocumento) {
   })
 }
 
+/** A revisão da seção pela IA: devolve a sugestão, sem gravar (§87). */
+export function useRevisarSecao(processoId: string, tipo: TipoDocumento) {
+  return useMutation({
+    mutationFn: (input: { secaoId: string; texto: string }) =>
+      api.revisarSecao(processoId, tipo, input.secaoId, input.texto),
+  })
+}
+
 /** Invalida tudo que depende do status ou da trilha de um processo. */
 function invalidarProcesso(queryClient: ReturnType<typeof useQueryClient>, processoId: string) {
   void queryClient.invalidateQueries({ queryKey: ["processos"] })
