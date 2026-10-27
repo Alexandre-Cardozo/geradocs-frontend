@@ -22,6 +22,13 @@ export interface BlocoDoDocumento {
   texto: string
   /** Este bloco é a declaração de dispensa, e não conteúdo da seção. */
   dispensada: boolean
+  /** O número impresso; vazio quando a seção não é numerada, ausente quando é o `id`. */
+  numero?: string
+}
+
+/** O número que sai antes do título: o do modelo, ou o próprio `id`. */
+export function numeroImpresso(bloco: { id: string; numero?: string }): string {
+  return bloco.numero ?? bloco.id
 }
 
 /**
@@ -35,12 +42,24 @@ export function corpoDoDocumento(secoes: SecaoDocumento[]): BlocoDoDocumento[] {
   const blocos: BlocoDoDocumento[] = []
   for (const secao of secoes) {
     if (foiDispensada(secao)) {
-      blocos.push({ id: secao.id, titulo: secao.titulo, texto: paragrafoDeDispensa(secao), dispensada: true })
+      blocos.push({
+        id: secao.id,
+        titulo: secao.titulo,
+        texto: paragrafoDeDispensa(secao),
+        dispensada: true,
+        ...(secao.numero === undefined ? {} : { numero: secao.numero }),
+      })
       continue
     }
     const conteudo = secao.conteudo.trim()
     if (conteudo) {
-      blocos.push({ id: secao.id, titulo: secao.titulo, texto: conteudo, dispensada: false })
+      blocos.push({
+        id: secao.id,
+        titulo: secao.titulo,
+        texto: conteudo,
+        dispensada: false,
+        ...(secao.numero === undefined ? {} : { numero: secao.numero }),
+      })
     }
   }
   return blocos

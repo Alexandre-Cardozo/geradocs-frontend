@@ -449,3 +449,125 @@ describe("seções criadas pelo servidor", () => {
     expect(ordem).toEqual(["2.2", "2.1"])
   })
 })
+
+/**
+ * A minuta da AGU como estrutura do documento (§85, ADR-052 do back-end).
+ */
+describe("modelo de estrutura", () => {
+  const comMinuta = {
+    ...documentoApi,
+    documentType: "EDITAL",
+    currentVersion: 1,
+    sections: [
+      {
+        ...secaoApi("PC00", 1, true, "Torna-se público."),
+        number: "",
+        topics: ["PREAMBULO"],
+        modelText: "Torna-se público que...",
+        modelNotes: ["Nota explicativa: adapte."],
+      },
+      { ...secaoApi("PC12", 2, false), number: "12", topics: ["DOTACAO"], modelText: null, modelNotes: [] },
+      { ...secaoApi("PC12.1", 3, false), origin: "AD_HOC", number: "12.1", topics: [] },
+    ],
+    body: [
+      { sectionCode: "PC00", title: "Preâmbulo", text: "Torna-se público.", dispensed: false, headingNumber: "" },
+      { sectionCode: "7", title: "Antiga", text: "Texto.", dispensed: false, headingNumber: "7" },
+    ],
+    structureModel: { code: "AGU-EDITAL-PC", version: "2025-11", title: "Minuta AGU", publishedIn: "nov/2025" },
+    structureTitle: "Minuta AGU — Pregão (nov/2025)",
+    availableModels: [
+      {
+        code: "AGU-EDITAL-PC",
+        version: "2025-11",
+        title: "Minuta AGU — Pregão",
+        description: "Menor preço.",
+        publishedIn: "nov/2025",
+        sectionCount: 17,
+        current: true,
+      },
+    ],
+    modelChoiceRequired: false,
+    rectificationRequired: true,
+    otherModelTexts: [{ sectionCode: "12", title: "Da Dotação Orçamentária", content: "02.01." }],
+  }
+
+  it("traz a minuta, o número, os assuntos, o texto e as notas, e liga o painel pelo assunto", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id/documents/:tipo`, () => HttpResponse.json(comMinuta)),
+    )
+    const { abrirDocumento } = await carregarClienteLimpo()
+
+    const documento = await abrirDocumento(PROCESSO, "Edital")
+
+    expect(documento.estrutura).toEqual({ titulo: "Minuta AGU — Pregão (nov/2025)", codigoDoModelo: "AGU-EDITAL-PC" })
+    expect(documento.modelos).toEqual([
+      {
+        codigo: "AGU-EDITAL-PC",
+        versao: "2025-11",
+        titulo: "Minuta AGU — Pregão",
+        descricao: "Menor preço.",
+        publicadoEm: "nov/2025",
+        quantidadeDeSecoes: 17,
+        atual: true,
+      },
+    ])
+    expect(documento.retificacaoExigida).toBe(true)
+    expect(documento.escolhaDeModeloPendente).toBe(false)
+    expect(documento.textosDeOutroModelo).toEqual([
+      { secao: "12", titulo: "Da Dotação Orçamentária", texto: "02.01." },
+    ])
+    expect(documento.secoes[0]).toMatchObject({
+      numero: "",
+      assuntos: ["PREAMBULO"],
+      textoDaMinuta: "Torna-se público que...",
+      notasDaMinuta: ["Nota explicativa: adapte."],
+    })
+    // O código da minuta não está no catálogo da tela: é o assunto que liga o painel.
+    expect(documento.secoes[1]?.painel).toBe("dotacao")
+    expect(documento.secoes[1]?.textoDaMinuta).toBeUndefined()
+    expect(documento.secoes[2]?.painel).toBeUndefined()
+    expect(documento.corpo[0]?.numero).toBe("")
+    // Número igual ao código é o da Estrutura GeraDocs: não vira campo.
+    expect(documento.corpo[1]?.numero).toBeUndefined()
+  })
+
+  it("sem minuta, a Estrutura GeraDocs, sem escolha nem textos guardados", async () => {
+    const { abrirDocumento } = await carregarClienteLimpo()
+
+    const documento = await abrirDocumento(PROCESSO, "ETP")
+
+    expect(documento.estrutura).toEqual({ titulo: "Estrutura GeraDocs (Lei 14.133/21)" })
+    expect(documento.modelos).toEqual([])
+    expect(documento.escolhaDeModeloPendente).toBe(false)
+    expect(documento.retificacaoExigida).toBe(false)
+    expect(documento.textosDeOutroModelo).toEqual([])
+    expect(documento.secoes[0]?.numero).toBeUndefined()
+  })
+
+  it("a prévia e a troca falam com as rotas do modelo", async () => {
+    let pedido: { metodo: string; url: string; corpo?: unknown } | undefined
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id/documents/:tipo/structure-model/preview`, ({ request }) => {
+        pedido = { metodo: "GET", url: request.url }
+        return HttpResponse.json({ kept: ["Do Objeto"], merged: [], blank: ["Dos Recursos"], unplaced: ["Da Dotação"] })
+      }),
+      http.put(`${urlDaApi}/procurement-processes/:id/documents/:tipo/structure-model`, async ({ request }) => {
+        pedido = { metodo: "PUT", url: request.url, corpo: await request.json() }
+        return HttpResponse.json(comMinuta)
+      }),
+    )
+    const { previaDaTrocaDeModelo, trocarModeloDoDocumento } = await carregarClienteLimpo()
+
+    expect(await previaDaTrocaDeModelo(PROCESSO, "Edital", "AGU-EDITAL-TP")).toEqual({
+      mantidas: ["Do Objeto"],
+      reunidas: [],
+      emBranco: ["Dos Recursos"],
+      semLugar: ["Da Dotação"],
+    })
+    expect(pedido?.url).toContain("/documents/EDITAL/structure-model/preview?code=AGU-EDITAL-TP")
+
+    const trocado = await trocarModeloDoDocumento(PROCESSO, "Edital", "AGU-EDITAL-TP")
+    expect(pedido).toMatchObject({ metodo: "PUT", corpo: { code: "AGU-EDITAL-TP" } })
+    expect(trocado.estrutura.codigoDoModelo).toBe("AGU-EDITAL-PC")
+  })
+})

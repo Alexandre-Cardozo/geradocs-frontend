@@ -52,8 +52,11 @@ import {
   gerarTextoDaSecao,
   excluirSecao,
   historicoDeVersoes,
+  previaDaTrocaDeModelo,
   reordenarSecoes,
   salvarSecao,
+  trocarModeloDoDocumento,
+  type PreviaDaTroca,
   versoesComTexto,
 } from "@/lib/api/authoring-client"
 import {
@@ -323,6 +326,24 @@ export async function getDocumento(
   tipo: TipoDocumento,
 ): Promise<DocumentoEmElaboracao> {
   return abrirDocumento(processoId, tipo)
+}
+
+/** O que a troca de modelo faria com o texto já escrito (ADR-052 do back-end). */
+export async function getPreviaDaTroca(
+  processoId: string,
+  tipo: TipoDocumento,
+  codigo: string,
+): Promise<PreviaDaTroca> {
+  return previaDaTrocaDeModelo(processoId, tipo, codigo)
+}
+
+/** Escolhe ou troca a minuta que o documento segue. */
+export async function trocarModelo(
+  processoId: string,
+  tipo: TipoDocumento,
+  codigo: string,
+): Promise<DocumentoEmElaboracao> {
+  return trocarModeloDoDocumento(processoId, tipo, codigo)
 }
 
 export interface AtualizarSecaoInput {

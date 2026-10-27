@@ -350,6 +350,32 @@ export function useAtualizarSecao(processoId: string, tipo: TipoDocumento) {
   })
 }
 
+/** A prévia da troca de modelo — só quando há um modelo escolhido para comparar. */
+export function usePreviaDaTroca(processoId: string, tipo: TipoDocumento, codigo: string | null) {
+  return useQuery({
+    queryKey: ["previa-da-troca", processoId, tipo, codigo],
+    // `enabled` só deixa chegar aqui com o código escolhido.
+    queryFn: () => api.getPreviaDaTroca(processoId, tipo, String(codigo)),
+    enabled: processoId !== "" && codigo != null,
+    // A prévia depende do texto do momento: guardada, mostraria o que a troca
+    // faria com o texto de antes.
+    staleTime: 0,
+    gcTime: 0,
+  })
+}
+
+/** Escolhe ou troca a minuta do documento (ADR-052 do back-end). */
+export function useTrocarModelo(processoId: string, tipo: TipoDocumento) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (codigo: string) => api.trocarModelo(processoId, tipo, codigo),
+    onSuccess: (documento) => {
+      queryClient.setQueryData(chaves.secoes(processoId, tipo), documento)
+      void queryClient.invalidateQueries({ queryKey: chaves.trilha(processoId) })
+    },
+  })
+}
+
 export function useGerarSecao(processoId: string, tipo: TipoDocumento) {
   const queryClient = useQueryClient()
   return useMutation({

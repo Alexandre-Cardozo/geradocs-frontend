@@ -265,6 +265,31 @@ export interface SecaoDocumento {
   justificativaDispensa?: string
   /** Painel especial do editor, quando a seção tem um. */
   painel?: PainelSecao
+  /**
+   * O número impresso antes do título, quando o modelo o define (ADR-052 do
+   * back-end). Vazio no preâmbulo da minuta, que não é numerado; ausente na
+   * Estrutura GeraDocs, em que o número é o próprio `id`.
+   */
+  numero?: string
+  /** Os assuntos da seção no modelo — é por eles que a troca leva o texto. */
+  assuntos?: string[]
+  /** O texto da minuta da AGU, ponto de partida opcional. */
+  textoDaMinuta?: string
+  /** As notas explicativas da minuta. */
+  notasDaMinuta?: string[]
+}
+
+/** Uma minuta-padrão que o documento pode seguir (ADR-052 do back-end). */
+export interface ModeloDeEstrutura {
+  codigo: string
+  versao: string
+  titulo: string
+  descricao: string
+  /** Como a AGU data a versão: "nov/2025". */
+  publicadoEm: string
+  quantidadeDeSecoes: number
+  /** É o modelo que o documento segue agora. */
+  atual: boolean
 }
 
 /** Achado do parecer da IA sobre o DFD. */

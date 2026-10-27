@@ -84,3 +84,19 @@ describe("corpo do documento", () => {
     expect(corpo[0]?.texto).toBe("Texto com sobras.")
   })
 })
+
+describe("número impresso (§85)", () => {
+  it("é o da minuta quando ela o define, e o código quando não", async () => {
+    const { corpoDoDocumento, numeroImpresso } = await import("@/lib/dominio/corpo")
+    const base = { status: "Completo" as const, obrigatoria: true, origem: "catalogo" as const }
+    const blocos = corpoDoDocumento([
+      { ...base, id: "PC00", titulo: "Preâmbulo", conteudo: "Torna-se público.", numero: "" },
+      { ...base, id: "PC02", titulo: "Do Registro", conteudo: "", obrigatoria: false, numero: "2",
+        justificativaDispensa: "Não é registro de preços." },
+      { ...base, id: "3", titulo: "Antiga", conteudo: "Texto." },
+    ])
+
+    expect(blocos.map(numeroImpresso)).toEqual(["", "2", "3"])
+    expect(blocos[1]?.dispensada).toBe(true)
+  })
+})
