@@ -1191,3 +1191,17 @@ As funcionalidades foram chegando cada uma com a sua explicação, e as telas fi
 - **A referência legal continua literal**, mas entre parênteses ao fim da frase, e não como explicação do artigo.
 
 O porquê de cada regra continua nos comentários do código e neste documento — que é onde quem mantém o produto o procura, e não na tela de quem preenche o processo.
+
+## 85. A estrutura do documento segue a minuta da AGU quando ela existe
+
+O back-end passou a ter **modelos de estrutura** (ADR-052): a lista de seções de um documento vem da minuta-padrão da AGU que se aplica à modalidade, e a Estrutura GeraDocs (o catálogo de sempre) fica para quem não tem minuta e para os documentos já em andamento. Fase 1: Edital (pregão e concorrência por menor preço, concorrência por técnica e preço, credenciamento) e Aviso de Contratação Direta.
+
+**Na tela:**
+
+- **Uma minuta aplicável:** o servidor já abre o documento nela; o editor só mostra qual é, no topo da lista de seções.
+- **Mais de uma** (Edital da concorrência): antes da primeira seção, a etapa **Modelo do Documento**, com um cartão por minuta. Nada de escolher por padrão: a escolha muda a estrutura inteira.
+- **Trocar Modelo**, no topo da lista de seções, abre a prévia do que acontece com o texto (mantidas, reunidas, em branco, sem lugar) antes de confirmar. Em documento já gerado, a prévia diz que a próxima geração será retificação — e a etapa final passa a pedir a natureza e o motivo, porque o servidor recusa concluir sem eles.
+- **Texto da minuta:** a seção que o tem oferece **Usar o Texto da Minuta** como ponto de partida — nunca preenchido sozinho, porque é texto federal (Compras.gov.br, SICAF) que o município adapta. As notas explicativas da AGU ficam recolhidas em **Notas da AGU**, para não repetir o problema do §84.
+- **Textos de outro modelo:** o que a troca não teve onde pôr aparece numa lista recolhida, com **Inserir nesta Seção**. Nada some.
+
+**Os painéis se ligam pelo assunto da seção, e não só pelo código:** o código passou a ser próprio de cada modelo (`PC03`), e o painel de dotação precisa aparecer onde o assunto é dotação, em qualquer modelo. O número impresso também vem do servidor: o preâmbulo da minuta não tem número, e as cláusulas seguem a numeração da AGU.

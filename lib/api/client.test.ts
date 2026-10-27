@@ -111,6 +111,8 @@ describe("a fachada liga cada chamada no lugar certo", () => {
       [PROCESSO, "ETP"],
     ],
     ["getCorpoDocumento", (a) => a.getCorpoDocumento(PROCESSO, "ETP"), elaboracao.corpoDaVersaoVigente, [PROCESSO, "ETP"]],
+    ["getPreviaDaTroca", (a) => a.getPreviaDaTroca(PROCESSO, "Edital", "AGU-EDITAL-TP"), elaboracao.previaDaTrocaDeModelo, [PROCESSO, "Edital", "AGU-EDITAL-TP"]],
+    ["trocarModelo", (a) => a.trocarModelo(PROCESSO, "Edital", "AGU-EDITAL-TP"), elaboracao.trocarModeloDoDocumento, [PROCESSO, "Edital", "AGU-EDITAL-TP"]],
     ["getHistoricoVersoes", (a) => a.getHistoricoVersoes(PROCESSO, "ETP"), elaboracao.historicoDeVersoes, [PROCESSO, "ETP"]],
     ["getVersoesComTexto", (a) => a.getVersoesComTexto(PROCESSO, "ETP"), elaboracao.versoesComTexto, [PROCESSO, "ETP"]],
     ["acrescentarSecaoDoDocumento", (a) => a.acrescentarSecaoDoDocumento(PROCESSO, "ETP", "Memória", "4", true), elaboracao.acrescentarSecao, [PROCESSO, "ETP", "Memória", "4", true]],

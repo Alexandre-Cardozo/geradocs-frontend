@@ -657,3 +657,31 @@ describe("configuração do órgão: de quem é a entidade", () => {
     expect(api.atualizarConfigTenant).not.toHaveBeenCalled()
   })
 })
+
+describe("modelo de estrutura (§85)", () => {
+  it("a prévia só pergunta quando há minuta escolhida", async () => {
+    const { wrapper } = ambiente()
+    vi.mocked(api.getPreviaDaTroca).mockResolvedValue({ mantidas: [], reunidas: [], emBranco: [], semLugar: [] })
+
+    renderHook(() => hooks.usePreviaDaTroca(PROCESSO, "Edital", null), { wrapper })
+    expect(api.getPreviaDaTroca).not.toHaveBeenCalled()
+
+    const { result } = renderHook(() => hooks.usePreviaDaTroca(PROCESSO, "Edital", "AGU-EDITAL-TP"), { wrapper })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(api.getPreviaDaTroca).toHaveBeenCalledWith(PROCESSO, "Edital", "AGU-EDITAL-TP")
+  })
+
+  it("trocar grava o documento devolvido e recarrega a trilha", async () => {
+    const { wrapper, gravou, invalidou } = ambiente()
+    vi.mocked(api.trocarModelo).mockResolvedValue({ secoes: [] } as never)
+
+    const { result } = renderHook(() => hooks.useTrocarModelo(PROCESSO, "Edital"), { wrapper })
+    act(() => result.current.mutate("AGU-EDITAL-TP"))
+
+    await waitFor(() =>
+      expect(gravou).toHaveBeenCalledWith(chaves.secoes(PROCESSO, "Edital"), { secoes: [] }),
+    )
+    expect(api.trocarModelo).toHaveBeenCalledWith(PROCESSO, "Edital", "AGU-EDITAL-TP")
+    expect(invalidadas(invalidou)).toContain(chave(chaves.trilha(PROCESSO)))
+  })
+})

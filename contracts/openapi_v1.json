@@ -41,6 +41,36 @@
         "required" : [ "anchorSectionCode", "nested", "title" ],
         "type" : "object"
       },
+      "AiDraftResponse" : {
+        "properties" : {
+          "content" : {
+            "type" : "string"
+          },
+          "documentType" : {
+            "type" : "string"
+          },
+          "missingFacts" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "sectionCode" : {
+            "type" : "string"
+          },
+          "sectionTitle" : {
+            "type" : "string"
+          },
+          "warnings" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "content", "documentType", "missingFacts", "sectionCode", "sectionTitle", "warnings" ],
+        "type" : "object"
+      },
       "AiStatusResponse" : {
         "properties" : {
           "available" : {
@@ -171,7 +201,7 @@
       "AuditEntryResponse" : {
         "properties" : {
           "action" : {
-            "enum" : [ "BUDGET_APPROPRIATION_DECLARED", "BUDGET_APPROPRIATION_REMOVED", "BUDGET_APPROPRIATION_UPDATED", "BUNDLE_EXPORTED", "DEPARTMENT_CREATED", "DEPARTMENT_DEACTIVATED", "DEPARTMENT_UPDATED", "DFD_ATTACHED", "DFD_REMOVED", "DFD_UPDATED", "DOCUMENT_DOWNLOADED", "DOCUMENT_FINALIZED", "DOCUMENT_GENERATED", "LOGIN_FAILED", "LOGIN_SUCCEEDED", "ORGANIZATION_CREATED", "ORGANIZATION_DEACTIVATED", "ORGANIZATION_LETTERHEAD_UPDATED", "ORGANIZATION_UPDATED", "PASSWORD_RESET_COMPLETED", "PASSWORD_RESET_REQUESTED", "PCA_IMPORTED", "PRICE_QUOTE_RECORDED", "PRICE_QUOTE_REMOVED", "PRICE_QUOTE_UPDATED", "PROCUREMENT_PROCESS_CLOSED", "PROCUREMENT_PROCESS_CREATED", "PROCUREMENT_PROCESS_REOPENED", "PROCUREMENT_PROCESS_UPDATED", "REGULATION_ADDED", "REGULATION_FILE_REPLACED", "REGULATION_REINSTATED", "REGULATION_REMOVED", "REGULATION_REVOKED", "REGULATION_UPDATED", "SECTION_DISPENSED", "SECTION_WRITTEN", "TEMPLATE_PUBLISHED", "USER_CPF_REVEALED", "USER_CREATED", "USER_DEACTIVATED", "USER_ORGANIZATION_TRANSFERRED", "USER_PASSWORD_RESET", "USER_UPDATED" ],
+            "enum" : [ "BUDGET_APPROPRIATION_DECLARED", "BUDGET_APPROPRIATION_REMOVED", "BUDGET_APPROPRIATION_UPDATED", "BUNDLE_EXPORTED", "DEPARTMENT_CREATED", "DEPARTMENT_DEACTIVATED", "DEPARTMENT_UPDATED", "DFD_ATTACHED", "DFD_REMOVED", "DFD_UPDATED", "DOCUMENT_DOWNLOADED", "DOCUMENT_FINALIZED", "DOCUMENT_GENERATED", "DOCUMENT_STRUCTURE_CHANGED", "LOGIN_FAILED", "LOGIN_SUCCEEDED", "ORGANIZATION_CREATED", "ORGANIZATION_DEACTIVATED", "ORGANIZATION_LETTERHEAD_UPDATED", "ORGANIZATION_UPDATED", "PASSWORD_RESET_COMPLETED", "PASSWORD_RESET_REQUESTED", "PCA_IMPORTED", "PRICE_QUOTE_RECORDED", "PRICE_QUOTE_REMOVED", "PRICE_QUOTE_UPDATED", "PROCUREMENT_PROCESS_CLOSED", "PROCUREMENT_PROCESS_CREATED", "PROCUREMENT_PROCESS_REOPENED", "PROCUREMENT_PROCESS_UPDATED", "REGULATION_ADDED", "REGULATION_FILE_REPLACED", "REGULATION_REINSTATED", "REGULATION_REMOVED", "REGULATION_REVOKED", "REGULATION_UPDATED", "SECTION_DISPENSED", "SECTION_WRITTEN", "TEMPLATE_PUBLISHED", "USER_CPF_REVEALED", "USER_CREATED", "USER_DEACTIVATED", "USER_ORGANIZATION_TRANSFERRED", "USER_PASSWORD_RESET", "USER_UPDATED" ],
             "type" : "string"
           },
           "actorId" : {
@@ -284,6 +314,9 @@
           "dispensed" : {
             "type" : "boolean"
           },
+          "headingNumber" : {
+            "type" : "string"
+          },
           "sectionCode" : {
             "type" : "string"
           },
@@ -294,7 +327,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "dispensed", "sectionCode", "text", "title" ],
+        "required" : [ "dispensed", "headingNumber", "sectionCode", "text", "title" ],
         "type" : "object"
       },
       "BudgetAppropriationRequest" : {
@@ -388,6 +421,17 @@
           }
         },
         "required" : [ "currentPassword", "newPassword" ],
+        "type" : "object"
+      },
+      "ChangeStructureModelRequest" : {
+        "properties" : {
+          "code" : {
+            "maxLength" : 40,
+            "minLength" : 0,
+            "type" : "string"
+          }
+        },
+        "required" : [ "code" ],
         "type" : "object"
       },
       "CloseProcurementProcessRequest" : {
@@ -974,6 +1018,12 @@
       },
       "DocumentResponse" : {
         "properties" : {
+          "availableModels" : {
+            "items" : {
+              "$ref" : "#/components/schemas/StructureModelOption"
+            },
+            "type" : "array"
+          },
           "body" : {
             "items" : {
               "$ref" : "#/components/schemas/BlockView"
@@ -1001,6 +1051,15 @@
             "format" : "uuid",
             "type" : "string"
           },
+          "modelChoiceRequired" : {
+            "type" : "boolean"
+          },
+          "otherModelTexts" : {
+            "items" : {
+              "$ref" : "#/components/schemas/OtherModelTextView"
+            },
+            "type" : "array"
+          },
           "pendingRequiredSections" : {
             "items" : {
               "type" : "string"
@@ -1015,6 +1074,9 @@
             "format" : "int32",
             "type" : "integer"
           },
+          "rectificationRequired" : {
+            "type" : "boolean"
+          },
           "sections" : {
             "items" : {
               "$ref" : "#/components/schemas/SectionResponseView"
@@ -1026,9 +1088,15 @@
               "type" : "string"
             },
             "type" : "array"
+          },
+          "structureModel" : {
+            "$ref" : "#/components/schemas/StructureModelView"
+          },
+          "structureTitle" : {
+            "type" : "string"
           }
         },
-        "required" : [ "body", "canGenerate", "changedSinceVersion", "currentVersion", "documentType", "finalized", "id", "pendingRequiredSections", "processId", "progress", "sections", "silentGaps" ],
+        "required" : [ "availableModels", "body", "canGenerate", "changedSinceVersion", "currentVersion", "documentType", "finalized", "id", "modelChoiceRequired", "otherModelTexts", "pendingRequiredSections", "processId", "progress", "rectificationRequired", "sections", "silentGaps", "structureTitle" ],
         "type" : "object"
       },
       "DocumentTemplate" : {
@@ -1459,6 +1527,21 @@
           }
         },
         "required" : [ "createdAt", "entityType", "executiveAgency", "id", "name", "status", "updatedAt", "version" ],
+        "type" : "object"
+      },
+      "OtherModelTextView" : {
+        "properties" : {
+          "content" : {
+            "type" : "string"
+          },
+          "sectionCode" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "content", "sectionCode", "title" ],
         "type" : "object"
       },
       "PageProcurementProcessResponse" : {
@@ -2195,6 +2278,18 @@
           "legalBasis" : {
             "type" : "string"
           },
+          "modelNotes" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "modelText" : {
+            "type" : "string"
+          },
+          "number" : {
+            "type" : "string"
+          },
           "origin" : {
             "enum" : [ "AD_HOC", "CATALOG" ],
             "type" : "string"
@@ -2214,9 +2309,15 @@
           },
           "title" : {
             "type" : "string"
+          },
+          "topics" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
           }
         },
-        "required" : [ "content", "origin", "position", "required", "resolved", "sectionCode", "title" ],
+        "required" : [ "content", "modelNotes", "origin", "position", "required", "resolved", "sectionCode", "title", "topics" ],
         "type" : "object"
       },
       "SessionResponse" : {
@@ -2319,6 +2420,88 @@
           }
         },
         "required" : [ "cpf", "id", "name" ],
+        "type" : "object"
+      },
+      "StructureModelOption" : {
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "current" : {
+            "type" : "boolean"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "publishedIn" : {
+            "type" : "string"
+          },
+          "sectionCount" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "version" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "code", "current", "description", "publishedIn", "sectionCount", "title", "version" ],
+        "type" : "object"
+      },
+      "StructureModelPreviewResponse" : {
+        "properties" : {
+          "blank" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "kept" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "merged" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "unplaced" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "blank", "kept", "merged", "unplaced" ],
+        "type" : "object"
+      },
+      "StructureModelView" : {
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "publishedIn" : {
+            "type" : "string"
+          },
+          "source" : {
+            "type" : "string"
+          },
+          "sourceUrl" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "version" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "code", "publishedIn", "source", "sourceUrl", "title", "version" ],
         "type" : "object"
       },
       "TemplateResponse" : {
@@ -2725,7 +2908,7 @@
           "name" : "action",
           "required" : false,
           "schema" : {
-            "enum" : [ "BUDGET_APPROPRIATION_DECLARED", "BUDGET_APPROPRIATION_REMOVED", "BUDGET_APPROPRIATION_UPDATED", "BUNDLE_EXPORTED", "DEPARTMENT_CREATED", "DEPARTMENT_DEACTIVATED", "DEPARTMENT_UPDATED", "DFD_ATTACHED", "DFD_REMOVED", "DFD_UPDATED", "DOCUMENT_DOWNLOADED", "DOCUMENT_FINALIZED", "DOCUMENT_GENERATED", "LOGIN_FAILED", "LOGIN_SUCCEEDED", "ORGANIZATION_CREATED", "ORGANIZATION_DEACTIVATED", "ORGANIZATION_LETTERHEAD_UPDATED", "ORGANIZATION_UPDATED", "PASSWORD_RESET_COMPLETED", "PASSWORD_RESET_REQUESTED", "PCA_IMPORTED", "PRICE_QUOTE_RECORDED", "PRICE_QUOTE_REMOVED", "PRICE_QUOTE_UPDATED", "PROCUREMENT_PROCESS_CLOSED", "PROCUREMENT_PROCESS_CREATED", "PROCUREMENT_PROCESS_REOPENED", "PROCUREMENT_PROCESS_UPDATED", "REGULATION_ADDED", "REGULATION_FILE_REPLACED", "REGULATION_REINSTATED", "REGULATION_REMOVED", "REGULATION_REVOKED", "REGULATION_UPDATED", "SECTION_DISPENSED", "SECTION_WRITTEN", "TEMPLATE_PUBLISHED", "USER_CPF_REVEALED", "USER_CREATED", "USER_DEACTIVATED", "USER_ORGANIZATION_TRANSFERRED", "USER_PASSWORD_RESET", "USER_UPDATED" ],
+            "enum" : [ "BUDGET_APPROPRIATION_DECLARED", "BUDGET_APPROPRIATION_REMOVED", "BUDGET_APPROPRIATION_UPDATED", "BUNDLE_EXPORTED", "DEPARTMENT_CREATED", "DEPARTMENT_DEACTIVATED", "DEPARTMENT_UPDATED", "DFD_ATTACHED", "DFD_REMOVED", "DFD_UPDATED", "DOCUMENT_DOWNLOADED", "DOCUMENT_FINALIZED", "DOCUMENT_GENERATED", "DOCUMENT_STRUCTURE_CHANGED", "LOGIN_FAILED", "LOGIN_SUCCEEDED", "ORGANIZATION_CREATED", "ORGANIZATION_DEACTIVATED", "ORGANIZATION_LETTERHEAD_UPDATED", "ORGANIZATION_UPDATED", "PASSWORD_RESET_COMPLETED", "PASSWORD_RESET_REQUESTED", "PCA_IMPORTED", "PRICE_QUOTE_RECORDED", "PRICE_QUOTE_REMOVED", "PRICE_QUOTE_UPDATED", "PROCUREMENT_PROCESS_CLOSED", "PROCUREMENT_PROCESS_CREATED", "PROCUREMENT_PROCESS_REOPENED", "PROCUREMENT_PROCESS_UPDATED", "REGULATION_ADDED", "REGULATION_FILE_REPLACED", "REGULATION_REINSTATED", "REGULATION_REMOVED", "REGULATION_REVOKED", "REGULATION_UPDATED", "SECTION_DISPENSED", "SECTION_WRITTEN", "TEMPLATE_PUBLISHED", "USER_CPF_REVEALED", "USER_CREATED", "USER_DEACTIVATED", "USER_ORGANIZATION_TRANSFERRED", "USER_PASSWORD_RESET", "USER_UPDATED" ],
             "type" : "string"
           }
         }, {
@@ -5164,6 +5347,50 @@
         "tags" : [ "document-authoring-controller" ]
       }
     },
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/sections/1/ai-draft" : {
+      "post" : {
+        "operationId" : "generateEtpNeedDraft",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "documentType",
+          "required" : true,
+          "schema" : {
+            "enum" : [ "AVISO", "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/GenerateSectionRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AiDraftResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "document-authoring-controller" ]
+      }
+    },
     "/api/v1/procurement-processes/{processId}/documents/{documentType}/sections/{sectionCode}" : {
       "delete" : {
         "operationId" : "removeSection",
@@ -5298,6 +5525,93 @@
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/GeneratedSectionResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "document-authoring-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/structure-model" : {
+      "put" : {
+        "operationId" : "changeStructureModel",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "documentType",
+          "required" : true,
+          "schema" : {
+            "enum" : [ "AVISO", "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ChangeStructureModelRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DocumentResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "document-authoring-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/structure-model/preview" : {
+      "get" : {
+        "operationId" : "previewStructureModel",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "documentType",
+          "required" : true,
+          "schema" : {
+            "enum" : [ "AVISO", "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "code",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StructureModelPreviewResponse"
                 }
               }
             },

@@ -17,4 +17,4 @@ export {
   totalSecoes,
 } from "./catalogo"
 export type { AnexoDoArquivo, GrupoDeDocumentos, MetaDocumento, RegraDocumental } from "./catalogo"
-export { painelDaSecao, secoesPorTipoBase } from "./secoes"
+export { painelDaSecao, painelDoAssunto, secoesPorTipoBase } from "./secoes"

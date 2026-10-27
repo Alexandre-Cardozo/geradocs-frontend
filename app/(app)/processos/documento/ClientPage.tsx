@@ -24,6 +24,13 @@ import { CaminhosDaSecao } from "@/components/documentos/caminhos-da-secao"
 import { DispensaDeSecao } from "@/components/documentos/dispensa-de-secao"
 import { EtapaFinal } from "@/components/documentos/etapa-final"
 import {
+  ApoioDaMinuta,
+  EscolhaDoModelo,
+  TextosDeOutroModelo,
+  TrocaDeModelo,
+} from "@/components/documentos/modelo-do-documento"
+import { PainelRetificacao } from "@/components/processos/painel-retificacao"
+import {
   PainelDaAnaliseCritica,
   PainelDasColetas,
   PainelDasFontes,
@@ -122,6 +129,23 @@ export default function EditorDocumento() {
   useEffect(() => {
     secaoAtivaRef.current = activeSection
   }, [activeSection])
+
+  /*
+    A seção aberta precisa existir na estrutura. O código passou a ser do
+    modelo (ADR-052 do back-end): o Edital na minuta da AGU começa em "PC00", e
+    a troca de minuta tira de baixo a seção que estava aberta. Nos dois casos,
+    abre-se a primeira.
+  */
+  const primeira = lista[0]
+  if (
+    secoes.isSuccess &&
+    primeira &&
+    activeSection !== ETAPA_FINAL &&
+    !lista.some((secao) => secao.id === activeSection)
+  ) {
+    setActiveSection(primeira.id)
+  }
+  const [trocandoModelo, setTrocandoModelo] = useState(false)
 
   const naEtapaFinal = activeSection === ETAPA_FINAL
   const active: SecaoDocumento | undefined = lista.find((s) => s.id === activeSection)
@@ -229,6 +253,26 @@ export default function EditorDocumento() {
     )
   }
 
+  if (documento.data?.escolhaDeModeloPendente) {
+    return (
+      <div className="p-4 sm:p-5 lg:p-7">
+        <Link
+          href={`/processos/detalhe?id=${encodeURIComponent(processoId)}`}
+          className="mb-4 inline-flex items-center gap-1.5 text-xs font-semibold text-text-3 no-underline"
+        >
+          <span className="rotate-180">
+            <IconArrowRight size={12} strokeWidth={2.5} />
+          </span>
+          Voltar ao Processo
+        </Link>
+        <EscolhaDoModelo processoId={processoId} tipo={tipo} modelos={documento.data.modelos} />
+      </div>
+    )
+  }
+
+  const modelos = documento.data?.modelos ?? []
+  const podeTrocarModelo = modelos.some((modelo) => !modelo.atual)
+
   return (
     <div className="flex flex-col lg:h-full lg:flex-row lg:overflow-hidden">
       {/* Rail de seções */}
@@ -252,6 +296,20 @@ export default function EditorDocumento() {
             <div className="font-mono text-xs text-text-muted">{processo.data.numero}</div>
             <div className="mt-0.5 text-base leading-snug font-bold break-words text-text-1">{processo.data.objeto}</div>
             <div className="mt-0.75 text-xs text-text-3">{processo.data.secretaria}</div>
+            {documento.data && (
+              <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-2xs text-text-muted">
+                <span>{documento.data.estrutura.titulo}</span>
+                {podeTrocarModelo && (
+                  <button
+                    type="button"
+                    onClick={() => setTrocandoModelo(true)}
+                    className="cursor-pointer border-none bg-transparent p-0 font-semibold text-royal"
+                  >
+                    Trocar Modelo
+                  </button>
+                )}
+              </div>
+            )}
             {documentoGerado && foiRetificado(documentoGerado.versao) && (
               // O cabeçalho é onde quem está editando descobre que trabalha
               // sobre um documento já retificado — antes de gerar mais uma versão.
@@ -301,7 +359,7 @@ export default function EditorDocumento() {
                       <IconCheck size={11} strokeWidth={3} />
                     </span>
                   ) : (
-                    s.id
+                    numeroNoTrilho(s)
                   )}
                 </span>
                 <span className="block min-w-0 flex-1">
@@ -364,7 +422,7 @@ export default function EditorDocumento() {
             <div className="mb-0.5 text-xs text-text-muted">
               {naEtapaFinal
                 ? `Etapa final · ${meta.titulo}`
-                : `Seção ${active?.id} de ${lista.length} · ${active?.fundamentoLegal}`}
+                : `Seção ${lista.findIndex((s) => s.id === activeSection) + 1} de ${lista.length}${active?.fundamentoLegal ? ` · ${active.fundamentoLegal}` : ""}`}
             </div>
             <h2 className="m-0 font-display text-panel font-bold text-text-1">
               {naEtapaFinal ? "Revisão e Geração" : active?.titulo}
@@ -406,7 +464,37 @@ export default function EditorDocumento() {
 
         <div className="relative flex-1 overflow-y-auto p-4 lg:p-6">
 
-          {naEtapaFinal && (
+          {naEtapaFinal && documento.data?.retificacaoExigida && (
+            /*
+              A minuta mudou desde a versão gerada: a nova não é regeração, é a
+              mesma peça em outra estrutura, e o servidor só a conclui como
+              retificação declarada (ADR-052 do back-end).
+            */
+            <div className="flex flex-col gap-3">
+              <PainelRetificacao
+                processoId={processoId}
+                tipo={tipo}
+                versaoAtual={documento.data.versao}
+                pendente={gerarDocumento.isPending}
+                onConfirmar={(retificacao) =>
+                  gerarDocumento.mutate(
+                    { processoId, tipo, retificacao },
+                    {
+                      onSuccess: () => {
+                        showToast(`${tipo} retificado no novo modelo.`)
+                        router.push(rotaDoDocumentoGerado(processoId, tipo, true))
+                      },
+                      onError: (erro) =>
+                        showToast(erro instanceof Error ? erro.message : `Não foi possível gerar o ${tipo}.`),
+                    },
+                  )
+                }
+                onCancelar={() => trocarSecao(lista[0]?.id ?? "")}
+              />
+            </div>
+          )}
+
+          {naEtapaFinal && !documento.data?.retificacaoExigida && (
             <EtapaFinal
               processoId={processoId}
               tipo={tipo}
@@ -453,6 +541,11 @@ export default function EditorDocumento() {
             />
           ) : !naEtapaFinal && active ? (
             <SectionBlock title={active.titulo} hint={active.hint ?? ""}>
+              {(active.textoDaMinuta || active.notasDaMinuta) && (
+                <div className="mb-3">
+                  <ApoioDaMinuta secao={active} rascunho={rascunho} setRascunho={setRascunho} />
+                </div>
+              )}
               {active.status === "Completo" && rascunho === active.conteudo && active.conteudo !== "" ? (
                 <div className="flex flex-col gap-3.5">
                   <div className="flex items-start gap-3 rounded-xl border border-tint-success-border bg-tint-success-bg px-4.5 py-4">
@@ -601,6 +694,23 @@ export default function EditorDocumento() {
           )}
 
 
+          {!naEtapaFinal && active && (
+            <TextosDeOutroModelo
+              textos={documento.data?.textosDeOutroModelo ?? []}
+              onInserir={(texto) => setRascunho(rascunho.trim() === "" ? texto : `${rascunho}\n\n${texto}`)}
+            />
+          )}
+
+          {trocandoModelo && documento.data && (
+            <TrocaDeModelo
+              processoId={processoId}
+              tipo={tipo}
+              modelos={documento.data.modelos}
+              versaoGerada={documento.data.versao}
+              onFechar={() => setTrocandoModelo(false)}
+            />
+          )}
+
           {/*
             A navegação entre seções. Gerar o documento não está mais aqui: ele
             se gera na etapa final, depois de a pessoa ver o todo (§69).
@@ -645,4 +755,13 @@ export default function EditorDocumento() {
       </div>
     </div>
   )
+}
+
+/**
+ * O que o trilho mostra no lugar do número: o da minuta, quando ela o define
+ * (o preâmbulo não tem, e mostra um traço), ou o próprio código.
+ */
+function numeroNoTrilho(secao: SecaoDocumento): string {
+  if (secao.numero === undefined) return secao.id
+  return secao.numero === "" ? "–" : secao.numero
 }

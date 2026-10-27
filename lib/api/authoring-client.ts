@@ -2,10 +2,11 @@ import "client-only";
 
 import { requisicaoProtegida } from "@/lib/api/auth-client";
 import type { Elaboracao } from "@/lib/documentos/elaboracao";
-import { painelDaSecao } from "@/lib/documentos";
+import { painelDaSecao, painelDoAssunto } from "@/lib/documentos";
 import type { BlocoDoDocumento } from "@/lib/dominio";
 import type { MotivoRetificacao, Retificacao } from "@/lib/dominio"
 import type {
+  ModeloDeEstrutura,
   SecaoDocumento,
   StatusDocumento,
   TipoDocumento,
@@ -43,6 +44,21 @@ interface SecaoApi {
   content: string;
   dispensationJustification?: string;
   resolved: boolean;
+  /** Número impresso, quando o modelo o define (ADR-052). */
+  number?: string | null;
+  topics?: string[];
+  modelText?: string | null;
+  modelNotes?: string[];
+}
+
+interface ModeloApi {
+  code: string;
+  version: string;
+  title: string;
+  description: string;
+  publishedIn: string;
+  sectionCount: number;
+  current: boolean;
 }
 
 interface DocumentoApi {
@@ -57,7 +73,13 @@ interface DocumentoApi {
   sections: SecaoApi[];
   pendingRequiredSections: string[];
   silentGaps: string[];
-  body: { sectionCode: string; title: string; text: string; dispensed: boolean }[];
+  body: { sectionCode: string; title: string; text: string; dispensed: boolean; headingNumber?: string }[];
+  structureModel?: { code: string; version: string; title: string; publishedIn: string } | null;
+  structureTitle?: string;
+  availableModels?: ModeloApi[];
+  modelChoiceRequired?: boolean;
+  rectificationRequired?: boolean;
+  otherModelTexts?: { sectionCode: string; title: string; content: string }[];
 }
 
 export interface DocumentoEmElaboracao {
@@ -75,6 +97,24 @@ export interface DocumentoEmElaboracao {
   /** Dispensáveis em branco sem justificativa: somem do documento sem registro. */
   lacunas: string[];
   corpo: BlocoDoDocumento[];
+  /** A estrutura vigente: a minuta da AGU, ou a Estrutura GeraDocs (ADR-052). */
+  estrutura: { titulo: string; codigoDoModelo?: string };
+  /** As minutas que se aplicam ao documento. */
+  modelos: ModeloDeEstrutura[];
+  /** Documento em branco com mais de uma minuta: a escolha vem antes da primeira seção. */
+  escolhaDeModeloPendente: boolean;
+  /** O modelo mudou desde a versão gerada: a próxima geração é retificação. */
+  retificacaoExigida: boolean;
+  /** Texto guardado de seções fora da estrutura atual. */
+  textosDeOutroModelo: { secao: string; titulo: string; texto: string }[];
+}
+
+/** O que a troca de modelo faria com o texto já escrito. */
+export interface PreviaDaTroca {
+  mantidas: string[];
+  reunidas: string[];
+  emBranco: string[];
+  semLugar: string[];
 }
 
 function rota(processoId: string, tipo: TipoDocumento): string {
@@ -98,7 +138,10 @@ function status(secao: SecaoApi): StatusDocumento {
 function mapearSecao(secao: SecaoApi, tipo: TipoDocumento): SecaoDocumento {
   // Seção criada pelo servidor não tem painel: painel assiste inciso da lei,
   // e a lei não conhece a seção que ele inventou.
-  const painel = secao.origin === "AD_HOC" ? undefined : painelDaSecao(tipo, secao.sectionCode);
+  const painel =
+    secao.origin === "AD_HOC"
+      ? undefined
+      : (painelDaSecao(tipo, secao.sectionCode) ?? painelDoAssunto(secao.topics?.[0]));
   return {
     id: secao.sectionCode,
     titulo: secao.title,
@@ -112,6 +155,10 @@ function mapearSecao(secao: SecaoApi, tipo: TipoDocumento): SecaoDocumento {
       ? { justificativaDispensa: secao.dispensationJustification }
       : {}),
     ...(painel ? { painel } : {}),
+    ...(secao.number == null ? {} : { numero: secao.number }),
+    ...(secao.topics?.length ? { assuntos: secao.topics } : {}),
+    ...(secao.modelText ? { textoDaMinuta: secao.modelText } : {}),
+    ...(secao.modelNotes?.length ? { notasDaMinuta: secao.modelNotes } : {}),
   };
 }
 
@@ -138,6 +185,29 @@ function mapear(documento: DocumentoApi, tipo: TipoDocumento): DocumentoEmElabor
       titulo: bloco.title,
       texto: bloco.text,
       dispensada: bloco.dispensed,
+      ...(bloco.headingNumber === undefined || bloco.headingNumber === bloco.sectionCode
+        ? {}
+        : { numero: bloco.headingNumber }),
+    })),
+    estrutura: {
+      titulo: documento.structureTitle ?? "Estrutura GeraDocs (Lei 14.133/21)",
+      ...(documento.structureModel ? { codigoDoModelo: documento.structureModel.code } : {}),
+    },
+    modelos: (documento.availableModels ?? []).map((modelo) => ({
+      codigo: modelo.code,
+      versao: modelo.version,
+      titulo: modelo.title,
+      descricao: modelo.description,
+      publicadoEm: modelo.publishedIn,
+      quantidadeDeSecoes: modelo.sectionCount,
+      atual: modelo.current,
+    })),
+    escolhaDeModeloPendente: documento.modelChoiceRequired ?? false,
+    retificacaoExigida: documento.rectificationRequired ?? false,
+    textosDeOutroModelo: (documento.otherModelTexts ?? []).map((texto) => ({
+      secao: texto.sectionCode,
+      titulo: texto.title,
+      texto: texto.content,
     })),
   };
 }
@@ -154,6 +224,36 @@ export async function abrirDocumento(
  * @param justificativaDispensa por que a seção fica em branco (Art. 18, § 2º);
  *                              ignorada quando há conteúdo
  */
+/** O que a troca de modelo faria com o texto já escrito, sem gravar (ADR-052). */
+export async function previaDaTrocaDeModelo(
+  processoId: string,
+  tipo: TipoDocumento,
+  codigo: string,
+): Promise<PreviaDaTroca> {
+  const previa = await requisicaoProtegida<{
+    kept: string[];
+    merged: string[];
+    blank: string[];
+    unplaced: string[];
+  }>(`${rota(processoId, tipo)}/structure-model/preview?code=${encodeURIComponent(codigo)}`);
+  return { mantidas: previa.kept, reunidas: previa.merged, emBranco: previa.blank, semLugar: previa.unplaced };
+}
+
+/** Escolhe ou troca a minuta que o documento segue (ADR-052). */
+export async function trocarModeloDoDocumento(
+  processoId: string,
+  tipo: TipoDocumento,
+  codigo: string,
+): Promise<DocumentoEmElaboracao> {
+  return mapear(
+    await requisicaoProtegida<DocumentoApi>(`${rota(processoId, tipo)}/structure-model`, {
+      method: "PUT",
+      body: JSON.stringify({ code: codigo }),
+    }),
+    tipo,
+  );
+}
+
 export async function salvarSecao(
   processoId: string,
   tipo: TipoDocumento,

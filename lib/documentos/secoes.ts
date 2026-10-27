@@ -501,3 +501,19 @@ export function painelDaSecao(
 ): SecaoDocumento["painel"] {
   return secoesPorTipoBase[tipo].find((secao) => secao.id === codigo)?.painel
 }
+
+/**
+ * O painel de uma seção de minuta da AGU, pelo assunto principal dela (ADR-052
+ * do back-end).
+ *
+ * <p>O código da seção é próprio de cada modelo ("PC03"), e o catálogo da tela
+ * não o conhece: é o assunto que diz que ali se trata de dotação, em qualquer
+ * minuta.
+ */
+const PAINEL_DO_ASSUNTO: Record<string, NonNullable<SecaoDocumento["painel"]>> = {
+  DOTACAO: "dotacao",
+}
+
+export function painelDoAssunto(assunto: string | undefined): SecaoDocumento["painel"] {
+  return assunto ? PAINEL_DO_ASSUNTO[assunto] : undefined
+}

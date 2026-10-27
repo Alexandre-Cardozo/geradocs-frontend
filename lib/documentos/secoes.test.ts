@@ -148,3 +148,12 @@ describe("painéis especiais", () => {
     ])
   })
 })
+
+describe("painel pelo assunto (§85)", () => {
+  it("liga o painel ao assunto principal da seção da minuta", async () => {
+    const { painelDoAssunto } = await import("@/lib/documentos/secoes")
+    expect(painelDoAssunto("DOTACAO")).toBe("dotacao")
+    expect(painelDoAssunto("OBJETO")).toBeUndefined()
+    expect(painelDoAssunto(undefined)).toBeUndefined()
+  })
+})
