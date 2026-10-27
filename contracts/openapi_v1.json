@@ -1537,6 +1537,9 @@
           "sectionCode" : {
             "type" : "string"
           },
+          "targetSectionCode" : {
+            "type" : "string"
+          },
           "title" : {
             "type" : "string"
           }

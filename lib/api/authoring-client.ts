@@ -79,7 +79,7 @@ interface DocumentoApi {
   availableModels?: ModeloApi[];
   modelChoiceRequired?: boolean;
   rectificationRequired?: boolean;
-  otherModelTexts?: { sectionCode: string; title: string; content: string }[];
+  otherModelTexts?: { sectionCode: string; title: string; content: string; targetSectionCode?: string | null }[];
 }
 
 export interface DocumentoEmElaboracao {
@@ -105,8 +105,19 @@ export interface DocumentoEmElaboracao {
   escolhaDeModeloPendente: boolean;
   /** O modelo mudou desde a versão gerada: a próxima geração é retificação. */
   retificacaoExigida: boolean;
-  /** Texto guardado de seções fora da estrutura atual. */
-  textosDeOutroModelo: { secao: string; titulo: string; texto: string }[];
+  /**
+   * Texto guardado de seções fora da estrutura atual. `secaoAlvo` é a seção
+   * atual do mesmo assunto, onde ele aparece; ausente quando nenhuma trata dele.
+   */
+  textosDeOutroModelo: TextoDeOutroModelo[];
+}
+
+/** Texto de outro modelo, com a seção atual a que ele pertence. */
+export interface TextoDeOutroModelo {
+  secao: string;
+  titulo: string;
+  texto: string;
+  secaoAlvo?: string;
 }
 
 /** O que a troca de modelo faria com o texto já escrito. */
@@ -208,6 +219,7 @@ function mapear(documento: DocumentoApi, tipo: TipoDocumento): DocumentoEmElabor
       secao: texto.sectionCode,
       titulo: texto.title,
       texto: texto.content,
+      ...(texto.targetSectionCode ? { secaoAlvo: texto.targetSectionCode } : {}),
     })),
   };
 }
