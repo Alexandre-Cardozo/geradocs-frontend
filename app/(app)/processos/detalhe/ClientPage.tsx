@@ -61,6 +61,8 @@ import {
 import { formatBRL, formatData } from "@/lib/format"
 import { opcoesDeSecretaria } from "@/lib/secretarias/opcoes"
 import {
+  NATUREZA_DO_OBJETO,
+  type NaturezaDoObjeto,
   FORMA_DA_DISPENSA,
   MODALIDADE_LABEL,
   type FormaDaDispensa,
@@ -98,6 +100,7 @@ export default function HubProcesso() {
   const [objeto, setObjeto] = useState("")
   const [objetoDemanda, setObjetoDemanda] = useState("")
   const [secretaria, setSecretaria] = useState("")
+  const [naturezaDoObjeto, setNaturezaDoObjeto] = useState<NaturezaDoObjeto | "">("")
   // Modalidade escolhida mas ainda não aplicada: fica pendente enquanto o
   // alerta de impacto está na tela.
   const [novaModalidade, setNovaModalidade] = useState<Modalidade | null>(null)
@@ -118,6 +121,7 @@ export default function HubProcesso() {
     setObjeto(processo.data.objeto)
     setObjetoDemanda(processo.data.objetoDemanda ?? "")
     setSecretaria(processo.data.secretariaId ?? "")
+    setNaturezaDoObjeto(processo.data.naturezaDoObjeto ?? "")
     setEditando(true)
   }
 
@@ -129,6 +133,7 @@ export default function HubProcesso() {
         objetoDemanda: objetoDemanda.trim(),
         // A troca de secretaria vai para a trilha; mantida, nem é enviada.
         secretariaId: secretaria && secretaria !== processo.data?.secretariaId ? secretaria : undefined,
+        naturezaDoObjeto: naturezaDoObjeto === "" ? null : naturezaDoObjeto,
       },
       {
         onSuccess: () => {
@@ -608,6 +613,35 @@ export default function HubProcesso() {
           <div>
             <dt className="text-2xs font-semibold tracking-caps text-text-muted uppercase">Atualizado em</dt>
             <dd className="m-0 mt-0.5 text-base text-text-1">{formatData(proc.atualizadoEm)}</dd>
+          </div>
+
+          {/* A natureza escolhe a minuta da AGU do TR e do Contrato (ADR-053). */}
+          <div className="sm:col-span-2">
+            <dt className="text-2xs font-semibold tracking-caps text-text-muted uppercase">Natureza do Objeto</dt>
+            {!editando ? (
+              <dd className="m-0 mt-0.5 text-base text-text-1">
+                {proc.naturezaDoObjeto ? (
+                  NATUREZA_DO_OBJETO[proc.naturezaDoObjeto]
+                ) : (
+                  <span className="text-text-faint">Não informada</span>
+                )}
+              </dd>
+            ) : (
+              <dd className="m-0 mt-1 max-w-md">
+                <Dropdown
+                  value={naturezaDoObjeto}
+                  onChange={(valor) => setNaturezaDoObjeto(valor as NaturezaDoObjeto | "")}
+                  ariaLabel="Natureza do Objeto"
+                  options={[
+                    { value: "", label: "Não informada" },
+                    ...(Object.keys(NATUREZA_DO_OBJETO) as NaturezaDoObjeto[]).map((chave) => ({
+                      value: chave,
+                      label: NATUREZA_DO_OBJETO[chave],
+                    })),
+                  ]}
+                />
+              </dd>
+            )}
           </div>
 
           {/* Objeto da Demanda — trabalha junto com o DFD, alimenta o ETP */}

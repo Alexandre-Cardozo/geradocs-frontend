@@ -152,8 +152,12 @@ describe("painéis especiais", () => {
 describe("painel pelo assunto (§85)", () => {
   it("liga o painel ao assunto principal da seção da minuta", async () => {
     const { painelDoAssunto } = await import("@/lib/documentos/secoes")
-    expect(painelDoAssunto("DOTACAO")).toBe("dotacao")
-    expect(painelDoAssunto("OBJETO")).toBeUndefined()
-    expect(painelDoAssunto(undefined)).toBeUndefined()
+    expect(painelDoAssunto("Edital", "DOTACAO")).toBe("dotacao")
+    // O objeto do TR tem o painel de quantidades; o do Edital, não.
+    expect(painelDoAssunto("TR", "OBJETO")).toBe("quantidades")
+    expect(painelDoAssunto("TR", "ESTIMATIVA_DO_VALOR")).toBe("valor")
+    expect(painelDoAssunto("Edital", "OBJETO")).toBeUndefined()
+    expect(painelDoAssunto("ETP", "DOTACAO")).toBeUndefined()
+    expect(painelDoAssunto("TR", undefined)).toBeUndefined()
   })
 })

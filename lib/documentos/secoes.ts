@@ -510,10 +510,19 @@ export function painelDaSecao(
  * não o conhece: é o assunto que diz que ali se trata de dotação, em qualquer
  * minuta.
  */
-const PAINEL_DO_ASSUNTO: Record<string, NonNullable<SecaoDocumento["painel"]>> = {
-  DOTACAO: "dotacao",
+const PAINEL_DO_ASSUNTO: Partial<Record<TipoDocumento, Record<string, NonNullable<SecaoDocumento["painel"]>>>> = {
+  // No TR, os mesmos painéis da Estrutura GeraDocs: quantidades na definição
+  // do objeto, necessidade, valor e dotação (ADR-053 do back-end).
+  TR: {
+    OBJETO: "quantidades",
+    NECESSIDADE: "necessidade",
+    ESTIMATIVA_DO_VALOR: "valor",
+    DOTACAO: "dotacao",
+  },
+  Edital: { DOTACAO: "dotacao" },
+  Contrato: { DOTACAO: "dotacao" },
 }
 
-export function painelDoAssunto(assunto: string | undefined): SecaoDocumento["painel"] {
-  return assunto ? PAINEL_DO_ASSUNTO[assunto] : undefined
+export function painelDoAssunto(tipo: TipoDocumento, assunto: string | undefined): SecaoDocumento["painel"] {
+  return assunto ? PAINEL_DO_ASSUNTO[tipo]?.[assunto] : undefined
 }

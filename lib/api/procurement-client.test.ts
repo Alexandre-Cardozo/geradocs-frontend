@@ -214,6 +214,11 @@ describe("criarProcessoReal", () => {
     expect(corpo.modality).toBe("DIRECT_AWARD_ARTICLE_75")
     expect(corpo.departmentId).toBe(DEPARTAMENTO_ID)
     expect(corpo.estimatedValue).toBe(12000)
+    // Sem natureza informada, vai como ausente (ADR-053).
+    expect(corpo.objectNature).toBeNull()
+
+    await criarProcessoReal({ ...entrada, naturezaDoObjeto: "SERVICES" })
+    expect(corpo.objectNature).toBe("SERVICES")
   })
 
   it("preserva o objeto da demanda e o fundamento legal quando existem", async () => {
@@ -328,6 +333,28 @@ describe("atualizarProcessoReal", () => {
 
     expect(corpos[0]?.dispensationForm).toBe("DISPUTE")
     expect(corpos[1]?.dispensationForm).toBe("DIRECT")
+  })
+
+  it("a natureza do objeto vai e volta, é reenviada quando não muda e null a retira (ADR-053)", async () => {
+    const corpos: Record<string, unknown>[] = []
+    const comNatureza = { ...processoApi, objectNature: "GOODS" }
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id`, () => HttpResponse.json(comNatureza)),
+      http.patch(`${urlDaApi}/procurement-processes/:id`, async ({ request }) => {
+        corpos.push((await request.json()) as Record<string, unknown>)
+        return HttpResponse.json(comNatureza)
+      }),
+    )
+    const { atualizarProcessoReal, obterProcesso } = await carregarClienteLimpo()
+    const atual = await obterProcesso(processoApi.id)
+    expect(atual.naturezaDoObjeto).toBe("GOODS")
+
+    await atualizarProcessoReal(atual, { objeto: "Descrição revisada" })
+    await atualizarProcessoReal(atual, { naturezaDoObjeto: "WORKS_AND_ENGINEERING" })
+    await atualizarProcessoReal(atual, { naturezaDoObjeto: null })
+    await atualizarProcessoReal({ ...atual, naturezaDoObjeto: undefined }, { objeto: "Outra" })
+
+    expect(corpos.map((corpo) => corpo.objectNature)).toEqual(["GOODS", "WORKS_AND_ENGINEERING", null, null])
   })
 
   it("a secretaria só vai quando a capa a troca — ausente, o servidor mantém a atual", async () => {

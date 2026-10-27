@@ -1463,6 +1463,8 @@ export interface components {
             /** @enum {string} */
             modality: "ACCREDITATION" | "AUCTION" | "COMPETITION" | "COMPETITIVE_DIALOGUE" | "CONTEST" | "DIRECT_AWARD_ARTICLE_75" | "ELECTRONIC_AUCTION" | "SOLE_SOURCE";
             objectDescription: string;
+            /** @enum {string} */
+            objectNature?: "GOODS" | "SERVICES" | "SERVICES_WITH_DEDICATED_LABOR" | "WORKS_AND_ENGINEERING";
             urgency: boolean;
         };
         CreateUserRequest: {
@@ -1959,6 +1961,8 @@ export interface components {
             /** @enum {string} */
             modality: "ACCREDITATION" | "AUCTION" | "COMPETITION" | "COMPETITIVE_DIALOGUE" | "CONTEST" | "DIRECT_AWARD_ARTICLE_75" | "ELECTRONIC_AUCTION" | "SOLE_SOURCE";
             objectDescription: string;
+            /** @enum {string} */
+            objectNature?: "GOODS" | "SERVICES" | "SERVICES_WITH_DEDICATED_LABOR" | "WORKS_AND_ENGINEERING";
             /** Format: uuid */
             organizationId: string;
             /** @enum {string} */
@@ -2203,6 +2207,8 @@ export interface components {
             /** @enum {string} */
             modality: "ACCREDITATION" | "AUCTION" | "COMPETITION" | "COMPETITIVE_DIALOGUE" | "CONTEST" | "DIRECT_AWARD_ARTICLE_75" | "ELECTRONIC_AUCTION" | "SOLE_SOURCE";
             objectDescription: string;
+            /** @enum {string} */
+            objectNature?: "GOODS" | "SERVICES" | "SERVICES_WITH_DEDICATED_LABOR" | "WORKS_AND_ENGINEERING";
             urgency: boolean;
         };
         UpdateUserRequest: {

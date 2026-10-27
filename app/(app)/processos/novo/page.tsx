@@ -52,6 +52,8 @@ import { formatBRL, parseValorBR } from "@/lib/format";
 import {
   FORMA_DA_DISPENSA,
   FUNDAMENTO_DA_DISPENSA,
+  NATUREZA_DO_OBJETO,
+  type NaturezaDoObjeto,
   MODALIDADE_LABEL,
   type FormaDaDispensa,
   type FundamentoDaDispensa,
@@ -213,6 +215,7 @@ export default function NovoProcesso() {
     opções do pregão. Sem esta escolha não há como sugerir os documentos certos.
   */
   const [formaDaDispensa, setFormaDaDispensa] = useState<FormaDaDispensa | "">("");
+  const [naturezaDoObjeto, setNaturezaDoObjeto] = useState<NaturezaDoObjeto | "">("");
   const [isAdesaoATA, setIsAdesaoATA] = useState(false);
   const [ataMode, setATAMode] = useState<ModoATA | "">("");
   const [ataFile, setATAFile] = useState<string | null>(null);
@@ -396,6 +399,7 @@ export default function NovoProcesso() {
         modalidade: modalidadeSel.valor,
         ...(fundamentoDaDispensa === "" ? {} : { fundamentoDaDispensa }),
         ...(forma ? { formaDaDispensa: forma } : {}),
+        ...(naturezaDoObjeto === "" ? {} : { naturezaDoObjeto }),
         secretaria,
         valorEstimado: valorNumerico,
         fundamentoLegal: fundamento.trim() || undefined,
@@ -717,6 +721,21 @@ export default function NovoProcesso() {
                       />
                     </div>
                   )}
+                </FormField>
+
+                <FormField label="Natureza do Objeto" hint="Escolhe a minuta da AGU do TR e do Contrato.">
+                  <Dropdown
+                    value={naturezaDoObjeto}
+                    onChange={(valor) => setNaturezaDoObjeto(valor as NaturezaDoObjeto | "")}
+                    ariaLabel="Natureza do Objeto"
+                    options={[
+                      { value: "", label: "Não informar agora" },
+                      ...(Object.keys(NATUREZA_DO_OBJETO) as NaturezaDoObjeto[]).map((chave) => ({
+                        value: chave,
+                        label: NATUREZA_DO_OBJETO[chave],
+                      })),
+                    ]}
+                  />
                 </FormField>
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

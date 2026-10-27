@@ -568,6 +568,10 @@
             "minLength" : 3,
             "type" : "string"
           },
+          "objectNature" : {
+            "enum" : [ "GOODS", "SERVICES", "SERVICES_WITH_DEDICATED_LABOR", "WORKS_AND_ENGINEERING" ],
+            "type" : "string"
+          },
           "urgency" : {
             "type" : "boolean"
           }
@@ -1967,6 +1971,10 @@
           "objectDescription" : {
             "type" : "string"
           },
+          "objectNature" : {
+            "enum" : [ "GOODS", "SERVICES", "SERVICES_WITH_DEDICATED_LABOR", "WORKS_AND_ENGINEERING" ],
+            "type" : "string"
+          },
           "organizationId" : {
             "format" : "uuid",
             "type" : "string"
@@ -2684,6 +2692,10 @@
           "objectDescription" : {
             "maxLength" : 1000,
             "minLength" : 3,
+            "type" : "string"
+          },
+          "objectNature" : {
+            "enum" : [ "GOODS", "SERVICES", "SERVICES_WITH_DEDICATED_LABOR", "WORKS_AND_ENGINEERING" ],
             "type" : "string"
           },
           "urgency" : {

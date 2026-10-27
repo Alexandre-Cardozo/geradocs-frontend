@@ -1206,3 +1206,12 @@ O back-end passou a ter **modelos de estrutura** (ADR-052): a lista de seções 
 - **A escolha da minuta ocupa a largura da área de trabalho**, como as demais telas do editor.
 
 **Os painéis se ligam pelo assunto da seção, e não só pelo código:** o código passou a ser próprio de cada modelo (`PC03`), e o painel de dotação precisa aparecer onde o assunto é dotação, em qualquer modelo. O número impresso também vem do servidor: o preâmbulo da minuta não tem número, e as cláusulas seguem a numeração da AGU.
+
+## 86. A natureza do objeto escolhe o TR e o Contrato da AGU
+
+Fase 2 do §85 (ADR-053 do back-end). A AGU tem dois TRs (compras; serviços e obras) e quatro contratos (compras; serviços sem e com dedicação exclusiva de mão de obra; obras e serviços de engenharia). O que separa um do outro é a **natureza do objeto**, que passa a ser um campo do processo:
+
+- **Novo Processo e capa:** "Natureza do Objeto", opcional ("Não informar agora"), com a dica de que é ela que escolhe a minuta.
+- **Declarada,** TR e Contrato em branco já abrem na minuta certa. **Sem ela,** a etapa Modelo do Documento oferece as opções.
+- **Painéis do TR na minuta:** quantidades (condições gerais), necessidade, valor e dotação, ligados pelo assunto da seção — o mapa agora é por tipo de documento, porque o "objeto" do TR tem painel e o do Edital não.
+- **Contrato:** o título da cláusula já traz o ordinal ("Cláusula Primeira – Objeto"), e por isso o trilho mostra um traço no lugar do número.
