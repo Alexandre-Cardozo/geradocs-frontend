@@ -297,6 +297,13 @@ export interface SecaoDocumento {
   textoDaMinuta?: string
   /** As notas explicativas da minuta. */
   notasDaMinuta?: string[]
+  /**
+   * As cláusulas obrigatórias da minuta que não estão no texto salvo (ADR-055
+   * do back-end) — o que pede justificativa (Art. 19, § 2º, Lei 14.133/21).
+   */
+  desvioDaMinuta?: { clausulas: number; faltam: string[] }
+  /** Por que a seção se afasta da minuta, quando escrito. */
+  justificativaDoDesvio?: string
 }
 
 /** Uma minuta-padrão que o documento pode seguir (ADR-052 do back-end). */
@@ -310,6 +317,8 @@ export interface ModeloDeEstrutura {
   quantidadeDeSecoes: number
   /** É o modelo que o documento segue agora. */
   atual: boolean
+  /** Modelo próprio do órgão, e não minuta da AGU (ADR-056 do back-end). */
+  doOrgao?: boolean
 }
 
 /** Achado do parecer da IA sobre o DFD. */

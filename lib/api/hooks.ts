@@ -25,6 +25,13 @@ import {
   removerFotoDePerfil,
 } from "@/lib/api/avatar-client"
 import { iaDisponivel } from "@/lib/api/ai-client"
+import {
+  desativarModelo,
+  detalheDoModelo,
+  listarModelos,
+  publicarModelo,
+  publicarVersaoDoModelo,
+} from "@/lib/api/modelos-client"
 import { geracoesDoDocumento, listarJuntadas } from "@/lib/api/generation-client"
 import {
   anexarArquivoAoDfd,
@@ -383,6 +390,31 @@ export function useGerarSecao(processoId: string, tipo: TipoDocumento) {
       api.gerarSecao(processoId, tipo, input.secaoId, input.rascunho),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: chaves.secoes(processoId, tipo) })
+    },
+  })
+}
+
+/** A justificativa de o documento não seguir a minuta da AGU (§88). */
+export function useJustificarModelo(processoId: string, tipo: TipoDocumento) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (texto: string) => api.justificarModelo(processoId, tipo, texto),
+    onSuccess: (documento) => {
+      queryClient.setQueryData(chaves.secoes(processoId, tipo), documento)
+      void queryClient.invalidateQueries({ queryKey: chaves.trilha(processoId) })
+    },
+  })
+}
+
+/** A justificativa da alteração da minuta numa seção (§88). */
+export function useJustificarDesvio(processoId: string, tipo: TipoDocumento) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { secaoId: string; texto: string }) =>
+      api.justificarDesvio(processoId, tipo, input.secaoId, input.texto),
+    onSuccess: (documento) => {
+      queryClient.setQueryData(chaves.secoes(processoId, tipo), documento)
+      void queryClient.invalidateQueries({ queryKey: chaves.trilha(processoId) })
     },
   })
 }
@@ -1080,6 +1112,41 @@ export function useIaDisponivel() {
     queryKey: chaves.iaDisponivel,
     queryFn: iaDisponivel,
     staleTime: Infinity,
+  })
+}
+
+/* ── Modelos do órgão (ADR-056 do back-end) ────────────────────────────────── */
+
+const CHAVE_MODELOS = ["modelos-de-estrutura"] as const
+
+/**
+ * As minutas da AGU e os modelos do órgão, com as operações do coordenador.
+ *
+ * <p>Toda publicação recarrega a lista e os documentos abertos: o modelo novo
+ * passa a ser opção na escolha da minuta, e o desativado deixa de ser.
+ */
+export function useModelosDoOrgao() {
+  const queryClient = useQueryClient()
+  const modelos = useQuery({ queryKey: CHAVE_MODELOS, queryFn: listarModelos })
+  const recarregar = () => {
+    void queryClient.invalidateQueries({ queryKey: CHAVE_MODELOS })
+    void queryClient.invalidateQueries({ queryKey: ["secoes"] })
+  }
+  return {
+    modelos,
+    publicar: useMutation({ mutationFn: publicarModelo, onSuccess: recarregar }),
+    publicarVersao: useMutation({ mutationFn: publicarVersaoDoModelo, onSuccess: recarregar }),
+    desativar: useMutation({ mutationFn: desativarModelo, onSuccess: recarregar }),
+  }
+}
+
+/** O modelo inteiro, seção a seção — só quando há um escolhido. */
+export function useDetalheDoModelo(codigo: string | null) {
+  return useQuery({
+    queryKey: [...CHAVE_MODELOS, codigo],
+    // `enabled` só deixa chegar aqui com o código escolhido.
+    queryFn: () => detalheDoModelo(String(codigo)),
+    enabled: codigo != null,
   })
 }
 

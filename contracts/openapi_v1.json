@@ -201,7 +201,7 @@
       "AuditEntryResponse" : {
         "properties" : {
           "action" : {
-            "enum" : [ "BUDGET_APPROPRIATION_DECLARED", "BUDGET_APPROPRIATION_REMOVED", "BUDGET_APPROPRIATION_UPDATED", "BUNDLE_EXPORTED", "DEPARTMENT_CREATED", "DEPARTMENT_DEACTIVATED", "DEPARTMENT_UPDATED", "DFD_ATTACHED", "DFD_REMOVED", "DFD_UPDATED", "DOCUMENT_DOWNLOADED", "DOCUMENT_FINALIZED", "DOCUMENT_GENERATED", "DOCUMENT_STRUCTURE_CHANGED", "LOGIN_FAILED", "LOGIN_SUCCEEDED", "ORGANIZATION_CREATED", "ORGANIZATION_DEACTIVATED", "ORGANIZATION_LETTERHEAD_UPDATED", "ORGANIZATION_UPDATED", "PASSWORD_RESET_COMPLETED", "PASSWORD_RESET_REQUESTED", "PCA_IMPORTED", "PRICE_QUOTE_RECORDED", "PRICE_QUOTE_REMOVED", "PRICE_QUOTE_UPDATED", "PROCUREMENT_PROCESS_CLOSED", "PROCUREMENT_PROCESS_CREATED", "PROCUREMENT_PROCESS_REOPENED", "PROCUREMENT_PROCESS_UPDATED", "REGULATION_ADDED", "REGULATION_FILE_REPLACED", "REGULATION_REINSTATED", "REGULATION_REMOVED", "REGULATION_REVOKED", "REGULATION_UPDATED", "SECTION_DISPENSED", "SECTION_WRITTEN", "TEMPLATE_PUBLISHED", "USER_CPF_REVEALED", "USER_CREATED", "USER_DEACTIVATED", "USER_ORGANIZATION_TRANSFERRED", "USER_PASSWORD_RESET", "USER_UPDATED" ],
+            "enum" : [ "BUDGET_APPROPRIATION_DECLARED", "BUDGET_APPROPRIATION_REMOVED", "BUDGET_APPROPRIATION_UPDATED", "BUNDLE_EXPORTED", "DEPARTMENT_CREATED", "DEPARTMENT_DEACTIVATED", "DEPARTMENT_UPDATED", "DFD_ATTACHED", "DFD_REMOVED", "DFD_UPDATED", "DOCUMENT_DOWNLOADED", "DOCUMENT_FINALIZED", "DOCUMENT_GENERATED", "DOCUMENT_MODEL_JUSTIFIED", "DOCUMENT_STRUCTURE_CHANGED", "LOGIN_FAILED", "LOGIN_SUCCEEDED", "ORGANIZATION_CREATED", "ORGANIZATION_DEACTIVATED", "ORGANIZATION_LETTERHEAD_UPDATED", "ORGANIZATION_UPDATED", "PASSWORD_RESET_COMPLETED", "PASSWORD_RESET_REQUESTED", "PCA_IMPORTED", "PRICE_QUOTE_RECORDED", "PRICE_QUOTE_REMOVED", "PRICE_QUOTE_UPDATED", "PROCUREMENT_PROCESS_CLOSED", "PROCUREMENT_PROCESS_CREATED", "PROCUREMENT_PROCESS_REOPENED", "PROCUREMENT_PROCESS_UPDATED", "REGULATION_ADDED", "REGULATION_FILE_REPLACED", "REGULATION_REINSTATED", "REGULATION_REMOVED", "REGULATION_REVOKED", "REGULATION_UPDATED", "SECTION_DISPENSED", "SECTION_WRITTEN", "STRUCTURE_MODEL_DEACTIVATED", "STRUCTURE_MODEL_PUBLISHED", "TEMPLATE_PUBLISHED", "USER_CPF_REVEALED", "USER_CREATED", "USER_DEACTIVATED", "USER_ORGANIZATION_TRANSFERRED", "USER_PASSWORD_RESET", "USER_UPDATED" ],
             "type" : "string"
           },
           "actorId" : {
@@ -234,7 +234,7 @@
             "type" : "string"
           },
           "resourceType" : {
-            "enum" : [ "AUTHENTICATION", "DEPARTMENT", "ORGANIZATION", "PCA_PLAN", "PROCUREMENT_PROCESS", "REGULATION", "TEMPLATE", "USER" ],
+            "enum" : [ "AUTHENTICATION", "DEPARTMENT", "ORGANIZATION", "PCA_PLAN", "PROCUREMENT_PROCESS", "REGULATION", "STRUCTURE_MODEL", "TEMPLATE", "USER" ],
             "type" : "string"
           }
         },
@@ -407,6 +407,24 @@
         "required" : [ "amount", "budgetUnit", "expenseNature", "fiscalYear", "id", "registeredAt", "resourceSource", "workProgram" ],
         "type" : "object"
       },
+      "Catalog" : {
+        "properties" : {
+          "agu" : {
+            "items" : {
+              "$ref" : "#/components/schemas/Summary"
+            },
+            "type" : "array"
+          },
+          "organization" : {
+            "items" : {
+              "$ref" : "#/components/schemas/OrganizationSummary"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "agu", "organization" ],
+        "type" : "object"
+      },
       "ChangePasswordRequest" : {
         "properties" : {
           "currentPassword" : {
@@ -475,6 +493,40 @@
           }
         },
         "required" : [ "cpf" ],
+        "type" : "object"
+      },
+      "Create" : {
+        "properties" : {
+          "baseCode" : {
+            "maxLength" : 40,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "description" : {
+            "maxLength" : 500,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "justification" : {
+            "maxLength" : 2000,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "sections" : {
+            "items" : {
+              "$ref" : "#/components/schemas/SectionText"
+            },
+            "maxItems" : 80,
+            "minItems" : 0,
+            "type" : "array"
+          },
+          "title" : {
+            "maxLength" : 200,
+            "minLength" : 0,
+            "type" : "string"
+          }
+        },
+        "required" : [ "baseCode", "justification", "sections", "title" ],
         "type" : "object"
       },
       "CreateDepartmentRequest" : {
@@ -849,6 +901,43 @@
         },
         "type" : "object"
       },
+      "Detail" : {
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "documentType" : {
+            "enum" : [ "AVISO", "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+            "type" : "string"
+          },
+          "justification" : {
+            "type" : "string"
+          },
+          "publishedIn" : {
+            "type" : "string"
+          },
+          "sections" : {
+            "items" : {
+              "$ref" : "#/components/schemas/Section"
+            },
+            "type" : "array"
+          },
+          "source" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "version" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "code", "description", "documentType", "publishedIn", "sections", "source", "title", "version" ],
+        "type" : "object"
+      },
       "DetailsView" : {
         "properties" : {
           "address" : {
@@ -1058,6 +1147,15 @@
           "modelChoiceRequired" : {
             "type" : "boolean"
           },
+          "modelJustification" : {
+            "type" : "string"
+          },
+          "modelJustificationRequired" : {
+            "type" : "boolean"
+          },
+          "newerModel" : {
+            "$ref" : "#/components/schemas/NewerModelView"
+          },
           "otherModelTexts" : {
             "items" : {
               "$ref" : "#/components/schemas/OtherModelTextView"
@@ -1100,7 +1198,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableModels", "body", "canGenerate", "changedSinceVersion", "currentVersion", "documentType", "finalized", "id", "modelChoiceRequired", "otherModelTexts", "pendingRequiredSections", "processId", "progress", "rectificationRequired", "sections", "silentGaps", "structureTitle" ],
+        "required" : [ "availableModels", "body", "canGenerate", "changedSinceVersion", "currentVersion", "documentType", "finalized", "id", "modelChoiceRequired", "modelJustificationRequired", "otherModelTexts", "pendingRequiredSections", "processId", "progress", "rectificationRequired", "sections", "silentGaps", "structureTitle" ],
         "type" : "object"
       },
       "DocumentTemplate" : {
@@ -1286,6 +1384,10 @@
           "draft" : {
             "maxLength" : 20000,
             "minLength" : 0,
+            "type" : "string"
+          },
+          "mode" : {
+            "enum" : [ "DRAFT", "REVIEW" ],
             "type" : "string"
           }
         },
@@ -1494,6 +1596,50 @@
         "required" : [ "active", "id", "organizationId" ],
         "type" : "object"
       },
+      "ModelDeviationView" : {
+        "properties" : {
+          "clauses" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "missing" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "clauses", "missing" ],
+        "type" : "object"
+      },
+      "ModelJustificationRequest" : {
+        "properties" : {
+          "text" : {
+            "maxLength" : 2000,
+            "minLength" : 0,
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "NewerModelView" : {
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "publishedIn" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "version" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "code", "publishedIn", "title", "version" ],
+        "type" : "object"
+      },
       "OrganizationResponse" : {
         "properties" : {
           "createdAt" : {
@@ -1531,6 +1677,53 @@
           }
         },
         "required" : [ "createdAt", "entityType", "executiveAgency", "id", "name", "status", "updatedAt", "version" ],
+        "type" : "object"
+      },
+      "OrganizationSummary" : {
+        "properties" : {
+          "active" : {
+            "type" : "boolean"
+          },
+          "baseCode" : {
+            "type" : "string"
+          },
+          "baseVersion" : {
+            "type" : "string"
+          },
+          "code" : {
+            "type" : "string"
+          },
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "createdByName" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "documentType" : {
+            "enum" : [ "AVISO", "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+            "type" : "string"
+          },
+          "justification" : {
+            "type" : "string"
+          },
+          "newerBase" : {
+            "$ref" : "#/components/schemas/Summary"
+          },
+          "publishedIn" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "version" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "active", "baseCode", "baseVersion", "code", "createdAt", "createdByName", "description", "documentType", "justification", "publishedIn", "title", "version" ],
         "type" : "object"
       },
       "OtherModelTextView" : {
@@ -2253,6 +2446,39 @@
         },
         "type" : "object"
       },
+      "Section" : {
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "hint" : {
+            "type" : "string"
+          },
+          "legalBasis" : {
+            "type" : "string"
+          },
+          "modelText" : {
+            "type" : "string"
+          },
+          "notes" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "number" : {
+            "type" : "string"
+          },
+          "required" : {
+            "type" : "boolean"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "code", "hint", "legalBasis", "notes", "number", "required", "title" ],
+        "type" : "object"
+      },
       "SectionDiffView" : {
         "properties" : {
           "change" : {
@@ -2287,6 +2513,12 @@
             "type" : "string"
           },
           "legalBasis" : {
+            "type" : "string"
+          },
+          "modelDeviation" : {
+            "$ref" : "#/components/schemas/ModelDeviationView"
+          },
+          "modelDeviationJustification" : {
             "type" : "string"
           },
           "modelNotes" : {
@@ -2329,6 +2561,22 @@
           }
         },
         "required" : [ "content", "modelNotes", "origin", "position", "required", "resolved", "sectionCode", "title", "topics" ],
+        "type" : "object"
+      },
+      "SectionText" : {
+        "properties" : {
+          "code" : {
+            "maxLength" : 6,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "text" : {
+            "maxLength" : 100000,
+            "minLength" : 0,
+            "type" : "string"
+          }
+        },
+        "required" : [ "code" ],
         "type" : "object"
       },
       "SessionResponse" : {
@@ -2451,6 +2699,9 @@
             "format" : "int32",
             "type" : "integer"
           },
+          "source" : {
+            "type" : "string"
+          },
           "title" : {
             "type" : "string"
           },
@@ -2458,7 +2709,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "code", "current", "description", "publishedIn", "sectionCount", "title", "version" ],
+        "required" : [ "code", "current", "description", "publishedIn", "sectionCount", "source", "title", "version" ],
         "type" : "object"
       },
       "StructureModelPreviewResponse" : {
@@ -2496,6 +2747,9 @@
           "code" : {
             "type" : "string"
           },
+          "justification" : {
+            "type" : "string"
+          },
           "publishedIn" : {
             "type" : "string"
           },
@@ -2513,6 +2767,38 @@
           }
         },
         "required" : [ "code", "publishedIn", "source", "sourceUrl", "title", "version" ],
+        "type" : "object"
+      },
+      "Summary" : {
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "documentType" : {
+            "enum" : [ "AVISO", "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+            "type" : "string"
+          },
+          "publishedIn" : {
+            "type" : "string"
+          },
+          "sectionCount" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "source" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "version" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "code", "description", "documentType", "publishedIn", "sectionCount", "source", "title", "version" ],
         "type" : "object"
       },
       "TemplateResponse" : {
@@ -2563,6 +2849,35 @@
           }
         },
         "required" : [ "confirmed", "destinationOrganizationId", "reason", "sourceOrganizationId" ],
+        "type" : "object"
+      },
+      "Update" : {
+        "properties" : {
+          "description" : {
+            "maxLength" : 500,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "justification" : {
+            "maxLength" : 2000,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "sections" : {
+            "items" : {
+              "$ref" : "#/components/schemas/SectionText"
+            },
+            "maxItems" : 80,
+            "minItems" : 0,
+            "type" : "array"
+          },
+          "title" : {
+            "maxLength" : 200,
+            "minLength" : 0,
+            "type" : "string"
+          }
+        },
+        "required" : [ "justification", "sections", "title" ],
         "type" : "object"
       },
       "UpdateDepartmentRequest" : {
@@ -2923,7 +3238,7 @@
           "name" : "action",
           "required" : false,
           "schema" : {
-            "enum" : [ "BUDGET_APPROPRIATION_DECLARED", "BUDGET_APPROPRIATION_REMOVED", "BUDGET_APPROPRIATION_UPDATED", "BUNDLE_EXPORTED", "DEPARTMENT_CREATED", "DEPARTMENT_DEACTIVATED", "DEPARTMENT_UPDATED", "DFD_ATTACHED", "DFD_REMOVED", "DFD_UPDATED", "DOCUMENT_DOWNLOADED", "DOCUMENT_FINALIZED", "DOCUMENT_GENERATED", "DOCUMENT_STRUCTURE_CHANGED", "LOGIN_FAILED", "LOGIN_SUCCEEDED", "ORGANIZATION_CREATED", "ORGANIZATION_DEACTIVATED", "ORGANIZATION_LETTERHEAD_UPDATED", "ORGANIZATION_UPDATED", "PASSWORD_RESET_COMPLETED", "PASSWORD_RESET_REQUESTED", "PCA_IMPORTED", "PRICE_QUOTE_RECORDED", "PRICE_QUOTE_REMOVED", "PRICE_QUOTE_UPDATED", "PROCUREMENT_PROCESS_CLOSED", "PROCUREMENT_PROCESS_CREATED", "PROCUREMENT_PROCESS_REOPENED", "PROCUREMENT_PROCESS_UPDATED", "REGULATION_ADDED", "REGULATION_FILE_REPLACED", "REGULATION_REINSTATED", "REGULATION_REMOVED", "REGULATION_REVOKED", "REGULATION_UPDATED", "SECTION_DISPENSED", "SECTION_WRITTEN", "TEMPLATE_PUBLISHED", "USER_CPF_REVEALED", "USER_CREATED", "USER_DEACTIVATED", "USER_ORGANIZATION_TRANSFERRED", "USER_PASSWORD_RESET", "USER_UPDATED" ],
+            "enum" : [ "BUDGET_APPROPRIATION_DECLARED", "BUDGET_APPROPRIATION_REMOVED", "BUDGET_APPROPRIATION_UPDATED", "BUNDLE_EXPORTED", "DEPARTMENT_CREATED", "DEPARTMENT_DEACTIVATED", "DEPARTMENT_UPDATED", "DFD_ATTACHED", "DFD_REMOVED", "DFD_UPDATED", "DOCUMENT_DOWNLOADED", "DOCUMENT_FINALIZED", "DOCUMENT_GENERATED", "DOCUMENT_MODEL_JUSTIFIED", "DOCUMENT_STRUCTURE_CHANGED", "LOGIN_FAILED", "LOGIN_SUCCEEDED", "ORGANIZATION_CREATED", "ORGANIZATION_DEACTIVATED", "ORGANIZATION_LETTERHEAD_UPDATED", "ORGANIZATION_UPDATED", "PASSWORD_RESET_COMPLETED", "PASSWORD_RESET_REQUESTED", "PCA_IMPORTED", "PRICE_QUOTE_RECORDED", "PRICE_QUOTE_REMOVED", "PRICE_QUOTE_UPDATED", "PROCUREMENT_PROCESS_CLOSED", "PROCUREMENT_PROCESS_CREATED", "PROCUREMENT_PROCESS_REOPENED", "PROCUREMENT_PROCESS_UPDATED", "REGULATION_ADDED", "REGULATION_FILE_REPLACED", "REGULATION_REINSTATED", "REGULATION_REMOVED", "REGULATION_REVOKED", "REGULATION_UPDATED", "SECTION_DISPENSED", "SECTION_WRITTEN", "STRUCTURE_MODEL_DEACTIVATED", "STRUCTURE_MODEL_PUBLISHED", "TEMPLATE_PUBLISHED", "USER_CPF_REVEALED", "USER_CREATED", "USER_DEACTIVATED", "USER_ORGANIZATION_TRANSFERRED", "USER_PASSWORD_RESET", "USER_UPDATED" ],
             "type" : "string"
           }
         }, {
@@ -2964,7 +3279,7 @@
           "name" : "resourceType",
           "required" : false,
           "schema" : {
-            "enum" : [ "AUTHENTICATION", "DEPARTMENT", "ORGANIZATION", "PCA_PLAN", "PROCUREMENT_PROCESS", "REGULATION", "TEMPLATE", "USER" ],
+            "enum" : [ "AUTHENTICATION", "DEPARTMENT", "ORGANIZATION", "PCA_PLAN", "PROCUREMENT_PROCESS", "REGULATION", "STRUCTURE_MODEL", "TEMPLATE", "USER" ],
             "type" : "string"
           }
         }, {
@@ -3208,7 +3523,7 @@
     },
     "/api/v1/document-templates/{documentType}" : {
       "get" : {
-        "operationId" : "list_4",
+        "operationId" : "list_5",
         "parameters" : [ {
           "in" : "path",
           "name" : "documentType",
@@ -3375,7 +3690,7 @@
     },
     "/api/v1/organizations" : {
       "get" : {
-        "operationId" : "list_3",
+        "operationId" : "list_4",
         "responses" : {
           "200" : {
             "content" : {
@@ -3394,7 +3709,7 @@
         "tags" : [ "organization-controller" ]
       },
       "post" : {
-        "operationId" : "create_3",
+        "operationId" : "create_4",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -3422,7 +3737,7 @@
     },
     "/api/v1/organizations/{organizationId}" : {
       "get" : {
-        "operationId" : "get_3",
+        "operationId" : "get_4",
         "parameters" : [ {
           "in" : "path",
           "name" : "organizationId",
@@ -3447,7 +3762,7 @@
         "tags" : [ "organization-controller" ]
       },
       "patch" : {
-        "operationId" : "update_3",
+        "operationId" : "update_4",
         "parameters" : [ {
           "in" : "header",
           "name" : "If-Match",
@@ -3491,7 +3806,7 @@
     },
     "/api/v1/organizations/{organizationId}/deactivate" : {
       "post" : {
-        "operationId" : "deactivate_1",
+        "operationId" : "deactivate_2",
         "parameters" : [ {
           "in" : "header",
           "name" : "If-Match",
@@ -3975,7 +4290,7 @@
     },
     "/api/v1/procurement-processes" : {
       "get" : {
-        "operationId" : "list_2",
+        "operationId" : "list_3",
         "parameters" : [ {
           "in" : "query",
           "name" : "page",
@@ -4033,7 +4348,7 @@
         "tags" : [ "procurement-process-controller" ]
       },
       "post" : {
-        "operationId" : "create_2",
+        "operationId" : "create_3",
         "requestBody" : {
           "content" : {
             "multipart/form-data" : {
@@ -4088,7 +4403,7 @@
     },
     "/api/v1/procurement-processes/{id}" : {
       "get" : {
-        "operationId" : "get_2",
+        "operationId" : "get_3",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
@@ -4113,7 +4428,7 @@
         "tags" : [ "procurement-process-controller" ]
       },
       "patch" : {
-        "operationId" : "update_2",
+        "operationId" : "update_3",
         "parameters" : [ {
           "in" : "header",
           "name" : "If-Match",
@@ -5272,6 +5587,51 @@
         "tags" : [ "document-generation-controller" ]
       }
     },
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/model-justification" : {
+      "put" : {
+        "operationId" : "justifyModel",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "documentType",
+          "required" : true,
+          "schema" : {
+            "enum" : [ "AVISO", "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ModelJustificationRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DocumentResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "document-authoring-controller" ]
+      }
+    },
     "/api/v1/procurement-processes/{processId}/documents/{documentType}/sections" : {
       "post" : {
         "operationId" : "addSection",
@@ -5549,6 +5909,58 @@
         "tags" : [ "document-authoring-controller" ]
       }
     },
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/sections/{sectionCode}/model-deviation" : {
+      "put" : {
+        "operationId" : "justifyDeviation",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "documentType",
+          "required" : true,
+          "schema" : {
+            "enum" : [ "AVISO", "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "sectionCode",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ModelJustificationRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DocumentResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "document-authoring-controller" ]
+      }
+    },
     "/api/v1/procurement-processes/{processId}/documents/{documentType}/structure-model" : {
       "put" : {
         "operationId" : "changeStructureModel",
@@ -5791,7 +6203,7 @@
     },
     "/api/v1/regulations" : {
       "get" : {
-        "operationId" : "list_1",
+        "operationId" : "list_2",
         "responses" : {
           "200" : {
             "content" : {
@@ -5810,7 +6222,7 @@
         "tags" : [ "regulation-controller" ]
       },
       "post" : {
-        "operationId" : "create_1",
+        "operationId" : "create_2",
         "requestBody" : {
           "content" : {
             "multipart/form-data" : {
@@ -5847,7 +6259,7 @@
     },
     "/api/v1/regulations/{id}" : {
       "get" : {
-        "operationId" : "get",
+        "operationId" : "get_1",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
@@ -5872,7 +6284,7 @@
         "tags" : [ "regulation-controller" ]
       },
       "put" : {
-        "operationId" : "update",
+        "operationId" : "update_1",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
@@ -6127,6 +6539,127 @@
         "tags" : [ "staff-controller" ]
       }
     },
+    "/api/v1/structure-models" : {
+      "get" : {
+        "operationId" : "list_1",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Catalog"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "structure-model-controller" ]
+      },
+      "post" : {
+        "operationId" : "create_1",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Create"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Detail"
+                }
+              }
+            },
+            "description" : "Created"
+          }
+        },
+        "tags" : [ "structure-model-controller" ]
+      }
+    },
+    "/api/v1/structure-models/{code}" : {
+      "delete" : {
+        "operationId" : "deactivate",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "code",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        },
+        "tags" : [ "structure-model-controller" ]
+      },
+      "get" : {
+        "operationId" : "get",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "code",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Detail"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "structure-model-controller" ]
+      },
+      "put" : {
+        "operationId" : "update",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "code",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Update"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Detail"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "structure-model-controller" ]
+      }
+    },
     "/api/v1/users" : {
       "get" : {
         "operationId" : "list",
@@ -6192,7 +6725,7 @@
     },
     "/api/v1/users/{userId}" : {
       "get" : {
-        "operationId" : "get_1",
+        "operationId" : "get_2",
         "parameters" : [ {
           "in" : "path",
           "name" : "userId",
@@ -6217,7 +6750,7 @@
         "tags" : [ "user-controller" ]
       },
       "patch" : {
-        "operationId" : "update_1",
+        "operationId" : "update_2",
         "parameters" : [ {
           "in" : "header",
           "name" : "If-Match",
@@ -6323,7 +6856,7 @@
     },
     "/api/v1/users/{userId}/deactivate" : {
       "post" : {
-        "operationId" : "deactivate",
+        "operationId" : "deactivate_1",
         "parameters" : [ {
           "in" : "header",
           "name" : "If-Match",

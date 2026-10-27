@@ -36,7 +36,7 @@ export function EscolhaDoModelo({
       <div>
         <h2 className="m-0 font-display text-lg font-bold text-text-1">Modelo do Documento</h2>
         <p className="m-0 mt-1 text-sm text-text-3">
-          A AGU publica mais de uma minuta para este {tipo}. Escolha a que vai estruturar as seções.
+          Há mais de um modelo para este {tipo}. Escolha o que vai estruturar as seções.
         </p>
       </div>
       <div role="radiogroup" aria-label="Minutas da AGU" className="flex flex-col gap-2.5">
@@ -47,7 +47,7 @@ export function EscolhaDoModelo({
             selected={escolhido === modelo.codigo}
             onClick={() => setEscolhido(modelo.codigo)}
             title={`${modelo.titulo} (${modelo.publicadoEm})`}
-            desc={`${modelo.descricao} ${modelo.quantidadeDeSecoes} seções.`}
+            desc={`${modelo.doOrgao ? "Modelo do órgão. " : ""}${modelo.descricao} ${modelo.quantidadeDeSecoes} seções.`}
           />
         ))}
       </div>
@@ -166,7 +166,7 @@ export function TrocaDeModelo({
               selected={escolhido === modelo.codigo}
               onClick={() => setEscolhido(modelo.codigo)}
               title={`${modelo.titulo} (${modelo.publicadoEm})`}
-              desc={modelo.descricao}
+              desc={`${modelo.doOrgao ? "Modelo do órgão. " : ""}${modelo.descricao}`}
             />
           ))}
         </div>

@@ -421,6 +421,18 @@ describe("seções do documento", () => {
     expect(elaboracao.salvarSecao).not.toHaveBeenCalled()
   })
 
+  it("as justificativas da minuta passam direto ao servidor (§88)", async () => {
+    const api = await fachadaLimpa()
+    vi.mocked(elaboracao.justificarModelo).mockResolvedValue(documento as never)
+    vi.mocked(elaboracao.justificarDesvio).mockResolvedValue(documento as never)
+
+    await api.justificarModelo(PROCESSO, "ETP", "Motivo.")
+    await api.justificarDesvio(PROCESSO, "ETP", "1", "Alteração.")
+
+    expect(elaboracao.justificarModelo).toHaveBeenCalledWith(PROCESSO, "ETP", "Motivo.")
+    expect(elaboracao.justificarDesvio).toHaveBeenCalledWith(PROCESSO, "ETP", "1", "Alteração.")
+  })
+
   it("revisar pede a revisão do texto e não grava a sugestão", async () => {
     const api = await fachadaLimpa()
     vi.mocked(elaboracao.gerarTextoDaSecao).mockResolvedValue("Texto revisado.")

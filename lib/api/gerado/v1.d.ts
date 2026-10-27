@@ -187,7 +187,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_4"];
+        get: operations["list_5"];
         put?: never;
         post?: never;
         delete?: never;
@@ -283,9 +283,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_3"];
+        get: operations["list_4"];
         put?: never;
-        post: operations["create_3"];
+        post: operations["create_4"];
         delete?: never;
         options?: never;
         head?: never;
@@ -299,13 +299,13 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_3"];
+        get: operations["get_4"];
         put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
-        patch: operations["update_3"];
+        patch: operations["update_4"];
         trace?: never;
     };
     "/api/v1/organizations/{organizationId}/deactivate": {
@@ -317,7 +317,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["deactivate_1"];
+        post: operations["deactivate_2"];
         delete?: never;
         options?: never;
         head?: never;
@@ -459,9 +459,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_2"];
+        get: operations["list_3"];
         put?: never;
-        post: operations["create_2"];
+        post: operations["create_3"];
         delete?: never;
         options?: never;
         head?: never;
@@ -491,13 +491,13 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_2"];
+        get: operations["get_3"];
         put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
-        patch: operations["update_2"];
+        patch: operations["update_3"];
         trace?: never;
     };
     "/api/v1/procurement-processes/{id}/budget-appropriations": {
@@ -852,6 +852,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/model-justification": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["justifyModel"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/procurement-processes/{processId}/documents/{documentType}/sections": {
         parameters: {
             query?: never;
@@ -926,6 +942,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["generateSection"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/sections/{sectionCode}/model-deviation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["justifyDeviation"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1035,9 +1067,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_1"];
+        get: operations["list_2"];
         put?: never;
-        post: operations["create_1"];
+        post: operations["create_2"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1051,8 +1083,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get"];
-        put: operations["update"];
+        get: operations["get_1"];
+        put: operations["update_1"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1156,6 +1188,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/structure-models": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_1"];
+        put?: never;
+        post: operations["create_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/structure-models/{code}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get"];
+        put: operations["update"];
+        post?: never;
+        delete: operations["deactivate"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/users": {
         parameters: {
             query?: never;
@@ -1179,13 +1243,13 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_1"];
+        get: operations["get_2"];
         put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
-        patch: operations["update_1"];
+        patch: operations["update_2"];
         trace?: never;
     };
     "/api/v1/users/{userId}/avatar": {
@@ -1229,7 +1293,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["deactivate"];
+        post: operations["deactivate_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1342,7 +1406,7 @@ export interface components {
         };
         AuditEntryResponse: {
             /** @enum {string} */
-            action: "BUDGET_APPROPRIATION_DECLARED" | "BUDGET_APPROPRIATION_REMOVED" | "BUDGET_APPROPRIATION_UPDATED" | "BUNDLE_EXPORTED" | "DEPARTMENT_CREATED" | "DEPARTMENT_DEACTIVATED" | "DEPARTMENT_UPDATED" | "DFD_ATTACHED" | "DFD_REMOVED" | "DFD_UPDATED" | "DOCUMENT_DOWNLOADED" | "DOCUMENT_FINALIZED" | "DOCUMENT_GENERATED" | "DOCUMENT_STRUCTURE_CHANGED" | "LOGIN_FAILED" | "LOGIN_SUCCEEDED" | "ORGANIZATION_CREATED" | "ORGANIZATION_DEACTIVATED" | "ORGANIZATION_LETTERHEAD_UPDATED" | "ORGANIZATION_UPDATED" | "PASSWORD_RESET_COMPLETED" | "PASSWORD_RESET_REQUESTED" | "PCA_IMPORTED" | "PRICE_QUOTE_RECORDED" | "PRICE_QUOTE_REMOVED" | "PRICE_QUOTE_UPDATED" | "PROCUREMENT_PROCESS_CLOSED" | "PROCUREMENT_PROCESS_CREATED" | "PROCUREMENT_PROCESS_REOPENED" | "PROCUREMENT_PROCESS_UPDATED" | "REGULATION_ADDED" | "REGULATION_FILE_REPLACED" | "REGULATION_REINSTATED" | "REGULATION_REMOVED" | "REGULATION_REVOKED" | "REGULATION_UPDATED" | "SECTION_DISPENSED" | "SECTION_WRITTEN" | "TEMPLATE_PUBLISHED" | "USER_CPF_REVEALED" | "USER_CREATED" | "USER_DEACTIVATED" | "USER_ORGANIZATION_TRANSFERRED" | "USER_PASSWORD_RESET" | "USER_UPDATED";
+            action: "BUDGET_APPROPRIATION_DECLARED" | "BUDGET_APPROPRIATION_REMOVED" | "BUDGET_APPROPRIATION_UPDATED" | "BUNDLE_EXPORTED" | "DEPARTMENT_CREATED" | "DEPARTMENT_DEACTIVATED" | "DEPARTMENT_UPDATED" | "DFD_ATTACHED" | "DFD_REMOVED" | "DFD_UPDATED" | "DOCUMENT_DOWNLOADED" | "DOCUMENT_FINALIZED" | "DOCUMENT_GENERATED" | "DOCUMENT_MODEL_JUSTIFIED" | "DOCUMENT_STRUCTURE_CHANGED" | "LOGIN_FAILED" | "LOGIN_SUCCEEDED" | "ORGANIZATION_CREATED" | "ORGANIZATION_DEACTIVATED" | "ORGANIZATION_LETTERHEAD_UPDATED" | "ORGANIZATION_UPDATED" | "PASSWORD_RESET_COMPLETED" | "PASSWORD_RESET_REQUESTED" | "PCA_IMPORTED" | "PRICE_QUOTE_RECORDED" | "PRICE_QUOTE_REMOVED" | "PRICE_QUOTE_UPDATED" | "PROCUREMENT_PROCESS_CLOSED" | "PROCUREMENT_PROCESS_CREATED" | "PROCUREMENT_PROCESS_REOPENED" | "PROCUREMENT_PROCESS_UPDATED" | "REGULATION_ADDED" | "REGULATION_FILE_REPLACED" | "REGULATION_REINSTATED" | "REGULATION_REMOVED" | "REGULATION_REVOKED" | "REGULATION_UPDATED" | "SECTION_DISPENSED" | "SECTION_WRITTEN" | "STRUCTURE_MODEL_DEACTIVATED" | "STRUCTURE_MODEL_PUBLISHED" | "TEMPLATE_PUBLISHED" | "USER_CPF_REVEALED" | "USER_CREATED" | "USER_DEACTIVATED" | "USER_ORGANIZATION_TRANSFERRED" | "USER_PASSWORD_RESET" | "USER_UPDATED";
             /** Format: uuid */
             actorId: string;
             actorName: string;
@@ -1357,7 +1421,7 @@ export interface components {
             /** Format: uuid */
             resourceId: string;
             /** @enum {string} */
-            resourceType: "AUTHENTICATION" | "DEPARTMENT" | "ORGANIZATION" | "PCA_PLAN" | "PROCUREMENT_PROCESS" | "REGULATION" | "TEMPLATE" | "USER";
+            resourceType: "AUTHENTICATION" | "DEPARTMENT" | "ORGANIZATION" | "PCA_PLAN" | "PROCUREMENT_PROCESS" | "REGULATION" | "STRUCTURE_MODEL" | "TEMPLATE" | "USER";
         };
         AuditPageResponse: {
             content: components["schemas"]["AuditEntryResponse"][];
@@ -1417,6 +1481,10 @@ export interface components {
             resourceSource: string;
             workProgram: string;
         };
+        Catalog: {
+            agu: components["schemas"]["Summary"][];
+            organization: components["schemas"]["OrganizationSummary"][];
+        };
         ChangePasswordRequest: {
             currentPassword: string;
             newPassword: string;
@@ -1436,6 +1504,13 @@ export interface components {
         };
         CpfResponse: {
             cpf: string;
+        };
+        Create: {
+            baseCode: string;
+            description?: string;
+            justification: string;
+            sections: components["schemas"]["SectionText"][];
+            title: string;
         };
         CreateDepartmentRequest: {
             acronym?: string;
@@ -1549,6 +1624,18 @@ export interface components {
             secretaryCpf?: string;
             secretaryName?: string;
         };
+        Detail: {
+            code: string;
+            description: string;
+            /** @enum {string} */
+            documentType: "AVISO" | "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
+            justification?: string;
+            publishedIn: string;
+            sections: components["schemas"]["Section"][];
+            source: string;
+            title: string;
+            version: string;
+        };
         DetailsView: {
             address?: string;
             institutionalEmail?: string;
@@ -1625,6 +1712,9 @@ export interface components {
             /** Format: uuid */
             id: string;
             modelChoiceRequired: boolean;
+            modelJustification?: string;
+            modelJustificationRequired: boolean;
+            newerModel?: components["schemas"]["NewerModelView"];
             otherModelTexts: components["schemas"]["OtherModelTextView"][];
             pendingRequiredSections: string[];
             /** Format: uuid */
@@ -1700,6 +1790,8 @@ export interface components {
         };
         GenerateSectionRequest: {
             draft?: string;
+            /** @enum {string} */
+            mode?: "DRAFT" | "REVIEW";
         };
         GeneratedFileResponse: {
             /** Format: int64 */
@@ -1781,6 +1873,20 @@ export interface components {
             /** Format: uuid */
             organizationId: string;
         };
+        ModelDeviationView: {
+            /** Format: int32 */
+            clauses: number;
+            missing: string[];
+        };
+        ModelJustificationRequest: {
+            text?: string;
+        };
+        NewerModelView: {
+            code: string;
+            publishedIn: string;
+            title: string;
+            version: string;
+        };
         OrganizationResponse: {
             /** Format: date-time */
             createdAt: string;
@@ -1797,6 +1903,23 @@ export interface components {
             updatedAt: string;
             /** Format: int64 */
             version: number;
+        };
+        OrganizationSummary: {
+            active: boolean;
+            baseCode: string;
+            baseVersion: string;
+            code: string;
+            /** Format: date-time */
+            createdAt: string;
+            createdByName: string;
+            description: string;
+            /** @enum {string} */
+            documentType: "AVISO" | "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
+            justification: string;
+            newerBase?: components["schemas"]["Summary"];
+            publishedIn: string;
+            title: string;
+            version: string;
         };
         OtherModelTextView: {
             content: string;
@@ -2065,6 +2188,16 @@ export interface components {
             content?: string;
             dispensationJustification?: string;
         };
+        Section: {
+            code: string;
+            hint: string;
+            legalBasis: string;
+            modelText?: string;
+            notes: string[];
+            number: string;
+            required: boolean;
+            title: string;
+        };
         SectionDiffView: {
             /** @enum {string} */
             change: "ADDED" | "CHANGED" | "REMOVED" | "UNCHANGED";
@@ -2078,6 +2211,8 @@ export interface components {
             dispensationJustification?: string;
             hint?: string;
             legalBasis?: string;
+            modelDeviation?: components["schemas"]["ModelDeviationView"];
+            modelDeviationJustification?: string;
             modelNotes: string[];
             modelText?: string;
             number?: string;
@@ -2090,6 +2225,10 @@ export interface components {
             sectionCode: string;
             title: string;
             topics: string[];
+        };
+        SectionText: {
+            code: string;
+            text?: string;
         };
         SessionResponse: {
             activeMembership?: components["schemas"]["MembershipResponse"];
@@ -2134,6 +2273,7 @@ export interface components {
             publishedIn: string;
             /** Format: int32 */
             sectionCount: number;
+            source: string;
             title: string;
             version: string;
         };
@@ -2145,9 +2285,22 @@ export interface components {
         };
         StructureModelView: {
             code: string;
+            justification?: string;
             publishedIn: string;
             source: string;
             sourceUrl: string;
+            title: string;
+            version: string;
+        };
+        Summary: {
+            code: string;
+            description: string;
+            /** @enum {string} */
+            documentType: "AVISO" | "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
+            publishedIn: string;
+            /** Format: int32 */
+            sectionCount: number;
+            source: string;
             title: string;
             version: string;
         };
@@ -2170,6 +2323,12 @@ export interface components {
             reason: string;
             /** Format: uuid */
             sourceOrganizationId: string;
+        };
+        Update: {
+            description?: string;
+            justification: string;
+            sections: components["schemas"]["SectionText"][];
+            title: string;
         };
         UpdateDepartmentRequest: {
             acronym?: string;
@@ -2307,12 +2466,12 @@ export interface operations {
     search: {
         parameters: {
             query?: {
-                action?: "BUDGET_APPROPRIATION_DECLARED" | "BUDGET_APPROPRIATION_REMOVED" | "BUDGET_APPROPRIATION_UPDATED" | "BUNDLE_EXPORTED" | "DEPARTMENT_CREATED" | "DEPARTMENT_DEACTIVATED" | "DEPARTMENT_UPDATED" | "DFD_ATTACHED" | "DFD_REMOVED" | "DFD_UPDATED" | "DOCUMENT_DOWNLOADED" | "DOCUMENT_FINALIZED" | "DOCUMENT_GENERATED" | "DOCUMENT_STRUCTURE_CHANGED" | "LOGIN_FAILED" | "LOGIN_SUCCEEDED" | "ORGANIZATION_CREATED" | "ORGANIZATION_DEACTIVATED" | "ORGANIZATION_LETTERHEAD_UPDATED" | "ORGANIZATION_UPDATED" | "PASSWORD_RESET_COMPLETED" | "PASSWORD_RESET_REQUESTED" | "PCA_IMPORTED" | "PRICE_QUOTE_RECORDED" | "PRICE_QUOTE_REMOVED" | "PRICE_QUOTE_UPDATED" | "PROCUREMENT_PROCESS_CLOSED" | "PROCUREMENT_PROCESS_CREATED" | "PROCUREMENT_PROCESS_REOPENED" | "PROCUREMENT_PROCESS_UPDATED" | "REGULATION_ADDED" | "REGULATION_FILE_REPLACED" | "REGULATION_REINSTATED" | "REGULATION_REMOVED" | "REGULATION_REVOKED" | "REGULATION_UPDATED" | "SECTION_DISPENSED" | "SECTION_WRITTEN" | "TEMPLATE_PUBLISHED" | "USER_CPF_REVEALED" | "USER_CREATED" | "USER_DEACTIVATED" | "USER_ORGANIZATION_TRANSFERRED" | "USER_PASSWORD_RESET" | "USER_UPDATED";
+                action?: "BUDGET_APPROPRIATION_DECLARED" | "BUDGET_APPROPRIATION_REMOVED" | "BUDGET_APPROPRIATION_UPDATED" | "BUNDLE_EXPORTED" | "DEPARTMENT_CREATED" | "DEPARTMENT_DEACTIVATED" | "DEPARTMENT_UPDATED" | "DFD_ATTACHED" | "DFD_REMOVED" | "DFD_UPDATED" | "DOCUMENT_DOWNLOADED" | "DOCUMENT_FINALIZED" | "DOCUMENT_GENERATED" | "DOCUMENT_MODEL_JUSTIFIED" | "DOCUMENT_STRUCTURE_CHANGED" | "LOGIN_FAILED" | "LOGIN_SUCCEEDED" | "ORGANIZATION_CREATED" | "ORGANIZATION_DEACTIVATED" | "ORGANIZATION_LETTERHEAD_UPDATED" | "ORGANIZATION_UPDATED" | "PASSWORD_RESET_COMPLETED" | "PASSWORD_RESET_REQUESTED" | "PCA_IMPORTED" | "PRICE_QUOTE_RECORDED" | "PRICE_QUOTE_REMOVED" | "PRICE_QUOTE_UPDATED" | "PROCUREMENT_PROCESS_CLOSED" | "PROCUREMENT_PROCESS_CREATED" | "PROCUREMENT_PROCESS_REOPENED" | "PROCUREMENT_PROCESS_UPDATED" | "REGULATION_ADDED" | "REGULATION_FILE_REPLACED" | "REGULATION_REINSTATED" | "REGULATION_REMOVED" | "REGULATION_REVOKED" | "REGULATION_UPDATED" | "SECTION_DISPENSED" | "SECTION_WRITTEN" | "STRUCTURE_MODEL_DEACTIVATED" | "STRUCTURE_MODEL_PUBLISHED" | "TEMPLATE_PUBLISHED" | "USER_CPF_REVEALED" | "USER_CREATED" | "USER_DEACTIVATED" | "USER_ORGANIZATION_TRANSFERRED" | "USER_PASSWORD_RESET" | "USER_UPDATED";
                 actorId?: string;
                 from?: string;
                 page?: number;
                 resourceId?: string;
-                resourceType?: "AUTHENTICATION" | "DEPARTMENT" | "ORGANIZATION" | "PCA_PLAN" | "PROCUREMENT_PROCESS" | "REGULATION" | "TEMPLATE" | "USER";
+                resourceType?: "AUTHENTICATION" | "DEPARTMENT" | "ORGANIZATION" | "PCA_PLAN" | "PROCUREMENT_PROCESS" | "REGULATION" | "STRUCTURE_MODEL" | "TEMPLATE" | "USER";
                 size?: number;
                 to?: string;
             };
@@ -2529,7 +2688,7 @@ export interface operations {
             };
         };
     };
-    list_4: {
+    list_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -2682,7 +2841,7 @@ export interface operations {
             };
         };
     };
-    list_3: {
+    list_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -2702,7 +2861,7 @@ export interface operations {
             };
         };
     };
-    create_3: {
+    create_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -2726,7 +2885,7 @@ export interface operations {
             };
         };
     };
-    get_3: {
+    get_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -2748,7 +2907,7 @@ export interface operations {
             };
         };
     };
-    update_3: {
+    update_4: {
         parameters: {
             query?: never;
             header?: {
@@ -2776,7 +2935,7 @@ export interface operations {
             };
         };
     };
-    deactivate_1: {
+    deactivate_2: {
         parameters: {
             query?: never;
             header?: {
@@ -3124,7 +3283,7 @@ export interface operations {
             };
         };
     };
-    list_2: {
+    list_3: {
         parameters: {
             query?: {
                 page?: number;
@@ -3150,7 +3309,7 @@ export interface operations {
             };
         };
     };
-    create_2: {
+    create_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -3198,7 +3357,7 @@ export interface operations {
             };
         };
     };
-    get_2: {
+    get_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -3220,7 +3379,7 @@ export interface operations {
             };
         };
     };
-    update_2: {
+    update_3: {
         parameters: {
             query?: never;
             header?: {
@@ -3986,6 +4145,33 @@ export interface operations {
             };
         };
     };
+    justifyModel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                documentType: "AVISO" | "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
+                processId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ModelJustificationRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DocumentResponse"];
+                };
+            };
+        };
+    };
     addSection: {
         parameters: {
             query?: never;
@@ -4147,6 +4333,34 @@ export interface operations {
             };
         };
     };
+    justifyDeviation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                documentType: "AVISO" | "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
+                processId: string;
+                sectionCode: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ModelJustificationRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DocumentResponse"];
+                };
+            };
+        };
+    };
     changeStructureModel: {
         parameters: {
             query?: never;
@@ -4296,7 +4510,7 @@ export interface operations {
             };
         };
     };
-    list_1: {
+    list_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -4316,7 +4530,7 @@ export interface operations {
             };
         };
     };
-    create_1: {
+    create_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -4344,7 +4558,7 @@ export interface operations {
             };
         };
     };
-    get: {
+    get_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -4366,7 +4580,7 @@ export interface operations {
             };
         };
     };
-    update: {
+    update_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -4558,6 +4772,118 @@ export interface operations {
             };
         };
     };
+    list_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Catalog"];
+                };
+            };
+        };
+    };
+    create_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Create"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Update"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Detail"];
+                };
+            };
+        };
+    };
+    deactivate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     list: {
         parameters: {
             query?: {
@@ -4605,7 +4931,7 @@ export interface operations {
             };
         };
     };
-    get_1: {
+    get_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -4627,7 +4953,7 @@ export interface operations {
             };
         };
     };
-    update_1: {
+    update_2: {
         parameters: {
             query?: never;
             header?: {
@@ -4701,7 +5027,7 @@ export interface operations {
             };
         };
     };
-    deactivate: {
+    deactivate_1: {
         parameters: {
             query?: never;
             header?: {
