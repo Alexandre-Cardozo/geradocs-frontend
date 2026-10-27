@@ -196,6 +196,18 @@ describe("textos de outro modelo", () => {
     expect(onInserir).toHaveBeenCalledWith("02.01.33.")
   })
 
+  it("sem seção aberta, o texto é só para leitura, com título próprio", () => {
+    renderizar(
+      <TextosDeOutroModelo
+        titulo="Textos Sem Seção Correspondente"
+        textos={[{ secao: "14", titulo: "Da Matriz de Riscos", texto: "Riscos." }]}
+      />,
+    )
+
+    expect(screen.getByText("Textos Sem Seção Correspondente (1)")).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Inserir nesta Seção" })).not.toBeInTheDocument()
+  })
+
   it("sem texto guardado, não aparece", () => {
     const { container } = renderizar(<TextosDeOutroModelo textos={[]} onInserir={vi.fn()} />)
     expect(container).toBeEmptyDOMElement()

@@ -488,7 +488,10 @@ describe("modelo de estrutura", () => {
     ],
     modelChoiceRequired: false,
     rectificationRequired: true,
-    otherModelTexts: [{ sectionCode: "12", title: "Da Dotação Orçamentária", content: "02.01." }],
+    otherModelTexts: [
+      { sectionCode: "12", title: "Da Dotação Orçamentária", content: "02.01.", targetSectionCode: "PC12" },
+      { sectionCode: "14", title: "Da Matriz de Riscos", content: "Riscos.", targetSectionCode: null },
+    ],
   }
 
   it("traz a minuta, o número, os assuntos, o texto e as notas, e liga o painel pelo assunto", async () => {
@@ -514,7 +517,8 @@ describe("modelo de estrutura", () => {
     expect(documento.retificacaoExigida).toBe(true)
     expect(documento.escolhaDeModeloPendente).toBe(false)
     expect(documento.textosDeOutroModelo).toEqual([
-      { secao: "12", titulo: "Da Dotação Orçamentária", texto: "02.01." },
+      { secao: "12", titulo: "Da Dotação Orçamentária", texto: "02.01.", secaoAlvo: "PC12" },
+      { secao: "14", titulo: "Da Matriz de Riscos", texto: "Riscos." },
     ])
     expect(documento.secoes[0]).toMatchObject({
       numero: "",

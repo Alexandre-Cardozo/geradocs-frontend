@@ -67,7 +67,13 @@ function edital(modelo: string | null) {
     availableModels: MODELOS.map((m) => ({ ...m, current: m.code === modelo })),
     modelChoiceRequired: modelo === null,
     rectificationRequired: false,
-    otherModelTexts: [],
+    otherModelTexts:
+      modelo === null
+        ? []
+        : [
+            { sectionCode: "PC01", title: "Do Objeto", content: "Objeto escrito na outra minuta.", targetSectionCode: "TP01" },
+            { sectionCode: "PC12", title: "Da Formação do Cadastro de Reserva", content: "Reserva.", targetSectionCode: null },
+          ],
   }
 }
 
@@ -101,4 +107,15 @@ test("na concorrência, a minuta é escolhida antes e estrutura o Edital", async
   )
   await page.getByText("Notas da AGU (1)").click()
   await expect(page.getByText("Nota explicativa: adapte ao órgão.")).toBeVisible()
+
+  // O texto de outra minuta aparece só na seção do mesmo assunto.
+  await expect(page.getByText(/Textos de Outro Modelo/)).toHaveCount(0)
+  await page.getByRole("button", { name: /Do Objeto/ }).first().click()
+  await expect(page.getByText("Textos de Outro Modelo (1)")).toBeVisible()
+  await page.getByText("Textos de Outro Modelo (1)").click()
+  await expect(page.getByText("Objeto escrito na outra minuta.")).toBeVisible()
+
+  // O que não tem seção correspondente fica na etapa final.
+  await page.getByRole("button", { name: /Revisão e Geração/ }).click()
+  await expect(page.getByText("Textos Sem Seção Correspondente (1)")).toBeVisible()
 })

@@ -694,10 +694,20 @@ export default function EditorDocumento() {
           )}
 
 
+          {/*
+            O texto de outro modelo aparece só na seção do mesmo assunto; o que
+            não tem seção correspondente fica na etapa final, para não se perder.
+          */}
           {!naEtapaFinal && active && (
             <TextosDeOutroModelo
-              textos={documento.data?.textosDeOutroModelo ?? []}
+              textos={(documento.data?.textosDeOutroModelo ?? []).filter((texto) => texto.secaoAlvo === active.id)}
               onInserir={(texto) => setRascunho(rascunho.trim() === "" ? texto : `${rascunho}\n\n${texto}`)}
+            />
+          )}
+          {naEtapaFinal && (
+            <TextosDeOutroModelo
+              titulo="Textos Sem Seção Correspondente"
+              textos={(documento.data?.textosDeOutroModelo ?? []).filter((texto) => texto.secaoAlvo === undefined)}
             />
           )}
 

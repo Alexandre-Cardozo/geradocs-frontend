@@ -32,7 +32,7 @@ export function EscolhaDoModelo({
   const motivoId = useId()
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-4">
+    <div className="flex w-full flex-col gap-4">
       <div>
         <h2 className="m-0 font-display text-lg font-bold text-text-1">Modelo do Documento</h2>
         <p className="m-0 mt-1 text-sm text-text-3">
@@ -291,32 +291,38 @@ export function ApoioDaMinuta({
 /**
  * O texto guardado de seções que não estão na estrutura atual (§85).
  *
- * <p>É o que a troca de minuta não teve onde pôr. Fica recolhido, e cada trecho
- * pode ser inserido na seção aberta.
+ * <p>É o que a troca de minuta não teve onde pôr. Na seção, aparece só o texto
+ * do mesmo assunto, com Inserir nesta Seção; na etapa final, o que não tem seção
+ * correspondente, para nada se perder.
  */
 export function TextosDeOutroModelo({
   textos,
+  titulo = "Textos de Outro Modelo",
   onInserir,
 }: {
   textos: { secao: string; titulo: string; texto: string }[]
-  onInserir: (texto: string) => void
+  titulo?: string
+  /** Ausente, o texto fica só para leitura — não há seção aberta onde inserir. */
+  onInserir?: (texto: string) => void
 }) {
   if (textos.length === 0) return null
   return (
     <details className="mt-4 rounded-card border border-border bg-surface px-4 py-3 text-sm">
       <summary className="cursor-pointer font-semibold text-text-2">
-        Textos de Outro Modelo ({textos.length})
+        {titulo} ({textos.length})
       </summary>
       <ul className="m-0 mt-3 flex list-none flex-col gap-3 p-0">
         {textos.map((texto) => (
           <li key={texto.secao} className="flex flex-col gap-1.5 border-t border-border-soft pt-3">
             <span className="font-semibold text-text-1">{texto.titulo}</span>
-            <span className="line-clamp-3 whitespace-pre-line text-text-3">{texto.texto}</span>
-            <span>
-              <Button size="sm" variant="ghost" onClick={() => onInserir(texto.texto)}>
-                Inserir nesta Seção
-              </Button>
-            </span>
+            <span className={`whitespace-pre-line text-text-3 ${onInserir ? "line-clamp-3" : ""}`}>{texto.texto}</span>
+            {onInserir && (
+              <span>
+                <Button size="sm" variant="ghost" onClick={() => onInserir(texto.texto)}>
+                  Inserir nesta Seção
+                </Button>
+              </span>
+            )}
           </li>
         ))}
       </ul>

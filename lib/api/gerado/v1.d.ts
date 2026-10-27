@@ -1799,6 +1799,7 @@ export interface components {
         OtherModelTextView: {
             content: string;
             sectionCode: string;
+            targetSectionCode?: string;
             title: string;
         };
         PageProcurementProcessResponse: {
