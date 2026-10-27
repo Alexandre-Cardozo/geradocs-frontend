@@ -1,4 +1,4 @@
-import type { BlocoDoDocumento } from "@/lib/dominio"
+import { numeroImpresso, type BlocoDoDocumento } from "@/lib/dominio"
 
 /**
  * O texto que sai no documento.
@@ -32,7 +32,10 @@ export function PreviaDoDocumento({
         {blocos.map((bloco) => (
           <li key={bloco.id}>
             <div className="flex flex-wrap items-baseline gap-2">
-              <span className="font-mono text-xs text-text-muted">{bloco.id}.</span>
+              {/* O número da minuta, e não o código: o preâmbulo não tem número (§85). */}
+              {numeroImpresso(bloco) !== "" && (
+                <span className="font-mono text-xs text-text-muted">{numeroImpresso(bloco)}.</span>
+              )}
               <span className="text-base font-semibold text-text-1">{bloco.titulo}</span>
               {bloco.dispensada && (
                 <span className="rounded-sm bg-tint-royal-bg px-1.5 py-0.5 text-2xs font-semibold text-royal">
