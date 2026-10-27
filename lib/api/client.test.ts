@@ -420,6 +420,15 @@ describe("seções do documento", () => {
     expect(secao.conteudo).toBe("Texto proposto pelo servidor.")
     expect(elaboracao.salvarSecao).not.toHaveBeenCalled()
   })
+
+  it("revisar pede a revisão do texto e não grava a sugestão", async () => {
+    const api = await fachadaLimpa()
+    vi.mocked(elaboracao.gerarTextoDaSecao).mockResolvedValue("Texto revisado.")
+
+    await expect(api.revisarSecao(PROCESSO, "ETP", "1", "Texto.")).resolves.toBe("Texto revisado.")
+    expect(elaboracao.gerarTextoDaSecao).toHaveBeenCalledWith(PROCESSO, "ETP", "1", "Texto.", "revisao")
+    expect(elaboracao.salvarSecao).not.toHaveBeenCalled()
+  })
 })
 
 describe("geração de documento", () => {

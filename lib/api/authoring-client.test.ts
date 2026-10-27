@@ -162,6 +162,11 @@ describe("gerar texto da seção", () => {
 
     await gerarTextoDaSecao(PROCESSO, "ETP", "1")
     expect(corpo?.draft).toBeNull()
+    expect(corpo).not.toHaveProperty("mode")
+
+    // Na revisão, o texto é o que se revisa, e o modo vai declarado (§87).
+    await gerarTextoDaSecao(PROCESSO, "ETP", "1", "Texto a revisar.", "revisao")
+    expect(corpo).toEqual({ draft: "Texto a revisar.", mode: "REVIEW" })
   })
 })
 

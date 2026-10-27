@@ -23,6 +23,7 @@ import { rotaDoDocumentoGerado } from "@/lib/documentos/rotas"
 import { CaminhosDaSecao } from "@/components/documentos/caminhos-da-secao"
 import { DispensaDeSecao } from "@/components/documentos/dispensa-de-secao"
 import { EtapaFinal } from "@/components/documentos/etapa-final"
+import { RevisaoComIa } from "@/components/documentos/revisao-com-ia"
 import {
   ApoioDaMinuta,
   EscolhaDoModelo,
@@ -463,6 +464,16 @@ export default function EditorDocumento() {
         </div>
 
         <div className="relative flex-1 overflow-y-auto p-4 lg:p-6">
+
+          {/*
+            A revisão da IA vem antes do arquivo, e nunca grava sozinha: cada
+            sugestão entra só se quem assina aceitar (§87).
+          */}
+          {naEtapaFinal && (
+            <div className="mb-4">
+              <RevisaoComIa processoId={processoId} tipo={tipo} secoes={lista} />
+            </div>
+          )}
 
           {naEtapaFinal && documento.data?.retificacaoExigida && (
             /*

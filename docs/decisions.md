@@ -1215,3 +1215,14 @@ Fase 2 do §85 (ADR-053 do back-end). A AGU tem dois TRs (compras; serviços e o
 - **Declarada,** TR e Contrato em branco já abrem na minuta certa. **Sem ela,** a etapa Modelo do Documento oferece as opções.
 - **Painéis do TR na minuta:** quantidades (condições gerais), necessidade, valor e dotação, ligados pelo assunto da seção — o mapa agora é por tipo de documento, porque o "objeto" do TR tem painel e o do Edital não.
 - **Contrato:** o título da cláusula já traz o ordinal ("Cláusula Primeira – Objeto"), e por isso o trilho mostra um traço no lugar do número.
+
+## 87. A IA revisa o documento na etapa final, e nada entra sem aceitar
+
+Fase 3 do §85 (ADR-054 do back-end). A redação da IA passou a levar a minuta da seção, as outras seções já escritas, os dados do processo e os trechos das normas vigentes do órgão. Na tela:
+
+- **Revisão com IA**, no topo da etapa final, antes da geração: revisa seção por seção as que têm texto, com o andamento ("Revisando 3 de 12") e **Parar**.
+- **A sugestão aparece marcada sobre o texto atual**, por palavra: o que sai riscado, o que entra destacado — com "Removido:"/"Incluído:" para leitor de tela. Por palavra, e não por letra: quem assina lê frases.
+- **Aceitar** grava a seção; **Descartar** tira a sugestão. Nada é gravado sozinho: a revisão é sugestão, e quem decide é quem assina.
+- Sugestão que só muda espaços não conta; a seção sem mudança entra na contagem "sem alteração", e a que falhou é dita pelo nome, sem interromper as outras.
+- **Sem modelo de IA**, o botão fica desabilitado com o motivo antes do clique, como o Gerar com IA da seção.
+- A geração do arquivo continua determinística: a IA só sugere texto, não monta o documento.
