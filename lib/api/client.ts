@@ -56,6 +56,8 @@ import {
   reordenarSecoes,
   salvarSecao,
   trocarModeloDoDocumento,
+  justificarDesvio as justificarDesvioDoDocumento,
+  justificarModelo as justificarModeloDoDocumento,
   type PreviaDaTroca,
   versoesComTexto,
 } from "@/lib/api/authoring-client"
@@ -348,6 +350,25 @@ export async function trocarModelo(
   codigo: string,
 ): Promise<DocumentoEmElaboracao> {
   return trocarModeloDoDocumento(processoId, tipo, codigo)
+}
+
+/** A justificativa de o documento não seguir a minuta da AGU (Art. 19, § 2º). */
+export async function justificarModelo(
+  processoId: string,
+  tipo: TipoDocumento,
+  texto: string,
+): Promise<DocumentoEmElaboracao> {
+  return justificarModeloDoDocumento(processoId, tipo, texto)
+}
+
+/** A justificativa da alteração da minuta numa seção (Art. 19, § 2º). */
+export async function justificarDesvio(
+  processoId: string,
+  tipo: TipoDocumento,
+  secaoId: string,
+  texto: string,
+): Promise<DocumentoEmElaboracao> {
+  return justificarDesvioDoDocumento(processoId, tipo, secaoId, texto)
 }
 
 export interface AtualizarSecaoInput {

@@ -119,3 +119,53 @@ test("na concorrência, a minuta é escolhida antes e estrutura o Edital", async
   await page.getByRole("button", { name: /Revisão e Geração/ }).click()
   await expect(page.getByText("Textos Sem Seção Correspondente (1)")).toBeVisible()
 })
+
+test("a seção que se afasta da minuta pede a justificativa, e a etapa final a resume (§88)", async ({ page }) => {
+  await comSessao(page)
+  await comProcessoEDocumento(page)
+  let justificativa: string | null = null
+  const documento = () => {
+    const base = edital("AGU-EDITAL-TP")
+    return {
+      ...base,
+      sections: base.sections.map((secao, i) =>
+        i === 1
+          ? {
+              ...secao,
+              content: "Objeto escrito pelo município.",
+              resolved: true,
+              modelDeviation: { clauses: 1, missing: ["1.1. O objeto da presente licitação é [objeto]."] },
+              modelDeviationJustification: justificativa,
+            }
+          : secao,
+      ),
+      newerModel: { code: "AGU-EDITAL-TP", version: "2026-09", title: "Minuta AGU", publishedIn: "set/2026" },
+    }
+  }
+  await page.route(`${API}/procurement-processes/*`, (r) =>
+    r.fulfill({ json: { ...processo, modality: "COMPETITION", documents: ["ETP", "TR", "EDITAL"] } }),
+  )
+  await page.route(`${API}/procurement-processes/*/documents/EDITAL`, (r) => r.fulfill({ json: documento() }))
+  await page.route(`${API}/procurement-processes/*/documents/EDITAL/sections/TP01/model-deviation`, async (r) => {
+    justificativa = (r.request().postDataJSON() as { text: string }).text
+    await r.fulfill({ json: documento() })
+  })
+
+  await page.goto(rota(`/processos/documento?id=${processo.id}&tipo=edital`))
+
+  // A versão nova da minuta aparece na linha do modelo.
+  await expect(page.getByText("Versão set/2026 disponível")).toBeVisible()
+
+  await page.getByRole("button", { name: /Do Objeto/ }).first().click()
+  await expect(page.getByText(/deixa de fora 1 de 1 cláusula da minuta/)).toBeVisible()
+  await page.getByText("Cláusulas Fora do Texto").click()
+  await expect(page.getByText("1.1. O objeto da presente licitação é [objeto].")).toBeVisible()
+  await page.getByRole("textbox", { name: "Justificativa da Alteração" }).fill("A lei municipal define o objeto.")
+  await page.getByRole("button", { name: "Salvar Justificativa" }).click()
+  await expect(page.getByText(/Alteração justificada/)).toBeVisible()
+  expect(justificativa).toBe("A lei municipal define o objeto.")
+
+  await page.getByRole("button", { name: /Revisão e Geração/ }).click()
+  await expect(page.getByRole("heading", { name: "Minuta da AGU" })).toBeVisible()
+  await expect(page.getByText("Alteração Justificada")).toBeVisible()
+})

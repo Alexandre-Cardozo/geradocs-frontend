@@ -1226,3 +1226,13 @@ Fase 3 do §85 (ADR-054 do back-end). A redação da IA passou a levar a minuta 
 - Sugestão que só muda espaços não conta; a seção sem mudança entra na contagem "sem alteração", e a que falhou é dita pelo nome, sem interromper as outras.
 - **Sem modelo de IA**, o botão fica desabilitado com o motivo antes do clique, como o Gerar com IA da seção.
 - A geração do arquivo continua determinística: a IA só sugere texto, não monta o documento.
+
+## 88. Justificativa do Art. 19, § 2º, versão nova da minuta e modelo do órgão
+
+Fase 4 do §85 (ADR-055 e ADR-056 do back-end). A lei pede que a não utilização das minutas seja justificada por escrito e anexada ao processo (Art. 19, § 2º, Lei 14.133/21). Na tela:
+
+- **Seção alterada:** quando o texto salvo deixa de fora cláusulas obrigatórias da minuta, a seção diz quantas ("deixa de fora 1 de 3 cláusulas"), lista quais em **Cláusulas Fora do Texto** e oferece **Justificativa da Alteração**. Adaptar (colchetes, alternativas, "se for o caso") não conta. Justificada, o aviso vira informação.
+- **Etapa final — Minuta da AGU:** o documento que não segue a minuta existente pede a **Justificativa de Não Utilização da Minuta**; as seções alteradas aparecem com o estado (justificada ou não) e **Abrir Seção**. No modelo do órgão, mostra a justificativa dele.
+- **Orienta, não trava:** nada disso impede concluir ou gerar. Cada justificativa vai para a trilha do processo, com o texto.
+- **Versão nova da minuta:** a linha do modelo mostra "Versão set/2026 disponível"; **Trocar Modelo** passa a oferecê-la, com a prévia de sempre.
+- **Modelos do Órgão** (navegação principal): o coordenador publica um modelo sobre uma minuta da AGU — título, justificativa obrigatória e o texto-padrão de cada seção, que começa com o da minuta —, publica a versão seguinte e desativa. O servidor consulta. O modelo ativo aparece na escolha da minuta como "Modelo do órgão", ao lado das da AGU; com ele, o documento em branco passa a pedir a escolha.

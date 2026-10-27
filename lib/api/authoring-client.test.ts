@@ -517,6 +517,7 @@ describe("modelo de estrutura", () => {
         publicadoEm: "nov/2025",
         quantidadeDeSecoes: 17,
         atual: true,
+        doOrgao: false,
       },
     ])
     expect(documento.retificacaoExigida).toBe(true)
@@ -540,6 +541,77 @@ describe("modelo de estrutura", () => {
     expect(documento.corpo[1]?.numero).toBeUndefined()
   })
 
+  it("traz o afastamento da minuta, as justificativas, o modelo do órgão e a versão nova (§88)", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id/documents/:tipo`, () =>
+        HttpResponse.json({
+          ...comMinuta,
+          sections: [
+            {
+              ...comMinuta.sections[0],
+              modelDeviation: { clauses: 3, missing: ["1.5. O critério de julgamento..."] },
+              modelDeviationJustification: "Lei municipal.",
+            },
+            { ...comMinuta.sections[1], modelDeviation: null, modelDeviationJustification: null },
+          ],
+          structureModel: { ...comMinuta.structureModel, source: "Órgão", justification: "Lei 1.234/2024." },
+          availableModels: [{ ...comMinuta.availableModels[0], source: "Órgão" }],
+          modelJustificationRequired: true,
+          modelJustification: "Iniciado antes das minutas.",
+          newerModel: { code: "AGU-EDITAL-PC", version: "2026-04", title: "Minuta AGU", publishedIn: "abr/2026" },
+        }),
+      ),
+    )
+    const { abrirDocumento } = await carregarClienteLimpo()
+
+    const documento = await abrirDocumento(PROCESSO, "Edital")
+
+    expect(documento.secoes[0]).toMatchObject({
+      desvioDaMinuta: { clausulas: 3, faltam: ["1.5. O critério de julgamento..."] },
+      justificativaDoDesvio: "Lei municipal.",
+    })
+    expect(documento.secoes[1]?.desvioDaMinuta).toBeUndefined()
+    expect(documento.secoes[1]?.justificativaDoDesvio).toBeUndefined()
+    expect(documento.modelos[0]?.doOrgao).toBe(true)
+    expect(documento.justificativaDoModelo).toEqual({
+      pedida: true,
+      texto: "Iniciado antes das minutas.",
+      doModelo: "Lei 1.234/2024.",
+    })
+    expect(documento.versaoMaisNova).toEqual({
+      codigo: "AGU-EDITAL-PC",
+      versao: "2026-04",
+      titulo: "Minuta AGU",
+      publicadoEm: "abr/2026",
+    })
+  })
+
+  it("as justificativas vão às rotas delas, e em branco retiram", async () => {
+    const pedidos: { url: string; corpo: unknown }[] = []
+    servidor.use(
+      http.put(`${urlDaApi}/procurement-processes/:id/documents/:tipo/model-justification`, async ({ request }) => {
+        pedidos.push({ url: new URL(request.url).pathname, corpo: await request.json() })
+        return HttpResponse.json(comMinuta)
+      }),
+      http.put(
+        `${urlDaApi}/procurement-processes/:id/documents/:tipo/sections/:secao/model-deviation`,
+        async ({ request }) => {
+          pedidos.push({ url: new URL(request.url).pathname, corpo: await request.json() })
+          return HttpResponse.json(comMinuta)
+        },
+      ),
+    )
+    const { justificarDesvio, justificarModelo } = await carregarClienteLimpo()
+
+    expect((await justificarModelo(PROCESSO, "Edital", "Motivo.")).tipo).toBe("Edital")
+    await justificarDesvio(PROCESSO, "Edital", "PC01", "")
+
+    expect(pedidos).toEqual([
+      { url: expect.stringMatching(/\/documents\/EDITAL\/model-justification$/), corpo: { text: "Motivo." } },
+      { url: expect.stringMatching(/\/sections\/PC01\/model-deviation$/), corpo: { text: "" } },
+    ])
+  })
+
   it("sem minuta, a Estrutura GeraDocs, sem escolha nem textos guardados", async () => {
     const { abrirDocumento } = await carregarClienteLimpo()
 
@@ -550,6 +622,8 @@ describe("modelo de estrutura", () => {
     expect(documento.escolhaDeModeloPendente).toBe(false)
     expect(documento.retificacaoExigida).toBe(false)
     expect(documento.textosDeOutroModelo).toEqual([])
+    expect(documento.justificativaDoModelo).toEqual({ pedida: false })
+    expect(documento.versaoMaisNova).toBeUndefined()
     expect(documento.secoes[0]?.numero).toBeUndefined()
   })
 

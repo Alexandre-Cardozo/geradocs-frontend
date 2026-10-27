@@ -23,6 +23,7 @@ import { rotaDoDocumentoGerado } from "@/lib/documentos/rotas"
 import { CaminhosDaSecao } from "@/components/documentos/caminhos-da-secao"
 import { DispensaDeSecao } from "@/components/documentos/dispensa-de-secao"
 import { EtapaFinal } from "@/components/documentos/etapa-final"
+import { AlteracoesDaMinuta, JustificativaDoDesvio } from "@/components/documentos/justificativa-da-minuta"
 import { RevisaoComIa } from "@/components/documentos/revisao-com-ia"
 import {
   ApoioDaMinuta,
@@ -300,6 +301,13 @@ export default function EditorDocumento() {
             {documento.data && (
               <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-2xs text-text-muted">
                 <span>{documento.data.estrutura.titulo}</span>
+                {documento.data.versaoMaisNova && (
+                  // A versão em uso continua valendo; a troca é a de sempre,
+                  // com a prévia do que acontece com o texto (§88).
+                  <span className="font-semibold text-tint-warning-fg">
+                    Versão {documento.data.versaoMaisNova.publicadoEm} disponível
+                  </span>
+                )}
                 {podeTrocarModelo && (
                   <button
                     type="button"
@@ -474,6 +482,17 @@ export default function EditorDocumento() {
               <RevisaoComIa processoId={processoId} tipo={tipo} secoes={lista} />
             </div>
           )}
+          {naEtapaFinal && documento.data && (
+            <div className="mb-4">
+              <AlteracoesDaMinuta
+                processoId={processoId}
+                tipo={tipo}
+                secoes={lista}
+                justificativa={documento.data.justificativaDoModelo}
+                onAbrirSecao={trocarSecao}
+              />
+            </div>
+          )}
 
           {naEtapaFinal && documento.data?.retificacaoExigida && (
             /*
@@ -555,6 +574,11 @@ export default function EditorDocumento() {
               {(active.textoDaMinuta || active.notasDaMinuta) && (
                 <div className="mb-3">
                   <ApoioDaMinuta secao={active} rascunho={rascunho} setRascunho={setRascunho} />
+                </div>
+              )}
+              {active.desvioDaMinuta && (
+                <div className="mb-3">
+                  <JustificativaDoDesvio processoId={processoId} tipo={tipo} secao={active} />
                 </div>
               )}
               {active.status === "Completo" && rascunho === active.conteudo && active.conteudo !== "" ? (

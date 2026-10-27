@@ -49,6 +49,9 @@ interface SecaoApi {
   topics?: string[];
   modelText?: string | null;
   modelNotes?: string[];
+  /** As cláusulas da minuta que não estão no texto (ADR-055). */
+  modelDeviation?: { clauses: number; missing: string[] } | null;
+  modelDeviationJustification?: string | null;
 }
 
 interface ModeloApi {
@@ -59,6 +62,8 @@ interface ModeloApi {
   publishedIn: string;
   sectionCount: number;
   current: boolean;
+  /** "AGU" ou "Órgão" (ADR-056). */
+  source?: string;
 }
 
 interface DocumentoApi {
@@ -74,12 +79,22 @@ interface DocumentoApi {
   pendingRequiredSections: string[];
   silentGaps: string[];
   body: { sectionCode: string; title: string; text: string; dispensed: boolean; headingNumber?: string }[];
-  structureModel?: { code: string; version: string; title: string; publishedIn: string } | null;
+  structureModel?: {
+    code: string;
+    version: string;
+    title: string;
+    publishedIn: string;
+    source?: string;
+    justification?: string | null;
+  } | null;
   structureTitle?: string;
   availableModels?: ModeloApi[];
   modelChoiceRequired?: boolean;
   rectificationRequired?: boolean;
   otherModelTexts?: { sectionCode: string; title: string; content: string; targetSectionCode?: string | null }[];
+  modelJustificationRequired?: boolean;
+  modelJustification?: string | null;
+  newerModel?: { code: string; version: string; title: string; publishedIn: string } | null;
 }
 
 export interface DocumentoEmElaboracao {
@@ -110,6 +125,14 @@ export interface DocumentoEmElaboracao {
    * atual do mesmo assunto, onde ele aparece; ausente quando nenhuma trata dele.
    */
   textosDeOutroModelo: TextoDeOutroModelo[];
+  /**
+   * A justificativa de não seguir a minuta da AGU (Art. 19, § 2º; ADR-055 do
+   * back-end). `pedida` quando há minuta e o documento não a segue; `doModelo`
+   * é a do modelo do órgão, escrita uma vez por quem o publicou (ADR-056).
+   */
+  justificativaDoModelo: { pedida: boolean; texto?: string; doModelo?: string };
+  /** A versão mais nova da minuta que o documento segue, quando a AGU publicou outra. */
+  versaoMaisNova?: { codigo: string; versao: string; titulo: string; publicadoEm: string };
 }
 
 /** Texto de outro modelo, com a seção atual a que ele pertence. */
@@ -170,6 +193,10 @@ function mapearSecao(secao: SecaoApi, tipo: TipoDocumento): SecaoDocumento {
     ...(secao.topics?.length ? { assuntos: secao.topics } : {}),
     ...(secao.modelText ? { textoDaMinuta: secao.modelText } : {}),
     ...(secao.modelNotes?.length ? { notasDaMinuta: secao.modelNotes } : {}),
+    ...(secao.modelDeviation
+      ? { desvioDaMinuta: { clausulas: secao.modelDeviation.clauses, faltam: secao.modelDeviation.missing } }
+      : {}),
+    ...(secao.modelDeviationJustification ? { justificativaDoDesvio: secao.modelDeviationJustification } : {}),
   };
 }
 
@@ -212,6 +239,7 @@ function mapear(documento: DocumentoApi, tipo: TipoDocumento): DocumentoEmElabor
       publicadoEm: modelo.publishedIn,
       quantidadeDeSecoes: modelo.sectionCount,
       atual: modelo.current,
+      doOrgao: modelo.source === "Órgão",
     })),
     escolhaDeModeloPendente: documento.modelChoiceRequired ?? false,
     retificacaoExigida: documento.rectificationRequired ?? false,
@@ -221,6 +249,21 @@ function mapear(documento: DocumentoApi, tipo: TipoDocumento): DocumentoEmElabor
       texto: texto.content,
       ...(texto.targetSectionCode ? { secaoAlvo: texto.targetSectionCode } : {}),
     })),
+    justificativaDoModelo: {
+      pedida: documento.modelJustificationRequired ?? false,
+      ...(documento.modelJustification ? { texto: documento.modelJustification } : {}),
+      ...(documento.structureModel?.justification ? { doModelo: documento.structureModel.justification } : {}),
+    },
+    ...(documento.newerModel
+      ? {
+          versaoMaisNova: {
+            codigo: documento.newerModel.code,
+            versao: documento.newerModel.version,
+            titulo: documento.newerModel.title,
+            publicadoEm: documento.newerModel.publishedIn,
+          },
+        }
+      : {}),
   };
 }
 
@@ -262,6 +305,40 @@ export async function trocarModeloDoDocumento(
       method: "PUT",
       body: JSON.stringify({ code: codigo }),
     }),
+    tipo,
+  );
+}
+
+/**
+ * Grava, ou retira com texto em branco, a justificativa de o documento não
+ * seguir a minuta da AGU (Art. 19, § 2º; ADR-055 do back-end).
+ */
+export async function justificarModelo(
+  processoId: string,
+  tipo: TipoDocumento,
+  texto: string,
+): Promise<DocumentoEmElaboracao> {
+  return mapear(
+    await requisicaoProtegida<DocumentoApi>(`${rota(processoId, tipo)}/model-justification`, {
+      method: "PUT",
+      body: JSON.stringify({ text: texto }),
+    }),
+    tipo,
+  );
+}
+
+/** Grava, ou retira com texto em branco, a justificativa da alteração da minuta numa seção. */
+export async function justificarDesvio(
+  processoId: string,
+  tipo: TipoDocumento,
+  secaoId: string,
+  texto: string,
+): Promise<DocumentoEmElaboracao> {
+  return mapear(
+    await requisicaoProtegida<DocumentoApi>(
+      `${rota(processoId, tipo)}/sections/${encodeURIComponent(secaoId)}/model-deviation`,
+      { method: "PUT", body: JSON.stringify({ text: texto }) },
+    ),
     tipo,
   );
 }

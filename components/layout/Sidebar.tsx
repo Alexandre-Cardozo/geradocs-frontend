@@ -9,6 +9,7 @@ import geradocsLogo from "@/public/geradocs-mark-white.png";
 
 import {
   IconBuilding,
+  IconClipboard,
   IconClipboardList,
   IconDashboard,
   IconDownload,
@@ -32,6 +33,7 @@ const ICONES: Record<IconeNav, ReactNode> = {
   processos: <IconFileText size={18} />,
   documentos: <IconDownload size={18} />,
   normas: <IconScale size={18} />,
+  modelos: <IconClipboard size={18} />,
   timbre: <IconImage size={18} />,
   secretarias: <IconBuilding size={18} />,
   pca: <IconClipboardList size={18} />,
