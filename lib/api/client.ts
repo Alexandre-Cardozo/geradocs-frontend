@@ -93,6 +93,7 @@ import type {
   EventoDoProcesso,
   MetodoDaEstimativa,
   Modalidade,
+  NaturezaDoObjeto,
   NovoProcessoInput,
   ParecerDFD,
   PerfilAcesso,
@@ -240,6 +241,8 @@ export interface AtualizarProcessoInput {
   fundamentoDaDispensa?: FundamentoDaDispensa
   /** Direta ou com disputa (ADR-046); trocá-la muda os documentos cabíveis. */
   formaDaDispensa?: FormaDaDispensa
+  /** A natureza do objeto (ADR-053); `null` retira a declaração. */
+  naturezaDoObjeto?: NaturezaDoObjeto | null
 }
 
 /**
@@ -278,6 +281,7 @@ export async function atualizarProcesso(input: AtualizarProcessoInput): Promise<
     valorEstimado: input.valorEstimado,
     fundamentoDaDispensa: input.fundamentoDaDispensa,
     formaDaDispensa: input.formaDaDispensa,
+    naturezaDoObjeto: input.naturezaDoObjeto,
     secretariaId: input.secretariaId,
     motivo,
   })

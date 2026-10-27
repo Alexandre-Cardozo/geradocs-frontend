@@ -152,7 +152,7 @@ function mapearSecao(secao: SecaoApi, tipo: TipoDocumento): SecaoDocumento {
   const painel =
     secao.origin === "AD_HOC"
       ? undefined
-      : (painelDaSecao(tipo, secao.sectionCode) ?? painelDoAssunto(secao.topics?.[0]));
+      : (painelDaSecao(tipo, secao.sectionCode) ?? painelDoAssunto(tipo, secao.topics?.[0]));
   return {
     id: secao.sectionCode,
     titulo: secao.title,

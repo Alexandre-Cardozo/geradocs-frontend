@@ -9,6 +9,7 @@ import type {
   FundamentoDaDispensa,
   MetodoDaEstimativa,
   Modalidade,
+  NaturezaDoObjeto,
   NovoProcessoInput,
   Processo,
   StatusProcesso,
@@ -44,6 +45,7 @@ interface ProcessoApi {
   modality: string;
   dispensationGround?: FundamentoDaDispensa | null;
   dispensationForm?: FormaDaDispensa | null;
+  objectNature?: NaturezaDoObjeto | null;
   estimatedValue: number;
   legalBasis?: string;
   urgency: boolean;
@@ -119,6 +121,7 @@ function mapear(item: ProcessoApi): Processo {
       ? { fundamentoDaDispensa: item.dispensationGround as FundamentoDaDispensa }
       : {}),
     ...(item.dispensationForm ? { formaDaDispensa: item.dispensationForm } : {}),
+    ...(item.objectNature ? { naturezaDoObjeto: item.objectNature } : {}),
     responsavel: item.responsibleUserName,
     criadoEm: item.createdAt,
     atualizadoEm: item.updatedAt,
@@ -210,6 +213,7 @@ export async function criarProcessoReal(input: NovoProcessoInput): Promise<Proce
           departmentId: input.secretaria,
           dispensationGround: input.fundamentoDaDispensa ?? null,
           dispensationForm: input.formaDaDispensa ?? null,
+          objectNature: input.naturezaDoObjeto ?? null,
           estimatedValue: input.valorEstimado ?? 0,
           legalBasis: input.fundamentoLegal,
           urgency: false,
@@ -258,6 +262,8 @@ export async function atualizarProcessoReal(
     fundamentoDaDispensa?: FundamentoDaDispensa | null;
     /** Direta ou com disputa (ADR-046); ausente, reenvia a atual. */
     formaDaDispensa?: FormaDaDispensa | null;
+    /** A natureza do objeto (ADR-053); ausente, reenvia a atual; `null` retira. */
+    naturezaDoObjeto?: NaturezaDoObjeto | null;
     /** Por que mudou; vai literal para a trilha do servidor (ADR-024). */
     motivo?: string;
     /** A secretaria requisitante; ausente, o servidor mantém a atual. */
@@ -285,6 +291,10 @@ export async function atualizarProcessoReal(
           mudancas.formaDaDispensa === undefined
             ? (atual.formaDaDispensa ?? null)
             : mudancas.formaDaDispensa,
+        objectNature:
+          mudancas.naturezaDoObjeto === undefined
+            ? (atual.naturezaDoObjeto ?? null)
+            : mudancas.naturezaDoObjeto,
         estimatedValue:
           mudancas.valorEstimado === undefined
             ? atual.valorEstimado

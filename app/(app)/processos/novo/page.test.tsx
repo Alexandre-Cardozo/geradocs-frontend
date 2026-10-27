@@ -253,3 +253,33 @@ describe("novo processo: a inexigibilidade", () => {
     expect(card).toHaveTextContent("Art. 74 da Lei 14.133/21")
   })
 })
+
+/** A natureza do objeto escolhe a minuta da AGU do TR e do Contrato (ADR-053). */
+describe("novo processo: a natureza do objeto", () => {
+  it("é opcional e, escolhida, vai ao servidor com o processo", async () => {
+    let dados: Record<string, unknown> = {}
+    servidor.use(
+      http.post(`${urlDaApi}/procurement-processes`, async ({ request }) => {
+        const corpo = await request.formData()
+        dados = JSON.parse(await (corpo.get("dados") as Blob).text()) as Record<string, unknown>
+        return HttpResponse.json({}, { status: 500 })
+      }),
+    )
+    comSecretarias([{ id: "02753761-6201-45f7-a9d9-2a1abf6d4f3c", name: "Secretaria de Meio Ambiente" }])
+    renderizar(<NovoProcesso />)
+    await irParaIdentificacao()
+    await userEvent.click(screen.getByRole("button", { name: /Secretaria requisitante/ }))
+    await userEvent.click(await screen.findByRole("option", { name: "Secretaria de Meio Ambiente" }))
+    await userEvent.type(screen.getByPlaceholderText(/Modernização dos laboratórios/), "Reforma da escola")
+    await userEvent.type(screen.getByPlaceholderText(/Aquisição de 150 microcomputadores/), "Reforma")
+
+    expect(screen.getByRole("button", { name: "Natureza do Objeto" })).toHaveTextContent("Não informar agora")
+    await userEvent.click(screen.getByRole("button", { name: "Natureza do Objeto" }))
+    await userEvent.click(await screen.findByRole("option", { name: "Obras e serviços de engenharia" }))
+    await userEvent.click(screen.getByRole("button", { name: /Continuar/ }))
+    await userEvent.click(await screen.findByRole("button", { name: /Criar Processo/ }))
+
+    await waitFor(() => expect(dados.objectNature).toBe("WORKS_AND_ENGINEERING"))
+  })
+})
+

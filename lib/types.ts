@@ -69,6 +69,22 @@ export const FUNDAMENTO_DA_DISPENSA: Record<FundamentoDaDispensa, string> = {
 }
 
 /**
+ * A natureza do objeto da contratação (ADR-053 do back-end).
+ *
+ * <p>É o que escolhe as minutas da AGU do Termo de Referência e do Contrato:
+ * um TR para compras e outro para serviços e obras; um contrato para cada
+ * natureza.
+ */
+export type NaturezaDoObjeto = "GOODS" | "SERVICES" | "SERVICES_WITH_DEDICATED_LABOR" | "WORKS_AND_ENGINEERING"
+
+export const NATUREZA_DO_OBJETO: Record<NaturezaDoObjeto, string> = {
+  GOODS: "Bens",
+  SERVICES: "Serviços sem dedicação exclusiva de mão de obra",
+  SERVICES_WITH_DEDICATED_LABOR: "Serviços com dedicação exclusiva de mão de obra",
+  WORKS_AND_ENGINEERING: "Obras e serviços de engenharia",
+}
+
+/**
  * A forma da dispensa de licitação (ADR-046 do back-end).
  *
  * <p>As duas são contratação direta (Art. 72), mas se instruem de modo
@@ -144,6 +160,8 @@ export interface Processo {
   fundamentoDaDispensa?: FundamentoDaDispensa
   /** Direta ou com disputa; só na dispensa (ADR-046). */
   formaDaDispensa?: FormaDaDispensa
+  /** A natureza do objeto (ADR-053); ausente enquanto não declarada. */
+  naturezaDoObjeto?: NaturezaDoObjeto
   secretaria: string
   /** O id da secretaria requisitante — é por ele que a edição a troca. */
   secretariaId?: string
@@ -191,6 +209,8 @@ export interface NovoProcessoInput {
   fundamentoDaDispensa?: FundamentoDaDispensa
   /** Direta ou com disputa, quando a modalidade é a dispensa (ADR-046). */
   formaDaDispensa?: FormaDaDispensa
+  /** A natureza do objeto (ADR-053), quando já se sabe. */
+  naturezaDoObjeto?: NaturezaDoObjeto
   secretaria: string
   valorEstimado?: number
   fundamentoLegal?: string
