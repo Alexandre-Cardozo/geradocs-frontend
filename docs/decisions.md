@@ -1245,3 +1245,12 @@ As duas telas definem o **conteúdo** dos documentos do órgão — as normas qu
 
 - **Coordenador:** "Normas do Órgão" e "Modelos do Órgão" abrem a seção Configurações, antes de Timbre, Secretarias, PCA e Usuários.
 - **Servidor:** as duas rotas deixam de existir para ele. Ele continua usando o que elas definem onde serve: a lista de normas vigentes no ato normativo da etapa final, o modelo do órgão na escolha da minuta, os trechos das normas na redação com IA. A API de consulta segue aberta ao servidor por isso; cadastrar, alterar, publicar e desativar já eram só do coordenador.
+
+## 90. A prévia da troca de minuta diz as duas estruturas antes do destino do texto
+
+A prévia contava as seções da **minuta nova** ("1 recebe o texto · 19 ficam em branco"), mas a pessoa pensa no documento que tem: com o Contrato de obras (18 seções) indo para o de mão de obra (20), parecia que 17 seções se perderiam, e o trilho passava de "1 de 18" para "1 de 20" sem explicação.
+
+- **Primeiro a estrutura:** "18 seções hoje → 20 seções na nova minuta", contadas como o trilho conta — as seções criadas pelo servidor acompanham a troca e entram nas duas contas.
+- **Depois o texto já escrito**, só o que acontece: recebe o texto da seção do mesmo assunto, junta o texto de mais de uma, volta com o texto que já tinha; o que não tem seção do mesmo assunto fica guardado. Sem nada escrito: "só a estrutura muda".
+- As seções em branco vêm por último ("19 seções começam em branco"), em vez de dividir a linha com o que recebe texto.
+- Os cartões da troca dizem quantas seções cada minuta tem, e a confirmação diz quantas o documento passa a ter. Concordância de número em tudo ("1 seção", e não "1 seções").

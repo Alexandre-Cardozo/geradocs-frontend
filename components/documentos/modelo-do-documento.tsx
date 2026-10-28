@@ -6,6 +6,7 @@ import { Button, ChoiceCard, InfoBanner } from "@/components/ui"
 import { InlineSpinner } from "@/components/shared/estados"
 import { useToast } from "@/components/shared/providers"
 import { usePreviaDaTroca, useTrocarModelo } from "@/lib/api/hooks"
+import { contar, resumoDaTroca } from "@/lib/documentos/troca"
 import type { ModeloDeEstrutura, SecaoDocumento, TipoDocumento } from "@/lib/types"
 
 const FOCAVEIS = 'button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])'
@@ -47,7 +48,7 @@ export function EscolhaDoModelo({
             selected={escolhido === modelo.codigo}
             onClick={() => setEscolhido(modelo.codigo)}
             title={`${modelo.titulo} (${modelo.publicadoEm})`}
-            desc={`${modelo.doOrgao ? "Modelo do órgão. " : ""}${modelo.descricao} ${modelo.quantidadeDeSecoes} seções.`}
+            desc={`${modelo.doOrgao ? "Modelo do órgão. " : ""}${modelo.descricao} ${contar(modelo.quantidadeDeSecoes, "seção", "seções")}.`}
           />
         ))}
       </div>
@@ -84,6 +85,8 @@ export function TrocaDeModelo({
   tipo,
   modelos,
   versaoGerada,
+  secoesAtuais,
+  secoesDoServidor = 0,
   onFechar,
 }: {
   processoId: string
@@ -91,6 +94,10 @@ export function TrocaDeModelo({
   modelos: ModeloDeEstrutura[]
   /** A versão já gerada; zero quando o documento ainda não foi gerado. */
   versaoGerada: number
+  /** Quantas seções o documento tem hoje, como o trilho as conta (§90). */
+  secoesAtuais: number
+  /** As criadas pelo servidor: acompanham a troca e entram na conta da minuta nova. */
+  secoesDoServidor?: number
   onFechar: () => void
 }) {
   const opcoes = modelos.filter((modelo) => !modelo.atual)
@@ -102,6 +109,9 @@ export function TrocaDeModelo({
   const tituloId = useId()
   const motivoId = useId()
   const pronta = escolhido != null && previa.data != null
+  const destino = opcoes.find((modelo) => modelo.codigo === escolhido)
+  const secoesNovas = destino ? destino.quantidadeDeSecoes + secoesDoServidor : 0
+  const resumo = previa.data && destino ? resumoDaTroca(previa.data, secoesAtuais, secoesNovas) : null
 
   useEffect(() => {
     const quemAbriu = document.activeElement instanceof HTMLElement ? document.activeElement : null
@@ -136,7 +146,8 @@ export function TrocaDeModelo({
     if (!escolhido) return
     trocar.mutate(escolhido, {
       onSuccess: () => {
-        showToast(versaoGerada > 0 ? "Minuta trocada. A próxima geração será a retificação." : "Minuta trocada.")
+        const agora = destino ? ` Agora são ${contar(secoesNovas, "seção", "seções")}.` : ""
+        showToast(`Minuta trocada.${agora}${versaoGerada > 0 ? " A próxima geração será a retificação." : ""}`)
         onFechar()
       },
       onError: (erro) => showToast(erro instanceof Error ? erro.message : "Não foi possível trocar a minuta."),
@@ -166,7 +177,7 @@ export function TrocaDeModelo({
               selected={escolhido === modelo.codigo}
               onClick={() => setEscolhido(modelo.codigo)}
               title={`${modelo.titulo} (${modelo.publicadoEm})`}
-              desc={`${modelo.doOrgao ? "Modelo do órgão. " : ""}${modelo.descricao}`}
+              desc={`${modelo.doOrgao ? "Modelo do órgão. " : ""}${modelo.descricao} ${contar(modelo.quantidadeDeSecoes, "seção", "seções")}.`}
             />
           ))}
         </div>
@@ -175,24 +186,16 @@ export function TrocaDeModelo({
         {previa.isError && (
           <InfoBanner tone="warning">Não foi possível conferir o texto já escrito.</InfoBanner>
         )}
-        {previa.data && (
+        {resumo && (
           <div className="flex flex-col gap-1.5 rounded-lg border border-border bg-ice px-4 py-3 text-sm text-text-2">
-            <span>
-              <strong>{previa.data.mantidas.length}</strong> seções recebem o texto ·{" "}
-              <strong>{previa.data.reunidas.length}</strong> reúnem textos ·{" "}
-              <strong>{previa.data.emBranco.length}</strong> ficam em branco
-              {previa.data.restauradas.length > 0 && (
-                <>
-                  {" "}
-                  · <strong>{previa.data.restauradas.length}</strong> voltam com o texto que já tinham
-                </>
-              )}
-            </span>
-            {previa.data.semLugar.length > 0 && (
-              <span className="text-text-3">
-                Sem lugar na nova minuta (o texto fica guardado): {previa.data.semLugar.join(", ")}.
-              </span>
-            )}
+            <strong className="text-text-1">{resumo.estrutura}</strong>
+            <ul className="m-0 flex list-disc flex-col gap-1 pl-4">
+              {resumo.destinos.map((linha) => (
+                <li key={linha}>{linha}</li>
+              ))}
+              {resumo.emBranco && <li>{resumo.emBranco}</li>}
+            </ul>
+            {resumo.guardado && <span className="text-text-3">{resumo.guardado}</span>}
           </div>
         )}
         {versaoGerada > 0 && (

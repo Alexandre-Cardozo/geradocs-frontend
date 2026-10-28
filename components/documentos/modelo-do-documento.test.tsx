@@ -78,15 +78,22 @@ describe("troca de minuta", () => {
         tipo="Edital"
         modelos={[{ ...PC, atual: true }, TP]}
         versaoGerada={1}
+        secoesAtuais={17}
+        secoesDoServidor={1}
         onFechar={onFechar}
       />,
     )
 
-    // Com uma só outra opção, ela já vem escolhida e a prévia aparece.
-    expect(await screen.findByText(/seções recebem o texto/)).toHaveTextContent(
-      "2 seções recebem o texto · 1 reúnem textos · 1 ficam em branco",
-    )
-    expect(screen.getByText(/Da Formação do Cadastro de Reserva/)).toBeInTheDocument()
+    // Com uma só outra opção, ela já vem escolhida e a prévia aparece. A
+    // estrutura vem primeiro, contada como o trilho conta: as 13 seções da
+    // minuta nova mais a criada pelo servidor, que acompanha a troca (§90).
+    expect(await screen.findByText("17 seções hoje → 14 seções na nova minuta.")).toBeInTheDocument()
+    expect(screen.getByText("2 seções recebem o texto da seção do mesmo assunto.")).toBeInTheDocument()
+    expect(screen.getByText("1 seção junta o texto de mais de uma seção.")).toBeInTheDocument()
+    expect(screen.getByText("1 seção começa em branco.")).toBeInTheDocument()
+    expect(screen.getByText(/fica guardado: Da Formação do Cadastro de Reserva/)).toBeInTheDocument()
+    // O cartão diz quantas seções a minuta tem.
+    expect(screen.getByText(/Técnica e Preço/).closest("button")).toHaveTextContent("13 seções.")
     expect(screen.getByText(/A versão 1 já foi gerada/)).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole("button", { name: "Trocar Modelo" }))
@@ -103,13 +110,12 @@ describe("troca de minuta", () => {
       ),
     )
     renderizar(
-      <TrocaDeModelo processoId={PROCESSO} tipo="Edital" modelos={[{ ...PC, atual: true }, TP]} versaoGerada={0} onFechar={() => {}} />,
+      <TrocaDeModelo processoId={PROCESSO} tipo="Edital" modelos={[{ ...PC, atual: true }, TP]} versaoGerada={0} secoesAtuais={13} onFechar={() => {}} />,
     )
 
-    expect(await screen.findByText(/seções recebem o texto/)).toHaveTextContent(
-      "0 seções recebem o texto · 0 reúnem textos · 1 ficam em branco · 2 voltam com o texto que já tinham",
-    )
-    expect(screen.queryByText(/Sem lugar/)).not.toBeInTheDocument()
+    expect(await screen.findByText("13 seções hoje e na nova minuta.")).toBeInTheDocument()
+    expect(screen.getByText("2 seções voltam com o texto que já tinham.")).toBeInTheDocument()
+    expect(screen.queryByText(/fica guardado/)).not.toBeInTheDocument()
   })
 
   it("com várias opções, pede a escolha; Esc fecha", async () => {
@@ -121,6 +127,7 @@ describe("troca de minuta", () => {
         tipo="Edital"
         modelos={[PC, TP]}
         versaoGerada={0}
+        secoesAtuais={13}
         onFechar={onFechar}
       />,
     )
@@ -141,7 +148,7 @@ describe("troca de minuta", () => {
       ),
     )
     renderizar(
-      <TrocaDeModelo processoId={PROCESSO} tipo="Edital" modelos={[{ ...PC, atual: true }, TP]} versaoGerada={0} onFechar={vi.fn()} />,
+      <TrocaDeModelo processoId={PROCESSO} tipo="Edital" modelos={[{ ...PC, atual: true }, TP]} versaoGerada={0} secoesAtuais={13} onFechar={vi.fn()} />,
     )
 
     expect(await screen.findByText(/Não foi possível conferir/)).toBeInTheDocument()
