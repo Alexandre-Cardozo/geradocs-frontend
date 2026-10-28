@@ -47,7 +47,7 @@ export function FaixasDeCanto() {
 /** "uma solução [GovPro]" — a assinatura de endosso, em texto da marca e logo. */
 export function UmaSolucao({ children }: { children: ReactNode }) {
   return (
-    <span className="flex items-center gap-2 font-marca text-2xs font-semibold tracking-caps text-on-dark-45">
+    <span className="flex items-center gap-1.5 font-marca text-2xs font-semibold text-on-dark-45">
       uma solução
       {children}
     </span>
