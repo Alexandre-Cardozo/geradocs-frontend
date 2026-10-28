@@ -1263,3 +1263,14 @@ No cartão "Gerar com IA" de cada seção, **Orientar a IA (opcional)**: um camp
 - **Curadoria do sistema, sem aprovação de ninguém:** o servidor confere a orientação antes de mandar ao modelo. O que é claramente problemático — dado pessoal, tentativa de mudar as regras da IA, pedido vedado em contratação pública, ofensa — volta recusado, com o motivo no próprio campo, para reescrever. O que é sensível mas pode ser legítimo (marca, exclusividade, urgência, contratação direta) segue, e o aviso com o artigo aparece no campo.
 - **Na tela:** contador de 500 caracteres, contado como o servidor conta; o aviso "Não inclua dados pessoais"; o campo só aparece com IA disponível.
 - A falha da geração sem orientação passou a aparecer como aviso — antes, o clique falhava em silêncio.
+
+## 93. Retificar acontece no editor, junto da versão nova
+
+A retificação existia em dois lugares, cada um com metade dela. Na capa do processo, "Retificar" abria um painel que pedia a natureza e a descrição mas não deixava mudar o texto — e gerava a versão nova com as seções como estavam: sem edição prévia, a v3 saía com o mesmo texto (o mesmo hash) da v2, declarada como correção. No editor, o texto mudava, mas "Regerar" criava a versão nova sem perguntar nada. O painel da capa ainda perdia quem elaborou: concluía sem os dados da etapa final, e o servidor punha no arquivo quem clicou.
+
+- **Um caminho só:** "Retificar", na capa e no acervo, leva ao editor (`?retificar=1`), que avisa que é uma retificação e aponta para Revisão e Geração. A retificação se declara lá, onde o texto editado já pode ser lido e onde se escolhe quem elaborou e a portaria.
+- **Toda versão nova diz como entra no histórico:** depois da primeira geração, a etapa final pergunta se a v{n+1} é **Regeração** (ajuste antes de o documento sair da plataforma, sem registro de retificação) ou **Retificação** — erro material ou alteração substancial, com o que foi corrigido. O botão fica travado até a escolha, e diz por quê. Regerar continua possível: marcar toda versão como retificação esvaziaria a palavra (§30).
+- **Sem edição, aviso:** com as seções iguais às da versão gerada, a etapa diz que a nova sairia com o mesmo texto. Orienta e deixa seguir — trocar só quem elaborou ou a portaria também é motivo de versão.
+- **Modelo trocado depois de gerar** (ADR-052 do back-end): a mesma etapa, sem a opção de regeração. Antes, um painel substituía a etapa inteira, sem prévia nem elaboração.
+- **A errata foi para o acervo**, ao lado do histórico do texto: ela compara versões já geradas, e no painel da capa aparecia antes de a versão nova existir.
+- **Pendente:** o rótulo `v2 · RETIFICADO` ainda vale para toda versão a partir da segunda, inclusive regeração. Distinguir pede que o servidor diga se a versão vigente foi retificação declarada.

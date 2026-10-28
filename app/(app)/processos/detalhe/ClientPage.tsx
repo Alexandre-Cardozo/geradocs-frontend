@@ -22,7 +22,6 @@ import {
   useConfigTenant,
   useDocumentos,
   useEncerrarProcesso,
-  useGerarDocumento,
   useParecerDFD,
   useProcesso,
   useSecoes,
@@ -38,7 +37,6 @@ import { ItensDaDemanda } from "@/components/processos/itens-da-demanda"
 import { JuntadaDoProcesso } from "@/components/processos/juntada-do-processo"
 import { ProgressoDosObrigatorios } from "@/components/processos/progresso-dos-obrigatorios"
 import { TrilhaDoProcesso } from "@/components/processos/trilha-do-processo"
-import { PainelRetificacao } from "@/components/processos/painel-retificacao"
 import {
   CATALOGO,
   agruparAnexos,
@@ -46,7 +44,6 @@ import {
   ehObrigatorio,
   ordenar,
   pendencias,
-  porSlug,
 } from "@/lib/documentos"
 import { rotaDoDocumentoGerado, rotaDosDocumentosDoProcesso } from "@/lib/documentos/rotas"
 import {
@@ -56,7 +53,6 @@ import {
   impactoTrocaModalidade,
   rotuloDaModalidade,
   rotuloDaVersao,
-  type Retificacao,
 } from "@/lib/dominio"
 import { formatBRL, formatData } from "@/lib/format"
 import { opcoesDeSecretaria } from "@/lib/secretarias/opcoes"
@@ -81,7 +77,6 @@ export default function HubProcesso() {
   const parecer = useParecerDFD(processoId)
   const { data: tenant } = useConfigTenant()
   const atualizar = useAtualizarProcesso()
-  const gerar = useGerarDocumento()
   const encerrar = useEncerrarProcesso()
 
   // Seções de cada tipo, para o progresso dos cards. As chamadas são explícitas
@@ -109,12 +104,6 @@ export default function HubProcesso() {
   const [novaForma, setNovaForma] = useState<FormaDaDispensa | "">("")
   const [confirmandoEncerramento, setConfirmandoEncerramento] = useState(false)
   const [montandoJuntada, setMontandoJuntada] = useState(false)
-  // Documento cuja retificação está sendo declarada. Um por vez: retificar dois
-  // ao mesmo tempo esconderia qual histórico está sendo lido.
-  // A página do documento gerado leva até aqui para retificar: o painel já abre.
-  const [retificando, setRetificando] = useState<TipoDocumento | null>(
-    () => porSlug(searchParams.get("retificar") ?? "") ?? null,
-  )
 
   const abrirEdicao = () => {
     if (!processo.data) return
@@ -363,8 +352,14 @@ export default function HubProcesso() {
               <Button size="sm" variant="ghost" onClick={() => router.push(editorHref)}>
                 Revisar Seções
               </Button>
-              {proc.status !== "concluido" && retificando !== tipo && (
-                <Button size="sm" variant="ghost" onClick={() => setRetificando(tipo)}>
+              {/*
+                Leva ao editor, e não a um painel aqui: retificar é mudar o
+                texto, e era o que o painel da capa não deixava fazer — pedia a
+                natureza e a descrição e gerava a versão nova com as seções como
+                estavam, iguais às da anterior (§93).
+              */}
+              {proc.status !== "concluido" && (
+                <Button size="sm" variant="ghost" onClick={() => router.push(`${editorHref}&retificar=1`)}>
                   Retificar
                 </Button>
               )}
@@ -416,32 +411,6 @@ export default function HubProcesso() {
           )}
         </div>
 
-        {retificando === tipo && gerado && (
-          <PainelRetificacao
-            processoId={processoId}
-            tipo={tipo}
-            versaoAtual={gerado.versao}
-            pendente={gerar.isPending}
-            onConfirmar={(retificacao: Retificacao) =>
-              gerar.mutate(
-                { processoId, tipo, retificacao },
-                {
-                  onSuccess: (doc) => {
-                    setRetificando(null)
-                    showToast(`${tipo} retificado — ${rotuloDaVersao(doc.versao)}.`)
-                  },
-                  onError: (erro) =>
-                    showToast(
-                      erro instanceof Error
-                        ? erro.message
-                        : `Não foi possível retificar o ${tipo}. Tente novamente.`,
-                    ),
-                },
-              )
-            }
-            onCancelar={() => setRetificando(null)}
-          />
-        )}
       </div>
     )
   }

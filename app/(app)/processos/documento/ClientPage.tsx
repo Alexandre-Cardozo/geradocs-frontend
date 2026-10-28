@@ -4,7 +4,7 @@ import Link from "next/link"
 import { notFound, useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
 
-import { Button, ProgressBar, SectionBlock, Textarea, ValidationMsg } from "@/components/ui"
+import { Button, InfoBanner, ProgressBar, SectionBlock, Textarea, ValidationMsg } from "@/components/ui"
 import { IconArrowRight, IconCheckCircle, IconCheck, IconHelp, IconSave } from "@/components/ui/icons"
 import { PainelATA, PainelDaSecao } from "@/components/documentos/paineis"
 import { ErrorState, InlineSpinner, LoadingState } from "@/components/shared/estados"
@@ -32,7 +32,6 @@ import {
   TextosDeOutroModelo,
   TrocaDeModelo,
 } from "@/components/documentos/modelo-do-documento"
-import { PainelRetificacao } from "@/components/processos/painel-retificacao"
 import {
   PainelDaAnaliseCritica,
   PainelDasColetas,
@@ -79,6 +78,15 @@ const VALOR_DA_ETAPA_FINAL = "revisao"
 /** Abre o editor na seção que tem este painel — `?painel=valor`. */
 const PARAMETRO_DO_PAINEL = "painel"
 
+/**
+ * O editor aberto para retificar — `?retificar=1`.
+ *
+ * <p>É por onde "Retificar", na capa e no acervo, traz a pessoa: retificar é
+ * mudar o texto, e o texto se muda aqui. A natureza e a descrição se dizem na
+ * etapa final, junto da versão nova.
+ */
+const PARAMETRO_DA_RETIFICACAO = "retificar"
+
 export default function EditorDocumento() {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -101,6 +109,7 @@ export default function EditorDocumento() {
     (d) => d.processoId === processoId && d.tipo === tipo,
   )
   const jaGerado = documentoGerado != null
+  const retificando = jaGerado && searchParams.get(PARAMETRO_DA_RETIFICACAO) === "1"
 
   const [activeSection, setActiveSection] = useState(
     searchParams.get(PARAMETRO_DA_ETAPA_FINAL) === VALOR_DA_ETAPA_FINAL ? ETAPA_FINAL : "1",
@@ -504,6 +513,22 @@ export default function EditorDocumento() {
 
         <div className="relative flex-1 overflow-y-auto p-4 lg:p-6">
 
+          {documentoGerado && retificando && !naEtapaFinal && (
+            <InfoBanner tone="warning" className="mb-4">
+              <span>
+                Retificando o {tipo} ({rotuloDaVersao(documentoGerado.versao)}). Edite as seções que
+                precisam mudar e conclua em Revisão e Geração, dizendo a natureza e o que foi corrigido.{" "}
+                <button
+                  type="button"
+                  onClick={() => trocarSecao(ETAPA_FINAL)}
+                  className="cursor-pointer border-none bg-transparent p-0 font-semibold text-royal"
+                >
+                  Ir para Revisão e Geração
+                </button>
+              </span>
+            </InfoBanner>
+          )}
+
           {/*
             A revisão da IA vem antes do arquivo, e nunca grava sozinha: cada
             sugestão entra só se quem assina aceitar (§87).
@@ -525,51 +550,34 @@ export default function EditorDocumento() {
             </div>
           )}
 
-          {naEtapaFinal && documento.data?.retificacaoExigida && (
+          {naEtapaFinal && (
             /*
-              A minuta mudou desde a versão gerada: a nova não é regeração, é a
-              mesma peça em outra estrutura, e o servidor só a conclui como
-              retificação declarada (ADR-052 do back-end).
+              Uma etapa só para gerar, regerar e retificar. A retificação tinha
+              painel próprio — na capa e, com o modelo trocado, aqui no lugar
+              desta etapa — e nos dois perdia quem elaborou e a portaria, que
+              só esta etapa pergunta.
             */
-            <div className="flex flex-col gap-3">
-              <PainelRetificacao
-                processoId={processoId}
-                tipo={tipo}
-                versaoAtual={documento.data.versao}
-                pendente={gerarDocumento.isPending}
-                onConfirmar={(retificacao) =>
-                  gerarDocumento.mutate(
-                    { processoId, tipo, retificacao },
-                    {
-                      onSuccess: () => {
-                        showToast(`${tipo} retificado no novo modelo.`)
-                        router.push(rotaDoDocumentoGerado(processoId, tipo, true))
-                      },
-                      onError: (erro) =>
-                        showToast(erro instanceof Error ? erro.message : `Não foi possível gerar o ${tipo}.`),
-                    },
-                  )
-                }
-                onCancelar={() => trocarSecao(lista[0]?.id ?? "")}
-              />
-            </div>
-          )}
-
-          {naEtapaFinal && !documento.data?.retificacaoExigida && (
             <EtapaFinal
               processoId={processoId}
               tipo={tipo}
               secoes={lista}
               jaGerado={jaGerado}
+              versaoAtual={documentoGerado?.versao ?? documento.data?.versao ?? 0}
+              alteradoDesdeAVersao={documento.data?.alteradoDesdeAVersao ?? false}
+              retificacaoExigida={documento.data?.retificacaoExigida ?? false}
               pendente={gerarDocumento.isPending}
-              onGerar={(regerar, elaboracao) =>
+              onGerar={(regerar, elaboracao, retificacao) =>
                 gerarDocumento.mutate(
-                  { processoId, tipo, elaboracao },
+                  { processoId, tipo, elaboracao, retificacao },
                   {
                     // Vai ao documento gerado, e não de volta à capa: é ele
                     // que a pessoa quer ver e baixar (ADR-049).
-                    onSuccess: () => {
-                      showToast(`${tipo} ${regerar ? "regerado" : "gerado"}.`)
+                    onSuccess: (doc) => {
+                      showToast(
+                        retificacao
+                          ? `${tipo} retificado — ${rotuloDaVersao(doc.versao)}.`
+                          : `${tipo} ${regerar ? "regerado" : "gerado"}.`,
+                      )
                       router.push(rotaDoDocumentoGerado(processoId, tipo, true))
                     },
                     // Sem isto a falha era muda: o botão voltava ao estado
