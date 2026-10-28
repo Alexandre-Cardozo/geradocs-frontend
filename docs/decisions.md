@@ -1236,3 +1236,5 @@ Fase 4 do §85 (ADR-055 e ADR-056 do back-end). A lei pede que a não utilizaç�
 - **Orienta, não trava:** nada disso impede concluir ou gerar. Cada justificativa vai para a trilha do processo, com o texto.
 - **Versão nova da minuta:** a linha do modelo mostra "Versão set/2026 disponível"; **Trocar Modelo** passa a oferecê-la, com a prévia de sempre.
 - **Modelos do Órgão** (navegação principal): o coordenador publica um modelo sobre uma minuta da AGU — título, justificativa obrigatória e o texto-padrão de cada seção, que começa com o da minuta —, publica a versão seguinte e desativa. O servidor consulta. O modelo ativo aparece na escolha da minuta como "Modelo do órgão", ao lado das da AGU; com ele, o documento em branco passa a pedir a escolha.
+
+**Adendo (verificação pós-lançamento):** a prévia da troca passou a dizer quantas seções **voltam com o texto que já tinham** — ao voltar à minuta anterior, ela mostrava "0 seções recebem o texto" e listava quase tudo como "sem lugar", embora nada se perdesse. O texto igual ao que já está na seção de destino deixa de contar como sem lugar.

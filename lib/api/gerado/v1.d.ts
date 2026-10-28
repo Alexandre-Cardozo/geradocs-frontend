@@ -2281,6 +2281,7 @@ export interface components {
             blank: string[];
             kept: string[];
             merged: string[];
+            restored: string[];
             unplaced: string[];
         };
         StructureModelView: {
