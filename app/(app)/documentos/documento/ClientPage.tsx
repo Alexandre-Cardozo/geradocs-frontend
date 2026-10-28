@@ -9,6 +9,7 @@ import { IconArrowRight, IconCheckCircle, IconChevronRight, IconDownload, IconPe
 import { BaixarArquivos } from "@/components/documentos/baixar-arquivos"
 import { ConteudoDoDocumento } from "@/components/documentos/conteudo-do-documento"
 import { JuntadasExportadas } from "@/components/documentos/juntadas-exportadas"
+import { ErrataDoDocumento } from "@/components/documentos/errata-do-documento"
 import { VersoesDoDocumento } from "@/components/documentos/versoes-do-documento"
 import { EmptyState, ErrorState, LoadingState } from "@/components/shared/estados"
 import { useToast } from "@/components/shared/providers"
@@ -178,7 +179,7 @@ export default function DocumentoGerado() {
             {gerado ? "Revisar Seções" : "Elaborar Documento"}
           </Button>
           {gerado && proc.status !== "concluido" && (
-            <Button size="sm" variant="ghost" onClick={() => router.push(`${capa}&retificar=${meta.slug}`)}>
+            <Button size="sm" variant="ghost" onClick={() => router.push(`${editor}&retificar=1`)}>
               Retificar
             </Button>
           )}
@@ -209,6 +210,13 @@ export default function DocumentoGerado() {
             </Bloco>
             <Bloco titulo="Histórico do Texto">
               <VersoesDoDocumento processoId={processoId} tipo={tipo} />
+            </Bloco>
+            {/*
+              Facultativa. Morava no painel de retificação da capa, antes de a
+              versão nova existir — e a errata compara versões já geradas.
+            */}
+            <Bloco titulo="Errata — Facultativa">
+              <ErrataDoDocumento processoId={processoId} tipo={tipo} />
             </Bloco>
           </div>
           <div className="flex min-w-0 flex-col gap-4">

@@ -34,7 +34,11 @@ const secao = (
   ...(justificativaDispensa ? { justificativaDispensa } : {}),
 })
 
-function renderizarEtapa(secoes: SecaoDocumento[], jaGerado = false) {
+function renderizarEtapa(
+  secoes: SecaoDocumento[],
+  jaGerado = false,
+  versao: { alterado?: boolean; retificacaoExigida?: boolean } = {},
+) {
   const gerar = vi.fn()
   const visualizar = vi.fn()
   renderizar(
@@ -43,6 +47,9 @@ function renderizarEtapa(secoes: SecaoDocumento[], jaGerado = false) {
       tipo="ETP"
       secoes={secoes}
       jaGerado={jaGerado}
+      versaoAtual={jaGerado ? 2 : 0}
+      alteradoDesdeAVersao={versao.alterado ?? true}
+      retificacaoExigida={versao.retificacaoExigida ?? false}
       pendente={false}
       onGerar={gerar}
       onVisualizar={visualizar}
@@ -92,18 +99,55 @@ describe("etapa final do documento", () => {
     expect(screen.getByRole("button", { name: /Finalizar e Gerar/ })).toBeEnabled()
   })
 
-  it("com o documento já gerado, regerar pede confirmação antes de substituir", async () => {
-    const { gerar } = renderizarEtapa(
-      [secao("1", true, "Completo", "Necessidade descrita.")],
-      true,
-    )
+  /*
+    A versão nova de um documento já gerado diz como entra no histórico. Antes,
+    "Regerar" no editor não perguntava nada, e "Retificar" na capa perguntava
+    tudo mas não deixava mudar o texto (§93).
+  */
+  it("já gerado, a versão nova não sai sem dizer se é regeração ou retificação", async () => {
+    const { gerar } = renderizarEtapa([secao("1", true, "Completo", "Necessidade descrita.")], true)
 
-    await userEvent.click(await screen.findByRole("button", { name: /Regerar/ }))
-    expect(screen.getByText(/gerado anteriormente/)).toBeInTheDocument()
-    expect(gerar).not.toHaveBeenCalled()
+    const botao = await screen.findByRole("button", { name: /Gerar v3/ })
+    expect(botao).toBeDisabled()
+    const descrito = botao.getAttribute("aria-describedby")
+    expect(document.getElementById(descrito as string)).toHaveTextContent(/regeração ou retificação/)
 
-    await userEvent.click(screen.getByRole("button", { name: /Confirmar e Regerar/ }))
-    expect(gerar).toHaveBeenCalledWith(true, {})
+    await userEvent.click(screen.getByText("Regeração"))
+    await userEvent.click(screen.getByRole("button", { name: /Regerar ETP/ }))
+    expect(gerar).toHaveBeenCalledWith(true, {}, undefined)
+  })
+
+  it("retificar exige a natureza e o que foi corrigido, e entrega os dois", async () => {
+    const { gerar } = renderizarEtapa([secao("1", true, "Completo", "Necessidade descrita.")], true)
+
+    await userEvent.click(await screen.findByText("Retificação: Alteração substancial"))
+    // Sem dizer o quê, "alteração substancial" deixa a pergunta seguinte em aberto.
+    const botao = screen.getByRole("button", { name: /Retificar e Gerar v3/ })
+    expect(botao).toBeDisabled()
+
+    await userEvent.type(screen.getByLabelText("O que está sendo retificado"), "  Prazo de entrega alterado.  ")
+    await userEvent.click(botao)
+
+    expect(gerar).toHaveBeenCalledWith(true, {}, {
+      motivo: "alteracao_substancial",
+      detalhe: "Prazo de entrega alterado.",
+    })
+  })
+
+  it("com as seções iguais às da versão gerada, avisa que a nova sairia com o mesmo texto", async () => {
+    renderizarEtapa([secao("1", true, "Completo", "Necessidade descrita.")], true, { alterado: false })
+
+    expect(await screen.findByText(/As seções estão como na v2/)).toBeInTheDocument()
+  })
+
+  it("com o modelo trocado depois de gerar, só admite retificação", async () => {
+    renderizarEtapa([secao("1", true, "Completo", "Necessidade descrita.")], true, {
+      retificacaoExigida: true,
+    })
+
+    expect(await screen.findByText(/só pode ser concluída como retificação/)).toBeInTheDocument()
+    expect(screen.queryByText("Regeração")).not.toBeInTheDocument()
+    expect(screen.getByText("Retificação: Erro material")).toBeInTheDocument()
   })
 
   it("já gerado, o caminho de ver o documento leva ao acervo", async () => {
