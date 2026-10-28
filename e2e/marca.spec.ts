@@ -49,8 +49,7 @@ test("a barra lateral traz o logo e a assinatura da GovPro", async ({ page }) =>
 
   const barra = page.locator("aside").first()
   await esperarCarregada(barra.getByRole("img", { name: "GeraDocs" }))
-  await expect(barra.getByText("uma solução")).toBeVisible()
-  await esperarCarregada(barra.getByRole("img", { name: "GovPro" }))
+  await esperarCarregada(barra.getByRole("img", { name: "Uma solução GovPro" }))
   await semMarcaAntiga(page)
 })
 

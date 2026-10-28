@@ -22,7 +22,7 @@ import {
   IconUser,
 } from "@/components/ui/icons";
 import { FotoDePerfil } from "@/components/shared/foto-de-perfil";
-import { FaixaDaMarca, UmaSolucao } from "@/components/shared/marca";
+import { FaixaDaMarca } from "@/components/shared/marca";
 import { useBrasao, useLogout, useSessao, useTimbre } from "@/lib/api/hooks";
 import { navPrincipal, navSistema, type IconeNav } from "@/lib/auth/acesso";
 import { PERFIL_ACESSO_LABEL, TIPO_ENTIDADE_LABEL } from "@/lib/types";
@@ -150,10 +150,10 @@ export default function Sidebar({
       }`}
     >
       {/*
-        Identificação em uma linha, no desenho do endosso aprovado — "GERADOCS |
-        uma solução GOVPRO", o mesmo do carimbo dos documentos: o logo, um
-        filete e o endosso empilhado. Tem a altura do cabeçalho (h-15), com tudo
-        centralizado, e a faixa da marca cai na linha do filete dele.
+        Identificação em uma linha: o logo do GeraDocs, um filete e o logo da
+        GovPro — o produto e a empresa, sem texto entre eles. Tem a altura do
+        cabeçalho (h-15), com tudo centralizado, e a faixa da marca cai na linha
+        do filete dele. O "uma solução" fica no nome acessível do logo.
       */}
       <div className="relative flex h-15 shrink-0 items-center gap-3 px-5">
         <Image
@@ -165,9 +165,13 @@ export default function Sidebar({
           className="h-5.5 w-auto shrink-0 object-contain"
         />
         <span className="h-6 w-px shrink-0 bg-on-dark-20" aria-hidden />
-        <UmaSolucao empilhado>
-          <Image src={govproLogo} alt="GovPro" width={44} height={11} className="h-2.75 w-auto object-contain" />
-        </UmaSolucao>
+        <Image
+          src={govproLogo}
+          alt="Uma solução GovPro"
+          width={48}
+          height={12}
+          className="h-3 w-auto shrink-0 object-contain"
+        />
         <FaixaDaMarca className="absolute inset-x-5 bottom-0" />
       </div>
 

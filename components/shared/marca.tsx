@@ -1,5 +1,3 @@
-import type { ReactNode } from "react"
-
 /*
  * Elementos da marca GovPro + GeraDocs que a interface repete (decisão §92).
  *
@@ -41,23 +39,5 @@ export function FaixasDeCanto() {
         {canto}
       </div>
     </>
-  )
-}
-
-/**
- * "uma solução [GovPro]" — a assinatura de endosso, em texto da marca e logo.
- * Empilhada, é a metade direita do endosso aprovado ("GERADOCS | uma solução
- * GOVPRO"), a mesma do carimbo dos documentos.
- */
-export function UmaSolucao({ children, empilhado = false }: { children: ReactNode; empilhado?: boolean }) {
-  return (
-    <span
-      className={`flex font-marca text-2xs font-semibold leading-none text-on-dark-45 ${
-        empilhado ? "flex-col items-start gap-1" : "items-center gap-1.5"
-      }`}
-    >
-      uma solução
-      {children}
-    </span>
   )
 }
