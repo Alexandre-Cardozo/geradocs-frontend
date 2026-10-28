@@ -21,7 +21,7 @@ async function esperarCarregada(imagem: Locator) {
 
 async function semMarcaAntiga(page: Page) {
   await expect(page.locator("body")).not.toContainText("LAHHM")
-  await expect(page.locator('img[src*="lahhm"]')).toHaveCount(0)
+  await expect(page.locator('img[src*="lahhm"], a[href*="lahhm"]')).toHaveCount(0)
 }
 
 test("o login mostra o logo oficial do GeraDocs e o crédito da GovPro", async ({ page }) => {
@@ -36,6 +36,10 @@ test("o login mostra o logo oficial do GeraDocs e o crédito da GovPro", async (
   await esperarCarregada(credito)
   await expect(page.getByText("GeraDocs é uma solução")).toBeVisible()
   await expect(page.getByText("© 2026 GovPro. Todos os direitos reservados.")).toBeVisible()
+  await expect(page.getByRole("link", { name: "contato@govpro.com.br" })).toHaveAttribute(
+    "href",
+    "mailto:contato@govpro.com.br",
+  )
   await semMarcaAntiga(page)
 })
 
