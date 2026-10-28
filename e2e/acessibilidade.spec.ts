@@ -47,6 +47,11 @@ test.use({ reducedMotion: "reduce" })
 const TOKENS_SOBRE_NAVY = /text-on-dark-\d+/
 
 async function violacoesGraves(page: Parameters<typeof AxeBuilder>[0]["page"]) {
+  // Espera a página assentar: no meio da hidratação o <title> some por um
+  // instante, e o axe analisava esse instante — `document-title` intermitente
+  // (2 em 110 execuções, já antes do §85).
+  await expect(page).toHaveTitle(/GeraDocs/)
+  await page.waitForLoadState("networkidle")
   const { violations } = await new AxeBuilder({ page }).analyze()
   return violations
     .filter((violacao) => graves.includes(violacao.impact ?? ""))
