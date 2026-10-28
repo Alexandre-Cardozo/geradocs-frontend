@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test"
 
-import { comSessao, rota } from "./api"
+import { comSessao, rota, sessaoServidor } from "./api"
 
 /**
  * Modelos do Órgão (§88, ADR-056 do back-end): a lista na navegação, com a
@@ -9,7 +9,8 @@ import { comSessao, rota } from "./api"
 const API = "**/api/v1"
 
 test("o modelo do órgão aparece com a justificativa e o aviso da minuta nova", async ({ page }) => {
-  await comSessao(page)
+  // Só o coordenador mantém os modelos do órgão (§89).
+  await comSessao(page, { ...sessaoServidor, user: { ...sessaoServidor.user, profileAccess: "COORDENADOR" } })
   await page.route(`${API}/structure-models`, (r) =>
     r.fulfill({
       json: {
@@ -62,4 +63,15 @@ test("o modelo do órgão aparece com a justificativa e o aviso da minuta nova",
   await page.getByText("Justificativa (Art. 19, § 2º, Lei 14.133/21)").click()
   await expect(page.getByText("Lei Municipal 1.234/2024.")).toBeVisible()
   await expect(page.getByText(/A AGU publicou a versão abr\/2026 desta minuta/)).toBeVisible()
+})
+
+test("o servidor não tem normas nem modelos do órgão no menu, e a rota volta para o painel", async ({ page }) => {
+  await comSessao(page)
+  await page.goto(rota("/"))
+  await expect(page.getByRole("link", { name: "Processos" }).first()).toBeVisible()
+  await expect(page.getByRole("link", { name: "Modelos do Órgão" })).toHaveCount(0)
+  await expect(page.getByRole("link", { name: "Normas do Órgão" })).toHaveCount(0)
+
+  await page.goto(rota("/modelos"))
+  await expect(page).not.toHaveURL(/\/modelos/)
 })
