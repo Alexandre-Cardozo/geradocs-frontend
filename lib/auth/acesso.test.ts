@@ -24,8 +24,9 @@ const matriz: Array<{ rota: string; permitidos: PerfilAcesso[] }> = [
   { rota: "/processos", permitidos: ["servidor", "coordenador"] },
   { rota: "/processos/novo", permitidos: ["servidor", "coordenador"] },
   { rota: "/documentos", permitidos: ["servidor", "coordenador"] },
-  // O servidor consulta e baixa as normas; o administrador geral não é do órgão.
-  { rota: "/normas", permitidos: ["servidor", "coordenador"] },
+  // Normas e modelos são especificação do órgão: só o coordenador mantém (§89).
+  { rota: "/normas", permitidos: ["coordenador"] },
+  { rota: "/modelos", permitidos: ["coordenador"] },
   { rota: "/perfil", permitidos: perfis },
 ]
 
@@ -65,8 +66,9 @@ describe("navegação por perfil", () => {
     expect(hrefs).toEqual(["/", "/admin/entidades", "/admin/servidores"])
   })
 
-  it("as normas do órgão ficam no menu principal, ao alcance do servidor", () => {
-    expect(navPrincipal("servidor").map((item) => item.href)).toContain("/normas")
+  it("normas e modelos do órgão ficam nas configurações, à frente do resto (§89)", () => {
+    expect(navPrincipal("coordenador").map((item) => item.href)).not.toContain("/normas")
+    expect(navSistema("coordenador").map((item) => item.href).slice(0, 2)).toEqual(["/normas", "/modelos"])
   })
 
   it("servidor e coordenador veem o mesmo menu principal", () => {
@@ -80,8 +82,11 @@ describe("navegação por perfil", () => {
 
   it("cada assunto das configurações é uma entrada de menu, e não uma aba escondida", () => {
     // A tela única de abas obrigava a abrir /configuracoes para descobrir o que
-    // havia dentro; o menu agora nomeia os quatro assuntos.
+    // havia dentro; o menu agora nomeia cada assunto — normas e modelos à
+    // frente, porque definem o conteúdo dos documentos (§89).
     expect(navSistema("coordenador").map((item) => item.href)).toEqual([
+      "/normas",
+      "/modelos",
       "/configuracoes/timbre",
       "/configuracoes/secretarias",
       "/configuracoes/pca",

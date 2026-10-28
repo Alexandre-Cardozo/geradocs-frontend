@@ -1238,3 +1238,10 @@ Fase 4 do §85 (ADR-055 e ADR-056 do back-end). A lei pede que a não utilizaç�
 - **Modelos do Órgão** (navegação principal): o coordenador publica um modelo sobre uma minuta da AGU — título, justificativa obrigatória e o texto-padrão de cada seção, que começa com o da minuta —, publica a versão seguinte e desativa. O servidor consulta. O modelo ativo aparece na escolha da minuta como "Modelo do órgão", ao lado das da AGU; com ele, o documento em branco passa a pedir a escolha.
 
 **Adendo (verificação pós-lançamento):** a prévia da troca passou a dizer quantas seções **voltam com o texto que já tinham** — ao voltar à minuta anterior, ela mostrava "0 seções recebem o texto" e listava quase tudo como "sem lugar", embora nada se perdesse. O texto igual ao que já está na seção de destino deixa de contar como sem lugar.
+
+## 89. Normas e Modelos do Órgão ficam nas Configurações, só para o coordenador
+
+As duas telas definem o **conteúdo** dos documentos do órgão — as normas que a IA segue e que a etapa final cita como ato normativo, e as minutas adaptadas que estruturam os documentos. São especificação técnica da entidade, mantida por quem responde por ela. A decisão anterior (ADR-043 do back-end) as pôs no menu principal para o servidor consultar e baixar as normas; a consulta isolada não justificava a tela no menu de quem elabora.
+
+- **Coordenador:** "Normas do Órgão" e "Modelos do Órgão" abrem a seção Configurações, antes de Timbre, Secretarias, PCA e Usuários.
+- **Servidor:** as duas rotas deixam de existir para ele. Ele continua usando o que elas definem onde serve: a lista de normas vigentes no ato normativo da etapa final, o modelo do órgão na escolha da minuta, os trechos das normas na redação com IA. A API de consulta segue aberta ao servidor por isso; cadastrar, alterar, publicar e desativar já eram só do coordenador.

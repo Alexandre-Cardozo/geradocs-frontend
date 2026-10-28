@@ -14,8 +14,11 @@ const ACESSO_ROTA: Array<{ prefixo: string; perfis: PerfilAcesso[] }> = [
   { prefixo: "/configuracoes", perfis: ["coordenador"] },
   { prefixo: "/processos", perfis: ["servidor", "coordenador"] },
   { prefixo: "/documentos", perfis: ["servidor", "coordenador"] },
-  { prefixo: "/normas", perfis: ["servidor", "coordenador"] },
-  { prefixo: "/modelos", perfis: ["servidor", "coordenador"] },
+  // Normas e modelos são especificação técnica do órgão: quem mantém é o
+  // coordenador (§89). O servidor os usa onde eles servem — o ato normativo na
+  // etapa final, a minuta na escolha do modelo, os trechos na redação com IA.
+  { prefixo: "/normas", perfis: ["coordenador"] },
+  { prefixo: "/modelos", perfis: ["coordenador"] },
   { prefixo: "/perfil", perfis: ["servidor", "coordenador", "admin_geral"] },
 ]
 
@@ -59,10 +62,6 @@ export function navPrincipal(perfil: PerfilAcesso): ItemNav[] {
     { href: "/", label: "Dashboard", icone: "dashboard" },
     { href: "/processos", label: "Processos", icone: "processos" },
     { href: "/documentos", label: "Documentos", icone: "documentos" },
-    // Na navegação principal, e não em Configurações: o servidor também
-    // consulta, e Configurações é só do coordenador.
-    { href: "/normas", label: "Normas do Órgão", icone: "normas" },
-    { href: "/modelos", label: "Modelos do Órgão", icone: "modelos" },
   ]
 }
 
@@ -78,6 +77,10 @@ export function navPrincipal(perfil: PerfilAcesso): ItemNav[] {
 export function navSistema(perfil: PerfilAcesso): ItemNav[] {
   if (perfil === "coordenador") {
     return [
+      // Primeiro o que define o conteúdo dos documentos — as normas que a IA
+      // segue e as minutas do órgão —, depois a aparência e o cadastro (§89).
+      { href: "/normas", label: "Normas do Órgão", icone: "normas" },
+      { href: "/modelos", label: "Modelos do Órgão", icone: "modelos" },
       { href: "/configuracoes/timbre", label: "Timbre", icone: "timbre" },
       { href: "/configuracoes/secretarias", label: "Secretarias", icone: "secretarias" },
       { href: "/configuracoes/pca", label: "PCA", icone: "pca" },
