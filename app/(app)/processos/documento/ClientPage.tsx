@@ -516,8 +516,8 @@ export default function EditorDocumento() {
           {documentoGerado && retificando && !naEtapaFinal && (
             <InfoBanner tone="warning" className="mb-4">
               <span>
-                Retificando o {tipo} ({rotuloDaVersao(documentoGerado.versao)}). Edite as seções que
-                precisam mudar e conclua em Revisão e Geração, dizendo a natureza e o que foi corrigido.{" "}
+                Retificando a v{documentoGerado.versao} do {tipo}. Edite as seções que precisam mudar e
+                conclua em Revisão e Geração, dizendo a natureza e o que foi corrigido.{" "}
                 <button
                   type="button"
                   onClick={() => trocarSecao(ETAPA_FINAL)}

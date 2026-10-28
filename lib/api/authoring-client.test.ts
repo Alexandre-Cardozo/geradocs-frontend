@@ -347,6 +347,35 @@ describe("elaboração na conclusão", () => {
     expect(anterior?.responsavel).toBeNull()
     expect(anterior?.atoNormativo).toBeNull()
   })
+
+  it("cada versão traz o próprio texto, com hash e seções traduzidas", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id/documents/:tipo/versions`, () =>
+        HttpResponse.json([
+          {
+            version: 1,
+            note: "Geração inicial",
+            generatedAt: "2026-08-22T12:00:00-03:00",
+            contentHash: "a".repeat(64),
+            body: [
+              { sectionCode: "1", title: "Necessidade", text: "Texto da v1.", dispensed: false },
+              { sectionCode: "3", title: "Requisitos", text: "", dispensed: true },
+            ],
+          },
+        ]),
+      ),
+    )
+    const { versoesComTexto } = await carregarClienteLimpo()
+
+    // É o texto de cada versão que responde "o que estava escrito antes" —
+    // a pergunta que antecede a retificação e que a errata cita.
+    const [versao] = await versoesComTexto(PROCESSO, "ETP")
+    expect(versao?.hash).toBe("a".repeat(64))
+    expect(versao?.corpo).toEqual([
+      { id: "1", titulo: "Necessidade", texto: "Texto da v1.", dispensada: false },
+      { id: "3", titulo: "Requisitos", texto: "", dispensada: true },
+    ])
+  })
 })
 
 describe("comparação entre versões", () => {
