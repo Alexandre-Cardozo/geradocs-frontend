@@ -1429,6 +1429,9 @@
           "templateVersion" : {
             "format" : "int32",
             "type" : "integer"
+          },
+          "verificationCode" : {
+            "type" : "string"
           }
         },
         "required" : [ "byteSize", "documentVersion", "fileName", "format", "generatedAt", "id", "sha256", "templateVersion" ],

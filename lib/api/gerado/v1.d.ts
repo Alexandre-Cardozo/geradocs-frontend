@@ -1809,6 +1809,7 @@ export interface components {
             sha256: string;
             /** Format: int32 */
             templateVersion: number;
+            verificationCode?: string;
         };
         GeneratedSectionResponse: {
             guidanceWarnings: string[];
