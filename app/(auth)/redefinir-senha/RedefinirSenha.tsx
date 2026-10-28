@@ -68,10 +68,10 @@ export default function RedefinirSenha() {
             priority
             className="h-12 w-auto object-contain"
           />
-          <FaixaDaMarca className="mt-4 w-32" />
           <p className="m-0 mt-3 font-marca text-2xs font-semibold tracking-slogan text-on-dark-65 uppercase">
             Contratações públicas inteligentes
           </p>
+          <FaixaDaMarca className="mt-4 w-80" />
         </div>
 
         <div className="w-full max-w-md rounded-card border border-on-dark-border bg-surface p-6 sm:p-7">
