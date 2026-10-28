@@ -228,10 +228,10 @@ export default function Login() {
         <div className="text-xs text-on-dark-40">
           Precisa de ajuda?{" "}
           <a
-            href="mailto:contato@lahhm.com.br"
+            href="mailto:contato@govpro.com.br"
             className="font-medium text-on-dark-55 no-underline hover:text-electric"
           >
-            contato@lahhm.com.br
+            contato@govpro.com.br
           </a>
         </div>
         <div className="text-xs text-on-dark-30">
