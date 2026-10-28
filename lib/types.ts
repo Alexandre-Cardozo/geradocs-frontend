@@ -520,7 +520,7 @@ export type Entidade = Tenant
 
 /**
  * Usuário do sistema. A senha nunca trafega aqui — fica só no mapa de
- * credenciais do mock. `entidadeId` é null apenas para o admin geral (LAHHM).
+ * credenciais do mock. `entidadeId` é null apenas para o admin geral (GovPro).
  */
 export interface Usuario {
   /** Formato USR-NNN. */
@@ -537,7 +537,7 @@ export interface Usuario {
   /** Número do decreto de nomeação — o comissionado costuma lembrar dele, não da matrícula. */
   decretoNomeacao?: string
   perfilAcesso: PerfilAcesso
-  /** Entidade a que pertence. null = admin geral (LAHHM, sem entidade). */
+  /** Entidade a que pertence. null = admin geral (GovPro, sem entidade). */
   entidadeId: string | null
   /** Secretaria em que atua (nome). */
   secretaria?: string

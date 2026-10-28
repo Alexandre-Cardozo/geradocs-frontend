@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation"
 import { useEffect, type ReactNode } from "react"
 
+import { MarcaCarregando } from "@/components/shared/marca-carregando"
 import { Button } from "@/components/ui"
 import { useSessao } from "@/lib/api/hooks"
 import { rotaPermitida } from "@/lib/auth/acesso"
@@ -32,8 +33,8 @@ export default function GuardaSessao({ children }: { children: ReactNode }) {
     return (
       <div className="flex h-dvh items-center justify-center bg-ice">
         <div className="flex flex-col items-center gap-3">
-          <span className="size-8 animate-spin rounded-full border-2 border-border border-t-royal" />
-          <span className="text-sm text-text-3">Carregando…</span>
+          <MarcaCarregando tamanho={56} />
+          <span className="text-sm text-text-3" role="status">Carregando…</span>
         </div>
       </div>
     )

@@ -66,7 +66,7 @@ export default function PainelAdmin() {
 
   const totalEntidades = entidades.data?.length ?? 0
   const lista = usuarios.data ?? []
-  // Usuários operacionais das entidades — o admin geral (LAHHM) não entra na contagem.
+  // Usuários operacionais das entidades — o admin geral (GovPro) não entra na contagem.
   const usuariosDeEntidade = lista.filter((u) => u.perfilAcesso !== "admin_geral")
   const totalServidores = usuariosDeEntidade.length
   const coordenadores = usuariosDeEntidade.filter((u) => u.perfilAcesso === "coordenador").length
@@ -77,7 +77,7 @@ export default function PainelAdmin() {
   return (
     <div className="w-full p-4 sm:p-5 lg:p-7">
       <div className="mb-6">
-        <p className="m-0 mb-1 text-base text-text-3">Administração do Sistema · LAHHM</p>
+        <p className="m-0 mb-1 text-base text-text-3">Administração do Sistema · GovPro</p>
         <h2 className="m-0 font-display text-3xl font-extrabold tracking-tight text-text-1">
           Bem-vindo, {sessao?.usuario.primeiroNome ?? "Administrador"}
         </h2>

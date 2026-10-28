@@ -1,5 +1,5 @@
 // GeraDocs UI kit — Processos list (recreation of src/views/ProcessList.tsx)
-const DSP = window.LAHHMGeraDocsDesignSystem_11bcef;
+const DSP = window.GovProGeraDocsDesignSystem_11bcef;
 
 const gdAll = [
   { id: "PROC-2024-089", title: "Aquisição de Equipamentos de TI", secretaria: "Secretaria de Educação", modalidade: "Pregão Eletrônico", status: "em_revisao", valor: "R$ 485.000,00", etp: "Completo", tr: "Em andamento", responsavel: "Maria Costa" },

@@ -48,7 +48,7 @@ GeraDocs/
 │           └── servidores/page.tsx   # CRUD de servidores .................... rota  /admin/servidores
 │
 ├── components/                   # INTERFACE REUTILIZÁVEL (sem lógica de negócio, sem fetch)
-│   ├── ui/                       # Design System LAHHM/GeraDocs portado para React (primitivos)
+│   ├── ui/                       # Design System GovPro/GeraDocs portado para React (primitivos)
 │   │   ├── index.ts              # Barrel — IMPORTE SEMPRE DAQUI: import { Button } from "@/components/ui"
 │   │   ├── actions.tsx           # Button, Toggle
 │   │   ├── forms.tsx             # Input, Textarea, Select, FormField, FileUpload, ChoiceCard, SearchInput,
@@ -101,7 +101,7 @@ GeraDocs/
 │   │   └── fixtures.ts           # Dados de exemplo — PROIBIDO importar em componentes/páginas
 │   └── teste/                    # setup do Vitest, MSW, fixtures de API e guarda-corpos executáveis
 │
-├── design_system/                # Design System fonte (LAHHM · GeraDocs) — NORMATIVO, não editável
+├── design_system/                # Design System fonte (GovPro · GeraDocs) — NORMATIVO, não editável
 │   ├── readme.md                 # Regras visuais (leia antes de qualquer tarefa de UI)
 │   ├── tokens/                   # colors.css, typography.css, layout.css (origem dos tokens)
 │   └── components/*/*.prompt.md  # Especificação de cada componente
@@ -135,7 +135,7 @@ No App Router do Next.js, **a estrutura de pastas É o mapa de URLs**. Convenç�
 
 ### `components/ui/` — Design System (primitivos)
 
-É o Design System LAHHM/GeraDocs (`design_system/`, a fonte normativa) portado para React, estilizado com **Tailwind utility-first** sobre os tokens do DS. `ui` é o nome consagrado no ecossistema para "primitivos do design system" (mesma convenção do shadcn/ui e dos templates da Vercel). Botões, campos, badges — peças pequenas, sem estado de negócio, que só recebem props.
+É o Design System GovPro/GeraDocs (`design_system/`, a fonte normativa) portado para React, estilizado com **Tailwind utility-first** sobre os tokens do DS. `ui` é o nome consagrado no ecossistema para "primitivos do design system" (mesma convenção do shadcn/ui e dos templates da Vercel). Botões, campos, badges — peças pequenas, sem estado de negócio, que só recebem props.
 
 **Regras**:
 - Importe **sempre pelo barrel**: `import { Button, FormField } from "@/components/ui"` — o lint proíbe importar dos módulos internos (`actions.tsx` etc.). Exceção: ícones, que podem vir de `@/components/ui/icons`.

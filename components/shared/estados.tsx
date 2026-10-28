@@ -5,12 +5,16 @@ import type { ReactNode } from "react"
 import { Button } from "@/components/ui"
 import { IconSearch, IconXCircle } from "@/components/ui/icons"
 
+import { MarcaCarregando } from "./marca-carregando"
+
 /** Estados compartilhados de carregamento / erro / vazio das telas. */
 
 export function LoadingState({ label = "Carregando..." }: { label?: string }) {
   return (
-    <div className="p-15 text-center text-text-muted" role="status">
-      <span className="mb-3 inline-block size-6 animate-spin rounded-full border-[3px] border-tint-royal-border border-t-royal" />
+    <div className="flex flex-col items-center p-15 text-center text-text-muted" role="status">
+      <span className="mb-3 inline-flex">
+        <MarcaCarregando tamanho={36} />
+      </span>
       <p className="m-0 text-base font-medium">{label}</p>
     </div>
   )

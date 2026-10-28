@@ -1,8 +1,8 @@
-/* @ds-bundle: {"format":4,"namespace":"LAHHMGeraDocsDesignSystem_11bcef","components":[{"name":"Button","sourcePath":"components/actions/Button.jsx"},{"name":"Toggle","sourcePath":"components/actions/Toggle.jsx"},{"name":"Header","sourcePath":"components/chrome/Header.jsx"},{"name":"Sidebar","sourcePath":"components/chrome/Sidebar.jsx"},{"name":"DocPill","sourcePath":"components/feedback/DocPill.jsx"},{"name":"Tag","sourcePath":"components/feedback/DocPill.jsx"},{"name":"StatCard","sourcePath":"components/feedback/StatCard.jsx"},{"name":"ProgressBar","sourcePath":"components/feedback/StatCard.jsx"},{"name":"StatusBadge","sourcePath":"components/feedback/StatusBadge.jsx"},{"name":"ValidationMsg","sourcePath":"components/feedback/ValidationMsg.jsx"},{"name":"InfoBanner","sourcePath":"components/feedback/ValidationMsg.jsx"},{"name":"ChoiceCard","sourcePath":"components/forms/ChoiceCard.jsx"},{"name":"CheckMark","sourcePath":"components/forms/ChoiceCard.jsx"},{"name":"FileUpload","sourcePath":"components/forms/FileUpload.jsx"},{"name":"FormField","sourcePath":"components/forms/FormField.jsx"},{"name":"Input","sourcePath":"components/forms/Input.jsx"},{"name":"Textarea","sourcePath":"components/forms/Input.jsx"},{"name":"Select","sourcePath":"components/forms/Input.jsx"},{"name":"SearchInput","sourcePath":"components/forms/SearchInput.jsx"},{"name":"FilterTabs","sourcePath":"components/forms/SearchInput.jsx"},{"name":"SectionBlock","sourcePath":"components/navigation/SectionBlock.jsx"},{"name":"CardPanel","sourcePath":"components/navigation/SectionBlock.jsx"},{"name":"StepIndicator","sourcePath":"components/navigation/StepIndicator.jsx"}],"sourceHashes":{"components/actions/Button.jsx":"671fada2ca2a","components/actions/Toggle.jsx":"e7637a4616e7","components/chrome/Header.jsx":"18da28b91106","components/chrome/Sidebar.jsx":"6f20d520b5a6","components/feedback/DocPill.jsx":"cc56444b14c7","components/feedback/StatCard.jsx":"7d762ba25409","components/feedback/StatusBadge.jsx":"126872d81c1c","components/feedback/ValidationMsg.jsx":"14f5bc7278ea","components/forms/ChoiceCard.jsx":"64aca7d6af40","components/forms/FileUpload.jsx":"29c79abfc39b","components/forms/FormField.jsx":"bc994c77c551","components/forms/Input.jsx":"eac330198d1b","components/forms/SearchInput.jsx":"1a619d6b3ce0","components/navigation/SectionBlock.jsx":"8d410530095b","components/navigation/StepIndicator.jsx":"2adda7ec1d72","ui_kits/geradocs/DashboardScreen.jsx":"db591953ea7b","ui_kits/geradocs/ETPFormScreen.jsx":"70f1ee7c0106","ui_kits/geradocs/NewProcessScreen.jsx":"09e719520698","ui_kits/geradocs/ProcessListScreen.jsx":"40ca161e8178"},"inlinedExternals":[],"unexposedExports":[]} */
+/* @ds-bundle: {"format":4,"namespace":"GovProGeraDocsDesignSystem_11bcef","components":[{"name":"Button","sourcePath":"components/actions/Button.jsx"},{"name":"Toggle","sourcePath":"components/actions/Toggle.jsx"},{"name":"Header","sourcePath":"components/chrome/Header.jsx"},{"name":"Sidebar","sourcePath":"components/chrome/Sidebar.jsx"},{"name":"DocPill","sourcePath":"components/feedback/DocPill.jsx"},{"name":"Tag","sourcePath":"components/feedback/DocPill.jsx"},{"name":"StatCard","sourcePath":"components/feedback/StatCard.jsx"},{"name":"ProgressBar","sourcePath":"components/feedback/StatCard.jsx"},{"name":"StatusBadge","sourcePath":"components/feedback/StatusBadge.jsx"},{"name":"ValidationMsg","sourcePath":"components/feedback/ValidationMsg.jsx"},{"name":"InfoBanner","sourcePath":"components/feedback/ValidationMsg.jsx"},{"name":"ChoiceCard","sourcePath":"components/forms/ChoiceCard.jsx"},{"name":"CheckMark","sourcePath":"components/forms/ChoiceCard.jsx"},{"name":"FileUpload","sourcePath":"components/forms/FileUpload.jsx"},{"name":"FormField","sourcePath":"components/forms/FormField.jsx"},{"name":"Input","sourcePath":"components/forms/Input.jsx"},{"name":"Textarea","sourcePath":"components/forms/Input.jsx"},{"name":"Select","sourcePath":"components/forms/Input.jsx"},{"name":"SearchInput","sourcePath":"components/forms/SearchInput.jsx"},{"name":"FilterTabs","sourcePath":"components/forms/SearchInput.jsx"},{"name":"SectionBlock","sourcePath":"components/navigation/SectionBlock.jsx"},{"name":"CardPanel","sourcePath":"components/navigation/SectionBlock.jsx"},{"name":"StepIndicator","sourcePath":"components/navigation/StepIndicator.jsx"}],"sourceHashes":{"components/actions/Button.jsx":"671fada2ca2a","components/actions/Toggle.jsx":"e7637a4616e7","components/chrome/Header.jsx":"18da28b91106","components/chrome/Sidebar.jsx":"6f20d520b5a6","components/feedback/DocPill.jsx":"cc56444b14c7","components/feedback/StatCard.jsx":"7d762ba25409","components/feedback/StatusBadge.jsx":"126872d81c1c","components/feedback/ValidationMsg.jsx":"14f5bc7278ea","components/forms/ChoiceCard.jsx":"64aca7d6af40","components/forms/FileUpload.jsx":"29c79abfc39b","components/forms/FormField.jsx":"bc994c77c551","components/forms/Input.jsx":"eac330198d1b","components/forms/SearchInput.jsx":"1a619d6b3ce0","components/navigation/SectionBlock.jsx":"8d410530095b","components/navigation/StepIndicator.jsx":"2adda7ec1d72","ui_kits/geradocs/DashboardScreen.jsx":"db591953ea7b","ui_kits/geradocs/ETPFormScreen.jsx":"70f1ee7c0106","ui_kits/geradocs/NewProcessScreen.jsx":"09e719520698","ui_kits/geradocs/ProcessListScreen.jsx":"40ca161e8178"},"inlinedExternals":[],"unexposedExports":[]} */
 
 (() => {
 
-const __ds_ns = (window.LAHHMGeraDocsDesignSystem_11bcef = window.LAHHMGeraDocsDesignSystem_11bcef || {});
+const __ds_ns = (window.GovProGeraDocsDesignSystem_11bcef = window.GovProGeraDocsDesignSystem_11bcef || {});
 
 const __ds_scope = {};
 
@@ -318,6 +318,7 @@ function NavButton({
  * GeraDocs navy app sidebar: brand chip, órgão switcher, nav sections, user row.
  * Faithful port of src/components/Sidebar.tsx (wordmark updated to GeraDocs).
  */
+const GERADOCS_LOGO_ESCURO = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0NzMuMTQgMTAwIiB3aWR0aD0iNDczLjE0IiBoZWlnaHQ9IjEwMCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJHZXJhRG9jcyI+Cjx0aXRsZT5HZXJhRG9jczwvdGl0bGU+CjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0xMi43OSAtOS4zKSBzY2FsZSgxLjE2MjgpIj48cGF0aCBmaWxsPSIjNEM5M0ZGIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0zNCA4SDU4TDg4IDM4Vjk0SDM0QTIwIDIwIDAgMCAxIDE0IDc0VjI4QTIwIDIwIDAgMCAxIDM0IDhaTTMyIDI0QTIgMiAwIDAgMCAzMCAyNlY3NkEyIDIgMCAwIDAgMzIgNzhINzJWNDQuNkw1MS40IDI0WiIvPgogICAgPGNsaXBQYXRoIGlkPSJkYTQ0MiI+PHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBkPSJNMzQgOEg1OEw4OCAzOFY5NEgzNEEyMCAyMCAwIDAgMSAxNCA3NFYyOEEyMCAyMCAwIDAgMSAzNCA4Wk0zMiAyNEEyIDIgMCAwIDAgMzAgMjZWNzZBMiAyIDAgMCAwIDMyIDc4SDcyVjQ0LjZMNTEuNCAyNFoiLz48L2NsaXBQYXRoPgogICAgPGcgY2xpcC1wYXRoPSJ1cmwoI2RhNDQyKSI+PHBhdGggZmlsbD0iIzFGNUZENiIgZD0iTTE0IDcwUTE2IDI4IDU2IDI0TDMwIDI0TDMwIDc4WiIvPjxwYXRoIGZpbGw9IiMyRTZGRTYiIGQ9Ik04OCA2Mkw4OCAxMDBMMCAxMDBMMCA5NFoiLz48L2c+CiAgICA8cGF0aCBmaWxsPSIjRkZEMjREIiBkPSJNNjUgOEg5NEw3OS41IDIyLjVaIi8+PHBhdGggZmlsbD0iIzJCQzA2MiIgZD0iTTk0IDhWMzdMNzkuNSAyMi41WiIvPgogICAgPHJlY3QgeD0iMzgiIHk9IjQ0IiB3aWR0aD0iMjUiIGhlaWdodD0iOCIgcng9IjQiIGZpbGw9IiM0QzkzRkYiLz4KICAgIDxyZWN0IHg9IjM4IiB5PSI1OCIgd2lkdGg9IjE1IiBoZWlnaHQ9IjgiIHJ4PSI0IiBmaWxsPSIjNEM5M0ZGIi8+PC9nPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEyNC4wNiA3MCkiPjxwYXRoIGZpbGw9IiNGRkZGRkYiIGQ9Ik0yNC4wMCAwLjgwTDI0LjAwIDAuODBRMTkuMjYgMC44MCAxNS4yMC0wLjcxUTExLjE0LTIuMjMgOC4yMC01LjAzUTUuMjYtNy44MyAzLjYwLTExLjYzUTEuOTQtMTUuNDMgMS45NC0yMC4wMFExLjk0LTI0LjU3IDMuNjAtMjguMzdRNS4yNi0zMi4xNyA4LjIzLTM0Ljk3UTExLjIwLTM3Ljc3IDE1LjI5LTM5LjI5UTE5LjM3LTQwLjgwIDI0LjIzLTQwLjgwTDI0LjIzLTQwLjgwUTI5Ljg5LTQwLjgwIDM0LjM0LTM4LjkxUTM4LjgwLTM3LjAzIDQxLjcxLTMzLjQ5TDQxLjcxLTMzLjQ5TDM0LjUxLTI2Ljk3UTMyLjQ2LTI5LjIwIDMwLjA5LTMwLjMxUTI3LjcxLTMxLjQzIDI0LjgwLTMxLjQzTDI0LjgwLTMxLjQzUTIyLjIzLTMxLjQzIDIwLjExLTMwLjYzUTE4LTI5LjgzIDE2LjUxLTI4LjMxUTE1LjAzLTI2LjgwIDE0LjIwLTI0LjcxUTEzLjM3LTIyLjYzIDEzLjM3LTIwLjAwTDEzLjM3LTIwLjAwUTEzLjM3LTE3LjQ5IDE0LjIwLTE1LjM3UTE1LjAzLTEzLjI2IDE2LjUxLTExLjc0UTE4LTEwLjIzIDIwLjA5LTkuNDBRMjIuMTctOC41NyAyNC42OS04LjU3UTI3LjIwLTguNTcgMjkuNjAtOS40M0wyOS42MC05LjQzUTMwLjE3LTkuNjAgMzAuODAtOS44OUwzMC44MC05Ljg5TDMwLjgwLTIwLjg2TDQwLjgwLTIwLjg2TDQwLjgwLTQuMjlRMzcuMzctMS44MyAzMi44Ni0wLjUxUTI4LjM0IDAuODAgMjQuMDAgMC44MFpNNTkuNzctMTYuMDZMNTkuNzctOC43NEw4MC42OS04Ljc0TDgwLjY5IDBMNDguNTcgMEw0OC41Ny00MC4wMEw3OS45NC00MC4wMEw3OS45NC0zMS4yNkw1OS43Ny0zMS4yNkw1OS43Ny0yNC41MUw3Ny41NC0yNC41MUw3Ny41NC0xNi4wNkw1OS43Ny0xNi4wNlpNOTguODYgMEw4Ny41NCAwTDg3LjU0LTQwLjAwTDEwNS44My00MC4wMFExMTEuMzEtNDAuMDAgMTE1LjI5LTM4LjIzUTExOS4yNi0zNi40NiAxMjEuNDMtMzMuMTFRMTIzLjYwLTI5Ljc3IDEyMy42MC0yNS4yMEwxMjMuNjAtMjUuMjBRMTIzLjYwLTIwLjY5IDEyMS40My0xNy40M0wxMjEuNDMtMTcuNDNRMTE5LjM3LTE0LjI5IDExNS43Ny0xMi41N0wxMTUuNzctMTIuNTdMMTI0LjQwIDBMMTEyLjI5IDBMMTA1LjAzLTEwLjYzTDk4Ljg2LTEwLjYzTDk4Ljg2IDBaTTk4Ljg2LTMxLjA5TDk4Ljg2LTE5LjM3TDEwNS4xNC0xOS4zN1ExMDguNjktMTkuMzcgMTEwLjQzLTIwLjkxUTExMi4xNy0yMi40NiAxMTIuMTctMjUuMjBMMTEyLjE3LTI1LjIwUTExMi4xNy0yOC4wMCAxMTAuNDMtMjkuNTRRMTA4LjY5LTMxLjA5IDEwNS4xNC0zMS4wOUwxMDUuMTQtMzEuMDlMOTguODYtMzEuMDlaTTEzNy4xNCAwTDEyNS42MCAwTDE0My4yNi00MC4wMEwxNTQuNDAtNDAuMDBMMTcyLjExIDBMMTYwLjM0IDBMMTU3LjIwLTcuNzdMMTQwLjI5LTcuNzdMMTM3LjE0IDBaTTE0My42MC0xNi4xMUwxNTMuODktMTYuMTFMMTQ4Ljc0LTI4LjkxTDE0My42MC0xNi4xMVoiLz48cGF0aCBmaWxsPSIjNEM5M0ZGIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxNzEuODkgMCkiIGQ9Ik0yMi45MSAwTDQgMEw0LTQwLjAwTDIyLjkxLTQwLjAwUTI5LjU0LTQwLjAwIDM0LjU3LTM3LjU0UTM5LjYwLTM1LjA5IDQyLjQzLTMwLjYzUTQ1LjI2LTI2LjE3IDQ1LjI2LTIwLjAwTDQ1LjI2LTIwLjAwUTQ1LjI2LTEzLjg5IDQyLjQzLTkuNDBRMzkuNjAtNC45MSAzNC41Ny0yLjQ2UTI5LjU0IDAgMjIuOTEgMEwyMi45MSAwWk0xNS4zMS0zMC45N0wxNS4zMS05LjAzTDIyLjQ2LTkuMDNRMjUuODktOS4wMyAyOC40My0xMC4zMVEzMC45Ny0xMS42MCAzMi40MC0xNC4wOVEzMy44My0xNi41NyAzMy44My0yMC4wMEwzMy44My0yMC4wMFEzMy44My0yMy40OSAzMi40MC0yNS45NFEzMC45Ny0yOC40MCAyOC40My0yOS42OVEyNS44OS0zMC45NyAyMi40Ni0zMC45N0wyMi40Ni0zMC45N0wxNS4zMS0zMC45N1pNNzEuOTQgMC44MEw3MS45NCAwLjgwUTY3LjE0IDAuODAgNjMuMDktMC43NFE1OS4wMy0yLjI5IDU2LjAzLTUuMTFRNTMuMDMtNy45NCA1MS4zNy0xMS43MVE0OS43MS0xNS40OSA0OS43MS0yMC4wMEw0OS43MS0yMC4wMFE0OS43MS0yNC41MSA1MS4zNy0yOC4yOVE1My4wMy0zMi4wNiA1Ni4wMy0zNC44OVE1OS4wMy0zNy43MSA2My4wOS0zOS4yNlE2Ny4xNC00MC44MCA3MS45NC00MC44MEw3MS45NC00MC44MFE3Ni44MC00MC44MCA4MC44My0zOS4yNlE4NC44Ni0zNy43MSA4Ny44My0zNC44OVE5MC44MC0zMi4wNiA5Mi40OS0yOC4yOVE5NC4xNy0yNC41MSA5NC4xNy0yMC4wMEw5NC4xNy0yMC4wMFE5NC4xNy0xNS40OSA5Mi40OS0xMS42OVE5MC44MC03Ljg5IDg3LjgzLTUuMDlRODQuODYtMi4yOSA4MC44My0wLjc0UTc2LjgwIDAuODAgNzEuOTQgMC44MFpNNzEuOTQtOC41N0w3MS45NC04LjU3UTc0LjIzLTguNTcgNzYuMjAtOS4zN1E3OC4xNy0xMC4xNyA3OS42My0xMS42OVE4MS4wOS0xMy4yMCA4MS45MS0xNS4zMVE4Mi43NC0xNy40MyA4Mi43NC0yMC4wMEw4Mi43NC0yMC4wMFE4Mi43NC0yMi42MyA4MS45MS0yNC43MVE4MS4wOS0yNi44MCA3OS42My0yOC4zMVE3OC4xNy0yOS44MyA3Ni4yMC0zMC42M1E3NC4yMy0zMS40MyA3MS45NC0zMS40M0w3MS45NC0zMS40M1E2OS42Ni0zMS40MyA2Ny42OS0zMC42M1E2NS43MS0yOS44MyA2NC4yNi0yOC4zMVE2Mi44MC0yNi44MCA2MS45Ny0yNC43MVE2MS4xNC0yMi42MyA2MS4xNC0yMC4wMEw2MS4xNC0yMC4wMFE2MS4xNC0xNy40MyA2MS45Ny0xNS4zMVE2Mi44MC0xMy4yMCA2NC4yNi0xMS42OVE2NS43MS0xMC4xNyA2Ny42OS05LjM3UTY5LjY2LTguNTcgNzEuOTQtOC41N1pNMTIwLjYzIDAuODBMMTIwLjYzIDAuODBRMTE1Ljg5IDAuODAgMTExLjg2LTAuNzFRMTA3LjgzLTIuMjMgMTA0Ljg5LTUuMDNRMTAxLjk0LTcuODMgMTAwLjI5LTExLjYzUTk4LjYzLTE1LjQzIDk4LjYzLTIwLjAwTDk4LjYzLTIwLjAwUTk4LjYzLTI0LjU3IDEwMC4yOS0yOC4zN1ExMDEuOTQtMzIuMTcgMTA0Ljg5LTM0Ljk3UTEwNy44My0zNy43NyAxMTEuODYtMzkuMjlRMTE1Ljg5LTQwLjgwIDEyMC42My00MC44MEwxMjAuNjMtNDAuODBRMTI2LjE3LTQwLjgwIDEzMC41NC0zOC44NlExMzQuOTEtMzYuOTEgMTM3LjgzLTMzLjI2TDEzNy44My0zMy4yNkwxMzAuNjMtMjYuNzRRMTI4LjY5LTI5LjAzIDEyNi4zNy0zMC4yM1ExMjQuMDYtMzEuNDMgMTIxLjIwLTMxLjQzTDEyMS4yMC0zMS40M1ExMTguNzQtMzEuNDMgMTE2LjY5LTMwLjYzUTExNC42My0yOS44MyAxMTMuMTctMjguMzFRMTExLjcxLTI2LjgwIDExMC44OS0yNC42OVExMTAuMDYtMjIuNTcgMTEwLjA2LTIwLjAwTDExMC4wNi0yMC4wMFExMTAuMDYtMTcuNDMgMTEwLjg5LTE1LjMxUTExMS43MS0xMy4yMCAxMTMuMTctMTEuNjlRMTE0LjYzLTEwLjE3IDExNi42OS05LjM3UTExOC43NC04LjU3IDEyMS4yMC04LjU3TDEyMS4yMC04LjU3UTEyNC4wNi04LjU3IDEyNi4zNy05Ljc3UTEyOC42OS0xMC45NyAxMzAuNjMtMTMuMjZMMTMwLjYzLTEzLjI2TDEzNy44My02Ljc0UTEzNC45MS0zLjE0IDEzMC41NC0xLjE3UTEyNi4xNyAwLjgwIDEyMC42MyAwLjgwWk0xNTcuNDkgMC44MEwxNTcuNDkgMC44MFExNTIuNTcgMC44MCAxNDguMDMtMC40M1ExNDMuNDktMS42NiAxNDAuNjMtMy42MEwxNDAuNjMtMy42MEwxNDQuMzQtMTEuOTRRMTQ3LjAzLTEwLjIzIDE1MC41NC05LjExUTE1NC4wNi04IDE1Ny41NC04TDE1Ny41NC04UTE1OS44OS04IDE2MS4zMS04LjQzUTE2Mi43NC04Ljg2IDE2My40MC05LjU3UTE2NC4wNi0xMC4yOSAxNjQuMDYtMTEuMjZMMTY0LjA2LTExLjI2UTE2NC4wNi0xMi42MyAxNjIuODAtMTMuNDNRMTYxLjU0LTE0LjIzIDE1OS41NC0xNC43NFExNTcuNTQtMTUuMjYgMTU1LjExLTE1Ljc3UTE1Mi42OS0xNi4yOSAxNTAuMjYtMTcuMDlRMTQ3LjgzLTE3Ljg5IDE0NS44My0xOS4xN1ExNDMuODMtMjAuNDYgMTQyLjU3LTIyLjU0UTE0MS4zMS0yNC42MyAxNDEuMzEtMjcuODNMMTQxLjMxLTI3LjgzUTE0MS4zMS0zMS40MyAxNDMuMjktMzQuMzRRMTQ1LjI2LTM3LjI2IDE0OS4yMC0zOS4wM1ExNTMuMTQtNDAuODAgMTU5LjAzLTQwLjgwTDE1OS4wMy00MC44MFExNjIuOTctNDAuODAgMTY2Ljc3LTM5LjkxUTE3MC41Ny0zOS4wMyAxNzMuNTQtMzcuMzFMMTczLjU0LTM3LjMxTDE3MC4wNi0yOC45MVExNjcuMjAtMzAuNDYgMTY0LjQwLTMxLjIzUTE2MS42MC0zMiAxNTguOTctMzJMMTU4Ljk3LTMyUTE1Ni42My0zMiAxNTUuMjAtMzEuNTFRMTUzLjc3LTMxLjAzIDE1My4xNC0zMC4yM1ExNTIuNTEtMjkuNDMgMTUyLjUxLTI4LjQwTDE1Mi41MS0yOC40MFExNTIuNTEtMjcuMDkgMTUzLjc0LTI2LjMxUTE1NC45Ny0yNS41NCAxNTctMjUuMDZRMTU5LjAzLTI0LjU3IDE2MS40Ni0yNC4wNlExNjMuODktMjMuNTQgMTY2LjMxLTIyLjc3UTE2OC43NC0yMi4wMCAxNzAuNzQtMjAuNzFRMTcyLjc0LTE5LjQzIDE3My45Ny0xNy4zNFExNzUuMjAtMTUuMjYgMTc1LjIwLTEyLjExTDE3NS4yMC0xMi4xMVExNzUuMjAtOC42MyAxNzMuMjMtNS42OVExNzEuMjYtMi43NCAxNjcuMzQtMC45N1ExNjMuNDMgMC44MCAxNTcuNDkgMC44MFoiLz48L2c+Cjwvc3ZnPgo=";
 function Sidebar({
   currentView = "dashboard",
   navigate,
@@ -361,54 +362,23 @@ function Sidebar({
       padding: "24px 20px 20px",
       borderBottom: "1px solid rgba(255,255,255,0.06)"
     }
-  }, /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("img", {
+    src: GERADOCS_LOGO_ESCURO,
+    alt: "GeraDocs",
     style: {
-      display: "flex",
-      alignItems: "center",
-      gap: 10
+      height: 32,
+      display: "block"
     }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      width: 34,
-      height: 34,
-      background: "linear-gradient(135deg, #2563EB, #38BDF8)",
-      borderRadius: 8,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      flexShrink: 0
-    }
-  }, /*#__PURE__*/React.createElement("svg", {
-    width: "18",
-    height: "18",
-    viewBox: "0 0 24 24",
-    fill: "none",
-    stroke: "white",
-    strokeWidth: "2.5",
-    strokeLinecap: "round",
-    strokeLinejoin: "round"
-  }, /*#__PURE__*/React.createElement("path", {
-    d: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
-  }), /*#__PURE__*/React.createElement("polyline", {
-    points: "14 2 14 8 20 8"
-  }))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "var(--font-display)",
-      fontWeight: 700,
-      fontSize: 15,
-      color: "#FFFFFF",
-      letterSpacing: "-0.3px"
-    }
-  }, "GeraDocs"), /*#__PURE__*/React.createElement("div", {
+  }), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 10,
       color: "rgba(255,255,255,0.4)",
       fontWeight: 500,
       letterSpacing: "0.5px",
       textTransform: "uppercase",
-      marginTop: 1
+      marginTop: 6
     }
-  }, "LAHHM \xB7 Gov")))), /*#__PURE__*/React.createElement("div", {
+  }, "Uma solu\xE7\xE3o GovPro")), /*#__PURE__*/React.createElement("div", {
     style: {
       padding: "14px 20px",
       borderBottom: "1px solid rgba(255,255,255,0.06)"
@@ -1705,7 +1675,7 @@ Object.assign(__ds_scope, { StepIndicator });
 try { (() => {
 function _extends() { return _extends = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends.apply(null, arguments); }
 // GeraDocs UI kit — Dashboard (recreation of src/views/Dashboard.tsx)
-const DS = window.LAHHMGeraDocsDesignSystem_11bcef;
+const DS = window.GovProGeraDocsDesignSystem_11bcef;
 function GDIcon({
   d,
   poly,
@@ -2227,7 +2197,7 @@ Object.assign(window, {
 // ui_kits/geradocs/ETPFormScreen.jsx
 try { (() => {
 // GeraDocs UI kit — ETP editor (recreation of src/views/ETPForm.tsx, abbreviated)
-const DSE = window.LAHHMGeraDocsDesignSystem_11bcef;
+const DSE = window.GovProGeraDocsDesignSystem_11bcef;
 const etpSections = [{
   id: "1",
   title: "Descrição da Necessidade",
@@ -2792,7 +2762,7 @@ Object.assign(window, {
 // ui_kits/geradocs/NewProcessScreen.jsx
 try { (() => {
 // GeraDocs UI kit — Novo Processo wizard (recreation of src/views/NewProcess.tsx, abbreviated)
-const DSN = window.LAHHMGeraDocsDesignSystem_11bcef;
+const DSN = window.GovProGeraDocsDesignSystem_11bcef;
 const npIcon = children => /*#__PURE__*/React.createElement("svg", {
   width: "20",
   height: "20",
@@ -3384,7 +3354,7 @@ Object.assign(window, {
 // ui_kits/geradocs/ProcessListScreen.jsx
 try { (() => {
 // GeraDocs UI kit — Processos list (recreation of src/views/ProcessList.tsx)
-const DSP = window.LAHHMGeraDocsDesignSystem_11bcef;
+const DSP = window.GovProGeraDocsDesignSystem_11bcef;
 const gdAll = [{
   id: "PROC-2024-089",
   title: "Aquisição de Equipamentos de TI",

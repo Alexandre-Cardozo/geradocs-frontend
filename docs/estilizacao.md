@@ -6,7 +6,7 @@ Este documento define **como estilizar** no GeraDocs. Leia antes de mexer em qua
 
 O projeto usa **React + Tailwind CSS v4**, utility-first. Não há CSS-in-JS, CSS Modules nem estilos inline de layout — a aparência de cada elemento é expressa por classes utilitárias no `className`.
 
-O ponto que torna isso compatível com o design system LAHHM/GeraDocs: em `app/globals.css`, o bloco **`@theme`** declara cada token do DS (cores, fontes, raios, breakpoints, larguras máximas). O Tailwind v4 então **gera automaticamente** as utilities correspondentes, e cada uma resolve para a mesma CSS variable. Um único lugar define o valor:
+O ponto que torna isso compatível com o design system GovPro/GeraDocs: em `app/globals.css`, o bloco **`@theme`** declara cada token do DS (cores, fontes, raios, breakpoints, larguras máximas). O Tailwind v4 então **gera automaticamente** as utilities correspondentes, e cada uma resolve para a mesma CSS variable. Um único lugar define o valor:
 
 ```css
 /* app/globals.css */

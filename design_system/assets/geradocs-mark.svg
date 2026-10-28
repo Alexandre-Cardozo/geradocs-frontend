@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="GeraDocs">
+<title>GeraDocs</title>
+<g transform="translate(-26.91 -11.19) scale(5.2391)"><path fill="#2C78EE" fill-rule="evenodd" d="M34 8H58L88 38V94H34A20 20 0 0 1 14 74V28A20 20 0 0 1 34 8ZM32 24A2 2 0 0 0 30 26V76A2 2 0 0 0 32 78H72V44.6L51.4 24Z"/>
+    <clipPath id="da433"><path fill-rule="evenodd" d="M34 8H58L88 38V94H34A20 20 0 0 1 14 74V28A20 20 0 0 1 34 8ZM32 24A2 2 0 0 0 30 26V76A2 2 0 0 0 32 78H72V44.6L51.4 24Z"/></clipPath>
+    <g clip-path="url(#da433)"><path fill="#0E3A94" d="M14 70Q16 28 56 24L30 24L30 78Z"/><path fill="#1650C4" d="M88 62L88 100L0 100L0 94Z"/></g>
+    <path fill="#FFC72C" d="M65 8H94L79.5 22.5Z"/><path fill="#22B455" d="M94 8V37L79.5 22.5Z"/>
+    <rect x="38" y="44" width="25" height="8" rx="4" fill="#1F5FD6"/>
+    <rect x="38" y="58" width="15" height="8" rx="4" fill="#1F5FD6"/></g>
+</svg>

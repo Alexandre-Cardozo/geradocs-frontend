@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
 
-import geradocsLogo from "@/public/geradocs-mark-white.png";
+import geradocsLogo from "@/public/geradocs-logo-white.svg";
 
 import {
   IconBuilding,
@@ -147,29 +147,22 @@ export default function Sidebar({
         aberta ? "translate-x-0" : "-translate-x-full"
       }`}
     >
-      {/* Logo GeraDocs — marca oficial (sem fundo) */}
+      {/* Logo GeraDocs — marca oficial (símbolo + nome, versão para fundo escuro) */}
       <div className="border-b border-on-dark-border px-5 pt-6 pb-5">
-        <div className="flex items-center gap-2.5">
-          <Image
-            src={geradocsLogo}
-            alt="GeraDocs"
-            width={34}
-            height={36}
-            priority
-            className="shrink-0 object-contain"
-          />
-          <div>
-            <div className="font-display text-lg font-bold tracking-heading text-on-dark">
-              GeraDocs
-            </div>
-            <div className="mt-px text-2xs font-medium tracking-caps text-on-dark-40 uppercase">
-              LAHHM · GOV
-            </div>
-          </div>
+        <Image
+          src={geradocsLogo}
+          alt="GeraDocs"
+          width={151}
+          height={32}
+          priority
+          className="h-8 w-auto object-contain"
+        />
+        <div className="mt-1.5 text-2xs font-medium tracking-caps text-on-dark-40 uppercase">
+          Uma solução GovPro
         </div>
       </div>
 
-      {/* Entidade atual — a da sessão; para o admin geral, o contexto LAHHM */}
+      {/* Entidade atual — a da sessão; para o admin geral, o contexto GovPro */}
       <div className="border-b border-on-dark-border px-5 py-3.5">
         <div className="mb-1.5 text-2xs font-semibold tracking-caps-wide text-on-dark-35 uppercase">
           {perfil === "admin_geral" ? "Contexto" : "Entidade Atual"}
@@ -196,7 +189,7 @@ export default function Sidebar({
           <span className="block min-w-0 flex-1">
             <span className="block truncate text-sm font-semibold text-on-dark">
               {entidade?.nome ??
-                (perfil === "admin_geral" ? "Administração LAHHM" : "—")}
+                (perfil === "admin_geral" ? "Administração GovPro" : "—")}
             </span>
             <span className="block text-2xs text-on-dark-40">
               {/* O tipo, e não a unidade administrativa: aquele campo não

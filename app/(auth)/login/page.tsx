@@ -4,8 +4,8 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import geradocsLogo from "@/public/geradocs-mark-white.png";
-import lahhmLogo from "@/public/lahhm-logo-white.png";
+import geradocsLogo from "@/public/geradocs-logo-white.svg";
+import govproLogo from "@/public/govpro-logo-white.svg";
 
 import { Button, FormField, Input, ValidationMsg } from "@/components/ui";
 import { IconArrowRight, IconCheckCircle } from "@/components/ui/icons";
@@ -54,20 +54,17 @@ export default function Login() {
 
       {/* Conteúdo central — marca + card, centralizados no espaço disponível */}
       <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 py-4">
-        {/* Marca do produto — símbolo + wordmark + tagline entre filetes */}
+        {/* Marca do produto — logo oficial (símbolo + nome) + tagline entre filetes */}
         <div className="mb-5 flex flex-col items-center text-center">
           <Image
             src={geradocsLogo}
-            alt=""
-            width={44}
-            height={46}
+            alt="GeraDocs"
+            width={208}
+            height={44}
             priority
-            className="object-contain"
+            className="h-11 w-auto object-contain"
           />
-          <div className="mt-2.5 font-display text-3xl font-extrabold tracking-tight text-on-dark">
-            GeraDocs
-          </div>
-          <div className="mt-2.5 flex items-center gap-3">
+          <div className="mt-3 flex items-center gap-3">
             <span className="h-px w-7 bg-on-dark-border" />
             <span className="text-2xs font-semibold tracking-caps-wide text-electric uppercase">
               Contratações Públicas · Lei 14.133/21
@@ -219,13 +216,13 @@ export default function Login() {
       {/* Rodapé — proporcional, ancorado ao fim da tela */}
       <footer className="relative z-10 flex flex-col items-center gap-1 px-4 pb-5 text-center">
         <div className="flex items-center gap-2 text-sm text-on-dark-55">
-          GeraDocs é um produto
+          GeraDocs é uma solução
           <Image
-            src={lahhmLogo}
-            alt="LAHHM"
-            width={80}
-            height={25}
-            className="object-contain opacity-90"
+            src={govproLogo}
+            alt="GovPro"
+            width={87}
+            height={22}
+            className="h-5.5 w-auto object-contain opacity-90"
           />
         </div>
         <div className="text-xs text-on-dark-40">
@@ -238,7 +235,7 @@ export default function Login() {
           </a>
         </div>
         <div className="text-xs text-on-dark-30">
-          © 2026 LAHHM. Todos os direitos reservados.
+          © 2026 GovPro. Todos os direitos reservados.
         </div>
       </footer>
     </div>

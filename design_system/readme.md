@@ -1,6 +1,6 @@
-# LAHHM · GeraDocs Design System
+# GovPro · GeraDocs Design System
 
-GeraDocs is LAHHM's GovTech SaaS product: a web platform used by Brazilian municipal governments (prefeituras) and public agencies to automate the drafting of public-procurement documents under Lei 14.133/21. It generates **six document types, in the canonical order of a real contratação**: Cotação de Mercado → ETP → Mapa de Riscos → TR → Edital → Contrato. The DFD is an input (attached and AI-verified), and the PCA is agency-level context — neither is generated.
+GeraDocs is GovPro's GovTech SaaS product (GovPro was formerly named LAHHM): a web platform used by Brazilian municipal governments (prefeituras) and public agencies to automate the drafting of public-procurement documents under Lei 14.133/21. It generates **six document types, in the canonical order of a real contratação**: Cotação de Mercado → ETP → Mapa de Riscos → TR → Edital → Contrato. The DFD is an input (attached and AI-verified), and the PCA is agency-level context — neither is generated.
 
 It replaces manual Word files and scattered templates with a guided, step-by-step flow: create a contratação process (the documents on offer depend on the modalidade — direct contracting has no Edital), attach/verify the DFD with AI feedback, fill each document section by section with automatic validations, manage ATA adhesion (attach an ATA for AI review and/or delegate ATA search to the model), send for approval through a real state machine (legal review under Art. 53, then the manager approves / rejects / requests retification with per-section annotations, versioning each document), and export final DOCX/PDF with the municipality's letterhead. The six process statuses are a fixed vocabulary — the flow never invents new ones.
 
@@ -11,10 +11,10 @@ Which documents exist, in what order, on what legal basis: `docs/fluxo-contratac
 ## Sources
 
 - Codebase (ground truth): mounted local folder `GeraDocs SaaS Platform Prototype (Copy)/` — Vite + React + TS prototype (`src/components/{Sidebar,Header,StatusBadge}.tsx`, `src/views/{Dashboard,ProcessList,NewProcess,ETPForm,Approvals,Documents,Settings,DFDReview}.tsx`, `src/index.css`). Styling is inline-style-based; `index.css` holds the palette and font imports.
-- Logos: `uploads/geradocs_logo_.jpeg` (product mark), `uploads/laam_logo_.jpeg` (LAHHM company wordmark) → copied to `assets/`.
+- Logos: brand approved on 28/10/2026 (option A · Faceta — GovPro "G" with the green-yellow arrow; GeraDocs sheet with the same band and fold). Official files in `assets/` (SVG + PNG); the full brand package (manual, all sizes, letterheads, document stamps) lives outside the repo, in `marcas-govpro-geradocs/marca-aprovada/`. The previous LAHHM/GeraDocs art was retired.
 - Original prototype prompts (product spec) provided by the user in chat.
 
-Note: the prototype's sidebar wordmark reads "ContrataDoc"; per the user, the product name is **GeraDocs** and the company is **LAHHM** — the design system uses GeraDocs/LAHHM.
+Note: the prototype's sidebar wordmark reads "ContrataDoc"; per the user, the product name is **GeraDocs** and the company is **GovPro** — the design system uses GeraDocs/GovPro.
 
 ## CONTENT FUNDAMENTALS
 
@@ -56,7 +56,7 @@ Note: the prototype's sidebar wordmark reads "ContrataDoc"; per the user, the pr
 - Check marks: white 3–3.5 stroke polyline `20 6 9 17 4 12` inside filled royal/green circles/squares.
 - Emoji are not used anywhere; quick-action and modalidade rows use the same monochrome line icons (royal on white surfaces, electric #38BDF8 on navy).
 - Unicode arrows (→ ←) inside button/link labels are standard.
-- **Logos** (`assets/`) — naming convention `<brand>-<mark|logo>[-white].png`: **`mark`** = símbolo/glyph only, **`logo`** = símbolo + wordmark; `-white` = versão prata para fundo escuro. So: `geradocs-mark[-white].png` (blue gradient document glyph with check), `geradocs-logo[-white].png` (glyph + "GeraDocs"), `lahhm-mark[-white].png` (square "L" monogram), `lahhm-logo[-white].png` (monogram + "LAHHM"). Transparent PNGs. In the app: the sidebar uses `geradocs-mark-white.png` (34px), the login uses `geradocs-logo-white.png` + `lahhm-logo-white.png`, and the browser tab favicon is `geradocs-mark.png` (`app/icon.png`).
+- **Logos** (`assets/`) — naming convention `<brand>-<mark|logo>[-white].{svg,png}`: **`mark`** = símbolo only, **`logo`** = símbolo + nome (horizontal), **`endosso`** = "GeraDocs · uma solução GovPro"; `-white` = versão para fundo escuro. Files: `geradocs-{mark,logo}[-white]`, `govpro-{mark,logo}[-white]`, `geradocs-endosso-govpro[-white]`, plus `geradocs-carregando[-white].gif` (loading animation on solid white/navy). The wordmark is Montserrat ExtraBold in caps, two-tone (GERA/GOV navy `#0A1F44`, DOCS/PRO blue `#1F5FD6`), **already converted to curves in the SVG** — never retype it in another font; use the SVG (crisp at any size) or the PNG. In the app: the sidebar uses `public/geradocs-logo-white.svg` (32px) + "Uma solução GovPro"; login and password reset use `geradocs-logo-white.svg` (44px) and credit `govpro-logo-white.svg`; the favicon is `app/icon.png` + `app/apple-icon.png` + `app/favicon.ico` (symbol on the navy tile). The animated loading symbol is the `MarcaCarregando` component (SVG, transparent), colored by the `--color-marca-*` tokens.
 
 ## Fonts
 
@@ -66,7 +66,7 @@ All three families are Google Fonts, loaded via `@import` in `tokens/typography.
 
 - `styles.css` — global entry; imports everything under `tokens/`.
 - `tokens/` — `colors.css`, `typography.css`, `layout.css` (spacing, radii, borders, motion).
-- `assets/` — 8 artes: `geradocs-{mark,logo}[-white].png` e `lahhm-{mark,logo}[-white].png` (ver convenção acima).
+- `assets/` — artes da marca aprovada em SVG e PNG: `geradocs-{mark,logo}[-white]`, `govpro-{mark,logo}[-white]`, `geradocs-endosso-govpro[-white]` e `geradocs-carregando[-white].gif` (ver convenção acima).
 - `components/core/` — Button, StatusBadge, DocPill, Tag, Toggle, Input, Textarea, Select, MoneyInput, QuantityInput, FormField, FileUpload, ChoiceCard, StatCard, SectionBlock, ValidationMsg, StepIndicator, ProgressBar, SearchInput, FilterTabs.
 - `components/chrome/` — Sidebar, Header (app shell).
 - `ui_kits/geradocs/` — interactive recreation of the app (Dashboard, Processos, Novo Processo wizard, ETP editor).
@@ -77,9 +77,9 @@ All three families are Google Fonts, loaded via `@import` in `tokens/typography.
 
 - `ProgressBar`, `SearchInput`, `FilterTabs` — extracted from repeated inline patterns in the source views (ETP progress, header/list search, ProcessList status filter), not inventions.
 - `MoneyInput` / `QuantityInput` — the masked pt-BR money and quantity fields (`components/forms/MoneyInput.prompt.md`). They own the formatting so no screen can forget it.
-- **Login / auth screen** — `components/chrome/Login.prompt.md`. Outside the app shell, navy gradient background, product mark + LAHHM credit. `Input` gained `type` (`text`/`password`/`email`), `autoComplete` and `onKeyDown` (backward-compatible) for the credential fields.
+- **Login / auth screen** — `components/chrome/Login.prompt.md`. Outside the app shell, navy gradient background, official GeraDocs logo + GovPro credit. `Input` gained `type` (`text`/`password`/`email`), `autoComplete` and `onKeyDown` (backward-compatible) for the credential fields.
 - **Perfil de acesso** — o chip do perfil (`admin_geral`/`coordenador`/`servidor`) usa `Tag` (`warning`/`success`/`neutral`); é distinto do vocabulário de status de processo.
-- App-side extensions with no `.prompt.md` here, approved and registered in the app's `docs/decisions.md` §17: `Dropdown` (+ `DropdownOption`), `CheckMark`. Conversely, `CardPanel` is specified in `SectionBlock.prompt.md` but is not exported by the app barrel.
+- App-side extensions with no `.prompt.md` here, approved and registered in the app's `docs/decisions.md` §17: `Dropdown` (+ `DropdownOption`), `CheckMark`, `MarcaCarregando` (animated brand symbol for loading states). Conversely, `CardPanel` is specified in `SectionBlock.prompt.md` but is not exported by the app barrel.
 
 ### Known gaps
 

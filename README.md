@@ -1,6 +1,6 @@
 # GeraDocs — Frontend
 
-Aplicação web do **GeraDocs**, SaaS GovTech da **LAHHM** que automatiza, com IA, os documentos da fase preparatória da contratação pública sob a **Lei 14.133/2021**: o DFD é anexado e verificado, e a plataforma gera **Cotação de Mercado → ETP → Mapa de Riscos → TR → Edital → Contrato**, na ordem do fluxo real, até a exportação DOCX/PDF com o timbre da entidade. O protocolo e a aprovação acontecem no sistema de processo administrativo da entidade, não aqui.
+Aplicação web do **GeraDocs**, SaaS GovTech da **GovPro** que automatiza, com IA, os documentos da fase preparatória da contratação pública sob a **Lei 14.133/2021**: o DFD é anexado e verificado, e a plataforma gera **Cotação de Mercado → ETP → Mapa de Riscos → TR → Edital → Contrato**, na ordem do fluxo real, até a exportação DOCX/PDF com o timbre da entidade. O protocolo e a aprovação acontecem no sistema de processo administrativo da entidade, não aqui.
 
 > Que documentos existem, em que ordem, com que fundamento legal e quais são as lacunas conhecidas: **[docs/fluxo-contratacao.md](docs/fluxo-contratacao.md)** — leia antes de mexer em documentos, wizard ou hub do processo.
 
@@ -11,7 +11,7 @@ O projeto está em integração progressiva com o backend Spring Boot. Autentica
 - **Next.js 16** (App Router, Turbopack) · **React 19** · **TypeScript strict**
 - **Tailwind CSS v4** utility-first — tokens do DS mapeados via `@theme` (fonte única de verdade); ver [docs/estilizacao.md](docs/estilizacao.md)
 - **TanStack Query 5** — dados via hooks, com integração HTTP progressiva e mocks para módulos ainda não migrados
-- **Design System LAHHM/GeraDocs** — componentes portados a TSX (sem bibliotecas de UI de terceiros)
+- **Design System GovPro/GeraDocs** — componentes portados a TSX (sem bibliotecas de UI de terceiros)
 - Fontes via `next/font`: Plus Jakarta Sans (display), Inter (UI), JetBrains Mono (IDs/valores)
 
 ## Comandos
@@ -108,7 +108,7 @@ As áreas administrativas também usam a API protegida: `GET`/`POST` de organiza
 
 ## Login e perfis de acesso
 
-O app exige uma conta ativa cadastrada no backend e login por CPF + senha. Três perfis: **Administrador Geral** (LAHHM — gere entidades e servidores), **Coordenador** (gere a sua entidade + faz o fluxo de servidor) e **Servidor** (processos e documentos). A API define o perfil, a organização ativa, os papéis de workflow e as permissões da sessão. Detalhe e matriz RBAC: [docs/perfis-acesso.md](docs/perfis-acesso.md).
+O app exige uma conta ativa cadastrada no backend e login por CPF + senha. Três perfis: **Administrador Geral** (GovPro — gere entidades e servidores), **Coordenador** (gere a sua entidade + faz o fluxo de servidor) e **Servidor** (processos e documentos). A API define o perfil, a organização ativa, os papéis de workflow e as permissões da sessão. Detalhe e matriz RBAC: [docs/perfis-acesso.md](docs/perfis-acesso.md).
 
 ## Fluxo completo simulável com mocks
 

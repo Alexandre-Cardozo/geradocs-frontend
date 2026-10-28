@@ -1,5 +1,5 @@
 // GeraDocs UI kit — Dashboard (recreation of src/views/Dashboard.tsx)
-const DS = window.LAHHMGeraDocsDesignSystem_11bcef;
+const DS = window.GovProGeraDocsDesignSystem_11bcef;
 
 function GDIcon({ d, poly, extra, size = 20, sw = 2 }) {
   return (

@@ -2,7 +2,7 @@
    GeraDocs — Tailwind CSS v4 (utility-first)
 
    O bloco @theme abaixo é a FONTE ÚNICA DE VERDADE dos tokens do design system
-   LAHHM/GeraDocs (portados de design_system/tokens/*). Cada token vira ao mesmo
+   GovPro/GeraDocs (portados de design_system/tokens/*). Cada token vira ao mesmo
    tempo uma CSS variable (var(--color-royal)) e utilities Tailwind (bg-royal,
    text-royal, border-royal...). Valores crus (hex/px) só existem aqui.
 
@@ -32,6 +32,22 @@
   --color-electric: #38BDF8;
   --color-slate: #64748B;
   --color-ice: #F8FAFC;
+
+  /*
+   * ── Cores — marca GovPro/GeraDocs ───────────────────────────────────────
+   *
+   * As cores do símbolo aprovado (opção A · Faceta, manual da marca de
+   * 28/10/2026). Servem ao desenho da marca — o símbolo animado de
+   * carregamento —, e não à interface: botões, links e estados continuam nos
+   * tokens acima.
+   */
+  --color-marca-azul-marinho: #0A1F44;
+  --color-marca-azul: #1F5FD6;
+  --color-marca-faceta-clara: #2C78EE;
+  --color-marca-faceta-escura: #0E3A94;
+  --color-marca-faceta-media: #1650C4;
+  --color-marca-amarelo: #FFC72C;
+  --color-marca-verde: #22B455;
 
   /*
    * ── Cores — neutros ──────────────────────────────────────────────────────
@@ -206,6 +222,29 @@
     telas que pedem coluna estreita, e essas dizem isso no próprio contêiner.
   */
   --container-review: 820px;
+
+  /*
+   * ── Animação da marca ────────────────────────────────────────────────────
+   *
+   * Varredura circular que desenha o símbolo, segura e apaga — o movimento do
+   * GIF de carregamento da marca. Anima o traço da máscara de `MarcaCarregando`
+   * (pathLength 100). Sem `fill-mode`: com movimento reduzido a animação dura
+   * 0,01 ms e o traço volta ao valor de base, deixando o símbolo inteiro.
+   */
+  --animate-marca-varredura: marca-varredura 1.8s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+
+  @keyframes marca-varredura {
+    0% {
+      stroke-dashoffset: 100;
+    }
+    42%,
+    72% {
+      stroke-dashoffset: 0;
+    }
+    100% {
+      stroke-dashoffset: -100;
+    }
+  }
 }
 
 /*
