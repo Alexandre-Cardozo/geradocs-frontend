@@ -151,11 +151,12 @@ export default function Sidebar({
     >
       {/*
         Identificação em uma linha: o logo do GeraDocs, um filete e o logo da
-        GovPro — o produto e a empresa, sem texto entre eles. Tem a altura do
-        cabeçalho (h-15), com tudo centralizado, e a faixa da marca cai na linha
-        do filete dele. O "uma solução" fica no nome acessível do logo.
+        GovPro — o produto e a empresa, sem texto entre eles. Ocupa a largura
+        da barra de ponta a ponta, as mesmas pontas da faixa da marca, que cai na
+        linha do filete do cabeçalho (h-15). O "uma solução" fica no nome
+        acessível do logo.
       */}
-      <div className="relative flex h-15 shrink-0 items-center gap-3 px-5">
+      <div className="relative flex h-15 shrink-0 items-center justify-between px-5">
         <Image
           src={geradocsLogo}
           alt="GeraDocs"
