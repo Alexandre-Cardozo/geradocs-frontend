@@ -66,10 +66,10 @@ export default function Login() {
             priority
             className="h-12 w-auto object-contain"
           />
-          <FaixaDaMarca className="mt-4 w-32" />
           <p className="m-0 mt-3 font-marca text-2xs font-semibold tracking-slogan text-on-dark-65 uppercase">
             Contratações públicas inteligentes
           </p>
+          <FaixaDaMarca className="mt-4 w-80" />
         </div>
 
         {/* Card de login */}
