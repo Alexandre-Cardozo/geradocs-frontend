@@ -150,25 +150,26 @@ export default function Sidebar({
       }`}
     >
       {/*
-        Identificação: o logo do GeraDocs e, embaixo, a assinatura de endosso
-        "uma solução GovPro" — a mesma do login e do carimbo dos documentos.
-        A faixa da marca fecha o bloco no lugar do filete cinza.
+        Identificação: o logo do GeraDocs e, embaixo, o endosso "uma solução
+        GovPro" — o mesmo do login e do carimbo dos documentos. Compacta: tem a
+        altura do cabeçalho (h-15), e a faixa da marca cai na mesma linha do
+        filete dele, em vez de disputar atenção com a navegação.
       */}
-      <div className="px-5 pt-6">
+      <div className="relative flex h-15 shrink-0 flex-col items-start justify-center gap-1 px-5">
         <Image
           src={geradocsLogo}
           alt="GeraDocs"
-          width={151}
-          height={32}
+          width={104}
+          height={22}
           priority
-          className="h-8 w-auto object-contain"
+          className="h-5.5 w-auto object-contain"
         />
-        <div className="mt-2 pl-10">
+        <div className="pl-7">
           <UmaSolucao>
-            <Image src={govproLogo} alt="GovPro" width={55} height={14} className="h-3.5 w-auto object-contain" />
+            <Image src={govproLogo} alt="GovPro" width={40} height={10} className="h-2.5 w-auto object-contain" />
           </UmaSolucao>
         </div>
-        <FaixaDaMarca className="mt-5" />
+        <FaixaDaMarca className="absolute inset-x-5 bottom-0" />
       </div>
 
       {/* Entidade atual — a da sessão; para o admin geral, o contexto GovPro */}
