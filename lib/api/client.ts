@@ -50,6 +50,7 @@ import {
   concluirDocumento,
   corpoDaVersaoVigente,
   gerarTextoDaSecao,
+  pedirTextoDaSecao,
   excluirSecao,
   historicoDeVersoes,
   previaDaTrocaDeModelo,
@@ -411,12 +412,13 @@ export async function gerarSecao(
   tipo: TipoDocumento,
   secaoId: string,
   rascunho?: string,
-): Promise<SecaoDocumento> {
+  orientacao?: string,
+): Promise<SecaoDocumento & { avisosDaOrientacao: string[] }> {
   const documento = await abrirDocumento(processoId, tipo)
   const secao = documento.secoes.find((s) => s.id === secaoId)
   if (!secao) throw new Error(`Seção ${secaoId} não encontrada`)
-  const texto = await gerarTextoDaSecao(processoId, tipo, secaoId, rascunho)
-  return { ...secao, conteudo: texto, status: statusAposEditar(texto) }
+  const { texto, avisos } = await pedirTextoDaSecao(processoId, tipo, secaoId, rascunho, "redacao", orientacao)
+  return { ...secao, conteudo: texto, status: statusAposEditar(texto), avisosDaOrientacao: avisos }
 }
 
 /**

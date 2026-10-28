@@ -21,6 +21,7 @@ import {
 import { CATALOGO, porSlug } from "@/lib/documentos"
 import { rotaDoDocumentoGerado } from "@/lib/documentos/rotas"
 import { CaminhosDaSecao } from "@/components/documentos/caminhos-da-secao"
+import { OrientacaoDaIaContexto } from "@/components/documentos/orientacao-da-ia"
 import { DispensaDeSecao } from "@/components/documentos/dispensa-de-secao"
 import { EtapaFinal } from "@/components/documentos/etapa-final"
 import { AlteracoesDaMinuta, JustificativaDoDesvio } from "@/components/documentos/justificativa-da-minuta"
@@ -105,6 +106,17 @@ export default function EditorDocumento() {
     searchParams.get(PARAMETRO_DA_ETAPA_FINAL) === VALOR_DA_ETAPA_FINAL ? ETAPA_FINAL : "1",
   )
   const [rascunho, setRascunho] = useState("")
+  /*
+    A orientação à IA é da seção em que foi escrita (§91): trocar de seção a
+    deixa para trás — e ela não vai a nenhuma outra.
+  */
+  const [orientacao, setOrientacao] = useState<{ secao: string; texto: string; avisos: string[]; erro?: string }>({
+    secao: activeSection,
+    texto: "",
+    avisos: [],
+  })
+  const orientacaoDaSecao =
+    orientacao.secao === activeSection ? orientacao : { secao: activeSection, texto: "", avisos: [] }
   const [saved, setSaved] = useState(false)
   const secaoAtivaRef = useRef(activeSection)
   /** Para o caminho manual levar o cursor ao campo, em vez de só apontá-lo. */
@@ -226,11 +238,20 @@ export default function EditorDocumento() {
     const secaoId = active.id
     // O que está na tela vai junto: rascunho montado pela plataforma ou texto
     // escrito à mão. É dele que o modelo parte.
+    const texto = orientacaoDaSecao.texto
     gerar.mutate(
-      { secaoId, rascunho },
+      { secaoId, rascunho, orientacao: texto },
       {
         onSuccess: (secaoGerada) => {
           if (secaoAtivaRef.current === secaoId) setRascunho(secaoGerada.conteudo)
+          setOrientacao({ secao: secaoId, texto, avisos: secaoGerada.avisosDaOrientacao })
+        },
+        // Com orientação, a recusa da curadoria aparece no próprio campo, com o
+        // motivo; sem ela, a falha é da geração, e vai como aviso.
+        onError: (erro) => {
+          const mensagem = erro instanceof Error ? erro.message : "Não foi possível gerar com IA."
+          if (texto.trim() !== "") setOrientacao({ secao: secaoId, texto, avisos: [], erro: mensagem })
+          else showToast(mensagem)
         },
       },
     )
@@ -275,7 +296,17 @@ export default function EditorDocumento() {
   const modelos = documento.data?.modelos ?? []
   const podeTrocarModelo = modelos.some((modelo) => !modelo.atual)
 
+  // A orientação da seção aberta, para o cartão "Gerar com IA" — esteja ele no
+  // cartão genérico ou num painel especial.
+  const contextoDaOrientacao = {
+    texto: orientacaoDaSecao.texto,
+    onTexto: (texto: string) => setOrientacao({ secao: activeSection, texto, avisos: [] }),
+    avisos: orientacaoDaSecao.avisos,
+    ...(orientacaoDaSecao.erro ? { erro: orientacaoDaSecao.erro } : {}),
+  }
+
   return (
+    <OrientacaoDaIaContexto.Provider value={contextoDaOrientacao}>
     <div className="flex flex-col lg:h-full lg:flex-row lg:overflow-hidden">
       {/* Rail de seções */}
       <div className="flex w-full shrink-0 flex-col overflow-hidden border-b border-border bg-surface lg:w-70 lg:min-w-70 lg:border-r lg:border-b-0">
@@ -801,6 +832,7 @@ export default function EditorDocumento() {
         </div>
       </div>
     </div>
+    </OrientacaoDaIaContexto.Provider>
   )
 }
 

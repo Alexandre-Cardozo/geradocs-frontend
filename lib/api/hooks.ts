@@ -386,8 +386,8 @@ export function useTrocarModelo(processoId: string, tipo: TipoDocumento) {
 export function useGerarSecao(processoId: string, tipo: TipoDocumento) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (input: { secaoId: string; rascunho?: string }) =>
-      api.gerarSecao(processoId, tipo, input.secaoId, input.rascunho),
+    mutationFn: (input: { secaoId: string; rascunho?: string; orientacao?: string }) =>
+      api.gerarSecao(processoId, tipo, input.secaoId, input.rascunho, input.orientacao),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: chaves.secoes(processoId, tipo) })
     },

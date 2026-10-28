@@ -4,6 +4,8 @@ import { Button } from "@/components/ui"
 import { IconFileText, IconSparkles } from "@/components/ui/icons"
 import { useIaDisponivel } from "@/lib/api/hooks"
 
+import { CampoDeOrientacao } from "@/components/documentos/orientacao-da-ia"
+
 /**
  * Os atalhos para preencher a seção: o rascunho da plataforma e a IA.
  *
@@ -59,6 +61,8 @@ export function CaminhosDaSecao({
       <p id="motivo-da-ia" className="m-0 flex-1 text-sm text-text-3">
         {motivo}
       </p>
+      {/* Sem IA disponível, não há a quem orientar. */}
+      {ia.data === true && <CampoDeOrientacao />}
       {/*
         Os dois lado a lado: o rascunho serve a quem não usa o modelo, e a IA a
         quem usa. Nenhum some depois de a seção ter texto — pedir a redação a

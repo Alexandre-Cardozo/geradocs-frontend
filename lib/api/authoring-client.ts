@@ -385,7 +385,26 @@ export async function gerarTextoDaSecao(
   rascunho?: string,
   modo: "redacao" | "revisao" = "redacao",
 ): Promise<string> {
-  const gerada = await requisicaoProtegida<{ text: string }>(
+  return (await pedirTextoDaSecao(processoId, tipo, secaoId, rascunho, modo)).texto;
+}
+
+/**
+ * O pedido de redação com a orientação do servidor para esta seção (ADR-057 do
+ * back-end).
+ *
+ * A orientação vai só neste pedido — não é gravada nem vai a outra seção. O
+ * servidor faz a curadoria: recusa com o motivo o que é problemático e devolve
+ * em `avisos` o que é sensível e seguiu.
+ */
+export async function pedirTextoDaSecao(
+  processoId: string,
+  tipo: TipoDocumento,
+  secaoId: string,
+  rascunho?: string,
+  modo: "redacao" | "revisao" = "redacao",
+  orientacao?: string,
+): Promise<{ texto: string; avisos: string[] }> {
+  const gerada = await requisicaoProtegida<{ text: string; guidanceWarnings?: string[] }>(
     `${rota(processoId, tipo)}/sections/${encodeURIComponent(secaoId)}/generate`,
     {
       method: "POST",
@@ -395,11 +414,14 @@ export async function gerarTextoDaSecao(
       body: JSON.stringify(
         modo === "revisao"
           ? { draft: rascunho, mode: "REVIEW" }
-          : { draft: rascunho?.trim() ? rascunho : null },
+          : {
+              draft: rascunho?.trim() ? rascunho : null,
+              ...(orientacao?.trim() ? { guidance: orientacao } : {}),
+            },
       ),
     },
   );
-  return gerada.text;
+  return { texto: gerada.text, avisos: gerada.guidanceWarnings ?? [] };
 }
 
 /** Natureza da retificação, no vocabulário do contrato. */
