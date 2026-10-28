@@ -1254,3 +1254,12 @@ A prévia contava as seções da **minuta nova** ("1 recebe o texto · 19 ficam 
 - **Depois o texto já escrito**, só o que acontece: recebe o texto da seção do mesmo assunto, junta o texto de mais de uma, volta com o texto que já tinha; o que não tem seção do mesmo assunto fica guardado. Sem nada escrito: "só a estrutura muda".
 - As seções em branco vêm por último ("19 seções começam em branco"), em vez de dividir a linha com o que recebe texto.
 - Os cartões da troca dizem quantas seções cada minuta tem, e a confirmação diz quantas o documento passa a ter. Concordância de número em tudo ("1 seção", e não "1 seções").
+
+## 91. Orientação do servidor à IA, por seção, com curadoria do sistema
+
+No cartão "Gerar com IA" de cada seção, **Orientar a IA (opcional)**: um campo recolhido para quem elabora dizer o que a seção deve enfatizar (ADR-057 do back-end).
+
+- **Só para aquela seção:** a orientação vai no pedido da seção aberta e não é gravada; trocar de seção a deixa para trás, e nenhuma outra seção a recebe.
+- **Curadoria do sistema, sem aprovação de ninguém:** o servidor confere a orientação antes de mandar ao modelo. O que é claramente problemático — dado pessoal, tentativa de mudar as regras da IA, pedido vedado em contratação pública, ofensa — volta recusado, com o motivo no próprio campo, para reescrever. O que é sensível mas pode ser legítimo (marca, exclusividade, urgência, contratação direta) segue, e o aviso com o artigo aparece no campo.
+- **Na tela:** contador de 500 caracteres, contado como o servidor conta; o aviso "Não inclua dados pessoais"; o campo só aparece com IA disponível.
+- A falha da geração sem orientação passou a aparecer como aviso — antes, o clique falhava em silêncio.

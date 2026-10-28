@@ -138,6 +138,20 @@ describe("gerar texto da seção", () => {
     expect(gravou).toBe(false)
   })
 
+  it("os avisos da curadoria da orientação voltam com o texto (§91)", async () => {
+    servidor.use(
+      http.post(`${urlDaApi}/procurement-processes/:id/documents/:tipo/sections/:secao/generate`, () =>
+        HttpResponse.json({ text: "Texto.", guidanceWarnings: ["Marca só com justificativa."] }),
+      ),
+    )
+    const { pedirTextoDaSecao } = await carregarClienteLimpo()
+
+    expect(await pedirTextoDaSecao(PROCESSO, "ETP", "1", undefined, "redacao", "Indicar a marca.")).toEqual({
+      texto: "Texto.",
+      avisos: ["Marca só com justificativa."],
+    })
+  })
+
   it("o que já está escrito vai junto — e branco não vira rascunho", async () => {
     let corpo: Record<string, unknown> | undefined
     servidor.use(
@@ -163,6 +177,13 @@ describe("gerar texto da seção", () => {
     await gerarTextoDaSecao(PROCESSO, "ETP", "1")
     expect(corpo?.draft).toBeNull()
     expect(corpo).not.toHaveProperty("mode")
+
+    // A orientação do servidor vai junto só quando há (§91).
+    const { pedirTextoDaSecao } = await carregarClienteLimpo()
+    await pedirTextoDaSecao(PROCESSO, "ETP", "1", "Texto.", "redacao", "Enfatizar lotes.")
+    expect(corpo).toEqual({ draft: "Texto.", guidance: "Enfatizar lotes." })
+    await pedirTextoDaSecao(PROCESSO, "ETP", "1", "Texto.", "redacao", "   ")
+    expect(corpo).toEqual({ draft: "Texto." })
 
     // Na revisão, o texto é o que se revisa, e o modo vai declarado (§87).
     await gerarTextoDaSecao(PROCESSO, "ETP", "1", "Texto a revisar.", "revisao")
