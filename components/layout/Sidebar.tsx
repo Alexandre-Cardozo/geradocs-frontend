@@ -150,25 +150,24 @@ export default function Sidebar({
       }`}
     >
       {/*
-        Identificação: o logo do GeraDocs e, embaixo, o endosso "uma solução
-        GovPro" — o mesmo do login e do carimbo dos documentos. Compacta: tem a
-        altura do cabeçalho (h-15), e a faixa da marca cai na mesma linha do
-        filete dele, em vez de disputar atenção com a navegação.
+        Identificação em uma linha, no desenho do endosso aprovado — "GERADOCS |
+        uma solução GOVPRO", o mesmo do carimbo dos documentos: o logo, um
+        filete e o endosso empilhado. Tem a altura do cabeçalho (h-15), com tudo
+        centralizado, e a faixa da marca cai na linha do filete dele.
       */}
-      <div className="relative flex h-15 shrink-0 flex-col items-start justify-center gap-1 px-5">
+      <div className="relative flex h-15 shrink-0 items-center gap-3 px-5">
         <Image
           src={geradocsLogo}
           alt="GeraDocs"
           width={104}
           height={22}
           priority
-          className="h-5.5 w-auto object-contain"
+          className="h-5.5 w-auto shrink-0 object-contain"
         />
-        <div className="pl-7">
-          <UmaSolucao>
-            <Image src={govproLogo} alt="GovPro" width={40} height={10} className="h-2.5 w-auto object-contain" />
-          </UmaSolucao>
-        </div>
+        <span className="h-6 w-px shrink-0 bg-on-dark-20" aria-hidden />
+        <UmaSolucao empilhado>
+          <Image src={govproLogo} alt="GovPro" width={44} height={11} className="h-2.75 w-auto object-contain" />
+        </UmaSolucao>
         <FaixaDaMarca className="absolute inset-x-5 bottom-0" />
       </div>
 
