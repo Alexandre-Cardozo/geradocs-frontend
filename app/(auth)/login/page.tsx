@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import geradocsLogo from "@/public/geradocs-logo-white.svg";
 import govproLogo from "@/public/govpro-logo-white.svg";
 
+import { FaixaDaMarca, FaixasDeCanto } from "@/components/shared/marca";
 import { Button, FormField, Input, ValidationMsg } from "@/components/ui";
 import { IconArrowRight, IconCheckCircle } from "@/components/ui/icons";
 import { useLogin, useRecuperarSenha, useSessao } from "@/lib/api/hooks";
@@ -51,35 +52,36 @@ export default function Login() {
         className="pointer-events-none fixed top-[-18%] left-1/2 size-[600px] -translate-x-1/2 rounded-full bg-royal/10 blur-3xl"
         aria-hidden
       />
+      <FaixasDeCanto />
 
       {/* Conteúdo central — marca + card, centralizados no espaço disponível */}
       <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 py-4">
-        {/* Marca do produto — logo oficial (símbolo + nome) + tagline entre filetes */}
-        <div className="mb-5 flex flex-col items-center text-center">
+        {/* Marca do produto — logo oficial, a faixa da marca e o slogan */}
+        <div className="mb-6 flex flex-col items-center text-center">
           <Image
             src={geradocsLogo}
             alt="GeraDocs"
-            width={208}
-            height={44}
+            width={227}
+            height={48}
             priority
-            className="h-11 w-auto object-contain"
+            className="h-12 w-auto object-contain"
           />
-          <div className="mt-3 flex items-center gap-3">
-            <span className="h-px w-7 bg-on-dark-border" />
-            <span className="text-2xs font-semibold tracking-caps-wide text-electric uppercase">
-              Contratações Públicas · Lei 14.133/21
-            </span>
-            <span className="h-px w-7 bg-on-dark-border" />
-          </div>
+          <FaixaDaMarca className="mt-4 w-32" />
+          <p className="m-0 mt-3 font-marca text-2xs font-semibold tracking-slogan text-on-dark-65 uppercase">
+            Contratações públicas inteligentes
+          </p>
         </div>
 
         {/* Card de login */}
         <div className="w-full max-w-md rounded-card border border-on-dark-border bg-surface p-6 sm:p-7">
           {!modoRecuperar ? (
             <>
-              <h1 className="m-0 mb-4 text-center font-display text-lg font-extrabold tracking-tight text-text-1">
+              <h1 className="m-0 text-center font-display text-lg font-extrabold tracking-tight text-text-1">
                 Acesse sua conta
               </h1>
+              <p className="m-0 mt-1 mb-5 text-center text-sm text-balance text-text-3">
+                Documentos da contratação pública, conforme a Lei 14.133/21.
+              </p>
 
               <div className="flex flex-col gap-3.5">
                 <FormField label={IDENTIFICADOR.rotulo}>
