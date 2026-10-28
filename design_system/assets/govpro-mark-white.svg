@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="GovPro">
+<title>GovPro</title>
+<g transform="translate(-11.19 -16.43) scale(5.2391)"><path fill="#4C93FF" d="M50 10H94L82 30H50A22 22 0 0 0 41.02 72.08L66 62V94H50A42 42 0 0 1 50 10Z"/>
+    <clipPath id="ga2"><path d="M50 10H94L82 30H50A22 22 0 0 0 41.02 72.08L66 62V94H50A42 42 0 0 1 50 10Z"/></clipPath>
+    <g clip-path="url(#ga2)">
+      <path fill="#1F5FD6" d="M8 52C16 38 34 30 64 30L50 52L41.02 72.08C28 72 15 64 8 52Z"/>
+      <path fill="#2E6FE6" d="M66 62L66 100L0 100L0 88.7Z"/>
+    </g>
+    <path fill="#F0A500" d="M34 56L48 42L73 56Z"/><path fill="#FFD24D" d="M48 42H94L73 56Z"/>
+    <path fill="#2BC062" d="M73 56L94 42V78Z"/><path fill="#0E8A3E" d="M73 56L94 78L73 93Z"/></g>
+</svg>

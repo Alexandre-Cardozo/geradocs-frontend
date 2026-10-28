@@ -1,5 +1,5 @@
 // GeraDocs UI kit — ETP editor (recreation of src/views/ETPForm.tsx, abbreviated)
-const DSE = window.LAHHMGeraDocsDesignSystem_11bcef;
+const DSE = window.GovProGeraDocsDesignSystem_11bcef;
 
 const etpSections = [
   { id: "1", title: "Descrição da Necessidade", status: "completo", required: true },

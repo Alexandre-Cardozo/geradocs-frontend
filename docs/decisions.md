@@ -25,7 +25,7 @@ A sub-rota opcional `/[tipo]/[secao]` foi dispensada nesta fase: a troca de seç
 
 > **Atualizado (jul/2026):** a estilização migrou para **Tailwind CSS v4 utility-first**. A decisão detalhada e a garantia de fonte única de verdade estão no **item 10**; o guia prático em `docs/estilizacao.md`. O texto abaixo descreve a abordagem original (inline styles), preservado como histórico.
 
-~~O DS LAHHM/GeraDocs é distribuído como componentes com estilos inline referenciando tokens (`var(--...)`). Mantivemos esse padrão nos ports TSX e nas views~~ — substituído por classes utilitárias do Tailwind, cujos valores vêm do `@theme` (mesmos tokens). Os tints/gradientes que eram "Extensões do app" em `globals.css` viraram tokens do `@theme`; os pseudo-estados que eram classes `gd-*` viraram utilities `hover:*`.
+~~O DS GovPro/GeraDocs é distribuído como componentes com estilos inline referenciando tokens (`var(--...)`). Mantivemos esse padrão nos ports TSX e nas views~~ — substituído por classes utilitárias do Tailwind, cujos valores vêm do `@theme` (mesmos tokens). Os tints/gradientes que eram "Extensões do app" em `globals.css` viraram tokens do `@theme`; os pseudo-estados que eram classes `gd-*` viraram utilities `hover:*`.
 
 ## 3. Enforcement de aderência
 
@@ -95,7 +95,7 @@ Revisão multi-ângulo (skill code-review) usando as skills do repo (`.agents/sk
 
 ## 12. Protótipo preservado
 
-O protótipo Vite original foi mantido em `prototype/` como referência visual durante a migração e **removido do repositório** após a conclusão das 8 telas (permanece disponível no histórico do git, commit `131c240`). A especificação visual vigente é o design system em `design_system/` (renomeado de `LAHHM___GeraDocs_Design_System/`).
+O protótipo Vite original foi mantido em `prototype/` como referência visual durante a migração e **removido do repositório** após a conclusão das 8 telas (permanece disponível no histórico do git, commit `131c240`). A especificação visual vigente é o design system em `design_system/` (renomeado de `GovPro___GeraDocs_Design_System/`).
 
 ## 13. Catálogo de documentos como fonte única (`lib/documentos/`)
 
@@ -1263,6 +1263,16 @@ No cartão "Gerar com IA" de cada seção, **Orientar a IA (opcional)**: um camp
 - **Curadoria do sistema, sem aprovação de ninguém:** o servidor confere a orientação antes de mandar ao modelo. O que é claramente problemático — dado pessoal, tentativa de mudar as regras da IA, pedido vedado em contratação pública, ofensa — volta recusado, com o motivo no próprio campo, para reescrever. O que é sensível mas pode ser legítimo (marca, exclusividade, urgência, contratação direta) segue, e o aviso com o artigo aparece no campo.
 - **Na tela:** contador de 500 caracteres, contado como o servidor conta; o aviso "Não inclua dados pessoais"; o campo só aparece com IA disponível.
 - A falha da geração sem orientação passou a aparecer como aviso — antes, o clique falhava em silêncio.
+
+## 92. A marca passa a ser GovPro + GeraDocs (opção A · Faceta)
+
+A empresa deixou de se chamar LAHHM e passou a ser **GovPro**; o GeraDocs é um produto dela. A marca aprovada em 28/10/2026 (opção A · Faceta, manual em `marcas-govpro-geradocs/marca-aprovada/`) substitui as artes antigas em todo o aplicativo.
+
+- **Logo oficial em SVG:** login, redefinir senha e barra lateral usam `public/geradocs-logo-white.svg` (símbolo + nome em Montserrat, já em curvas). O nome deixou de ser texto digitado em Plus Jakarta Sans ao lado do símbolo: a marca tem fonte própria, e redigitá-la em outra fonte seria uma segunda marca. O crédito da empresa usa `public/govpro-logo-white.svg` ("GeraDocs é uma solução GovPro").
+- **Favicon:** `app/icon.png` (símbolo no selo azul-marinho), `app/apple-icon.png` e `app/favicon.ico`.
+- **Carregamento:** **`MarcaCarregando`** (`components/shared/marca-carregando.tsx`) desenha o símbolo em varredura circular, o mesmo movimento do GIF da marca, mas em SVG transparente. Entra no `LoadingState` das telas e no splash do `GuardaSessao`; o `InlineSpinner` e os botões continuam com o giro discreto. Fica registrado como extensão aprovada do DS (§17).
+- **Tokens `--color-marca-*`:** as cores do símbolo, só para o desenho da marca; a interface continua nos tokens de antes.
+- **Design system:** `design_system/assets/` traz as artes novas em SVG e PNG; as artes LAHHM foram excluídas. O namespace do bundle virou `GovProGeraDocsDesignSystem_11bcef`.
 
 ## 93. Retificar acontece no editor, junto da versão nova
 

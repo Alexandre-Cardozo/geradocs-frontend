@@ -1,5 +1,5 @@
 /**
- * Barrel do Design System LAHHM · GeraDocs — importe componentes daqui
+ * Barrel do Design System GovPro · GeraDocs — importe componentes daqui
  * (regra de aderência: nunca dos módulos internos).
  */
 export { Button, Toggle } from "./actions"

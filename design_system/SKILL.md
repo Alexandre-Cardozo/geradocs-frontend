@@ -1,6 +1,6 @@
 ---
-name: lahhm-geradocs-design
-description: Use this skill to generate well-branded interfaces and assets for LAHHM's GeraDocs GovTech platform (public procurement document automation for Brazilian municipalities), either for production or throwaway prototypes/mocks/etc. Contains essential design guidelines, colors, type, fonts, assets, and UI kit components for prototyping.
+name: govpro-geradocs-design
+description: Use this skill to generate well-branded interfaces and assets for GovPro's GeraDocs GovTech platform (public procurement document automation for Brazilian municipalities), either for production or throwaway prototypes/mocks/etc. Contains essential design guidelines, colors, type, fonts, assets, and UI kit components for prototyping.
 user-invocable: true
 ---
 

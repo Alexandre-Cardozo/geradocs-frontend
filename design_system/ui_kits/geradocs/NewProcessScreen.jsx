@@ -1,5 +1,5 @@
 // GeraDocs UI kit — Novo Processo wizard (recreation of src/views/NewProcess.tsx, abbreviated)
-const DSN = window.LAHHMGeraDocsDesignSystem_11bcef;
+const DSN = window.GovProGeraDocsDesignSystem_11bcef;
 
 const npIcon = (children) => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{children}</svg>

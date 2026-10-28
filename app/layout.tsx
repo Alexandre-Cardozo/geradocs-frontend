@@ -43,7 +43,7 @@ export const metadata: Metadata = {
     template: "%s | GeraDocs - Homologação",
   },
   description:
-    "Plataforma GovTech da LAHHM para automação dos documentos de planejamento da contratação pública sob a Lei 14.133/2021.",
+    "Plataforma GovTech da GovPro para automação dos documentos de planejamento da contratação pública sob a Lei 14.133/2021.",
 }
 
 export default function RootLayout({ children }: { children: ReactNode }) {

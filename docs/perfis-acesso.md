@@ -10,7 +10,7 @@ Autenticação, sessão e administração de acesso são **reais**: o frontend u
 
 | Perfil | Escopo | Pode |
 |---|---|---|
-| **Administrador Geral** (`admin_geral`) | Sistema todo (LAHHM) | Cadastrar entidades; criar servidores e vinculá-los a qualquer entidade; visão agregada. Não opera o fluxo de processos. **Não se cadastra pela interface**: a conta nasce com a inicialização do banco, e o perfil não é oferecido no formulário de servidores. |
+| **Administrador Geral** (`admin_geral`) | Sistema todo (GovPro) | Cadastrar entidades; criar servidores e vinculá-los a qualquer entidade; visão agregada. Não opera o fluxo de processos. **Não se cadastra pela interface**: a conta nasce com a inicialização do banco, e o perfil não é oferecido no formulário de servidores. |
 | **Coordenador** (`coordenador`) | Uma entidade | Tudo de servidor **+** gerir a sua entidade: secretarias, PCA, identidade visual, cabeçalho/rodapé, e cadastrar/ver servidores (com último acesso). |
 | **Servidor** (`servidor`) | Uma entidade | Editar o próprio perfil; criar processos e gerar documentos; consultar o fluxo de contratação. |
 

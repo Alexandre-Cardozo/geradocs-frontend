@@ -27,7 +27,7 @@ Layout (modern SaaS, GeraDocs-styled): full-bleed navy→petroleum background (`
   </main>
   {/* Rodapé proporcional, ancorado ao fim */}
   <footer className="relative z-10 flex flex-col items-center gap-1 px-4 pb-5 text-center">
-    GeraDocs é um produto <Image src="/lahhm-logo-white.png" .../> · ajuda (mailto) · © LAHHM
+    GeraDocs é uma solução <Image src={govproLogo /* public/govpro-logo-white.svg */} .../> · ajuda (mailto) · © GovPro
   </footer>
 </div>
 ```
@@ -35,8 +35,8 @@ Layout (modern SaaS, GeraDocs-styled): full-bleed navy→petroleum background (`
 Rules:
 
 - **Fits without scrolling.** `min-h-dvh flex-col`, `main` = `flex-1` centered, footer pinned. Keep the content compact (tight demo list, `py-4` main) so it fits on ~768px laptops.
-- **Brand block (the critical part):** the **mark** symbol (`geradocs-mark-white.png`, not the full logo — the wordmark is rendered as crisp display text), the "GeraDocs" wordmark in `font-display text-3xl`, then a short institutional tagline flanked by 1px rules (like the reference "— TRAVEL MANAGEMENT —"). Never bake the wordmark into a raster.
+- **Brand block (the critical part):** the official **logo** for dark backgrounds (`public/geradocs-logo-white.svg`, 44px high — symbol + two-tone Montserrat wordmark, already in curves, crisp at any size), then a short institutional tagline flanked by 1px rules (like the reference "— TRAVEL MANAGEMENT —"). Never retype the wordmark in another font, and never use a low-resolution raster of it.
 - **CPF field:** mask `000.000.000-00`, validate check digits, generic error ("CPF ou senha inválidos" — never reveal which failed).
-- **Footer:** proportional, always visible at the bottom — credits **LAHHM** ("GeraDocs é um produto LAHHM" + `lahhm-logo-white.png`), help mailto, copyright. Favicon da aba: `/icon.png` (= `geradocs-mark.png`, símbolo azul).
+- **Footer:** proportional, always visible at the bottom — credits **GovPro** ("GeraDocs é uma solução" + `govpro-logo-white.svg`), help mailto, copyright "© GovPro". Favicon da aba: `app/icon.png` + `app/apple-icon.png` + `app/favicon.ico` (símbolo do GeraDocs no selo azul-marinho).
 - Password recovery link → a minimal recovery view (email → generic confirmation) inside the same card.
 - Never use a photo background — the DS is flat; the navy gradient carries the mood.
