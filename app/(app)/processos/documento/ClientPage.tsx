@@ -752,6 +752,8 @@ export default function EditorDocumento() {
               tipo={tipo}
               modelos={documento.data.modelos}
               versaoGerada={documento.data.versao}
+              secoesAtuais={lista.length}
+              secoesDoServidor={lista.filter((secao) => secao.origem === "servidor").length}
               onFechar={() => setTrocandoModelo(false)}
             />
           )}
