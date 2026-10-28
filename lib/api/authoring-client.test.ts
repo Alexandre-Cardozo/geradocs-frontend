@@ -632,7 +632,13 @@ describe("modelo de estrutura", () => {
     servidor.use(
       http.get(`${urlDaApi}/procurement-processes/:id/documents/:tipo/structure-model/preview`, ({ request }) => {
         pedido = { metodo: "GET", url: request.url }
-        return HttpResponse.json({ kept: ["Do Objeto"], merged: [], blank: ["Dos Recursos"], unplaced: ["Da Dotação"] })
+        return HttpResponse.json({
+          kept: ["Do Objeto"],
+          merged: [],
+          blank: ["Dos Recursos"],
+          unplaced: ["Da Dotação"],
+          restored: ["Da Habilitação"],
+        })
       }),
       http.put(`${urlDaApi}/procurement-processes/:id/documents/:tipo/structure-model`, async ({ request }) => {
         pedido = { metodo: "PUT", url: request.url, corpo: await request.json() }
@@ -646,6 +652,7 @@ describe("modelo de estrutura", () => {
       reunidas: [],
       emBranco: ["Dos Recursos"],
       semLugar: ["Da Dotação"],
+      restauradas: ["Da Habilitação"],
     })
     expect(pedido?.url).toContain("/documents/EDITAL/structure-model/preview?code=AGU-EDITAL-TP")
 

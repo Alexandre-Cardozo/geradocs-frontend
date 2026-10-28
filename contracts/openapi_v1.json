@@ -2732,6 +2732,12 @@
             },
             "type" : "array"
           },
+          "restored" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
           "unplaced" : {
             "items" : {
               "type" : "string"
@@ -2739,7 +2745,7 @@
             "type" : "array"
           }
         },
-        "required" : [ "blank", "kept", "merged", "unplaced" ],
+        "required" : [ "blank", "kept", "merged", "restored", "unplaced" ],
         "type" : "object"
       },
       "StructureModelView" : {

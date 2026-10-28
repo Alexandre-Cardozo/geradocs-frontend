@@ -181,6 +181,12 @@ export function TrocaDeModelo({
               <strong>{previa.data.mantidas.length}</strong> seções recebem o texto ·{" "}
               <strong>{previa.data.reunidas.length}</strong> reúnem textos ·{" "}
               <strong>{previa.data.emBranco.length}</strong> ficam em branco
+              {previa.data.restauradas.length > 0 && (
+                <>
+                  {" "}
+                  · <strong>{previa.data.restauradas.length}</strong> voltam com o texto que já tinham
+                </>
+              )}
             </span>
             {previa.data.semLugar.length > 0 && (
               <span className="text-text-3">

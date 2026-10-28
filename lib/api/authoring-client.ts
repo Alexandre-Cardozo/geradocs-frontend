@@ -149,6 +149,8 @@ export interface PreviaDaTroca {
   reunidas: string[];
   emBranco: string[];
   semLugar: string[];
+  /** Seções que já tinham texto neste modelo e voltam com ele. */
+  restauradas: string[];
 }
 
 function rota(processoId: string, tipo: TipoDocumento): string {
@@ -290,8 +292,16 @@ export async function previaDaTrocaDeModelo(
     merged: string[];
     blank: string[];
     unplaced: string[];
+    restored?: string[];
   }>(`${rota(processoId, tipo)}/structure-model/preview?code=${encodeURIComponent(codigo)}`);
-  return { mantidas: previa.kept, reunidas: previa.merged, emBranco: previa.blank, semLugar: previa.unplaced };
+  return {
+    mantidas: previa.kept,
+    reunidas: previa.merged,
+    emBranco: previa.blank,
+    semLugar: previa.unplaced,
+    // Ausente no servidor anterior à correção: nenhuma seção conta como restaurada.
+    restauradas: previa.restored ?? [],
+  };
 }
 
 /** Escolhe ou troca a minuta que o documento segue (ADR-052). */

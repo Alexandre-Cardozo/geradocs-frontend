@@ -95,6 +95,23 @@ describe("troca de minuta", () => {
     expect(pedidos).toEqual([{ code: "AGU-EDITAL-TP" }])
   })
 
+  it("voltar à minuta anterior diz quantas seções voltam com o texto que já tinham", async () => {
+    comTroca()
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id/documents/:tipo/structure-model/preview`, () =>
+        HttpResponse.json({ kept: [], merged: [], blank: ["Dos Recursos"], unplaced: [], restored: ["Do Objeto", "Da Habilitação"] }),
+      ),
+    )
+    renderizar(
+      <TrocaDeModelo processoId={PROCESSO} tipo="Edital" modelos={[{ ...PC, atual: true }, TP]} versaoGerada={0} onFechar={() => {}} />,
+    )
+
+    expect(await screen.findByText(/seções recebem o texto/)).toHaveTextContent(
+      "0 seções recebem o texto · 0 reúnem textos · 1 ficam em branco · 2 voltam com o texto que já tinham",
+    )
+    expect(screen.queryByText(/Sem lugar/)).not.toBeInTheDocument()
+  })
+
   it("com várias opções, pede a escolha; Esc fecha", async () => {
     comTroca()
     const onFechar = vi.fn()

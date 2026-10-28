@@ -661,7 +661,7 @@ describe("configuração do órgão: de quem é a entidade", () => {
 describe("modelo de estrutura (§85)", () => {
   it("a prévia só pergunta quando há minuta escolhida", async () => {
     const { wrapper } = ambiente()
-    vi.mocked(api.getPreviaDaTroca).mockResolvedValue({ mantidas: [], reunidas: [], emBranco: [], semLugar: [] })
+    vi.mocked(api.getPreviaDaTroca).mockResolvedValue({ mantidas: [], reunidas: [], emBranco: [], semLugar: [], restauradas: [] })
 
     renderHook(() => hooks.usePreviaDaTroca(PROCESSO, "Edital", null), { wrapper })
     expect(api.getPreviaDaTroca).not.toHaveBeenCalled()
