@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
 
 import geradocsLogo from "@/public/geradocs-logo-white.svg";
+import govproLogo from "@/public/govpro-logo-white.svg";
 
 import {
   IconBuilding,
@@ -21,6 +22,7 @@ import {
   IconUser,
 } from "@/components/ui/icons";
 import { FotoDePerfil } from "@/components/shared/foto-de-perfil";
+import { FaixaDaMarca, UmaSolucao } from "@/components/shared/marca";
 import { useBrasao, useLogout, useSessao, useTimbre } from "@/lib/api/hooks";
 import { navPrincipal, navSistema, type IconeNav } from "@/lib/auth/acesso";
 import { PERFIL_ACESSO_LABEL, TIPO_ENTIDADE_LABEL } from "@/lib/types";
@@ -147,8 +149,12 @@ export default function Sidebar({
         aberta ? "translate-x-0" : "-translate-x-full"
       }`}
     >
-      {/* Logo GeraDocs — marca oficial (símbolo + nome, versão para fundo escuro) */}
-      <div className="border-b border-on-dark-border px-5 pt-6 pb-5">
+      {/*
+        Identificação: o logo do GeraDocs e, embaixo, a assinatura de endosso
+        "uma solução GovPro" — a mesma do login e do carimbo dos documentos.
+        A faixa da marca fecha o bloco no lugar do filete cinza.
+      */}
+      <div className="px-5 pt-6">
         <Image
           src={geradocsLogo}
           alt="GeraDocs"
@@ -157,9 +163,12 @@ export default function Sidebar({
           priority
           className="h-8 w-auto object-contain"
         />
-        <div className="mt-1.5 text-2xs font-medium tracking-caps text-on-dark-40 uppercase">
-          Uma solução GovPro
+        <div className="mt-2 pl-10">
+          <UmaSolucao>
+            <Image src={govproLogo} alt="GovPro" width={55} height={14} className="h-3.5 w-auto object-contain" />
+          </UmaSolucao>
         </div>
+        <FaixaDaMarca className="mt-5" />
       </div>
 
       {/* Entidade atual — a da sessão; para o admin geral, o contexto GovPro */}

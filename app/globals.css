@@ -18,6 +18,8 @@
   --font-display: var(--font-jakarta), "Plus Jakarta Sans", system-ui, sans-serif;
   --font-body: var(--font-inter), "Inter", system-ui, sans-serif;
   --font-mono: var(--font-jetbrains), "JetBrains Mono", monospace;
+  /* A fonte da marca: só no slogan e na assinatura junto do logo, nunca na interface. */
+  --font-marca: var(--font-montserrat), "Montserrat", system-ui, sans-serif;
 }
 
 @theme {
@@ -43,6 +45,8 @@
    */
   --color-marca-azul-marinho: #0A1F44;
   --color-marca-azul: #1F5FD6;
+  /* A 2ª parte do nome sobre fundo escuro (DOCS, PRO). */
+  --color-marca-azul-claro: #4C93FF;
   --color-marca-faceta-clara: #2C78EE;
   --color-marca-faceta-escura: #0E3A94;
   --color-marca-faceta-media: #1650C4;
@@ -197,6 +201,8 @@
   --tracking-heading: -0.3px;
   --tracking-caps: 0.5px;
   --tracking-caps-wide: 0.8px;
+  /* O espaçamento do slogan da marca, em caixa-alta. */
+  --tracking-slogan: 0.18em;
   --tracking-stat: -1px;
   --tracking-badge: 0.1px;
   --tracking-display: -0.4px;

@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { useState } from "react"
 
+import { FaixaDaMarca, FaixasDeCanto } from "@/components/shared/marca"
 import { Button, FormField, Input, ValidationMsg } from "@/components/ui"
 import { IconArrowRight, IconCheckCircle } from "@/components/ui/icons"
 import { useRedefinirSenha } from "@/lib/api/hooks"
@@ -55,24 +56,22 @@ export default function RedefinirSenha() {
         className="pointer-events-none fixed top-[-18%] left-1/2 size-[600px] -translate-x-1/2 rounded-full bg-royal/10 blur-3xl"
         aria-hidden
       />
+      <FaixasDeCanto />
 
       <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 py-4">
-        <div className="mb-5 flex flex-col items-center text-center">
+        <div className="mb-6 flex flex-col items-center text-center">
           <Image
             src={geradocsLogo}
             alt="GeraDocs"
-            width={208}
-            height={44}
+            width={227}
+            height={48}
             priority
-            className="h-11 w-auto object-contain"
+            className="h-12 w-auto object-contain"
           />
-          <div className="mt-2.5 flex items-center gap-3">
-            <span className="h-px w-7 bg-on-dark-border" />
-            <span className="text-2xs font-semibold tracking-caps-wide text-electric uppercase">
-              Contratações Públicas · Lei 14.133/21
-            </span>
-            <span className="h-px w-7 bg-on-dark-border" />
-          </div>
+          <FaixaDaMarca className="mt-4 w-32" />
+          <p className="m-0 mt-3 font-marca text-2xs font-semibold tracking-slogan text-on-dark-65 uppercase">
+            Contratações públicas inteligentes
+          </p>
         </div>
 
         <div className="w-full max-w-md rounded-card border border-on-dark-border bg-surface p-6 sm:p-7">

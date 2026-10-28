@@ -49,8 +49,18 @@ test("a barra lateral traz o logo e a assinatura da GovPro", async ({ page }) =>
 
   const barra = page.locator("aside").first()
   await esperarCarregada(barra.getByRole("img", { name: "GeraDocs" }))
-  await expect(barra.getByText("Uma solução GovPro")).toBeVisible()
+  await expect(barra.getByText("uma solução")).toBeVisible()
+  await esperarCarregada(barra.getByRole("img", { name: "GovPro" }))
   await semMarcaAntiga(page)
+})
+
+test("login e redefinir senha trazem o slogan da marca", async ({ page }) => {
+  await semSessao(page)
+  for (const caminho of ["/login", "/redefinir-senha/?token=x"]) {
+    await page.goto(rota(caminho))
+    await expect(page.getByText("Contratações públicas inteligentes")).toBeVisible()
+    await esperarCarregada(page.getByRole("img", { name: "GeraDocs" }))
+  }
 })
 
 test("enquanto a sessão resolve, o símbolo animado da marca aparece", async ({ page }) => {

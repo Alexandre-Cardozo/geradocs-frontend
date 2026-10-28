@@ -31,6 +31,19 @@ const inter = localFont({
   variable: "--font-inter",
 })
 
+/*
+ * Montserrat é a fonte da marca (manual de 28/10/2026): só nos textos que
+ * acompanham o logo — slogan e assinatura "uma solução GovPro". Fontsource
+ * 5.0.19, subconjunto latin, dois pesos estáticos (OFL, LICENSE-montserrat.txt).
+ */
+const montserrat = localFont({
+  src: [
+    { path: "./fonts/montserrat-latin-600-normal.woff2", weight: "600" },
+    { path: "./fonts/montserrat-latin-700-normal.woff2", weight: "700" },
+  ],
+  variable: "--font-montserrat",
+})
+
 const jetbrains = localFont({
   src: "./fonts/jetbrains-mono-latin-wght-normal.woff2",
   weight: "100 800",
@@ -48,7 +61,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="pt-BR" className={`${jakarta.variable} ${inter.variable} ${jetbrains.variable}`}>
+    <html lang="pt-BR" className={`${jakarta.variable} ${inter.variable} ${montserrat.variable} ${jetbrains.variable}`}>
       <body>
         <Providers>{children}</Providers>
       </body>
