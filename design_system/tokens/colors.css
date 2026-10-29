@@ -1,51 +1,69 @@
-/* GeraDocs — Color tokens (source: prototype src/index.css + component code) */
+/* GeraDocs — Color tokens. Mirror of the app's @theme (app/globals.css), brand palette GovPro + GeraDocs (§94). */
 :root {
-  /* Brand */
-  --color-navy: #071A3D;       /* sidebar, headings, institutional */
-  --color-petroleum: #0D3B66;  /* secondary states, money values, hover */
-  --color-royal: #2563EB;      /* primary actions, links, active */
-  --color-royal-hover: #1D4ED8;
-  --color-electric: #38BDF8;   /* accents, indicators, gradients */
-  --color-slate: #64748B;      /* secondary text, labels */
-  --color-ice: #F8FAFC;        /* app background */
+  /* Brand — token names kept, values from the brand manual (28/10/2026) */
+  --color-navy: #071A3D;       /* sidebar, dark surfaces */
+  --color-petroleum: #0E3A94;  /* deep brand blue: money values, dark panels */
+  --color-royal: #1F5FD6;      /* brand blue: primary actions, links, active, focus */
+  --color-royal-hover: #1650C4;
+  --color-electric: #4C93FF;   /* brand light blue: accents on dark, info, focus on dark */
+  --color-slate: #64748B;
+  --color-ice: #F4F7FC;        /* app background, blue-biased neutral */
 
-  /* Neutrals (slate scale used throughout the prototype) */
+  /* Brand mark (symbol, loading animation) */
+  --color-marca-azul-marinho: #0A1F44;
+  --color-marca-azul: #1F5FD6;
+  --color-marca-azul-claro: #4C93FF;
+  --color-marca-faceta-clara: #2C78EE;
+  --color-marca-faceta-escura: #0E3A94;
+  --color-marca-faceta-media: #1650C4;
+  --color-marca-amarelo: #FFC72C;
+  --color-marca-verde: #22B455;
+
+  /* Neutrals */
   --color-surface: #FFFFFF;
-  --color-border: #E2E8F0;
-  --color-border-soft: #F1F5F9;
-  --color-text-1: #071A3D;
+  --color-border: #DCE3EE;
+  --color-border-soft: #EEF2F8;
+  --color-text-1: #0A1F44;     /* brand navy */
   --color-text-2: #374151;
   --color-text-3: #4E5A6E;
   --color-text-muted: #556074;
   --color-text-faint: #5F6B80;
 
-  /* Semantic */
-  --color-success: #10B981;
-  --color-warning: #F59E0B;
+  /* Semantic — brand green = success, brand yellow = attention */
+  --color-success: #0B7A38;    /* dark brand green: 5.45:1 under white text */
+  --color-warning: #8F6300;    /* gold for attention icons/dots: 5.0:1 on the yellow tint */
   --color-danger: #EF4444;
-  --color-info: #38BDF8;
+  --color-info: #4C93FF;
 
   /* Status tints (badge bg / fg / dot) */
   --status-draft-bg: #F1F5F9;      --status-draft-fg: #475569;      --status-draft-dot: #94A3B8;
-  --status-review-bg: #FEF3C7;     --status-review-fg: #92400E;     --status-review-dot: #F59E0B;
-  --status-waiting-bg: #EFF6FF;    --status-waiting-fg: #1D4ED8;    --status-waiting-dot: #3B82F6;
-  --status-approved-bg: #ECFDF5;   --status-approved-fg: #065F46;   --status-approved-dot: #10B981;
+  --status-review-bg: #EAF2FF;     --status-review-fg: #0E3A94;     --status-review-dot: #4C93FF;
+  --status-waiting-bg: #FFF8E1;    --status-waiting-fg: #5C4300;    --status-waiting-dot: #F0A500;
+  --status-approved-bg: #EAF7EF;   --status-approved-fg: #0B6B33;   --status-approved-dot: #14A04B;
   --status-rejected-bg: #FEF2F2;   --status-rejected-fg: #991B1B;   --status-rejected-dot: #EF4444;
-  --status-done-bg: #F0FDF4;       --status-done-fg: #15803D;       --status-done-dot: #22C55E;
-  --status-progress-bg: #EFF6FF;   --status-progress-fg: #1D4ED8;   --status-progress-dot: #2563EB;
+  --status-done-bg: #EAF7EF;       --status-done-fg: #0B6B33;       --status-done-dot: #14A04B;
+  --status-progress-bg: #EDF3FD;   --status-progress-fg: #1650C4;   --status-progress-dot: #1F5FD6;
   --status-ready-bg: #F0FDFA;      --status-ready-fg: #0F766E;      --status-ready-dot: #0D9488;
 
+  /* Attention / success tints */
+  --tint-warning-bg: #FFF8E1;  --tint-warning-border: #FFE08A;  --tint-warning-fg: #5C4300;  --tint-warning-fg-strong: #3D2C00;
+  --tint-success-bg: #EAF7EF;  --tint-success-border: #B5E3C5;  --tint-success-fg: #0B6B33;
+  --tint-royal-bg: #EDF3FD;    --tint-royal-border: #C3D5F6;
+
   /* Document accent tints (doc type cards) */
-  --doc-etp: #2563EB;     --doc-etp-bg: #EFF6FF;
-  --doc-tr: #0D9488;      --doc-tr-bg: #F0FDFA;
+  --doc-etp: #1F5FD6;     --doc-etp-bg: #EDF3FD;
+  --doc-tr: #0F766E;      --doc-tr-bg: #F0FDFA;
   --doc-cotacao: #7C3AED; --doc-cotacao-bg: #F5F3FF;
   --doc-mapa: #B45309;    --doc-mapa-bg: #FFFBEB;
+  --doc-edital: #BE185D;  --doc-edital-bg: #FDF2F8;
+  --doc-contrato: #334155; --doc-contrato-bg: #F1F5F9;
 
   /* Gradients */
-  --gradient-brand: linear-gradient(135deg, #2563EB, #38BDF8); /* @kind color */
-  --gradient-user: linear-gradient(135deg, #0D3B66, #2563EB); /* @kind color */
-  --gradient-progress: linear-gradient(90deg, #2563EB, #38BDF8); /* @kind color */
-  --gradient-panel: linear-gradient(135deg, #1E3A5F 0%, #0D3B66 100%); /* @kind color */
+  --gradient-brand: linear-gradient(135deg, #1F5FD6, #4C93FF); /* @kind color */
+  --gradient-user: linear-gradient(135deg, #0A1F44, #1F5FD6); /* @kind color */
+  --gradient-progress: linear-gradient(90deg, #1F5FD6, #4C93FF); /* @kind color */
+  --gradient-panel: linear-gradient(135deg, #0E2A63 0%, #0A1F44 100%); /* @kind color */
+  --gradient-hero: linear-gradient(135deg, #071A3D 0%, #0E2A63 100%); /* @kind color */
 
   /* Semantic aliases */
   --surface-app: var(--color-ice);

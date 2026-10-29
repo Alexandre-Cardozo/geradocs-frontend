@@ -74,7 +74,7 @@ export function ImportarPca({ anos }: { anos: { value: string; label: string }[]
                   if (escolhido) setArquivo(escolhido)
                 }}
               />
-              <span className="inline-flex cursor-pointer items-center gap-2 rounded-[7px] border border-tint-royal-border bg-tint-royal-bg px-3.5 py-1.5 text-sm font-semibold text-royal">
+              <span className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-tint-royal-border bg-tint-royal-bg px-3.5 py-1.5 text-sm font-semibold text-royal">
                 <IconUpload size={14} strokeWidth={2} />
                 {arquivo ? "Trocar planilha" : "Escolher planilha"}
               </span>

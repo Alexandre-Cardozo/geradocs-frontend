@@ -32,14 +32,16 @@ const inter = localFont({
 })
 
 /*
- * Montserrat é a fonte da marca (manual de 28/10/2026): só nos textos que
- * acompanham o logo — slogan e assinatura "uma solução GovPro". Fontsource
- * 5.0.19, subconjunto latin, dois pesos estáticos (OFL, LICENSE-montserrat.txt).
+ * Montserrat é a fonte da marca (manual de 28/10/2026): títulos, números dos
+ * indicadores, rótulos em caixa-alta e o slogan (§94). O corpo segue em Inter.
+ * Fontsource 5.0.19, subconjunto latin, três pesos estáticos (OFL,
+ * LICENSE-montserrat.txt) — o 800 é o dos títulos de página.
  */
 const montserrat = localFont({
   src: [
     { path: "./fonts/montserrat-latin-600-normal.woff2", weight: "600" },
     { path: "./fonts/montserrat-latin-700-normal.woff2", weight: "700" },
+    { path: "./fonts/montserrat-latin-800-normal.woff2", weight: "800" },
   ],
   variable: "--font-montserrat",
 })

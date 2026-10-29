@@ -19,7 +19,7 @@ export function Button({ variant = "primary", size = "md", icon, children, disab
     secondary: { background: "#FFFFFF", border: "1px solid var(--color-border)", color: "var(--color-text-3)" },
     dark: { background: "var(--color-navy)", color: "#FFFFFF" },
     success: { background: "var(--color-success)", color: "#FFFFFF" },
-    ghost: { background: hover ? "#EFF6FF" : "transparent", color: "var(--color-royal)" },
+    ghost: { background: hover ? "#EDF3FD" : "transparent", color: "var(--color-royal)" },
   };
   return (
     <button

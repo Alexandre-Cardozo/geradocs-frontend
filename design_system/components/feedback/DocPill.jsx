@@ -1,9 +1,9 @@
 import React from "react";
 
 const map = {
-  "Completo": { bg: "#ECFDF5", color: "#065F46" },
-  "Em andamento": { bg: "#EFF6FF", color: "#1D4ED8" },
-  "Em revisão": { bg: "#FEF3C7", color: "#92400E" },
+  "Completo": { bg: "#EAF7EF", color: "#0B6B33" },
+  "Em andamento": { bg: "#EDF3FD", color: "#1650C4" },
+  "Em revisão": { bg: "#FFF8E1", color: "#5C4300" },
   "Rejeitado": { bg: "#FEF2F2", color: "#991B1B" },
   "Não iniciado": { bg: "#F1F5F9", color: "#475569" },
 };
@@ -24,9 +24,9 @@ export function DocPill({ status, bg, color }) {
 /** Micro tag: Obrigatório / Opcional / Recomendado / Urgente etc. */
 export function Tag({ children, tone = "info" }) {
   const tones = {
-    info: { bg: "#EFF6FF", color: "#1D4ED8" },
-    success: { bg: "#ECFDF5", color: "#065F46" },
-    warning: { bg: "#FEF3C7", color: "#92400E" },
+    info: { bg: "#EDF3FD", color: "#1650C4" },
+    success: { bg: "#EAF7EF", color: "#0B6B33" },
+    warning: { bg: "#FFF8E1", color: "#5C4300" },
     danger: { bg: "#FEF2F2", color: "#991B1B" },
     violet: { bg: "#F5F3FF", color: "#6D28D9" },
     neutral: { bg: "#F1F5F9", color: "#475569" },

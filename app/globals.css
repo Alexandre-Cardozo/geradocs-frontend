@@ -15,7 +15,9 @@
 /* Fontes injetadas pelo next/font (app/layout.tsx) — @theme inline para as
    utilities referenciarem as variáveis de runtime. */
 @theme inline {
-  --font-display: var(--font-jakarta), "Plus Jakarta Sans", system-ui, sans-serif;
+  /* Títulos na fonte da marca (§94); a Plus Jakarta Sans continua carregada
+     como reserva de quem ainda a citar. */
+  --font-display: var(--font-montserrat), "Montserrat", var(--font-jakarta), system-ui, sans-serif;
   --font-body: var(--font-inter), "Inter", system-ui, sans-serif;
   --font-mono: var(--font-jetbrains), "JetBrains Mono", monospace;
   /* A fonte da marca: só no slogan e na assinatura junto do logo, nunca na interface. */
@@ -26,14 +28,22 @@
   /* ── Breakpoints (mobile-first: 480 · 640 · 768 · 1024) ─────────────────── */
   --breakpoint-xs: 480px;
 
-  /* ── Cores — brand ──────────────────────────────────────────────────────── */
+  /*
+   * ── Cores — brand ────────────────────────────────────────────────────────
+   *
+   * Os valores da marca GovPro + GeraDocs (§94): royal e electric eram o azul
+   * 600 e o céu 400 do Tailwind, e ao lado do logo novo apareciam como um
+   * segundo azul. Os nomes dos tokens ficam — 135 usos de `royal` não precisam
+   * saber que a cor mudou —, os valores passam a ser os do manual da marca.
+   * Petróleo, que puxava para o verde-azulado, vira o azul profundo da marca.
+   */
   --color-navy: #071A3D;
-  --color-petroleum: #0D3B66;
-  --color-royal: #2563EB;
-  --color-royal-hover: #1D4ED8;
-  --color-electric: #38BDF8;
+  --color-petroleum: #0E3A94;
+  --color-royal: #1F5FD6;
+  --color-royal-hover: #1650C4;
+  --color-electric: #4C93FF;
   --color-slate: #64748B;
-  --color-ice: #F8FAFC;
+  --color-ice: #F4F7FC;
 
   /*
    * ── Cores — marca GovPro/GeraDocs ───────────────────────────────────────
@@ -65,56 +75,61 @@
    * A escala continua com três níveis distintos; ela só deixou de ter níveis
    * ilegíveis. `text-3` entrou junto porque, sem ele, ficaria mais claro que os
    * dois que vêm depois — e uma escala fora de ordem confunde mais que ajuda.
+   *
+   * Fundo e bordas ganharam o leve viés azul do manual da marca em 28/10/2026
+   * (§94): `ice` #F4F7FC, `border` #DCE3EE e `border-soft` #EEF2F8. Os cinzas de
+   * texto seguem acima de 4,5:1 sobre a superfície mais escura (#EEF2F8).
    */
   --color-surface: #FFFFFF;
-  --color-border: #E2E8F0;
-  --color-border-soft: #F1F5F9;
-  --color-text-1: #071A3D;
+  --color-border: #DCE3EE;
+  --color-border-soft: #EEF2F8;
+  --color-text-1: #0A1F44;
   --color-text-2: #374151;
   --color-text-3: #4E5A6E;
   --color-text-muted: #556074;
   --color-text-faint: #5F6B80;
 
   /* ── Cores — semânticas ─────────────────────────────────────────────────── */
-  --color-success: #10B981;
-  --color-warning: #2563EB;
+  --color-success: #0B7A38;
+  --color-warning: #8F6300;
   --color-danger: #EF4444;
-  --color-info: #38BDF8;
+  --color-info: #4C93FF;
 
   /* ── Tints de status (badge bg / fg / dot) ──────────────────────────────── */
   --color-status-draft-bg: #F1F5F9;
   --color-status-draft-fg: #475569;
   --color-status-draft-dot: #94A3B8;
-  /* "Em Revisão" era o mesmo par âmbar dos avisos; agora é o tom elétrico da
-     marca, distinto de "Aguardando" (royal) e de "Rascunho" (ardósia). */
-  --color-status-review-bg: #E0F2FE;
-  --color-status-review-fg: #0D3B66;
-  --color-status-review-dot: #38BDF8;
-  --color-status-waiting-bg: #EFF6FF;
-  --color-status-waiting-fg: #1D4ED8;
-  --color-status-waiting-dot: #3B82F6;
-  --color-status-approved-bg: #ECFDF5;
-  --color-status-approved-fg: #065F46;
-  --color-status-approved-dot: #10B981;
+  /* "Em Revisão" é o azul-claro da marca; "Aguardando" é o amarelo da marca
+     (§94), e deixou de ser o mesmo azul de "Em Elaboração". Aprovado e
+     Concluído usam o verde da marca. */
+  --color-status-review-bg: #EAF2FF;
+  --color-status-review-fg: #0E3A94;
+  --color-status-review-dot: #4C93FF;
+  --color-status-waiting-bg: #FFF8E1;
+  --color-status-waiting-fg: #5C4300;
+  --color-status-waiting-dot: #F0A500;
+  --color-status-approved-bg: #EAF7EF;
+  --color-status-approved-fg: #0B6B33;
+  --color-status-approved-dot: #14A04B;
   --color-status-rejected-bg: #FEF2F2;
   --color-status-rejected-fg: #991B1B;
   --color-status-rejected-dot: #EF4444;
-  --color-status-done-bg: #F0FDF4;
-  --color-status-done-fg: #15803D;
-  --color-status-done-dot: #22C55E;
+  --color-status-done-bg: #EAF7EF;
+  --color-status-done-fg: #0B6B33;
+  --color-status-done-dot: #14A04B;
   /* Etapas do processo (ADR-050), na paleta da marca e dos documentos:
      Rascunho (ardósia) → Em Elaboração (royal) → Pronto para Encerrar (teal,
      o mesmo do TR) → Concluído (verde). */
-  --color-status-progress-bg: #EFF6FF;
-  --color-status-progress-fg: #1D4ED8;
-  --color-status-progress-dot: #2563EB;
+  --color-status-progress-bg: #EDF3FD;
+  --color-status-progress-fg: #1650C4;
+  --color-status-progress-dot: #1F5FD6;
   --color-status-ready-bg: #F0FDFA;
   --color-status-ready-fg: #0F766E;
   --color-status-ready-dot: #0D9488;
 
   /* ── Acentos por tipo de documento ──────────────────────────────────────── */
-  --color-doc-etp: #2563EB;
-  --color-doc-etp-bg: #EFF6FF;
+  --color-doc-etp: #1F5FD6;
+  --color-doc-etp-bg: #EDF3FD;
   /* TR é teal-700, e não teal-600: o #0D9488 dava 3,59:1 sobre o próprio tint,
      abaixo do AA (4,5:1) no texto de 11px do chip. Mesmo matiz, 5,25:1. */
   --color-doc-tr: #0F766E;
@@ -130,26 +145,25 @@
   --color-doc-contrato-bg: #F1F5F9;
 
   /* ── Tints derivados do protótipo ───────────────────────────────────────── */
-  --color-tint-royal-bg: #EFF6FF;
-  --color-tint-royal-border: #BFDBFE;
-  --color-tint-success-bg: #ECFDF5;
-  --color-tint-success-border: #A7F3D0;
-  --color-tint-success-fg: #065F46;
-  --color-tint-success-fg-soft: #047857;
+  --color-tint-royal-bg: #EDF3FD;
+  --color-tint-royal-border: #C3D5F6;
+  --color-tint-success-bg: #EAF7EF;
+  --color-tint-success-border: #B5E3C5;
+  --color-tint-success-fg: #0B6B33;
+  --color-tint-success-fg-soft: #0B7A38;
   /*
-    O tom de atenção é da paleta da plataforma, e não âmbar.
-    O par #FFFBEB/#92400E vinha do protótipo e não existia em lugar nenhum do
-    produto: amarelo com texto tirando para o vermelho, no meio de uma interface
-    de navy, petróleo e royal. Quem avisa aqui é o ícone e o texto — a cor não
-    precisa vir de fora da paleta para dizer "olhe isto".
-    Neutro de ardósia com texto petróleo: fica distinto do informativo (azul
-    claro), do sucesso (verde) e do erro (vermelho), sem inventar um sexto tom.
+    Atenção é o amarelo da marca (§94, revisa a §64).
+    A §64 tirou o âmbar porque ele vinha de fora da paleta — amarelo com texto
+    tirando para o vermelho, no meio de navy, petróleo e royal. A marca GovPro
+    trouxe o amarelo para dentro da paleta, e ele é a cor que a marca reserva
+    para chamar o olhar. Fundo amarelo-claro com texto marrom-escuro (8,75:1);
+    o ícone e o ponto usam o dourado `warning` (5,0:1 sobre o fundo).
   */
-  --color-tint-warning-bg: #F1F5F9;
-  --color-tint-warning-border: #CBD5E1;
-  --color-tint-warning-fg: #0D3B66;
-  --color-tint-warning-fg-strong: #071A3D;
-  --color-tint-warning-chip-bg: #E2E8F0;
+  --color-tint-warning-bg: #FFF8E1;
+  --color-tint-warning-border: #FFE08A;
+  --color-tint-warning-fg: #5C4300;
+  --color-tint-warning-fg-strong: #3D2C00;
+  --color-tint-warning-chip-bg: #FFEFB8;
   --color-tint-danger-bg: #FEF2F2;
   --color-tint-danger-border: #FECACA;
   --color-tint-danger-border-strong: #FCA5A5;
@@ -159,8 +173,8 @@
   --color-tint-violet-fg: #6D28D9;
   --color-violet: #7C3AED;
   --color-teal: #0D9488;
-  --color-green: #16A34A;
-  --color-warning-strong: #0D3B66;
+  --color-green: #14A04B;
+  --color-warning-strong: #5C4300;
   --color-slate-strong: #475569;
   --color-surface-upload: #FAFAFA;
 
@@ -177,9 +191,9 @@
   --color-on-dark-fill: rgba(255, 255, 255, 0.06);
   --color-on-dark-fill-hover: rgba(255, 255, 255, 0.1);
   --color-on-dark-border: rgba(255, 255, 255, 0.08);
-  --color-on-dark-active: rgba(37, 99, 235, 0.18);
-  --color-on-dark-royal-chip: rgba(37, 99, 235, 0.4);
-  --color-on-dark-electric-chip: rgba(56, 189, 248, 0.15);
+  --color-on-dark-active: rgba(31, 95, 214, 0.26);
+  --color-on-dark-royal-chip: rgba(31, 95, 214, 0.45);
+  --color-on-dark-electric-chip: rgba(76, 147, 255, 0.16);
 
   /* ── Tipografia — escala fixa do DS (px verbatim do protótipo) ──────────── */
   --text-2xs: 10px;
@@ -273,11 +287,11 @@
 /* Gradientes — só nos usos canônicos do DS (chip da logo, avatar, progresso,
    painel escuro, hero). Não são um namespace do Tailwind; viram utilities. */
 :root {
-  --gradient-brand: linear-gradient(135deg, #2563EB, #38BDF8);
-  --gradient-user: linear-gradient(135deg, #0D3B66, #2563EB);
-  --gradient-progress: linear-gradient(90deg, #2563EB, #38BDF8);
-  --gradient-panel: linear-gradient(135deg, #1E3A5F 0%, #0D3B66 100%);
-  --gradient-hero: linear-gradient(135deg, #071A3D 0%, #0D3B66 100%);
+  --gradient-brand: linear-gradient(135deg, #1F5FD6, #4C93FF);
+  --gradient-user: linear-gradient(135deg, #0A1F44, #1F5FD6);
+  --gradient-progress: linear-gradient(90deg, #1F5FD6, #4C93FF);
+  --gradient-panel: linear-gradient(135deg, #0E2A63 0%, #0A1F44 100%);
+  --gradient-hero: linear-gradient(135deg, #071A3D 0%, #0E2A63 100%);
 }
 
 @utility gradient-brand {
@@ -324,6 +338,20 @@
     color: var(--color-royal);
   }
 
+  /*
+    Rótulos em caixa-alta na fonte da marca (§94): "ENTIDADE ATUAL", cabeçalhos
+    de tabela, rótulos de campo — o mesmo desenho do slogan. Fica na camada
+    base, então quem declara a fonte na própria classe (`font-mono` num código
+    em caixa-alta, por exemplo) continua com a dela.
+  */
+  .uppercase {
+    font-family: var(--font-marca);
+  }
+
+  ::selection {
+    background-color: rgba(31, 95, 214, 0.18);
+  }
+
   /* Focus ring global (correção de acessibilidade da fase — seção 3.3):
      anel visível em todo elemento interativo via :focus-visible. */
   :focus {
@@ -334,7 +362,8 @@
     outline-offset: 2px;
     border-radius: var(--radius-xs);
   }
-  /* Sobre superfícies navy o anel royal some — usa electric. */
+  /* Sobre superfícies navy o anel royal some — usa electric. Com a paleta da
+     marca (§94), são o azul e o azul-claro do logo: 5,7:1 nos dois fundos. */
   .on-dark :focus-visible {
     outline-color: var(--color-electric);
   }

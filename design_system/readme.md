@@ -31,19 +31,19 @@ Note: the prototype's sidebar wordmark reads "ContrataDoc"; per the user, the pr
 
 ## VISUAL FOUNDATIONS
 
-- **Palette:** deep navy `#071A3D` (sidebar, headings), petroleum `#0D3B66` (money values, dark panels), royal `#2563EB` (primary actions/links/active), electric `#38BDF8` (accents, active-item tick, gradients), slate `#64748B` (secondary text), ice `#F8FAFC` (app bg), border `#E2E8F0`. Semantic: success `#10B981`, danger `#EF4444`. **Atenção não tem cor própria fora da paleta**: o par âmbar `#FFFBEB`/`#92400E` que vinha do protótipo saiu em 27/08/2026 — amarelo com texto tirando para o vermelho não existia em lugar nenhum do produto. O tom de atenção é ardósia `#F1F5F9` com texto petróleo `#0D3B66`, e quem avisa é o ícone e o texto.
-- **Document accents (`doc-*`)** — one hue per document type, used on chips, icons and selected cards. Each has a paired tint background: Cotação `#7C3AED`/`#F5F3FF` · ETP `#2563EB`/`#EFF6FF` · Mapa `#B45309`/`#FFFBEB` · TR `#0D9488`/`#F0FDFA` · Edital `#BE185D`/`#FDF2F8` · Contrato `#334155`/`#F1F5F9`. **Contrato is slate, not green:** institutional green is already the "Concluído" status, and a green chip on a document would read as a status badge.
-- **Type:** Plus Jakarta Sans (700/800) for headings with negative tracking (−0.3/−0.5px); Inter for UI text; JetBrains Mono for IDs, money, kbd. Base UI size 13px; inputs 14px; stat numbers 30px/800. **Heading ramp (fixed):** page headings 20px/800 −0.5px · toolbar/header titles 17px/700 −0.3px · card titles 15px/700 · body 13px.
-- **Backgrounds:** flat ice-white app canvas; white cards; navy sidebar & occasional navy/petroleum dark panels (`linear-gradient(135deg,#1E3A5F,#0D3B66)`); no imagery, no textures.
-- **Gradients:** small and purposeful only — brand logo chip `135deg #2563EB→#38BDF8`, avatar `135deg #0D3B66→#2563EB`, progress bar `90deg #2563EB→#38BDF8`.
+- **Palette (brand GovPro + GeraDocs, §94):** deep navy `#071A3D` (sidebar, dark surfaces), brand navy `#0A1F44` (headings and main text), royal = brand blue `#1F5FD6` (primary actions/links/active/focus, hover `#1650C4`), electric = brand light blue `#4C93FF` (accents on navy, info, active-item tick), petroleum = deep brand blue `#0E3A94` (money values, dark panels), slate `#64748B` (secondary text), ice `#F4F7FC` (app bg, blue-biased), border `#DCE3EE`. Semantic: success = dark brand green `#0B7A38` (status dots `#14A04B`), danger `#EF4444`, **attention = brand yellow**: tint `#FFF8E1`/`#FFE08A` with dark-brown text `#5C4300` and gold icon/dot `#8F6300` (revises the 27/08/2026 slate decision — the brand brought yellow into the palette). Token names did not change; only values did.
+- **Document accents (`doc-*`)** — one hue per document type, used on chips, icons and selected cards. Each has a paired tint background: Cotação `#7C3AED`/`#F5F3FF` · ETP `#1F5FD6`/`#EDF3FD` · Mapa `#B45309`/`#FFFBEB` · TR `#0D9488`/`#F0FDFA` · Edital `#BE185D`/`#FDF2F8` · Contrato `#334155`/`#F1F5F9`. **Contrato is slate, not green:** institutional green is already the "Concluído" status, and a green chip on a document would read as a status badge.
+- **Type:** Montserrat (700/800) — the brand font — for headings, card titles and stat numbers, with negative tracking (−0.3/−0.5px); Montserrat 600 for caps micro-labels (a base rule on `.uppercase`); Inter for UI text; JetBrains Mono for IDs, money, kbd. Base UI size 13px; inputs 14px; stat numbers 30px/800. **Heading ramp (fixed):** page headings 20px/800 −0.5px · toolbar/header titles 17px/700 −0.3px · card titles 15px/700 · body 13px.
+- **Backgrounds:** flat ice-white app canvas; white cards; navy sidebar & occasional navy/petroleum dark panels (`gradient-panel`: `135deg #0E2A63→#0A1F44`); no imagery, no textures.
+- **Gradients:** small and purposeful only — brand chip `135deg #1F5FD6→#4C93FF`, avatar `135deg #0A1F44→#1F5FD6`, progress bar `90deg #1F5FD6→#4C93FF`, dark panel `135deg #0E2A63→#0A1F44`, hero `135deg #071A3D→#0E2A63`.
 - **Cards:** white, 1px `#E2E8F0` border, radius 12px, **no drop shadows** — the system is flat; borders carry separation. Inner section dividers use softer `#F1F5F9`.
 - **Radii scale:** 12px cards/tables, 8px inputs/buttons/nav, 6px pills/small chips, 999px badges/toggles/avatars.
 - **Buttons:** fixed heights — sm 32px · md 36px · lg 40px; radius 8px; 13–14px/600 labels.
-- **Hover states:** background shifts, not shadows — rows/list items to `#F8FAFC`; primary button `#2563EB→#1D4ED8`; sidebar items to `rgba(255,255,255,0.06)` + white text. Transitions `0.15s` (bg) / `0.2s` (toggles, progress).
-- **Selected states:** 2px royal border + `#EFF6FF` tint fill + check circle; sidebar active = `rgba(37,99,235,0.18)` fill + 3×20px electric left bar (rounded right).
+- **Hover states:** background shifts, not shadows — rows/list items to `#F4F7FC`; primary button `#1F5FD6→#1650C4`; sidebar items to `rgba(255,255,255,0.06)` + white text. Transitions `0.15s` (bg) / `0.2s` (toggles, progress).
+- **Selected states:** 2px royal border + `#EDF3FD` tint fill + check circle; sidebar active = `rgba(31,95,214,0.26)` fill + 3×20px electric (brand light blue) left bar (rounded right).
 - **Press states:** none distinct from hover in source; keep it that way.
 - **On-dark surfaces:** white at alpha steps — text 1.0/0.65/0.55/0.4/0.35/0.3, fills 0.06/0.08/0.1 borders.
-- **Focus:** inputs use `outline: none` in the source; no visible focus ring system (prototype-level; flag for accessibility work).
+- **Focus:** global `:focus-visible` ring in `app/globals.css` — 2px royal (brand blue, 5.7:1 on white), electric (brand light blue) inside `.on-dark` surfaces, and royal border + outline on inputs. Components do not declare their own focus styles.
 - **Shadows:** only the toggle knob (`0 1px 3px rgba(0,0,0,0.2)`).
 - **Density/layout:** fixed 240px navy sidebar, 60px white header, 28px page padding, max-width 1200px content (880px for wizards); ETP editor adds a 280px white section rail. Tables: uppercase 11px headers on `#F8FAFC`, 13–14px rows.
 - **Animation:** subtle and functional only — 0.15–0.2s eases, 0.5s progress width, 1s spinner. No bounces, no entrance animations.
@@ -54,13 +54,13 @@ Note: the prototype's sidebar wordmark reads "ContrataDoc"; per the user, the pr
 - **System:** inline SVG line icons, 24×24 viewBox, `stroke="currentColor"`, stroke-width 2 (2.5 for small/bold marks, 1.5 for large empty-state), round caps/joins — visually equivalent to **Feather/Lucide**. Rendered at 13–20px.
 - No icon font, no PNG icons. Use Lucide from CDN (or copy the same paths inline) when composing new screens — same stroke weight.
 - Check marks: white 3–3.5 stroke polyline `20 6 9 17 4 12` inside filled royal/green circles/squares.
-- Emoji are not used anywhere; quick-action and modalidade rows use the same monochrome line icons (royal on white surfaces, electric #38BDF8 on navy).
+- Emoji are not used anywhere; quick-action and modalidade rows use the same monochrome line icons (royal on white surfaces, electric #4C93FF on navy).
 - Unicode arrows (→ ←) inside button/link labels are standard.
 - **Logos** (`assets/`) — naming convention `<brand>-<mark|logo>[-white].{svg,png}`: **`mark`** = símbolo only, **`logo`** = símbolo + nome (horizontal), **`endosso`** = "GeraDocs · uma solução GovPro"; `-white` = versão para fundo escuro. Files: `geradocs-{mark,logo}[-white]`, `govpro-{mark,logo}[-white]`, `geradocs-endosso-govpro[-white]`, plus `geradocs-carregando[-white].gif` (loading animation on solid white/navy). The wordmark is Montserrat ExtraBold in caps, two-tone (GERA/GOV navy `#0A1F44`, DOCS/PRO blue `#1F5FD6`), **already converted to curves in the SVG** — never retype it in another font; use the SVG (crisp at any size) or the PNG. In the app: the sidebar brand block is one row as tall as the header (60px), "GERADOCS | GOVPRO": `public/geradocs-logo-white.svg` (22px), a thin divider and `govpro-logo-white.svg` (12px, accessible name "Uma solução GovPro"), spread edge to edge (`justify-between`, same ends as the brand rule) and vertically centered, and the brand rule (`FaixaDaMarca`) on the same line as the header border; login and password reset use `geradocs-logo-white.svg` (48px), the slogan "Contratações públicas inteligentes" in Montserrat with the brand rule under it (`w-80`), the diagonal corner bands (`FaixasDeCanto`, from the letterhead) and the GovPro credit; the favicon is `app/icon.png` + `app/favicon.ico` (symbol on a fully **transparent** background, the inside of the sheet included) and `app/apple-icon.png` (navy tile — iOS does not support transparency). The animated loading symbol is the `MarcaCarregando` component (SVG, transparent), colored by the `--color-marca-*` tokens. **Brand font:** Montserrat (`font-marca`, 600/700, local in `app/fonts/`) is used only for text that accompanies the logo — the slogan and the "uma solução" endorsement — never for interface text.
 
 ## Fonts
 
-All three families are Google Fonts, loaded via `@import` in `tokens/typography.css` (as in the source prototype): Plus Jakarta Sans, Inter, JetBrains Mono. No local binaries were provided; if offline use is needed, supply .woff2 files and we'll switch to local `@font-face`.
+In the app the fonts are local `woff2` files in `app/fonts/` (Fontsource, OFL): Montserrat 600/700/800 (brand: headings, stat numbers, caps labels, slogan), Inter (UI text), JetBrains Mono (IDs, money) and Plus Jakarta Sans (kept as fallback). The specimens here load the same families from Google Fonts via `tokens/typography.css`.
 
 ## Index
 
@@ -83,5 +83,4 @@ All three families are Google Fonts, loaded via `@import` in `tokens/typography.
 
 ### Known gaps
 
-- No focus-ring system in source (accessibility gap to resolve with product).
 - Approvals/Documents/Settings/DFDReview views exist in source but are not yet recreated in the UI kit.

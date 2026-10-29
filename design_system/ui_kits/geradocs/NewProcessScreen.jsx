@@ -41,7 +41,7 @@ function NewProcessScreen({ navigate }) {
   ];
 
   const docOptions = [
-    { key: "etp", title: "Estudo Técnico Preliminar (ETP)", desc: "Fundamenta a necessidade e os requisitos técnicos da contratação", obrig: true, sections: 12, color: "#2563EB", bg: "#EFF6FF" },
+    { key: "etp", title: "Estudo Técnico Preliminar (ETP)", desc: "Fundamenta a necessidade e os requisitos técnicos da contratação", obrig: true, sections: 12, color: "#1F5FD6", bg: "#EDF3FD" },
     { key: "tr", title: "Termo de Referência (TR)", desc: "Define as condições para execução do objeto da licitação", obrig: true, sections: 15, color: "#0D9488", bg: "#F0FDFA" },
     { key: "cotacao", title: "Cotação de Mercado", desc: "Pesquisa de preços com fornecedores para embasar a estimativa de valor", obrig: false, sections: 4, color: "#7C3AED", bg: "#F5F3FF" },
     { key: "mapa", title: "Mapa de Riscos", desc: "Avaliação e classificação dos riscos envolvidos na contratação", obrig: false, sections: 5, color: "#B45309", bg: "#FFFBEB" },
@@ -112,7 +112,7 @@ function NewProcessScreen({ navigate }) {
               <div style={{ marginBottom: 12 }}>
                 <label style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>
                   Documento de Formalização de Demanda (DFD)
-                  <span style={{ fontSize: 11, background: "#FFFBEB", color: "#92400E", borderRadius: 6, padding: "2px 7px", fontWeight: 600, marginLeft: 8 }}>Recomendado</span>
+                  <span style={{ fontSize: 11, background: "#FFFBEB", color: "#5C4300", borderRadius: 6, padding: "2px 7px", fontWeight: 600, marginLeft: 8 }}>Recomendado</span>
                 </label>
                 <p style={{ margin: "4px 0 0", fontSize: 12, color: "#64748B" }}>O DFD alimentará automaticamente as seções do ETP. Caso não possua, preencha o campo Objeto abaixo.</p>
               </div>
@@ -167,7 +167,7 @@ function NewProcessScreen({ navigate }) {
           <div style={{ marginBottom: 20 }}>
             <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 12 }}>Fases Opcionais do Processo</label>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <div style={{ background: "#FFFFFF", border: `1px solid ${verifDFD ? "#2563EB" : "#E2E8F0"}`, borderRadius: 12, padding: "16px 18px" }}>
+              <div style={{ background: "#FFFFFF", border: `1px solid ${verifDFD ? "#1F5FD6" : "#E2E8F0"}`, borderRadius: 12, padding: "16px 18px" }}>
                 <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
                   <div style={{ paddingTop: 2 }}><DSN.Toggle checked={verifDFD} onChange={setVerifDFD} /></div>
                   <div style={{ flex: 1 }}>

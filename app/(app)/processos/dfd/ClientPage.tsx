@@ -148,7 +148,14 @@ export default function VerificacaoDFD() {
         <span className="flex text-text-faint">
           <IconChevronRight size={14} strokeWidth={2.5} />
         </span>
-        <span className="font-mono text-sm font-bold text-royal">{processoId}</span>
+        {/* O número que a pessoa conhece (PROC-…), e não o identificador interno;
+            leva de volta à capa do processo. */}
+        <Link
+          href={`/processos/detalhe?id=${encodeURIComponent(processoId)}`}
+          className="font-mono text-sm font-bold text-royal no-underline"
+        >
+          {processo.data?.numero ?? "Processo"}
+        </Link>
         <span className="flex text-text-faint">
           <IconChevronRight size={14} strokeWidth={2.5} />
         </span>
@@ -156,7 +163,7 @@ export default function VerificacaoDFD() {
       </div>
 
       {/* Indicador de fase */}
-      <div className="on-dark mb-6 flex items-center gap-5 rounded-[14px] px-6 py-5 gradient-hero">
+      <div className="on-dark mb-6 flex items-center gap-5 rounded-card px-6 py-5 gradient-hero">
         <div className="flex size-11 shrink-0 items-center justify-center rounded-card bg-on-dark-electric-chip text-electric">
           <IconHelp size={22} />
         </div>

@@ -74,7 +74,7 @@ function Button({
       color: "#FFFFFF"
     },
     ghost: {
-      background: hover ? "#EFF6FF" : "transparent",
+      background: hover ? "#EDF3FD" : "transparent",
       color: "var(--color-royal)"
     }
   };
@@ -270,7 +270,7 @@ function NavButton({
       borderRadius: 8,
       border: "none",
       cursor: "pointer",
-      background: isActive ? "rgba(37,99,235,0.18)" : hover ? "rgba(255,255,255,0.06)" : "transparent",
+      background: isActive ? "rgba(31,95,214,0.18)" : hover ? "rgba(255,255,255,0.06)" : "transparent",
       color: isActive || hover ? "#FFFFFF" : inactive,
       fontSize: 13,
       fontWeight: isActive ? 600 : 500,
@@ -288,7 +288,7 @@ function NavButton({
       transform: "translateY(-50%)",
       width: 3,
       height: 20,
-      background: "#38BDF8",
+      background: "#4C93FF",
       borderRadius: "0 3px 3px 0"
     }
   }), /*#__PURE__*/React.createElement("span", {
@@ -406,7 +406,7 @@ function Sidebar({
     style: {
       width: 22,
       height: 22,
-      background: "rgba(37,99,235,0.4)",
+      background: "rgba(31,95,214,0.4)",
       borderRadius: 5,
       display: "flex",
       alignItems: "center",
@@ -418,7 +418,7 @@ function Sidebar({
     height: "12",
     viewBox: "0 0 24 24",
     fill: "none",
-    stroke: "#38BDF8",
+    stroke: "#4C93FF",
     strokeWidth: "2.5"
   }, /*#__PURE__*/React.createElement("path", {
     d: "M3 21h18M9 8h1M9 12h1M9 16h1M14 8h1M14 12h1M14 16h1M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"
@@ -505,7 +505,7 @@ function Sidebar({
       width: 34,
       height: 34,
       borderRadius: 999,
-      background: "linear-gradient(135deg, #0D3B66, #2563EB)",
+      background: "linear-gradient(135deg, #0E3A94, #1F5FD6)",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
@@ -561,16 +561,16 @@ Object.assign(__ds_scope, { Sidebar });
 try { (() => {
 const map = {
   "Completo": {
-    bg: "#ECFDF5",
-    color: "#065F46"
+    bg: "#EAF7EF",
+    color: "#0B6B33"
   },
   "Em andamento": {
-    bg: "#EFF6FF",
-    color: "#1D4ED8"
+    bg: "#EDF3FD",
+    color: "#1650C4"
   },
   "Em revisão": {
-    bg: "#FEF3C7",
-    color: "#92400E"
+    bg: "#FFF8E1",
+    color: "#5C4300"
   },
   "Rejeitado": {
     bg: "#FEF2F2",
@@ -613,16 +613,16 @@ function Tag({
 }) {
   const tones = {
     info: {
-      bg: "#EFF6FF",
-      color: "#1D4ED8"
+      bg: "#EDF3FD",
+      color: "#1650C4"
     },
     success: {
-      bg: "#ECFDF5",
-      color: "#065F46"
+      bg: "#EAF7EF",
+      color: "#0B6B33"
     },
     warning: {
-      bg: "#FEF3C7",
-      color: "#92400E"
+      bg: "#FFF8E1",
+      color: "#5C4300"
     },
     danger: {
       bg: "#FEF2F2",
@@ -663,8 +663,8 @@ function StatCard({
   sub,
   trend = "up",
   icon,
-  color = "#2563EB",
-  bg = "#EFF6FF"
+  color = "#1F5FD6",
+  bg = "#EDF3FD"
 }) {
   const warn = trend === "warn";
   return /*#__PURE__*/React.createElement("div", {
@@ -696,7 +696,7 @@ function StatCard({
     style: {
       fontSize: 11,
       color: warn ? "#D97706" : "#16A34A",
-      background: warn ? "#FFFBEB" : "#F0FDF4",
+      background: warn ? "#FFFBEB" : "#EAF7EF",
       borderRadius: 6,
       padding: "2px 7px",
       fontWeight: 600
@@ -781,21 +781,21 @@ const config = {
   },
   em_revisao: {
     label: "Em Revisão",
-    bg: "#FEF3C7",
-    color: "#92400E",
-    dot: "#F59E0B"
+    bg: "#EAF2FF",
+    color: "#0E3A94",
+    dot: "#4C93FF"
   },
   aguardando: {
     label: "Aguardando",
-    bg: "#EFF6FF",
-    color: "#1D4ED8",
-    dot: "#3B82F6"
+    bg: "#FFF8E1",
+    color: "#5C4300",
+    dot: "#F0A500"
   },
   aprovado: {
     label: "Aprovado",
-    bg: "#ECFDF5",
-    color: "#065F46",
-    dot: "#10B981"
+    bg: "#EAF7EF",
+    color: "#0B6B33",
+    dot: "#0B7A38"
   },
   rejeitado: {
     label: "Rejeitado",
@@ -805,9 +805,9 @@ const config = {
   },
   concluido: {
     label: "Concluído",
-    bg: "#F0FDF4",
-    color: "#15803D",
-    dot: "#22C55E"
+    bg: "#EAF7EF",
+    color: "#0B6B33",
+    dot: "#14A04B"
   }
 };
 
@@ -850,13 +850,13 @@ Object.assign(__ds_scope, { StatusBadge });
 try { (() => {
 const cfg = {
   ok: {
-    bg: "#ECFDF5",
-    color: "#065F46",
+    bg: "#EAF7EF",
+    color: "#0B6B33",
     icon: "✓"
   },
   warn: {
     bg: "#FFFBEB",
-    color: "#92400E",
+    color: "#5C4300",
     icon: "!"
   },
   error: {
@@ -904,14 +904,14 @@ function InfoBanner({
 }) {
   const tones = {
     info: {
-      bg: "#EFF6FF",
-      border: "#BFDBFE",
-      color: "#1D4ED8"
+      bg: "#EDF3FD",
+      border: "#C3D5F6",
+      color: "#1650C4"
     },
     warning: {
       bg: "#FFFBEB",
       border: "#FDE68A",
-      color: "#92400E"
+      color: "#5C4300"
     },
     danger: {
       bg: "#FEF2F2",
@@ -919,9 +919,9 @@ function InfoBanner({
       color: "#991B1B"
     },
     success: {
-      bg: "#ECFDF5",
+      bg: "#EAF7EF",
       border: "#A7F3D0",
-      color: "#065F46"
+      color: "#0B6B33"
     }
   };
   const c = tones[tone] || tones.info;
@@ -993,7 +993,7 @@ function ChoiceCard({
       padding: size === "small" ? "12px 16px" : "16px 20px",
       borderRadius: 12,
       border: selected ? "2px solid var(--color-royal)" : "1px solid var(--color-border)",
-      background: selected ? "#EFF6FF" : "#FFFFFF",
+      background: selected ? "#EDF3FD" : "#FFFFFF",
       cursor: "pointer",
       textAlign: "left",
       transition: "var(--transition-fast)",
@@ -1704,8 +1704,8 @@ const gdStats = [{
   value: "24",
   sub: "+3 este mês",
   trend: "up",
-  color: "#2563EB",
-  bg: "#EFF6FF",
+  color: "#1F5FD6",
+  bg: "#EDF3FD",
   icon: /*#__PURE__*/React.createElement(GDIcon, {
     d: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z",
     poly: ["14 2 14 8 20 8"]
@@ -1749,7 +1749,7 @@ const gdStats = [{
   sub: "Taxa de conclusão: 89%",
   trend: "up",
   color: "#16A34A",
-  bg: "#F0FDF4",
+  bg: "#EAF7EF",
   icon: /*#__PURE__*/React.createElement(GDIcon, {
     d: "M22 11.08V12a10 10 0 1 1-5.93-9.14",
     poly: ["22 4 12 14.01 9 11.01"]
@@ -1850,7 +1850,7 @@ function GDRow({
       padding: "13px 16px",
       fontSize: 13,
       fontWeight: 600,
-      color: "#0D3B66",
+      color: "#0E3A94",
       fontFamily: "var(--font-mono)"
     }
   }, p.valor), /*#__PURE__*/React.createElement("td", {
@@ -1944,7 +1944,7 @@ function DashboardScreen({
       onClick: () => navigate("processes"),
       style: {
         fontSize: 13,
-        color: "#2563EB",
+        color: "#1F5FD6",
         background: "none",
         border: "none",
         cursor: "pointer",
@@ -2032,7 +2032,7 @@ function DashboardScreen({
     style: {
       width: 32,
       height: 32,
-      background: "#EFF6FF",
+      background: "#EDF3FD",
       borderRadius: 8,
       display: "flex",
       alignItems: "center",
@@ -2044,7 +2044,7 @@ function DashboardScreen({
     style: {
       fontSize: 10,
       fontWeight: 700,
-      color: "#2563EB",
+      color: "#1F5FD6",
       fontFamily: "var(--font-mono)"
     }
   }, item.type)), /*#__PURE__*/React.createElement("div", {
@@ -2080,8 +2080,8 @@ function DashboardScreen({
     style: {
       width: "100%",
       padding: "9px",
-      background: "#EFF6FF",
-      color: "#2563EB",
+      background: "#EDF3FD",
+      color: "#1F5FD6",
       border: "none",
       borderRadius: 8,
       fontSize: 13,
@@ -2171,7 +2171,7 @@ function DashboardScreen({
     }
   }, /*#__PURE__*/React.createElement("span", {
     style: {
-      color: "#38BDF8",
+      color: "#4C93FF",
       display: "flex",
       flexShrink: 0
     }
@@ -2261,14 +2261,14 @@ const etpSections = [{
 }];
 const etpStatusMap = {
   completo: {
-    dot: "#10B981",
-    bg: "#ECFDF5",
-    color: "#065F46"
+    dot: "#0B7A38",
+    bg: "#EAF7EF",
+    color: "#0B6B33"
   },
   em_andamento: {
-    dot: "#3B82F6",
-    bg: "#EFF6FF",
-    color: "#1D4ED8"
+    dot: "#1F5FD6",
+    bg: "#EDF3FD",
+    color: "#1650C4"
   },
   pendente: {
     dot: "#94A3B8",
@@ -2374,8 +2374,8 @@ function ETPFormScreen({
         width: "100%",
         padding: "10px 10px",
         borderRadius: 8,
-        border: isActive ? "1px solid #BFDBFE" : "1px solid transparent",
-        background: isActive ? "#EFF6FF" : "transparent",
+        border: isActive ? "1px solid #C3D5F6" : "1px solid transparent",
+        background: isActive ? "#EDF3FD" : "transparent",
         cursor: "pointer",
         textAlign: "left",
         marginBottom: 2,
@@ -2416,7 +2416,7 @@ function ETPFormScreen({
       style: {
         fontSize: 12,
         fontWeight: isActive ? 600 : 500,
-        color: isActive ? "#1D4ED8" : "#374151",
+        color: isActive ? "#1650C4" : "#374151",
         lineHeight: 1.3
       }
     }, s.title, !s.required && /*#__PURE__*/React.createElement("span", {
@@ -2552,7 +2552,7 @@ function ETPFormScreen({
       border: "1px solid #E2E8F0",
       borderRadius: 8,
       background: "#F8FAFC",
-      color: "#0D3B66",
+      color: "#0E3A94",
       fontWeight: 700,
       fontFamily: "var(--font-mono)",
       fontSize: 14
@@ -2572,7 +2572,7 @@ function ETPFormScreen({
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      background: "linear-gradient(135deg, #1E3A5F 0%, #0D3B66 100%)",
+      background: "linear-gradient(135deg, #1E3A5F 0%, #0E3A94 100%)",
       borderRadius: 12,
       padding: "18px 20px",
       display: "flex",
@@ -2583,7 +2583,7 @@ function ETPFormScreen({
     style: {
       width: 36,
       height: 36,
-      background: "rgba(56,189,248,0.15)",
+      background: "rgba(76,147,255,0.15)",
       borderRadius: 9,
       display: "flex",
       alignItems: "center",
@@ -2595,7 +2595,7 @@ function ETPFormScreen({
     height: "18",
     viewBox: "0 0 24 24",
     fill: "none",
-    stroke: "#38BDF8",
+    stroke: "#4C93FF",
     strokeWidth: "2",
     strokeLinecap: "round",
     strokeLinejoin: "round"
@@ -2689,16 +2689,16 @@ function ETPFormScreen({
   }, "Enviar para revis\xE3o pela IA")), review === "loading" && /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 10,
-      background: "#EFF6FF",
+      background: "#EDF3FD",
       borderRadius: 8,
       padding: "12px 16px",
       fontSize: 13,
-      color: "#1D4ED8"
+      color: "#1650C4"
     }
   }, "Analisando ATA... aguarde."), review === "done" && /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 10,
-      background: "#ECFDF5",
+      background: "#EAF7EF",
       border: "1px solid #A7F3D0",
       borderRadius: 10,
       padding: "14px 16px"
@@ -2707,7 +2707,7 @@ function ETPFormScreen({
     style: {
       fontSize: 13,
       fontWeight: 700,
-      color: "#065F46",
+      color: "#0B6B33",
       marginBottom: 6
     }
   }, "Parecer da IA \u2014 ATA V\xE1lida"), /*#__PURE__*/React.createElement("p", {
@@ -2871,8 +2871,8 @@ function NewProcessScreen({
     desc: "Fundamenta a necessidade e os requisitos técnicos da contratação",
     obrig: true,
     sections: 12,
-    color: "#2563EB",
-    bg: "#EFF6FF"
+    color: "#1F5FD6",
+    bg: "#EDF3FD"
   }, {
     key: "tr",
     title: "Termo de Referência (TR)",
@@ -3066,7 +3066,7 @@ function NewProcessScreen({
     style: {
       fontSize: 11,
       background: "#FFFBEB",
-      color: "#92400E",
+      color: "#5C4300",
       borderRadius: 6,
       padding: "2px 7px",
       fontWeight: 600,
@@ -3237,7 +3237,7 @@ function NewProcessScreen({
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#FFFFFF",
-      border: `1px solid ${verifDFD ? "#2563EB" : "#E2E8F0"}`,
+      border: `1px solid ${verifDFD ? "#1F5FD6" : "#E2E8F0"}`,
       borderRadius: 12,
       padding: "16px 18px"
     }
@@ -3569,14 +3569,14 @@ function ProcessListScreen({
     }
   }, /*#__PURE__*/React.createElement(DSP.DocPill, {
     status: p.modalidade,
-    bg: "#EFF6FF",
-    color: "#1D4ED8"
+    bg: "#EDF3FD",
+    color: "#1650C4"
   })), /*#__PURE__*/React.createElement("td", {
     style: {
       padding: "14px 16px",
       fontSize: 13,
       fontWeight: 600,
-      color: "#0D3B66",
+      color: "#0E3A94",
       fontFamily: "var(--font-mono)",
       whiteSpace: "nowrap"
     }

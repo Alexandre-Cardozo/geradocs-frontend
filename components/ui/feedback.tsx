@@ -148,7 +148,7 @@ const validationCfg = {
 export function ValidationMsg({ type = "ok", msg }: { type?: "ok" | "warn" | "error"; msg: string }) {
   const c = validationCfg[type]
   return (
-    <div className={`mt-2.5 flex items-center gap-2 rounded-[7px] px-3 py-2 ${c.classes}`}>
+    <div className={`mt-2.5 flex items-center gap-2 rounded-md px-3 py-2 ${c.classes}`}>
       <span className="text-base font-bold">{c.icon}</span>
       <span className="text-sm font-medium">{msg}</span>
     </div>
