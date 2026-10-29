@@ -44,8 +44,7 @@ export function ConferenciaDaDispensa({ processoId }: { processoId: string }) {
   if (dados.limitePendente) {
     return (
       <InfoBanner tone="info">
-        Limites de dispensa de <strong>{dados.exercicio}</strong> não cadastrados: o valor não foi
-        conferido. Peça ao administrador da plataforma.
+        Limites de <strong>{dados.exercicio}</strong> não cadastrados: valor não conferido.
       </InfoBanner>
     )
   }

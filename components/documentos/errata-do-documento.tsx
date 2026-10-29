@@ -68,7 +68,7 @@ export function ErrataDoDocumento({
 
       {comparacao.isSuccess && comparacao.data.errata.length === 0 && (
         <InfoBanner tone="info">
-          Nada mudou entre estas duas versões — não há errata a publicar.
+          Sem diferenças entre as versões.
         </InfoBanner>
       )}
 

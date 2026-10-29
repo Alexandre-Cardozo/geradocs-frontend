@@ -4,7 +4,7 @@ import Link from "next/link"
 import { notFound, useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
 
-import { Button, InfoBanner, ProgressBar, SectionBlock, Textarea, ValidationMsg } from "@/components/ui"
+import { Button, InfoBanner, ProgressBar, SectionBlock, Textarea } from "@/components/ui"
 import { IconArrowRight, IconCheckCircle, IconCheck, IconHelp, IconSave } from "@/components/ui/icons"
 import { PainelATA, PainelDaSecao } from "@/components/documentos/paineis"
 import { ErrorState, InlineSpinner, LoadingState } from "@/components/shared/estados"
@@ -377,7 +377,7 @@ export default function EditorDocumento() {
             */}
             {documento.data?.alteradoDesdeAVersao && (
               <div className="mt-1.5 rounded-sm bg-tint-warning-bg px-2 py-1 text-2xs leading-snug text-tint-warning-fg">
-                Alterado após a última geração. Gere de novo para atualizar o arquivo.
+                Alterado desde a última geração.
               </div>
             )}
           </div>
@@ -516,15 +516,15 @@ export default function EditorDocumento() {
           {documentoGerado && retificando && !naEtapaFinal && (
             <InfoBanner tone="warning" className="mb-4">
               <span>
-                Retificando a v{documentoGerado.versao} do {tipo}. Edite as seções que precisam mudar e
-                conclua em Revisão e Geração, dizendo a natureza e o que foi corrigido.{" "}
+                Retificando a v{documentoGerado.versao} do {tipo}. Ao terminar, conclua em{" "}
                 <button
                   type="button"
                   onClick={() => trocarSecao(ETAPA_FINAL)}
                   className="cursor-pointer border-none bg-transparent p-0 font-semibold text-royal"
                 >
-                  Ir para Revisão e Geração
+                  Revisão e Geração
                 </button>
+                .
               </span>
             </InfoBanner>
           )}
@@ -621,21 +621,9 @@ export default function EditorDocumento() {
                 </div>
               )}
               {active.status === "Completo" && rascunho === active.conteudo && active.conteudo !== "" ? (
-                <div className="flex flex-col gap-3.5">
-                  <div className="flex items-start gap-3 rounded-xl border border-tint-success-border bg-tint-success-bg px-4.5 py-4">
-                    <span className="mt-px flex shrink-0 text-success">
-                      <IconCheckCircle size={18} strokeWidth={2.5} />
-                    </span>
-                    <div>
-                      <div className="text-md font-bold text-tint-success-fg">Seção Concluída</div>
-                      <p className="m-0 mt-1 text-base text-tint-success-fg-soft">
-                        Esta seção foi preenchida e validada. Edite o conteúdo abaixo para revisar.
-                      </p>
-                    </div>
-                  </div>
-                  <Textarea value={rascunho} onChange={(e) => setRascunho(e.target.value)} rows={6} />
-                  <ValidationMsg type="ok" msg="Texto suficiente para fundamentar a seção." />
-                </div>
+                // Concluída já aparece no ✓ da lista de seções; um cartão aqui
+                // repetia o aviso em cima do texto (§96).
+                <Textarea value={rascunho} onChange={(e) => setRascunho(e.target.value)} rows={6} />
               ) : (
                 <div className="flex flex-col gap-3">
                   <Textarea
@@ -653,9 +641,6 @@ export default function EditorDocumento() {
                     rascunhei".
                   */}
                   <CaminhosDaSecao gerando={gerar.isPending} onGerarComIa={handleGerarIA} />
-                  {rascunho.trim() !== "" && (
-                    <ValidationMsg type="ok" msg="Texto suficiente para fundamentar a seção." />
-                  )}
                   {gerar.isPending && <InlineSpinner label="Gerando conteúdo da seção... aguarde." />}
                 </div>
               )}

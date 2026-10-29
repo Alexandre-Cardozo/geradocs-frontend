@@ -102,7 +102,9 @@ describe("painel do administrador geral", () => {
 
     // A contagem é de quem opera as entidades; o admin da plataforma não opera
     // nenhuma, e some também da lista aberta da entidade.
-    expect(await screen.findByText(/1 usuário\(s\) nas entidades/)).toBeInTheDocument()
+    expect(await screen.findByText(/^Prefeitura · 1 servidor\(es\)/)).toBeInTheDocument()
+    const cartao = screen.getByText("Servidores", { selector: "div" }).parentElement as HTMLElement
+    expect(cartao).toHaveTextContent(/^Servidores1/)
 
     await userEvent.click(screen.getByRole("button", { name: /Prefeitura Municipal de Ecoporanga/ }))
     expect(await screen.findByText("Maria Costa Andrade")).toBeInTheDocument()

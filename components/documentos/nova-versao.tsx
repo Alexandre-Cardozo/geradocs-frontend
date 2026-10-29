@@ -92,8 +92,7 @@ export function NovaVersaoDoDocumento({
           // Sem isto, retificar sem ter editado gerava uma versão com o mesmo
           // texto (o mesmo hash) da anterior, declarada como correção.
           <InfoBanner tone="info">
-            As seções estão como na v{versaoAtual}. Para corrigir o texto, edite as seções antes — a
-            nova versão sai do que está nelas.
+            Sem edições desde a v{versaoAtual}: a nova versão sairá com o mesmo texto.
           </InfoBanner>
         )
       )}

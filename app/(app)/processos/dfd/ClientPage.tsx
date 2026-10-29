@@ -172,7 +172,7 @@ export default function VerificacaoDFD() {
             Etapa Inicial — Verificação do DFD pela IA
           </div>
           <p className="m-0 text-base text-on-dark-60">
-            O modelo analisará o DFD quanto à completude, conformidade legal e compatibilidade com o PCA antes de iniciar a elaboração dos documentos do processo.
+            Completude, conformidade legal e aderência ao PCA.
           </p>
         </div>
       </div>
@@ -183,10 +183,7 @@ export default function VerificacaoDFD() {
       {upload && (
         <div className="flex flex-col gap-4.5">
           <div className="rounded-card border border-border bg-surface px-6 py-5.5">
-            <h3 className="m-0 mb-1 font-display text-lg font-bold text-text-1">Enviar DFD para Verificação</h3>
-            <p className="m-0 mb-4.5 text-base text-text-3">
-              O DFD será analisado pela IA.
-            </p>
+            <h3 className="m-0 mb-4.5 font-display text-lg font-bold text-text-1">Enviar DFD para Verificação</h3>
 
             {dfdFile ? (
               <div>
@@ -407,11 +404,6 @@ export default function VerificacaoDFD() {
                 </li>
               ))}
             </ol>
-            <div className="mt-4 border-t border-border-soft pt-4">
-              <p className="m-0 text-sm text-text-3">
-                A verificação é opcional.
-              </p>
-            </div>
           </div>
         </aside>
       </div>

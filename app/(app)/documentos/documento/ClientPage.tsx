@@ -153,7 +153,7 @@ export default function DocumentoGerado() {
 
       {acabouDeGerar && gerado && (
         <InfoBanner tone="success" icon={<IconCheckCircle size={16} />}>
-          {meta.titulo} v{gerado.versao} gerado. Os arquivos estão prontos para baixar.
+          {meta.titulo} v{gerado.versao} gerado.
         </InfoBanner>
       )}
 
