@@ -55,8 +55,8 @@ function ProcessListScreen({ navigate }) {
                   <div style={{ fontSize: 11, color: "#94A3B8", fontFamily: "var(--font-mono)", marginTop: 3 }}>{p.id}</div>
                 </td>
                 <td style={{ padding: "14px 16px", fontSize: 12, color: "#64748B", maxWidth: 160 }}>{p.secretaria}</td>
-                <td style={{ padding: "14px 16px" }}><DSP.DocPill status={p.modalidade} bg="#EFF6FF" color="#1D4ED8" /></td>
-                <td style={{ padding: "14px 16px", fontSize: 13, fontWeight: 600, color: "#0D3B66", fontFamily: "var(--font-mono)", whiteSpace: "nowrap" }}>{p.valor}</td>
+                <td style={{ padding: "14px 16px" }}><DSP.DocPill status={p.modalidade} bg="#EDF3FD" color="#1650C4" /></td>
+                <td style={{ padding: "14px 16px", fontSize: 13, fontWeight: 600, color: "#0E3A94", fontFamily: "var(--font-mono)", whiteSpace: "nowrap" }}>{p.valor}</td>
                 <td style={{ padding: "14px 16px" }}><DSP.DocPill status={p.etp} /></td>
                 <td style={{ padding: "14px 16px" }}><DSP.DocPill status={p.tr} /></td>
                 <td style={{ padding: "14px 16px", fontSize: 12, color: "#64748B" }}>{p.responsavel}</td>

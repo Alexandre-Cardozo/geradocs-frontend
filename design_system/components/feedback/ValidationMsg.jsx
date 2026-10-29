@@ -1,8 +1,8 @@
 import React from "react";
 
 const cfg = {
-  ok: { bg: "#ECFDF5", color: "#065F46", icon: "✓" },
-  warn: { bg: "#FFFBEB", color: "#92400E", icon: "!" },
+  ok: { bg: "#EAF7EF", color: "#0B6B33", icon: "✓" },
+  warn: { bg: "#FFFBEB", color: "#5C4300", icon: "!" },
   error: { bg: "#FEF2F2", color: "#991B1B", icon: "✕" },
 };
 
@@ -20,10 +20,10 @@ export function ValidationMsg({ type = "ok", msg }) {
 /** Bordered info banner (blue/amber/red/green) with icon slot. */
 export function InfoBanner({ tone = "info", children }) {
   const tones = {
-    info: { bg: "#EFF6FF", border: "#BFDBFE", color: "#1D4ED8" },
-    warning: { bg: "#FFFBEB", border: "#FDE68A", color: "#92400E" },
+    info: { bg: "#EDF3FD", border: "#C3D5F6", color: "#1650C4" },
+    warning: { bg: "#FFFBEB", border: "#FDE68A", color: "#5C4300" },
     danger: { bg: "#FEF2F2", border: "#FECACA", color: "#991B1B" },
-    success: { bg: "#ECFDF5", border: "#A7F3D0", color: "#065F46" },
+    success: { bg: "#EAF7EF", border: "#A7F3D0", color: "#0B6B33" },
   };
   const c = tones[tone] || tones.info;
   return (

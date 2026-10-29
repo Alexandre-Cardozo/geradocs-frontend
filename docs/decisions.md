@@ -866,6 +866,8 @@ A barra passou a lê-lo de onde ele existe — `useTimbre` para saber se há um,
 
 ## 64. O tom de atenção volta para a paleta da plataforma
 
+> **Revista na §94 (28/10/2026):** a marca GovPro trouxe o amarelo para dentro da paleta, e atenção passou a ser o amarelo da marca.
+
 Os avisos vinham em âmbar `#FFFBEB` com texto `#92400E` — amarelo com o texto tirando para o vermelho. Era herança do protótipo e não existia em lugar nenhum do produto: a interface é navy, petróleo, royal, elétrico e ardósia, e no meio dela aquele par parecia de outro sistema.
 
 **A correção foi no token, não nas telas.** `tint-warning-*` passou a ser ardósia `#F1F5F9` com texto petróleo `#0D3B66` e borda `#CBD5E1`; `--color-warning` virou royal, e `--color-warning-strong`, petróleo. Os dez lugares que usam essas utilities — o aviso de senha provisória, o `InfoBanner` de atenção, a `Tag`, o `StatCard` "Em Elaboração", o painel do PCA, o parecer do DFD — mudaram junto, sem uma linha de JSX tocada. É para isso que os tokens existem.
@@ -1285,3 +1287,17 @@ A retificação existia em dois lugares, cada um com metade dela. Na capa do pro
 - **Modelo trocado depois de gerar** (ADR-052 do back-end): a mesma etapa, sem a opção de regeração. Antes, um painel substituía a etapa inteira, sem prévia nem elaboração.
 - **A errata foi para o acervo**, ao lado do histórico do texto: ela compara versões já geradas, e no painel da capa aparecia antes de a versão nova existir.
 - **Pendente:** o rótulo `v2 · RETIFICADO` ainda vale para toda versão a partir da segunda, inclusive regeração. Distinguir pede que o servidor diga se a versão vigente foi retificação declarada.
+
+## 94. A interface passa a usar a paleta e a fonte da marca
+
+Auditoria de 28/10/2026 nas 19 telas: login e barra lateral já estavam na marca nova (§92), o resto ainda falava a paleta anterior. Como toda cor do app sai de um token, a adequação é **troca de valores** — nenhum componente nem disposição mudou.
+
+- **Azuis da marca:** `royal` #2563EB → **#1F5FD6** (hover #1650C4), `electric` #38BDF8 → **#4C93FF**, `petroleum` #0D3B66 → **#0E3A94**, `text-1` → **#0A1F44**. Os nomes ficam; royal e electric eram o azul 600 e o céu 400 do Tailwind e, ao lado do logo, apareciam como um segundo azul. Contraste do primário: 5,17 → 5,73:1.
+- **Verde da marca = sucesso:** `success` #10B981 → **#0B7A38** e pontos de Aprovado/Concluído **#14A04B**. O botão "Finalizar e Gerar Documento" tinha texto branco a **2,54:1** (reprovava AA); agora 5,45:1.
+- **Amarelo da marca = atenção** (revisa a §64): fundo #FFF8E1, borda #FFE08A, texto #5C4300 (8,75:1), ícone e ponto #8F6300 (5,0:1). "Aguardando" deixa de ser o mesmo azul de "Em Elaboração".
+- **Neutros com o viés azul do manual:** `ice` #F4F7FC, `border` #DCE3EE, `border-soft` #EEF2F8; os cinzas de texto seguem acima de 4,5:1.
+- **Degradês e superfícies escuras** nos azuis da marca (`gradient-*`, `on-dark-*`).
+- **Montserrat** (`font-display`) nos títulos, cartões e números dos indicadores, com o peso 800 adicionado aos arquivos locais; rótulos em caixa-alta na Montserrat 600 por uma regra de base em `.uppercase` (quem declara a própria fonte, como `font-mono`, continua com ela). O corpo segue em Inter.
+- **Foco:** o anel global de `:focus-visible` já existia; com os tokens novos é o azul da marca (5,7:1 no branco) e o azul-claro sobre o navy.
+- **Consistência:** a trilha da tela do DFD mostra o número do processo (com link para a capa) em vez do identificador interno; quatro raios fora da escala voltaram para ela.
+- **Design system em dia:** `tokens/colors.css` e `typography.css` espelham o `@theme`; componentes de referência, kit, cards, bundle e standalone trocaram as cores antigas pelas da marca; `readme.md` descreve a paleta e a fonte novas.

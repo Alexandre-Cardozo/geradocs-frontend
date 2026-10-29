@@ -16,8 +16,8 @@ const etpSections = [
   { id: "12", title: "Posicionamento Conclusivo", status: "pendente", required: false },
 ];
 const etpStatusMap = {
-  completo: { dot: "#10B981", bg: "#ECFDF5", color: "#065F46" },
-  em_andamento: { dot: "#3B82F6", bg: "#EFF6FF", color: "#1D4ED8" },
+  completo: { dot: "#0B7A38", bg: "#EAF7EF", color: "#0B6B33" },
+  em_andamento: { dot: "#1F5FD6", bg: "#EDF3FD", color: "#1650C4" },
   pendente: { dot: "#94A3B8", bg: "#F1F5F9", color: "#475569" },
 };
 const etpDone = etpSections.filter((s) => s.status === "completo").length;
@@ -56,14 +56,14 @@ function ETPFormScreen({ navigate }) {
             const isActive = active === s.id;
             return (
               <button key={s.id} onClick={() => setActive(s.id)}
-                style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "10px 10px", borderRadius: 8, border: isActive ? "1px solid #BFDBFE" : "1px solid transparent", background: isActive ? "#EFF6FF" : "transparent", cursor: "pointer", textAlign: "left", marginBottom: 2, fontFamily: "var(--font-body)" }}>
+                style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "10px 10px", borderRadius: 8, border: isActive ? "1px solid #C3D5F6" : "1px solid transparent", background: isActive ? "#EDF3FD" : "transparent", cursor: "pointer", textAlign: "left", marginBottom: 2, fontFamily: "var(--font-body)" }}>
                 <div style={{ width: 22, height: 22, borderRadius: 6, background: sc.bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 10, fontWeight: 700, color: sc.color, fontFamily: "var(--font-mono)" }}>
                   {s.status === "completo" ? (
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={sc.dot} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
                   ) : s.id}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 12, fontWeight: isActive ? 600 : 500, color: isActive ? "#1D4ED8" : "#374151", lineHeight: 1.3 }}>
+                  <div style={{ fontSize: 12, fontWeight: isActive ? 600 : 500, color: isActive ? "#1650C4" : "#374151", lineHeight: 1.3 }}>
                     {s.title}{!s.required && <span style={{ fontSize: 10, color: "#94A3B8", marginLeft: 5 }}>Opt.</span>}
                   </div>
                 </div>
@@ -105,7 +105,7 @@ function ETPFormScreen({ navigate }) {
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                   <DSE.FormField label="Valor Unitário Estimado (R$)" required><DSE.Input prefix="R$" defaultValue="3.233,33" /></DSE.FormField>
                   <DSE.FormField label="Valor Total Estimado (R$)">
-                    <div style={{ padding: "10px 13px", border: "1px solid #E2E8F0", borderRadius: 8, background: "#F8FAFC", color: "#0D3B66", fontWeight: 700, fontFamily: "var(--font-mono)", fontSize: 14 }}>R$ 485.000,00</div>
+                    <div style={{ padding: "10px 13px", border: "1px solid #E2E8F0", borderRadius: 8, background: "#F8FAFC", color: "#0E3A94", fontWeight: 700, fontFamily: "var(--font-mono)", fontSize: 14 }}>R$ 485.000,00</div>
                   </DSE.FormField>
                 </div>
               </DSE.SectionBlock>
@@ -122,9 +122,9 @@ function ETPFormScreen({ navigate }) {
 
           {active === "6" && (
             <div style={{ marginTop: 20 }}>
-              <div style={{ background: "linear-gradient(135deg, #1E3A5F 0%, #0D3B66 100%)", borderRadius: 12, padding: "18px 20px", display: "flex", alignItems: "flex-start", gap: 16 }}>
-                <div style={{ width: 36, height: 36, background: "rgba(56,189,248,0.15)", borderRadius: 9, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
+              <div style={{ background: "linear-gradient(135deg, #1E3A5F 0%, #0E3A94 100%)", borderRadius: 12, padding: "18px 20px", display: "flex", alignItems: "flex-start", gap: 16 }}>
+                <div style={{ width: 36, height: 36, background: "rgba(76,147,255,0.15)", borderRadius: 9, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4C93FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 14, fontWeight: 700, color: "#FFFFFF", fontFamily: "var(--font-display)", marginBottom: 4 }}>A solução proposta é Adesão de ATA?</div>
@@ -152,11 +152,11 @@ function ETPFormScreen({ navigate }) {
                         </div>
                       )}
                       {review === "loading" && (
-                        <div style={{ marginTop: 10, background: "#EFF6FF", borderRadius: 8, padding: "12px 16px", fontSize: 13, color: "#1D4ED8" }}>Analisando ATA... aguarde.</div>
+                        <div style={{ marginTop: 10, background: "#EDF3FD", borderRadius: 8, padding: "12px 16px", fontSize: 13, color: "#1650C4" }}>Analisando ATA... aguarde.</div>
                       )}
                       {review === "done" && (
-                        <div style={{ marginTop: 10, background: "#ECFDF5", border: "1px solid #A7F3D0", borderRadius: 10, padding: "14px 16px" }}>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: "#065F46", marginBottom: 6 }}>Parecer da IA — ATA Válida</div>
+                        <div style={{ marginTop: 10, background: "#EAF7EF", border: "1px solid #A7F3D0", borderRadius: 10, padding: "14px 16px" }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: "#0B6B33", marginBottom: 6 }}>Parecer da IA — ATA Válida</div>
                           <p style={{ margin: 0, fontSize: 12, color: "#047857", lineHeight: 1.6 }}>A ATA analisada está vigente, com objeto compatível ao ETP e dentro dos limites legais para adesão (Art. 86 da Lei 14.133/21). Prazo de vigência: 30/11/2025. Órgão gerenciador: Governo do Estado de São Paulo. Nenhuma irregularidade identificada.</p>
                         </div>
                       )}

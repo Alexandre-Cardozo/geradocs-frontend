@@ -1,7 +1,7 @@
 import React from "react";
 
 /** Dashboard KPI card: icon chip, trend chip, 30px number. */
-export function StatCard({ label, value, sub, trend = "up", icon, color = "#2563EB", bg = "#EFF6FF" }) {
+export function StatCard({ label, value, sub, trend = "up", icon, color = "#1F5FD6", bg = "#EDF3FD" }) {
   const warn = trend === "warn";
   return (
     <div style={{ background: "var(--surface-card)", border: "var(--border-default)", borderRadius: "var(--radius-card)", padding: "20px 20px" }}>
@@ -10,7 +10,7 @@ export function StatCard({ label, value, sub, trend = "up", icon, color = "#2563
           {icon}
         </div>
         {sub && (
-          <span style={{ fontSize: 11, color: warn ? "#D97706" : "#16A34A", background: warn ? "#FFFBEB" : "#F0FDF4", borderRadius: 6, padding: "2px 7px", fontWeight: 600 }}>
+          <span style={{ fontSize: 11, color: warn ? "#D97706" : "#16A34A", background: warn ? "#FFFBEB" : "#EAF7EF", borderRadius: 6, padding: "2px 7px", fontWeight: 600 }}>
             {warn ? "!" : "↑"} {sub}
           </span>
         )}

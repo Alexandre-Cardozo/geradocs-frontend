@@ -23,14 +23,14 @@ function NavButton({ item, isActive, onClick, dim }) {
       style={{
         display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "9px 10px",
         borderRadius: 8, border: "none", cursor: "pointer",
-        background: isActive ? "rgba(37,99,235,0.18)" : hover ? "rgba(255,255,255,0.06)" : "transparent",
+        background: isActive ? "rgba(31,95,214,0.18)" : hover ? "rgba(255,255,255,0.06)" : "transparent",
         color: isActive || hover ? "#FFFFFF" : inactive,
         fontSize: 13, fontWeight: isActive ? 600 : 500, textAlign: "left",
         transition: "all 0.15s", position: "relative", marginBottom: 2, fontFamily: "var(--font-body)",
       }}
     >
       {isActive && (
-        <div style={{ position: "absolute", left: 0, top: "50%", transform: "translateY(-50%)", width: 3, height: 20, background: "#38BDF8", borderRadius: "0 3px 3px 0" }} />
+        <div style={{ position: "absolute", left: 0, top: "50%", transform: "translateY(-50%)", width: 3, height: 20, background: "#4C93FF", borderRadius: "0 3px 3px 0" }} />
       )}
       <span style={{ color: "inherit", display: "flex" }}>{icons[item.view] || item.icon}</span>
       <span style={{ flex: 1 }}>{item.label}</span>
@@ -72,8 +72,8 @@ export function Sidebar({
       <div style={{ padding: "14px 20px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
         <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", fontWeight: 600, letterSpacing: "0.8px", textTransform: "uppercase", marginBottom: 6 }}>Órgão Atual</div>
         <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.06)", borderRadius: 8, padding: "8px 10px", cursor: "pointer" }}>
-          <div style={{ width: 22, height: 22, background: "rgba(37,99,235,0.4)", borderRadius: 5, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" strokeWidth="2.5">
+          <div style={{ width: 22, height: 22, background: "rgba(31,95,214,0.4)", borderRadius: 5, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4C93FF" strokeWidth="2.5">
               <path d="M3 21h18M9 8h1M9 12h1M9 16h1M14 8h1M14 12h1M14 16h1M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16" />
             </svg>
           </div>
@@ -99,7 +99,7 @@ export function Sidebar({
 
       <div style={{ padding: "12px 16px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
-          <div style={{ width: 34, height: 34, borderRadius: 999, background: "linear-gradient(135deg, #0D3B66, #2563EB)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "#fff", flexShrink: 0 }}>{userInitials}</div>
+          <div style={{ width: 34, height: 34, borderRadius: 999, background: "linear-gradient(135deg, #0E3A94, #1F5FD6)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "#fff", flexShrink: 0 }}>{userInitials}</div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 13, color: "#FFFFFF", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{userName}</div>
             <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>{userRole}</div>

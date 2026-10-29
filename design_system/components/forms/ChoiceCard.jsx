@@ -9,7 +9,7 @@ export function ChoiceCard({ selected, onClick, icon, title, desc, size = "norma
         display: "flex", alignItems: "center", gap: 14,
         padding: size === "small" ? "12px 16px" : "16px 20px",
         borderRadius: 12, border: selected ? "2px solid var(--color-royal)" : "1px solid var(--color-border)",
-        background: selected ? "#EFF6FF" : "#FFFFFF", cursor: "pointer",
+        background: selected ? "#EDF3FD" : "#FFFFFF", cursor: "pointer",
         textAlign: "left", transition: "var(--transition-fast)", width: "100%",
       }}
     >

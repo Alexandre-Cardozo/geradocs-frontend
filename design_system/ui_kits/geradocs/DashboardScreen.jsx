@@ -12,10 +12,10 @@ function GDIcon({ d, poly, extra, size = 20, sw = 2 }) {
 }
 
 const gdStats = [
-  { label: "Processos Ativos", value: "24", sub: "+3 este mês", trend: "up", color: "#2563EB", bg: "#EFF6FF", icon: <GDIcon d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" poly={["14 2 14 8 20 8"]} /> },
+  { label: "Processos Ativos", value: "24", sub: "+3 este mês", trend: "up", color: "#1F5FD6", bg: "#EDF3FD", icon: <GDIcon d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" poly={["14 2 14 8 20 8"]} /> },
   { label: "Aguardando Aprovação", value: "7", sub: "3 com urgência", trend: "warn", color: "#D97706", bg: "#FFFBEB", icon: <GDIcon extra={<React.Fragment><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></React.Fragment>} /> },
   { label: "Documentos Gerados", value: "138", sub: "12 esta semana", trend: "up", color: "#0D9488", bg: "#F0FDFA", icon: <GDIcon d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" poly={["7 10 12 15 17 10"]} extra={<line x1="12" y1="15" x2="12" y2="3" />} /> },
-  { label: "ETPs Concluídos", value: "61", sub: "Taxa de conclusão: 89%", trend: "up", color: "#16A34A", bg: "#F0FDF4", icon: <GDIcon d="M22 11.08V12a10 10 0 1 1-5.93-9.14" poly={["22 4 12 14.01 9 11.01"]} /> },
+  { label: "ETPs Concluídos", value: "61", sub: "Taxa de conclusão: 89%", trend: "up", color: "#16A34A", bg: "#EAF7EF", icon: <GDIcon d="M22 11.08V12a10 10 0 1 1-5.93-9.14" poly={["22 4 12 14.01 9 11.01"]} /> },
 ];
 
 const gdRecent = [
@@ -42,7 +42,7 @@ function GDRow({ p, onClick }) {
         <div style={{ fontSize: 11, color: "#94A3B8", fontFamily: "var(--font-mono)", marginTop: 2 }}>{p.id}</div>
       </td>
       <td style={{ padding: "13px 16px", fontSize: 12, color: "#64748B" }}>{p.secretaria}</td>
-      <td style={{ padding: "13px 16px", fontSize: 13, fontWeight: 600, color: "#0D3B66", fontFamily: "var(--font-mono)" }}>{p.valor}</td>
+      <td style={{ padding: "13px 16px", fontSize: 13, fontWeight: 600, color: "#0E3A94", fontFamily: "var(--font-mono)" }}>{p.valor}</td>
       <td style={{ padding: "13px 16px" }}><DS.StatusBadge status={p.status} size="sm" /></td>
       <td style={{ padding: "13px 16px", fontSize: 12, color: "#94A3B8" }}>{p.date}</td>
     </tr>
@@ -69,7 +69,7 @@ function DashboardScreen({ navigate }) {
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 20 }}>
         <DS.CardPanel title="Processos Recentes"
-          action={<button onClick={() => navigate("processes")} style={{ fontSize: 13, color: "#2563EB", background: "none", border: "none", cursor: "pointer", fontWeight: 600 }}>Ver todos →</button>}>
+          action={<button onClick={() => navigate("processes")} style={{ fontSize: 13, color: "#1F5FD6", background: "none", border: "none", cursor: "pointer", fontWeight: 600 }}>Ver todos →</button>}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ background: "#F8FAFC" }}>
@@ -94,8 +94,8 @@ function DashboardScreen({ navigate }) {
               {gdPending.map((item) => (
                 <div key={item.id} onClick={() => navigate("approvals")}
                   style={{ padding: "12px 18px", cursor: "pointer", display: "flex", alignItems: "flex-start", gap: 10 }}>
-                  <div style={{ width: 32, height: 32, background: "#EFF6FF", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 }}>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: "#2563EB", fontFamily: "var(--font-mono)" }}>{item.type}</span>
+                  <div style={{ width: 32, height: 32, background: "#EDF3FD", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: "#1F5FD6", fontFamily: "var(--font-mono)" }}>{item.type}</span>
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 600, color: "#071A3D", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{item.label}</div>
@@ -106,7 +106,7 @@ function DashboardScreen({ navigate }) {
               ))}
             </div>
             <div style={{ padding: "12px 18px", borderTop: "1px solid #F1F5F9" }}>
-              <button onClick={() => navigate("approvals")} style={{ width: "100%", padding: "9px", background: "#EFF6FF", color: "#2563EB", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-body)" }}>
+              <button onClick={() => navigate("approvals")} style={{ width: "100%", padding: "9px", background: "#EDF3FD", color: "#1F5FD6", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-body)" }}>
                 Ver todas as aprovações
               </button>
             </div>
@@ -121,7 +121,7 @@ function DashboardScreen({ navigate }) {
             ].map((a) => (
               <button key={a.label} onClick={() => navigate("new-process")}
                 style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "10px 12px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 9, cursor: "pointer", marginBottom: 8, textAlign: "left", fontFamily: "var(--font-body)" }}>
-                <span style={{ color: "#38BDF8", display: "flex", flexShrink: 0 }}>{a.icon}</span>
+                <span style={{ color: "#4C93FF", display: "flex", flexShrink: 0 }}>{a.icon}</span>
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 600, color: "#FFFFFF" }}>{a.label}</div>
                   <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>{a.desc}</div>

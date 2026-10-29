@@ -74,7 +74,7 @@ function NavLink({
     >
       {/* Barra ativa 3×20 electric à esquerda */}
       {active && (
-        <span className="absolute top-1/2 left-0 h-5 w-0.75 -translate-y-1/2 rounded-r-[3px] bg-electric" />
+        <span className="absolute top-1/2 left-0 h-5 w-0.75 -translate-y-1/2 rounded-r-xs bg-electric" />
       )}
       <span className={`flex ${active ? "text-electric" : "text-inherit"}`}>
         {item.icon}
@@ -193,10 +193,10 @@ export default function Sidebar({
             <img
               src={brasaoUrl}
               alt=""
-              className="size-5.5 shrink-0 rounded-[5px] object-contain"
+              className="size-5.5 shrink-0 rounded-sm object-contain"
             />
           ) : (
-            <span className="flex size-5.5 shrink-0 items-center justify-center rounded-[5px] bg-on-dark-royal-chip text-electric">
+            <span className="flex size-5.5 shrink-0 items-center justify-center rounded-sm bg-on-dark-royal-chip text-electric">
               <IconBuilding size={12} strokeWidth={2.5} />
             </span>
           )}
