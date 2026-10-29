@@ -1312,3 +1312,11 @@ Vista no app, a §94 deixou todos os avisos amarelos — o aviso de retificaçã
 - **Design system:** `tokens/colors.css`, `readme.md`, a guideline de cores semânticas, os componentes de referência (DocPill, Tag, ValidationMsg, StatCard), o kit, o bundle e o standalone usam o mesmo par; os âmbares que sobravam do protótipo saíram junto.
 - O resto da §94 (azuis, verde de sucesso, neutros, Montserrat) fica como está.
 
+
+## 96. Texto informativo curto, ou nenhum
+
+Aviso que só informa compete com o que pede ação. Levantamento de 29/10/2026 nos 61 avisos e nos textos de ajuda das telas: ficam os que pedem ação ou têm efeito legal (erros, pendências obrigatórias, justificativas com fundamento, fracionamento, senha que "aparece só agora"); os demais saem ou encolhem.
+
+- **Saem:** a caixa "Seção Concluída" e o "Texto suficiente para fundamentar a seção." no editor (o ✓ da lista já diz que está concluída, e a frase aparecia com qualquer texto, sem verificar nada); "O número é gerado ao criar o processo."; as duas notas de que a busca de ATAs roda depois; a faixa "DFD anexado." (o campo já mostra o arquivo); "O DFD será analisado pela IA." e "A verificação é opcional." na tela do DFD; o rodapé de contagem do painel do admin, que repetia os cards.
+- **Encolhem:** retificação ("Ao terminar, conclua em Revisão e Geração."), "Alterado desde a última geração.", banner do DFD, encerramento do processo, geração concluída, nova versão sem edição, errata sem diferença, preço preliminar sem pesquisa, demanda sem itens e limites de dispensa não cadastrados.
+- **Ficam como estão, por decisão:** o cartão "Gerar com IA" indisponível (ADR-029) e o parecer simulado da ATA no painel de adesão — este último ainda não consulta o servidor e deve ser tratado à parte.

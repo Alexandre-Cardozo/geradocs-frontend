@@ -11,7 +11,7 @@ import {
   SectionBlock,
   Textarea,
 } from "@/components/ui"
-import { IconCheck, IconCheckCircle, IconFileText } from "@/components/ui/icons"
+import { IconCheckCircle, IconFileText } from "@/components/ui/icons"
 import { CaminhosDaSecao } from "@/components/documentos/caminhos-da-secao"
 import { InlineSpinner } from "@/components/shared/estados"
 import { useToast } from "@/components/shared/providers"
@@ -211,7 +211,7 @@ function PainelQuantidades({
         </InfoBanner>
       ) : itens.length === 0 ? (
         <InfoBanner tone="warning">
-          Nenhum item nos DFDs. Cadastre-os na Demanda Consolidada do processo.
+          Nenhum item nos DFDs — cadastre na Demanda Consolidada.
         </InfoBanner>
       ) : (
         <div className="flex flex-col gap-3">
@@ -411,7 +411,7 @@ function PainelValor({
         <InlineSpinner label="Somando os itens precificados..." />
       ) : itens.length === 0 ? (
         <InfoBanner tone="warning">
-          Nenhum item nos DFDs. Cadastre-os na Demanda Consolidada do processo.
+          Nenhum item nos DFDs — cadastre na Demanda Consolidada.
         </InfoBanner>
       ) : (
         <div className="flex flex-col gap-3">
@@ -439,9 +439,8 @@ function PainelValor({
           {daPesquisa.length < precificados.length && (
             <InfoBanner tone="info">
               {daPesquisa.length === 0
-                ? "Sem pesquisa de preços: o total usa o preço preliminar dos DFDs."
-                : `${precificados.length - daPesquisa.length} item(ns) ainda com o preço preliminar do DFD.`}{" "}
-              Registre a pesquisa na Cotação.
+                ? "Total com o preço preliminar dos DFDs, sem pesquisa na Cotação."
+                : `${precificados.length - daPesquisa.length} item(ns) com o preço preliminar do DFD, sem pesquisa na Cotação.`}
             </InfoBanner>
           )}
 
@@ -740,11 +739,6 @@ export function PainelATA() {
             </div>
           )}
 
-          {ataMode === "delegar" && (
-            <InfoBanner tone="info" icon={<IconCheck size={14} strokeWidth={2.5} />}>
-              A busca de ATAs compatíveis roda após a confirmação; os resultados aparecem neste processo.
-            </InfoBanner>
-          )}
 
           {ataMode !== "" && (
             <div className="mt-3.5">

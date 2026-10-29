@@ -173,12 +173,6 @@ export default function PainelAdmin() {
           </div>
         )}
       </div>
-
-      <p className="mt-4 text-xs text-text-muted">
-        {totalServidores} usuário(s) nas entidades · {coordenadores}{" "}
-        {PERFIL_ACESSO_LABEL.coordenador.toLowerCase()}(es) e {totalServidores - coordenadores}{" "}
-        {PERFIL_ACESSO_LABEL.servidor.toLowerCase()}(es).
-      </p>
     </div>
   )
 }

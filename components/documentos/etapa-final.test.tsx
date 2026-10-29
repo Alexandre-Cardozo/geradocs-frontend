@@ -137,7 +137,7 @@ describe("etapa final do documento", () => {
   it("com as seções iguais às da versão gerada, avisa que a nova sairia com o mesmo texto", async () => {
     renderizarEtapa([secao("1", true, "Completo", "Necessidade descrita.")], true, { alterado: false })
 
-    expect(await screen.findByText(/As seções estão como na v2/)).toBeInTheDocument()
+    expect(await screen.findByText(/Sem edições desde a v2/)).toBeInTheDocument()
   })
 
   it("com o modelo trocado depois de gerar, só admite retificação", async () => {

@@ -91,7 +91,7 @@ describe("errata do documento", () => {
     expect(screen.getByText("O prazo de entrega será de 45 dias corridos.")).toBeInTheDocument()
   })
 
-  it("sem diferenças, diz que não há errata a publicar", async () => {
+  it("sem diferenças, diz que não há o que corrigir", async () => {
     comVersoes(2)
     servidor.use(
       http.get(`${urlDaApi}/procurement-processes/:id/documents/:tipo/versions/comparison`, () =>
@@ -103,7 +103,7 @@ describe("errata do documento", () => {
     await escolher("Versão de origem da errata", 1)
     await escolher("Versão de destino da errata", 2)
 
-    expect(await screen.findByText(/não há errata a publicar/i)).toBeInTheDocument()
+    expect(await screen.findByText(/Sem diferenças entre as versões/i)).toBeInTheDocument()
   })
 
   it("seção acrescentada ou suprimida é dita, não deixada em branco", async () => {

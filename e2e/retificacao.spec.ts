@@ -113,12 +113,12 @@ test.describe("retificação de documento já gerado", () => {
     await expect(campo).toHaveValue(TEXTO_DA_V2)
     await campo.fill("Necessidade de 1.000 resmas de papel A4.")
     await page.getByRole("button", { name: /Salvar Rascunho/ }).click()
-    await expect(page.getByText(/Alterado após a última geração/)).toBeVisible()
+    await expect(page.getByText(/Alterado desde a última geração/)).toBeVisible()
 
-    await page.getByRole("button", { name: "Ir para Revisão e Geração" }).click()
+    await page.getByRole("button", { name: "Revisão e Geração", exact: true }).click()
     await expect(page.getByText("Nova Versão — v3")).toBeVisible()
     // O texto mudou: o aviso de que a v3 sairia igual à v2 não aparece.
-    await expect(page.getByText(/As seções estão como na v2/)).toHaveCount(0)
+    await expect(page.getByText(/Sem edições desde a v2/)).toHaveCount(0)
 
     const gerar = page.getByRole("button", { name: "Gerar v3" })
     await expect(gerar).toBeDisabled()
@@ -142,7 +142,7 @@ test.describe("retificação de documento já gerado", () => {
 
     await page.goto(rota(`/processos/documento?id=${processo.id}&tipo=etp&etapa=revisao`))
 
-    await expect(page.getByText(/As seções estão como na v2/)).toBeVisible()
+    await expect(page.getByText(/Sem edições desde a v2/)).toBeVisible()
   })
 
   test("regeração continua possível, e não vai como retificação", async ({ page }) => {

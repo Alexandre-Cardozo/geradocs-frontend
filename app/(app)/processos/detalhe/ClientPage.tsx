@@ -798,13 +798,11 @@ export default function HubProcesso() {
             <div className="font-display text-md font-bold text-text-1">Encerrar Processo</div>
             <p id="ajuda-encerrar" className="m-0 mt-1 text-sm text-text-3">
               {pendentes.length === 0
-                ? "Os documentos obrigatórios da modalidade foram gerados. Encerre o processo e protocole os arquivos no sistema administrativo da entidade."
-                : `Ainda faltam os obrigatórios da modalidade: ${pendentes
-                    .map((t) => CATALOGO[t].titulo)
-                    .join(", ")}. É possível encerrar assim mesmo, mediante justificativa.`}
+                ? "Obrigatórios gerados. Protocole os arquivos no sistema da entidade."
+                : `Faltam: ${pendentes.map((t) => CATALOGO[t].titulo).join(", ")}. Encerrar exige justificativa.`}
               {/* O opcional por fazer não é cobrado, mas fica dito: encerrar sem ele é escolha. */}
               {semCobranca.length > 0 &&
-                ` Ficam sem elaborar, sem necessidade de justificativa: ${semCobranca
+                ` Opcionais sem elaborar: ${semCobranca
                   .map((t) => CATALOGO[t].titulo)
                   .join(", ")}.`}
             </p>
@@ -832,7 +830,7 @@ export default function HubProcesso() {
 
       {proc.status === "concluido" && (
         <InfoBanner tone="success" className="mt-6">
-          Processo encerrado. Os documentos estão prontos para protocolo.
+          Processo encerrado.
         </InfoBanner>
       )}
 

@@ -582,12 +582,6 @@ export default function NovoProcesso() {
                       </FormField>
                     )}
 
-                    {ataMode === "delegar" && (
-                      <InfoBanner tone="info">
-                        A busca de ATAs roda após a criação; os resultados aparecem
-                        no processo.
-                      </InfoBanner>
-                    )}
                   </div>
                 )}
               </div>
@@ -691,15 +685,6 @@ export default function NovoProcesso() {
                     placeholder="Clique para selecionar o DFD ou arraste o arquivo aqui"
                     accept=".pdf,.docx,.doc"
                   />
-                  {dfdFile && (
-                    <InfoBanner
-                      tone="success"
-                      icon={<IconCheck size={14} strokeWidth={2.5} />}
-                      className="mt-2.5"
-                    >
-                      DFD anexado.
-                    </InfoBanner>
-                  )}
                 </div>
 
                 <FormField
@@ -843,10 +828,6 @@ export default function NovoProcesso() {
                   </div>
                 )}
               </div>
-
-              <InfoBanner tone="warning">
-                O número é gerado ao criar o processo.
-              </InfoBanner>
             </div>
           )}
 
