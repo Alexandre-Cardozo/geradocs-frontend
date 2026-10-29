@@ -13,7 +13,7 @@ function GDIcon({ d, poly, extra, size = 20, sw = 2 }) {
 
 const gdStats = [
   { label: "Processos Ativos", value: "24", sub: "+3 este mês", trend: "up", color: "#1F5FD6", bg: "#EDF3FD", icon: <GDIcon d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" poly={["14 2 14 8 20 8"]} /> },
-  { label: "Aguardando Aprovação", value: "7", sub: "3 com urgência", trend: "warn", color: "#D97706", bg: "#FFFBEB", icon: <GDIcon extra={<React.Fragment><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></React.Fragment>} /> },
+  { label: "Aguardando Aprovação", value: "7", sub: "3 com urgência", trend: "warn", color: "#0D3B66", bg: "#F1F5F9", icon: <GDIcon extra={<React.Fragment><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></React.Fragment>} /> },
   { label: "Documentos Gerados", value: "138", sub: "12 esta semana", trend: "up", color: "#0D9488", bg: "#F0FDFA", icon: <GDIcon d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" poly={["7 10 12 15 17 10"]} extra={<line x1="12" y1="15" x2="12" y2="3" />} /> },
   { label: "ETPs Concluídos", value: "61", sub: "Taxa de conclusão: 89%", trend: "up", color: "#16A34A", bg: "#EAF7EF", icon: <GDIcon d="M22 11.08V12a10 10 0 1 1-5.93-9.14" poly={["22 4 12 14.01 9 11.01"]} /> },
 ];

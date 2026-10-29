@@ -2,7 +2,7 @@ import React from "react";
 
 const cfg = {
   ok: { bg: "#EAF7EF", color: "#0B6B33", icon: "✓" },
-  warn: { bg: "#FFFBEB", color: "#5C4300", icon: "!" },
+  warn: { bg: "#F1F5F9", color: "#0D3B66", icon: "!" },
   error: { bg: "#FEF2F2", color: "#991B1B", icon: "✕" },
 };
 
@@ -21,7 +21,7 @@ export function ValidationMsg({ type = "ok", msg }) {
 export function InfoBanner({ tone = "info", children }) {
   const tones = {
     info: { bg: "#EDF3FD", border: "#C3D5F6", color: "#1650C4" },
-    warning: { bg: "#FFFBEB", border: "#FDE68A", color: "#5C4300" },
+    warning: { bg: "#F1F5F9", border: "#CBD5E1", color: "#0D3B66" },
     danger: { bg: "#FEF2F2", border: "#FECACA", color: "#991B1B" },
     success: { bg: "#EAF7EF", border: "#A7F3D0", color: "#0B6B33" },
   };
