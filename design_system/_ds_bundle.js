@@ -569,8 +569,8 @@ const map = {
     color: "#1650C4"
   },
   "Em revisão": {
-    bg: "#FFF8E1",
-    color: "#5C4300"
+    bg: "#E2E8F0",
+    color: "#0D3B66"
   },
   "Rejeitado": {
     bg: "#FEF2F2",
@@ -621,8 +621,8 @@ function Tag({
       color: "#0B6B33"
     },
     warning: {
-      bg: "#FFF8E1",
-      color: "#5C4300"
+      bg: "#E2E8F0",
+      color: "#0D3B66"
     },
     danger: {
       bg: "#FEF2F2",
@@ -695,8 +695,8 @@ function StatCard({
   }, icon), sub && /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 11,
-      color: warn ? "#D97706" : "#16A34A",
-      background: warn ? "#FFFBEB" : "#EAF7EF",
+      color: warn ? "#0D3B66" : "#16A34A",
+      background: warn ? "#E2E8F0" : "#EAF7EF",
       borderRadius: 6,
       padding: "2px 7px",
       fontWeight: 600
@@ -855,8 +855,8 @@ const cfg = {
     icon: "✓"
   },
   warn: {
-    bg: "#FFFBEB",
-    color: "#5C4300",
+    bg: "#F1F5F9",
+    color: "#0D3B66",
     icon: "!"
   },
   error: {
@@ -909,9 +909,9 @@ function InfoBanner({
       color: "#1650C4"
     },
     warning: {
-      bg: "#FFFBEB",
-      border: "#FDE68A",
-      color: "#5C4300"
+      bg: "#F1F5F9",
+      border: "#CBD5E1",
+      color: "#0D3B66"
     },
     danger: {
       bg: "#FEF2F2",
@@ -1715,8 +1715,8 @@ const gdStats = [{
   value: "7",
   sub: "3 com urgência",
   trend: "warn",
-  color: "#D97706",
-  bg: "#FFFBEB",
+  color: "#0D3B66",
+  bg: "#F1F5F9",
   icon: /*#__PURE__*/React.createElement(GDIcon, {
     extra: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("circle", {
       cx: "12",
@@ -3065,8 +3065,8 @@ function NewProcessScreen({
   }, "Documento de Formaliza\xE7\xE3o de Demanda (DFD)", /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 11,
-      background: "#FFFBEB",
-      color: "#5C4300",
+      background: "#E2E8F0",
+      color: "#0D3B66",
       borderRadius: 6,
       padding: "2px 7px",
       fontWeight: 600,

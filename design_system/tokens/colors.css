@@ -29,9 +29,9 @@
   --color-text-muted: #556074;
   --color-text-faint: #5F6B80;
 
-  /* Semantic — brand green = success, brand yellow = attention */
+  /* Semantic — brand green = success; attention stays slate (§64/§95) */
   --color-success: #0B7A38;    /* dark brand green: 5.45:1 under white text */
-  --color-warning: #8F6300;    /* gold for attention icons/dots: 5.0:1 on the yellow tint */
+  --color-warning: #1F5FD6;    /* attention icon: brand blue, the notice itself is slate */
   --color-danger: #EF4444;
   --color-info: #4C93FF;
 
@@ -46,7 +46,7 @@
   --status-ready-bg: #F0FDFA;      --status-ready-fg: #0F766E;      --status-ready-dot: #0D9488;
 
   /* Attention / success tints */
-  --tint-warning-bg: #FFF8E1;  --tint-warning-border: #FFE08A;  --tint-warning-fg: #5C4300;  --tint-warning-fg-strong: #3D2C00;
+  --tint-warning-bg: #F1F5F9;  --tint-warning-border: #CBD5E1;  --tint-warning-fg: #0D3B66;  --tint-warning-fg-strong: #071A3D;
   --tint-success-bg: #EAF7EF;  --tint-success-border: #B5E3C5;  --tint-success-fg: #0B6B33;
   --tint-royal-bg: #EDF3FD;    --tint-royal-border: #C3D5F6;
 

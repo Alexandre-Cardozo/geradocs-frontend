@@ -10,7 +10,7 @@ export function StatCard({ label, value, sub, trend = "up", icon, color = "#1F5F
           {icon}
         </div>
         {sub && (
-          <span style={{ fontSize: 11, color: warn ? "#D97706" : "#16A34A", background: warn ? "#FFFBEB" : "#EAF7EF", borderRadius: 6, padding: "2px 7px", fontWeight: 600 }}>
+          <span style={{ fontSize: 11, color: warn ? "#0D3B66" : "#16A34A", background: warn ? "#E2E8F0" : "#EAF7EF", borderRadius: 6, padding: "2px 7px", fontWeight: 600 }}>
             {warn ? "!" : "↑"} {sub}
           </span>
         )}

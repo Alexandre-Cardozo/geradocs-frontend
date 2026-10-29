@@ -50,7 +50,7 @@ import { type SecaoDocumento, type StatusDocumento } from "@/lib/types"
 
 const statusRail: Record<StatusDocumento, { dot: string; chip: string }> = {
   "Completo": { dot: "bg-success", chip: "bg-tint-success-bg text-tint-success-fg" },
-  "Em andamento": { dot: "bg-status-waiting-dot", chip: "bg-tint-royal-bg text-royal-hover" },
+  "Em andamento": { dot: "bg-status-progress-dot", chip: "bg-tint-royal-bg text-royal-hover" },
   "Em revisão": { dot: "bg-warning", chip: "bg-tint-warning-chip-bg text-tint-warning-fg" },
   "Rejeitado": { dot: "bg-danger", chip: "bg-tint-danger-bg text-tint-danger-fg" },
   "Não iniciado": { dot: "bg-text-muted", chip: "bg-border-soft text-slate-strong" },

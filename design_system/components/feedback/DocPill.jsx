@@ -3,7 +3,7 @@ import React from "react";
 const map = {
   "Completo": { bg: "#EAF7EF", color: "#0B6B33" },
   "Em andamento": { bg: "#EDF3FD", color: "#1650C4" },
-  "Em revisão": { bg: "#FFF8E1", color: "#5C4300" },
+  "Em revisão": { bg: "#E2E8F0", color: "#0D3B66" },
   "Rejeitado": { bg: "#FEF2F2", color: "#991B1B" },
   "Não iniciado": { bg: "#F1F5F9", color: "#475569" },
 };
@@ -26,7 +26,7 @@ export function Tag({ children, tone = "info" }) {
   const tones = {
     info: { bg: "#EDF3FD", color: "#1650C4" },
     success: { bg: "#EAF7EF", color: "#0B6B33" },
-    warning: { bg: "#FFF8E1", color: "#5C4300" },
+    warning: { bg: "#E2E8F0", color: "#0D3B66" },
     danger: { bg: "#FEF2F2", color: "#991B1B" },
     violet: { bg: "#F5F3FF", color: "#6D28D9" },
     neutral: { bg: "#F1F5F9", color: "#475569" },

@@ -112,7 +112,7 @@ function NewProcessScreen({ navigate }) {
               <div style={{ marginBottom: 12 }}>
                 <label style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>
                   Documento de Formalização de Demanda (DFD)
-                  <span style={{ fontSize: 11, background: "#FFFBEB", color: "#5C4300", borderRadius: 6, padding: "2px 7px", fontWeight: 600, marginLeft: 8 }}>Recomendado</span>
+                  <span style={{ fontSize: 11, background: "#E2E8F0", color: "#0D3B66", borderRadius: 6, padding: "2px 7px", fontWeight: 600, marginLeft: 8 }}>Recomendado</span>
                 </label>
                 <p style={{ margin: "4px 0 0", fontSize: 12, color: "#64748B" }}>O DFD alimentará automaticamente as seções do ETP. Caso não possua, preencha o campo Objeto abaixo.</p>
               </div>

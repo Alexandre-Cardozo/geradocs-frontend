@@ -866,7 +866,7 @@ A barra passou a lê-lo de onde ele existe — `useTimbre` para saber se há um,
 
 ## 64. O tom de atenção volta para a paleta da plataforma
 
-> **Revista na §94 (28/10/2026):** a marca GovPro trouxe o amarelo para dentro da paleta, e atenção passou a ser o amarelo da marca.
+> **Revista na §94 e restabelecida na §95 (28/10/2026):** o amarelo da marca chegou a ser o tom de atenção, mas os avisos voltaram para o neutro de ardósia desta seção.
 
 Os avisos vinham em âmbar `#FFFBEB` com texto `#92400E` — amarelo com o texto tirando para o vermelho. Era herança do protótipo e não existia em lugar nenhum do produto: a interface é navy, petróleo, royal, elétrico e ardósia, e no meio dela aquele par parecia de outro sistema.
 
@@ -1294,10 +1294,21 @@ Auditoria de 28/10/2026 nas 19 telas: login e barra lateral já estavam na marca
 
 - **Azuis da marca:** `royal` #2563EB → **#1F5FD6** (hover #1650C4), `electric` #38BDF8 → **#4C93FF**, `petroleum` #0D3B66 → **#0E3A94**, `text-1` → **#0A1F44**. Os nomes ficam; royal e electric eram o azul 600 e o céu 400 do Tailwind e, ao lado do logo, apareciam como um segundo azul. Contraste do primário: 5,17 → 5,73:1.
 - **Verde da marca = sucesso:** `success` #10B981 → **#0B7A38** e pontos de Aprovado/Concluído **#14A04B**. O botão "Finalizar e Gerar Documento" tinha texto branco a **2,54:1** (reprovava AA); agora 5,45:1.
-- **Amarelo da marca = atenção** (revisa a §64): fundo #FFF8E1, borda #FFE08A, texto #5C4300 (8,75:1), ícone e ponto #8F6300 (5,0:1). "Aguardando" deixa de ser o mesmo azul de "Em Elaboração".
+- **Amarelo da marca = atenção** (revisa a §64; **desfeito nos avisos pela §95**): fundo #FFF8E1, borda #FFE08A, texto #5C4300 (8,75:1), ícone e ponto #8F6300 (5,0:1). "Aguardando" deixa de ser o mesmo azul de "Em Elaboração" — isso continua valendo.
 - **Neutros com o viés azul do manual:** `ice` #F4F7FC, `border` #DCE3EE, `border-soft` #EEF2F8; os cinzas de texto seguem acima de 4,5:1.
 - **Degradês e superfícies escuras** nos azuis da marca (`gradient-*`, `on-dark-*`).
 - **Montserrat** (`font-display`) nos títulos, cartões e números dos indicadores, com o peso 800 adicionado aos arquivos locais; rótulos em caixa-alta na Montserrat 600 por uma regra de base em `.uppercase` (quem declara a própria fonte, como `font-mono`, continua com ela). O corpo segue em Inter.
 - **Foco:** o anel global de `:focus-visible` já existia; com os tokens novos é o azul da marca (5,7:1 no branco) e o azul-claro sobre o navy.
 - **Consistência:** a trilha da tela do DFD mostra o número do processo (com link para a capa) em vez do identificador interno; quatro raios fora da escala voltaram para ela.
 - **Design system em dia:** `tokens/colors.css` e `typography.css` espelham o `@theme`; componentes de referência, kit, cards, bundle e standalone trocaram as cores antigas pelas da marca; `readme.md` descreve a paleta e a fonte novas.
+
+## 95. Os avisos voltam para o neutro de ardósia
+
+Vista no app, a §94 deixou todos os avisos amarelos — o aviso de retificação, a etiqueta "Alterado após a última geração", o "Em revisão" dos documentos, o placar do DFD, o aviso de senha provisória e o card "Coordenadores". Com fundo inteiro, o amarelo da marca chamava atenção demais para avisos de rotina, que aparecem em quase toda tela.
+
+- **Atenção volta ao par da §64:** fundo #F1F5F9, borda #CBD5E1, texto #0D3B66 (10,45:1), forte #071A3D, chip #E2E8F0. O ícone de atenção (`warning`) passa a ser o azul da marca #1F5FD6, no lugar do royal antigo.
+- **"Aguardando" continua amarelo** (`status-waiting-*`): é um selo pequeno, e o que a §94 resolveu ali — ele era igual a "Em Elaboração" — continua resolvido.
+- **Ponto das seções "Em andamento"** no editor usava o token de "Aguardando" e ficou amarelo ao lado da etiqueta azul; passa a usar `status-progress-dot`, o azul de "Em Elaboração".
+- **Design system:** `tokens/colors.css`, `readme.md`, a guideline de cores semânticas, os componentes de referência (DocPill, Tag, ValidationMsg, StatCard), o kit, o bundle e o standalone usam o mesmo par; os âmbares que sobravam do protótipo saíram junto.
+- O resto da §94 (azuis, verde de sucesso, neutros, Montserrat) fica como está.
+

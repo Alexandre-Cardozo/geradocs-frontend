@@ -91,7 +91,7 @@
 
   /* ── Cores — semânticas ─────────────────────────────────────────────────── */
   --color-success: #0B7A38;
-  --color-warning: #8F6300;
+  --color-warning: #1F5FD6;
   --color-danger: #EF4444;
   --color-info: #4C93FF;
 
@@ -152,18 +152,17 @@
   --color-tint-success-fg: #0B6B33;
   --color-tint-success-fg-soft: #0B7A38;
   /*
-    Atenção é o amarelo da marca (§94, revisa a §64).
-    A §64 tirou o âmbar porque ele vinha de fora da paleta — amarelo com texto
-    tirando para o vermelho, no meio de navy, petróleo e royal. A marca GovPro
-    trouxe o amarelo para dentro da paleta, e ele é a cor que a marca reserva
-    para chamar o olhar. Fundo amarelo-claro com texto marrom-escuro (8,75:1);
-    o ícone e o ponto usam o dourado `warning` (5,0:1 sobre o fundo).
+    O tom de atenção é da paleta da plataforma, e não amarelo (§64, mantida na §95).
+    Quem avisa é o ícone e o texto — a cor não precisa vir de fora da paleta para
+    dizer "olhe isto". Neutro de ardósia com texto petróleo: fica distinto do
+    informativo (azul claro), do sucesso (verde) e do erro (vermelho). O amarelo
+    da marca, com fundo inteiro, chamava atenção demais nos avisos de rotina.
   */
-  --color-tint-warning-bg: #FFF8E1;
-  --color-tint-warning-border: #FFE08A;
-  --color-tint-warning-fg: #5C4300;
-  --color-tint-warning-fg-strong: #3D2C00;
-  --color-tint-warning-chip-bg: #FFEFB8;
+  --color-tint-warning-bg: #F1F5F9;
+  --color-tint-warning-border: #CBD5E1;
+  --color-tint-warning-fg: #0D3B66;
+  --color-tint-warning-fg-strong: #071A3D;
+  --color-tint-warning-chip-bg: #E2E8F0;
   --color-tint-danger-bg: #FEF2F2;
   --color-tint-danger-border: #FECACA;
   --color-tint-danger-border-strong: #FCA5A5;
@@ -174,7 +173,7 @@
   --color-violet: #7C3AED;
   --color-teal: #0D9488;
   --color-green: #14A04B;
-  --color-warning-strong: #5C4300;
+  --color-warning-strong: #0D3B66;
   --color-slate-strong: #475569;
   --color-surface-upload: #FAFAFA;
 
