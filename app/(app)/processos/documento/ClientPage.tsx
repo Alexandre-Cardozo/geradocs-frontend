@@ -565,6 +565,8 @@ export default function EditorDocumento() {
               versaoAtual={documentoGerado?.versao ?? documento.data?.versao ?? 0}
               alteradoDesdeAVersao={documento.data?.alteradoDesdeAVersao ?? false}
               retificacaoExigida={documento.data?.retificacaoExigida ?? false}
+              abertura={documento.data?.abertura}
+              onEditarCapa={() => router.push(`/processos/detalhe?id=${encodeURIComponent(processoId)}`)}
               pendente={gerarDocumento.isPending}
               onGerar={(regerar, elaboracao, retificacao) =>
                 gerarDocumento.mutate(

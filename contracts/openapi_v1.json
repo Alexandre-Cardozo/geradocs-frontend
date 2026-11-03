@@ -1156,6 +1156,9 @@
           "newerModel" : {
             "$ref" : "#/components/schemas/NewerModelView"
           },
+          "opening" : {
+            "$ref" : "#/components/schemas/OpeningView"
+          },
           "otherModelTexts" : {
             "items" : {
               "$ref" : "#/components/schemas/OtherModelTextView"
@@ -1198,7 +1201,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableModels", "body", "canGenerate", "changedSinceVersion", "currentVersion", "documentType", "finalized", "id", "modelChoiceRequired", "modelJustificationRequired", "otherModelTexts", "pendingRequiredSections", "processId", "progress", "rectificationRequired", "sections", "silentGaps", "structureTitle" ],
+        "required" : [ "availableModels", "body", "canGenerate", "changedSinceVersion", "currentVersion", "documentType", "finalized", "id", "modelChoiceRequired", "modelJustificationRequired", "opening", "otherModelTexts", "pendingRequiredSections", "processId", "progress", "rectificationRequired", "sections", "silentGaps", "structureTitle" ],
         "type" : "object"
       },
       "DocumentTemplate" : {
@@ -1652,6 +1655,27 @@
           }
         },
         "required" : [ "code", "publishedIn", "title", "version" ],
+        "type" : "object"
+      },
+      "OpeningView" : {
+        "properties" : {
+          "introduction" : {
+            "type" : "string"
+          },
+          "objectSource" : {
+            "type" : "string"
+          },
+          "objectText" : {
+            "type" : "string"
+          },
+          "processNumber" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "objectSource", "title" ],
         "type" : "object"
       },
       "OrganizationResponse" : {

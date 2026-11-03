@@ -29,6 +29,7 @@ import {
   type Elaboracao,
   type EscolhaDaElaboracao,
 } from "@/lib/documentos/elaboracao"
+import type { AberturaDoDocumento } from "@/lib/api/authoring-client"
 import type { SecaoDocumento, TipoDocumento } from "@/lib/types"
 
 /**
@@ -54,6 +55,8 @@ export function EtapaFinal({
   versaoAtual = 0,
   alteradoDesdeAVersao = false,
   retificacaoExigida = false,
+  abertura,
+  onEditarCapa,
   pendente,
   onGerar,
   onVisualizar,
@@ -68,6 +71,10 @@ export function EtapaFinal({
   alteradoDesdeAVersao?: boolean
   /** O documento mudou de modelo desde a versão gerada (ADR-052 do back-end). */
   retificacaoExigida?: boolean
+  /** O que sai antes da primeira seção (ADR-059 do back-end). */
+  abertura?: AberturaDoDocumento
+  /** Leva à capa do processo, onde se preenche o Objeto da Demanda. */
+  onEditarCapa?: () => void
   pendente: boolean
   /**
    * `regerar` distingue a primeira geração de uma versão nova;
@@ -107,7 +114,28 @@ export function EtapaFinal({
       )}
 
       <EstruturaDoDocumento processoId={processoId} tipo={tipo} secoes={secoes} />
-      <PreviaDoDocumento blocos={corpoDoDocumento(secoes)} />
+      <PreviaDoDocumento blocos={corpoDoDocumento(secoes)} abertura={abertura} />
+      {abertura?.objeto && abertura.objetoDaDescricao && (
+        /*
+          A descrição do processo costuma ser um título curto, digitado ao criar
+          o processo. Ela vale como objeto quando o Objeto da Demanda está em
+          branco — e isso não pode ser descoberto só no arquivo (§97).
+        */
+        <InfoBanner tone="warning">
+          <span>
+            Objeto da Demanda em branco: o OBJETO sai com a descrição do processo.{" "}
+            {onEditarCapa && (
+              <button
+                type="button"
+                onClick={onEditarCapa}
+                className="cursor-pointer border-none bg-transparent p-0 font-semibold text-royal"
+              >
+                Preencher na capa
+              </button>
+            )}
+          </span>
+        </InfoBanner>
+      )}
       <AnexosDoArquivo processoId={processoId} tipo={tipo} />
       <ElaboracaoDoDocumento
         processoId={processoId}

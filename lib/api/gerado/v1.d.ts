@@ -1715,6 +1715,7 @@ export interface components {
             modelJustification?: string;
             modelJustificationRequired: boolean;
             newerModel?: components["schemas"]["NewerModelView"];
+            opening: components["schemas"]["OpeningView"];
             otherModelTexts: components["schemas"]["OtherModelTextView"][];
             pendingRequiredSections: string[];
             /** Format: uuid */
@@ -1889,6 +1890,13 @@ export interface components {
             publishedIn: string;
             title: string;
             version: string;
+        };
+        OpeningView: {
+            introduction?: string;
+            objectSource: string;
+            objectText?: string;
+            processNumber?: string;
+            title: string;
         };
         OrganizationResponse: {
             /** Format: date-time */

@@ -95,6 +95,30 @@ interface DocumentoApi {
   modelJustificationRequired?: boolean;
   modelJustification?: string | null;
   newerModel?: { code: string; version: string; title: string; publishedIn: string } | null;
+  opening?: {
+    title: string;
+    introduction?: string | null;
+    processNumber?: string | null;
+    objectText?: string | null;
+    objectSource: string;
+  };
+}
+
+/**
+ * O que a próxima versão imprime antes da primeira seção (ADR-059 do back-end).
+ *
+ * Introdução, processo e objeto só existem nos documentos do planejamento —
+ * ETP, Mapa de Riscos, Cotação e TR. O Edital, o Aviso e a Minuta de Contrato
+ * seguem as minutas da AGU, que já abrem com o preâmbulo e o objeto.
+ */
+export interface AberturaDoDocumento {
+  /** O nome por extenso, em maiúsculas, como sai impresso. */
+  titulo: string;
+  introducao?: string;
+  processo?: string;
+  objeto?: string;
+  /** O Objeto da Demanda está em branco na capa, e vale a descrição do processo. */
+  objetoDaDescricao: boolean;
 }
 
 export interface DocumentoEmElaboracao {
@@ -133,6 +157,7 @@ export interface DocumentoEmElaboracao {
   justificativaDoModelo: { pedida: boolean; texto?: string; doModelo?: string };
   /** A versão mais nova da minuta que o documento segue, quando a AGU publicou outra. */
   versaoMaisNova?: { codigo: string; versao: string; titulo: string; publicadoEm: string };
+  abertura?: AberturaDoDocumento;
 }
 
 /** Texto de outro modelo, com a seção atual a que ele pertence. */
@@ -202,6 +227,18 @@ function mapearSecao(secao: SecaoApi, tipo: TipoDocumento): SecaoDocumento {
   };
 }
 
+function mapearAbertura(abertura: NonNullable<DocumentoApi["opening"]>): AberturaDoDocumento {
+  return {
+    titulo: abertura.title,
+    ...(abertura.introduction ? { introducao: abertura.introduction } : {}),
+    ...(abertura.processNumber ? { processo: abertura.processNumber } : {}),
+    ...(abertura.objectText ? { objeto: abertura.objectText } : {}),
+    // A descrição do processo costuma ser um título curto: a tela diz quando é
+    // ela que vai ao papel, para ninguém descobrir só no arquivo.
+    objetoDaDescricao: abertura.objectSource === "OBJECT_DESCRIPTION",
+  };
+}
+
 function mapear(documento: DocumentoApi, tipo: TipoDocumento): DocumentoEmElaboracao {
   return {
     processoId: documento.processId,
@@ -266,6 +303,7 @@ function mapear(documento: DocumentoApi, tipo: TipoDocumento): DocumentoEmElabor
           },
         }
       : {}),
+    ...(documento.opening ? { abertura: mapearAbertura(documento.opening) } : {}),
   };
 }
 
