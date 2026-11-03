@@ -150,6 +150,50 @@ describe("etapa final do documento", () => {
     expect(screen.getByText("Retificação: Erro material")).toBeInTheDocument()
   })
 
+  it("com o Objeto da Demanda em branco, diz que vale a descrição e leva à capa (§97)", async () => {
+    const editarCapa = vi.fn()
+    const abertura = {
+      titulo: "ESTUDO TÉCNICO PRELIMINAR",
+      introducao: "O presente documento caracteriza a primeira etapa.",
+      processo: "PROC-2026-000006",
+      objeto: "Aquisição de materiais",
+      objetoDaDescricao: true,
+    }
+    const { rerender } = renderizar(
+      <EtapaFinal
+        processoId={PROCESSO}
+        tipo="ETP"
+        secoes={[secao("1", true, "Completo", "Necessidade descrita.")]}
+        jaGerado={false}
+        abertura={abertura}
+        onEditarCapa={editarCapa}
+        pendente={false}
+        onGerar={vi.fn()}
+        onVisualizar={vi.fn()}
+      />,
+    )
+
+    expect(await screen.findByText(/Objeto da Demanda em branco/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: "Preencher na capa" }))
+    expect(editarCapa).toHaveBeenCalled()
+
+    // Preenchido na capa, o aviso some: o objeto é o da demanda.
+    rerender(
+      <EtapaFinal
+        processoId={PROCESSO}
+        tipo="ETP"
+        secoes={[secao("1", true, "Completo", "Necessidade descrita.")]}
+        jaGerado={false}
+        abertura={{ ...abertura, objetoDaDescricao: false }}
+        onEditarCapa={editarCapa}
+        pendente={false}
+        onGerar={vi.fn()}
+        onVisualizar={vi.fn()}
+      />,
+    )
+    expect(screen.queryByText(/Objeto da Demanda em branco/)).not.toBeInTheDocument()
+  })
+
   it("já gerado, o caminho de ver o documento leva ao acervo", async () => {
     const { visualizar } = renderizarEtapa(
       [secao("1", true, "Completo", "Necessidade descrita.")],

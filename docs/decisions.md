@@ -1320,3 +1320,11 @@ Aviso que só informa compete com o que pede ação. Levantamento de 29/10/2026 
 - **Saem:** a caixa "Seção Concluída" e o "Texto suficiente para fundamentar a seção." no editor (o ✓ da lista já diz que está concluída, e a frase aparecia com qualquer texto, sem verificar nada); "O número é gerado ao criar o processo."; as duas notas de que a busca de ATAs roda depois; a faixa "DFD anexado." (o campo já mostra o arquivo); "O DFD será analisado pela IA." e "A verificação é opcional." na tela do DFD; o rodapé de contagem do painel do admin, que repetia os cards.
 - **Encolhem:** retificação ("Ao terminar, conclua em Revisão e Geração."), "Alterado desde a última geração.", banner do DFD, encerramento do processo, geração concluída, nova versão sem edição, errata sem diferença, preço preliminar sem pesquisa, demanda sem itens e limites de dispensa não cadastrados.
 - **Ficam como estão, por decisão:** o cartão "Gerar com IA" indisponível (ADR-029) e o parecer simulado da ATA no painel de adesão — este último ainda não consulta o servidor e deve ser tratado à parte.
+
+## 97. A prévia abre como o papel: nome por extenso, introdução e OBJETO
+
+O arquivo gerado passa a abrir com o nome do documento por extenso e, nos documentos do planejamento (ETP, Mapa de Riscos, Cotação e TR), com **INTRODUÇÃO**, **PROCESSO:** e **OBJETO:** antes da primeira seção (ADR-059 do back-end). É o desenho que os órgãos usam nos seus ETPs.
+
+- **A prévia da etapa final mostra a abertura** como o servidor a devolve (`opening` do documento): o título em maiúsculas, a introdução, o número do processo e o objeto com o rótulo em negrito. Nas minutas da AGU (Edital, Aviso, Contrato), só o título — elas já abrem com o preâmbulo e o objeto.
+- **O objeto vem do Objeto da Demanda; sem ele, da descrição do processo.** Quando é a descrição que vai ao papel, a etapa final diz em uma linha, com o atalho "Preencher na capa". Orienta e deixa gerar: a descrição existe sempre, e o "OBJETO:" nunca sai em branco.
+- **A versão guarda o objeto** ao ser concluída: editar a capa depois muda a próxima versão, não a já gerada. As versões concluídas antes continuam saindo como saíam.

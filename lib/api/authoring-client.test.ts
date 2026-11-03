@@ -32,6 +32,67 @@ describe("abrir documento", () => {
     expect(documento.secoes[0]?.fundamentoLegal).toContain("Art. 18")
   })
 
+  /*
+    O que a próxima versão imprime antes da primeira seção (ADR-059 do
+    back-end): a tela mostra na prévia, e diz quando o objeto que vai ao papel
+    é a descrição do processo, e não o Objeto da Demanda.
+  */
+  it("traduz a abertura do documento, e diz quando o objeto vem da descrição", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id/documents/:tipo`, () =>
+        HttpResponse.json({
+          ...documentoApi,
+          opening: {
+            title: "ESTUDO TÉCNICO PRELIMINAR",
+            introduction: "O presente documento caracteriza a primeira etapa.",
+            processNumber: "PROC-2026-000006",
+            objectText: "Aquisição de materiais de expediente",
+            objectSource: "OBJECT_DESCRIPTION",
+          },
+        }),
+      ),
+    )
+    const { abrirDocumento } = await carregarClienteLimpo()
+
+    expect((await abrirDocumento(PROCESSO, "ETP")).abertura).toEqual({
+      titulo: "ESTUDO TÉCNICO PRELIMINAR",
+      introducao: "O presente documento caracteriza a primeira etapa.",
+      processo: "PROC-2026-000006",
+      objeto: "Aquisição de materiais de expediente",
+      objetoDaDescricao: true,
+    })
+  })
+
+  it("nas minutas da AGU a abertura é só o título; sem ela, nada", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id/documents/:tipo`, () =>
+        HttpResponse.json({
+          ...documentoApi,
+          documentType: "EDITAL",
+          opening: {
+            title: "EDITAL DE LICITAÇÃO",
+            introduction: null,
+            processNumber: null,
+            objectText: null,
+            objectSource: "DEMAND_OBJECT",
+          },
+        }),
+      ),
+    )
+    const { abrirDocumento } = await carregarClienteLimpo()
+
+    expect((await abrirDocumento(PROCESSO, "Edital")).abertura).toEqual({
+      titulo: "EDITAL DE LICITAÇÃO",
+      objetoDaDescricao: false,
+    })
+
+    // Servidor anterior à abertura: o campo não existe, e a prévia segue como era.
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id/documents/:tipo`, () => HttpResponse.json(documentoApi)),
+    )
+    expect((await abrirDocumento(PROCESSO, "ETP")).abertura).toBeUndefined()
+  })
+
   it("o status da seção vem do que o servidor considera resolvido", async () => {
     servidor.use(
       http.get(`${urlDaApi}/procurement-processes/:id/documents/:tipo`, () =>

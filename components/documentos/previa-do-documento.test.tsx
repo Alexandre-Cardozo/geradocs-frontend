@@ -25,6 +25,42 @@ describe("prévia do documento", () => {
     expect(screen.getByText("Dispensada")).toBeInTheDocument()
   })
 
+  it("abre como o papel: título por extenso, introdução, processo e OBJETO em destaque (§97)", () => {
+    renderizar(
+      <PreviaDoDocumento
+        blocos={[{ id: "1", titulo: "Necessidade", texto: "Descrição da necessidade.", dispensada: false }]}
+        abertura={{
+          titulo: "ESTUDO TÉCNICO PRELIMINAR",
+          introducao: "O presente documento caracteriza a primeira etapa.",
+          processo: "PROC-2026-000006",
+          objeto: "Contratação de plataforma de compras.",
+          objetoDaDescricao: false,
+        }}
+      />,
+    )
+
+    expect(screen.getByText("ESTUDO TÉCNICO PRELIMINAR")).toBeInTheDocument()
+    expect(screen.getByText("O presente documento caracteriza a primeira etapa.")).toBeInTheDocument()
+    expect(screen.getByText("PROC-2026-000006")).toBeInTheDocument()
+    // O rótulo em negrito, colado no objeto: é o destaque que o órgão pediu.
+    const rotulo = screen.getByText("OBJETO:")
+    expect(rotulo.tagName).toBe("STRONG")
+    expect(rotulo.parentElement).toHaveTextContent("OBJETO: Contratação de plataforma de compras.")
+  })
+
+  it("nas minutas da AGU a abertura é só o título", () => {
+    renderizar(
+      <PreviaDoDocumento
+        blocos={[{ id: "1", titulo: "Do Objeto", texto: "Texto.", dispensada: false }]}
+        abertura={{ titulo: "EDITAL DE LICITAÇÃO", objetoDaDescricao: false }}
+      />,
+    )
+
+    expect(screen.getByText("EDITAL DE LICITAÇÃO")).toBeInTheDocument()
+    expect(screen.queryByText("OBJETO:")).not.toBeInTheDocument()
+    expect(screen.queryByText("Introdução")).not.toBeInTheDocument()
+  })
+
   it("documento sem nada resolvido avisa que sairia vazio", () => {
     renderizar(<PreviaDoDocumento blocos={[]} />)
 
