@@ -4,6 +4,7 @@ import {
   CadastroDeServidor,
   SEM_RECUSAS,
   type EntidadeDoCadastro,
+  type PerfisDoCadastro,
   type RecusasDoCadastro,
 } from "@/components/admin/cadastro-de-servidor"
 import { renderizar, screen, userEvent } from "@/lib/teste/renderizar"
@@ -18,10 +19,12 @@ const ENTIDADE = { id: "org-1", nome: "Prefeitura Municipal de Ecoporanga" }
 
 function cadastro({
   entidade = { fixa: ENTIDADE },
+  perfis,
   recusas = SEM_RECUSAS,
   onCadastrar = () => {},
 }: {
   entidade?: EntidadeDoCadastro
+  perfis?: PerfisDoCadastro
   recusas?: RecusasDoCadastro
   onCadastrar?: Parameters<typeof CadastroDeServidor>[0]["onCadastrar"]
 } = {}) {
@@ -29,6 +32,7 @@ function cadastro({
     <CadastroDeServidor
       titulo="Cadastrar Servidor"
       entidade={entidade}
+      perfis={perfis}
       salvando={false}
       recusas={recusas}
       onCadastrar={onCadastrar}
@@ -98,5 +102,71 @@ describe("cadastro de servidor", () => {
     await userEvent.type(screen.getByLabelText(/Matrícula/), "MAT-9")
 
     expect(screen.queryByText("Matrícula já cadastrada.")).not.toBeInTheDocument()
+  })
+
+  it("o coordenador cadastra só servidor: o perfil vem travado e explica quem cadastra coordenador", async () => {
+    const cadastrar = vi.fn()
+    renderizar(cadastro({ perfis: "apenasServidor", onCadastrar: cadastrar }))
+
+    expect(screen.queryByRole("button", { name: /Perfil de acesso/ })).not.toBeInTheDocument()
+    expect(screen.getByDisplayValue("Servidor")).toBeDisabled()
+    expect(screen.getByText(/Coordenadores são cadastrados pelo administrador/)).toBeInTheDocument()
+
+    await preencherObrigatorios()
+    await userEvent.click(screen.getByRole("button", { name: "Cadastrar" }))
+
+    expect(cadastrar).toHaveBeenCalledWith(expect.objectContaining({ perfilAcesso: "servidor" }))
+  })
+
+  it("o administrador escolhe entre servidor e coordenador", async () => {
+    const cadastrar = vi.fn()
+    renderizar(cadastro({ onCadastrar: cadastrar }))
+
+    await preencherObrigatorios()
+    await userEvent.click(screen.getByRole("button", { name: /Perfil de acesso/ }))
+    await userEvent.click(screen.getByRole("option", { name: "Coordenador" }))
+    await userEvent.click(screen.getByRole("button", { name: "Cadastrar" }))
+
+    expect(cadastrar).toHaveBeenCalledWith(expect.objectContaining({ perfilAcesso: "coordenador" }))
+  })
+
+  it("entidade fixa no limite do plano: não cadastra e diz o limite", async () => {
+    renderizar(cadastro({ entidade: { fixa: { ...ENTIDADE, limiteUsuarios: 5, usuariosAtivos: 5 } } }))
+
+    await preencherObrigatorios()
+
+    expect(screen.getByText("Limite de 5 usuários atingido, conforme o plano da entidade.")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Cadastrar" })).toBeDisabled()
+  })
+
+  it("entidade fixa com vaga cadastra normalmente", async () => {
+    const cadastrar = vi.fn()
+    renderizar(
+      cadastro({ entidade: { fixa: { ...ENTIDADE, limiteUsuarios: 5, usuariosAtivos: 4 } }, onCadastrar: cadastrar }),
+    )
+
+    await preencherObrigatorios()
+    await userEvent.click(screen.getByRole("button", { name: "Cadastrar" }))
+
+    expect(cadastrar).toHaveBeenCalled()
+    expect(screen.queryByText(/Limite de/)).not.toBeInTheDocument()
+  })
+
+  it("o administrador vê na lista qual entidade está lotada, e escolhê-la bloqueia o cadastro", async () => {
+    const lotada = { id: "org-2", nome: "Câmara Lotada", limiteUsuarios: 2, usuariosAtivos: 2 }
+    renderizar(cadastro({ entidade: { opcoes: [ENTIDADE, lotada] } }))
+
+    await preencherObrigatorios()
+    await userEvent.click(screen.getByRole("button", { name: /^Entidade/ }))
+    await userEvent.click(screen.getByRole("option", { name: "Câmara Lotada (limite atingido)" }))
+
+    expect(screen.getByText("Limite de 2 usuários atingido, conforme o plano da entidade.")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Cadastrar" })).toBeDisabled()
+
+    await userEvent.click(screen.getByRole("button", { name: /^Entidade/ }))
+    await userEvent.click(screen.getByRole("option", { name: ENTIDADE.nome }))
+
+    expect(screen.queryByText(/Limite de/)).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Cadastrar" })).toBeEnabled()
   })
 })

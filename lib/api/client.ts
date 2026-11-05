@@ -742,6 +742,8 @@ export interface NovaEntidadeInput {
    * tipo: nem toda autarquia é agência executiva.
    */
   agenciaExecutiva?: boolean
+  /** Máximo de usuários ativos do plano, de 1 a 999 (ADR-060 do back-end). */
+  limiteUsuarios: number
   nome: string
   /** O servidor assume `prefeitura` sem este campo — ver `lib/types.ts`. */
   tipo: TipoEntidade
@@ -749,6 +751,15 @@ export interface NovaEntidadeInput {
 
 export async function criarEntidade(input: NovaEntidadeInput): Promise<Tenant> {
   return criarEntidadeNaApi(input)
+}
+
+/**
+ * Muda o limite de usuários do plano da entidade. Só o administrador da
+ * plataforma — o servidor recusa o resto com 403, e recusa (400) limite abaixo
+ * dos usuários ativos.
+ */
+export async function atualizarLimiteDeUsuarios(id: string, limiteUsuarios: number): Promise<Tenant> {
+  return atualizarEntidadeNaApi(id, { limiteUsuarios })
 }
 
 export async function removerEntidade(id: string): Promise<void> {

@@ -559,6 +559,12 @@
           "executiveAgency" : {
             "type" : "boolean"
           },
+          "maxUsers" : {
+            "format" : "int32",
+            "maximum" : 999,
+            "minimum" : 1,
+            "type" : "integer"
+          },
           "name" : {
             "maxLength" : 200,
             "minLength" : 0,
@@ -572,7 +578,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "name" ],
+        "required" : [ "maxUsers", "name" ],
         "type" : "object"
       },
       "CreateProcurementProcessRequest" : {
@@ -1680,6 +1686,10 @@
       },
       "OrganizationResponse" : {
         "properties" : {
+          "activeUsers" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
           "createdAt" : {
             "format" : "date-time",
             "type" : "string"
@@ -1694,6 +1704,10 @@
           "id" : {
             "format" : "uuid",
             "type" : "string"
+          },
+          "maxUsers" : {
+            "format" : "int32",
+            "type" : "integer"
           },
           "name" : {
             "type" : "string"
@@ -1714,7 +1728,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "createdAt", "entityType", "executiveAgency", "id", "name", "status", "updatedAt", "version" ],
+        "required" : [ "createdAt", "entityType", "executiveAgency", "id", "maxUsers", "name", "status", "updatedAt", "version" ],
         "type" : "object"
       },
       "OrganizationSummary" : {
@@ -2990,6 +3004,12 @@
           },
           "executiveAgency" : {
             "type" : "boolean"
+          },
+          "maxUsers" : {
+            "format" : "int32",
+            "maximum" : 999,
+            "minimum" : 1,
+            "type" : "integer"
           },
           "name" : {
             "maxLength" : 200,

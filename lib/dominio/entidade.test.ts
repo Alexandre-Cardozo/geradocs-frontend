@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest"
 
-import { tipoDaEntidade } from "@/lib/dominio/entidade"
+import {
+  avisoDeLimiteAtingido,
+  erroLimiteDeUsuarios,
+  limiteDeUsuariosAtingido,
+  tipoDaEntidade,
+} from "@/lib/dominio/entidade"
 
 /**
  * A tradução do tipo da entidade é lida de dois lugares — a sessão e a listagem
@@ -23,5 +28,35 @@ describe("tipoDaEntidade", () => {
     expect(tipoDaEntidade(null)).toBe("prefeitura")
     expect(tipoDaEntidade(undefined)).toBe("prefeitura")
     expect(tipoDaEntidade("CONSORCIO_PUBLICO")).toBe("prefeitura")
+  })
+})
+
+describe("limite de usuários da entidade", () => {
+  it("atinge quando os ativos alcançam o limite", () => {
+    expect(limiteDeUsuariosAtingido({ limiteUsuarios: 5, usuariosAtivos: 4 })).toBe(false)
+    expect(limiteDeUsuariosAtingido({ limiteUsuarios: 5, usuariosAtivos: 5 })).toBe(true)
+    // Acima do limite só por legado ou corrida; continua bloqueado.
+    expect(limiteDeUsuariosAtingido({ limiteUsuarios: 5, usuariosAtivos: 6 })).toBe(true)
+  })
+
+  it("sem limite ou sem contagem não presume nada e deixa a API decidir", () => {
+    expect(limiteDeUsuariosAtingido({ usuariosAtivos: 3 })).toBe(false)
+    expect(limiteDeUsuariosAtingido({ limiteUsuarios: 3 })).toBe(false)
+    expect(limiteDeUsuariosAtingido({})).toBe(false)
+  })
+
+  it("o aviso diz o número do plano, no singular quando é um", () => {
+    expect(avisoDeLimiteAtingido(5)).toBe("Limite de 5 usuários atingido, conforme o plano da entidade.")
+    expect(avisoDeLimiteAtingido(1)).toBe("Limite de 1 usuário atingido, conforme o plano da entidade.")
+  })
+
+  it("aceita inteiros de 1 a 999 e explica o resto", () => {
+    expect(erroLimiteDeUsuarios("1")).toBeUndefined()
+    expect(erroLimiteDeUsuarios(" 999 ")).toBeUndefined()
+    expect(erroLimiteDeUsuarios("")).toBe("Informe o limite de usuários.")
+    expect(erroLimiteDeUsuarios("2,5")).toBe("Use apenas números inteiros.")
+    expect(erroLimiteDeUsuarios("-3")).toBe("Use apenas números inteiros.")
+    expect(erroLimiteDeUsuarios("0")).toBe("O limite deve estar entre 1 e 999.")
+    expect(erroLimiteDeUsuarios("1000")).toBe("O limite deve estar entre 1 e 999.")
   })
 })

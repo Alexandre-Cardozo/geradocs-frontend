@@ -15,6 +15,8 @@ interface BackendOrganization {
   unit: string | null
   entityType: BackendTipoEntidade
   executiveAgency?: boolean
+  maxUsers?: number
+  activeUsers?: number | null
   status: "ACTIVE" | "INACTIVE"
   version: number
 }
@@ -90,6 +92,8 @@ function tenantDa(organization: BackendOrganization, secretarias: Secretaria[] =
     tipo: tipoDaEntidade(organization.entityType),
     // Só dobra o limite de dispensa quando declarada (Art. 75, § 2º).
     agenciaExecutiva: organization.executiveAgency === true,
+    limiteUsuarios: organization.maxUsers,
+    usuariosAtivos: organization.activeUsers ?? undefined,
     secretarias,
     timbrado: true,
     cabecalho: organization.name.toUpperCase(),
@@ -152,6 +156,8 @@ export interface NovaEntidadeInput {
    * tipo: nem toda autarquia é agência executiva.
    */
   agenciaExecutiva?: boolean
+  /** Máximo de usuários ativos do plano, de 1 a 999. Obrigatório no servidor. */
+  limiteUsuarios: number
   nome: string
   /**
    * O que a entidade é.
@@ -187,6 +193,7 @@ export async function criarEntidade(input: NovaEntidadeInput): Promise<Tenant> {
       name: input.nome.trim(),
       entityType: TIPO_PARA_BACKEND[input.tipo],
       executiveAgency: input.agenciaExecutiva ?? false,
+      maxUsers: input.limiteUsuarios,
     }),
   })
   return tenantDa(organization)
@@ -202,21 +209,33 @@ export async function desativarEntidade(id: string): Promise<void> {
 }
 
 /**
- * Renomeia a entidade.
+ * Renomeia a entidade ou, para o administrador da plataforma, muda o limite de usuários.
  *
- * <p>Só o nome: é o que a plataforma deixa editar. Timbre, cabeçalho e rodapé
- * continuam fabricados por `tenantDa()` e marcados como sintéticos na tela —
- * gravá-los aqui daria a impressão de terem sido salvos. A unidade
- * administrativa que o servidor guarda é reenviada como está: nenhuma tela a
- * mostra, e apagá-la de passagem seria decidir por quem não foi perguntado.
+ * <p>Timbre, cabeçalho e rodapé continuam fabricados por `tenantDa()` e marcados
+ * como sintéticos na tela — gravá-los aqui daria a impressão de terem sido
+ * salvos. A unidade, o tipo e a agência executiva que o servidor guarda são
+ * reenviados como estão: o servidor lê a ausência do tipo como `PREFEITURA` e a
+ * da agência como "não", e renomear uma câmara a transformava em prefeitura.
+ *
+ * <p>O limite só vai quando pedido: o servidor recusa (403) o campo vindo de quem
+ * não administra a plataforma — e o coordenador também renomeia a entidade.
  */
-export async function atualizarEntidade(id: string, patch: { nome?: string }): Promise<Tenant> {
+export async function atualizarEntidade(
+  id: string,
+  patch: { nome?: string; limiteUsuarios?: number },
+): Promise<Tenant> {
   const atual = await requisicaoProtegida<BackendOrganization>(`/organizations/${id}`)
   const organization = await requisicaoProtegida<BackendOrganization>(`/organizations/${id}`, {
     method: "PATCH",
     // A API troca o recurso inteiro: o que não muda é reenviado como está.
     headers: { "If-Match": ifMatch(atual.version) },
-    body: JSON.stringify({ name: patch.nome?.trim() || atual.name, unit: atual.unit ?? null }),
+    body: JSON.stringify({
+      name: patch.nome?.trim() || atual.name,
+      unit: atual.unit ?? null,
+      entityType: atual.entityType,
+      executiveAgency: atual.executiveAgency === true,
+      ...(patch.limiteUsuarios === undefined ? {} : { maxUsers: patch.limiteUsuarios }),
+    }),
   })
   return tenantDa(organization)
 }

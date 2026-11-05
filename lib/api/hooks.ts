@@ -713,6 +713,19 @@ export function useCriarEntidade() {
   })
 }
 
+/** O limite de usuários do plano; muda o que a entidade e as telas de cadastro mostram. */
+export function useAtualizarLimiteDeUsuarios() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, limiteUsuarios }: { id: string; limiteUsuarios: number }) =>
+      api.atualizarLimiteDeUsuarios(id, limiteUsuarios),
+    onSuccess: (tenant) => {
+      void queryClient.invalidateQueries({ queryKey: chaves.entidades })
+      void queryClient.invalidateQueries({ queryKey: chaves.tenant(tenant.id) })
+    },
+  })
+}
+
 export function useRemoverEntidade() {
   const queryClient = useQueryClient()
   return useMutation({
@@ -754,7 +767,10 @@ export function useUsuarios(entidadeId?: string, busca = "") {
 
 function invalidarUsuarios(queryClient: ReturnType<typeof useQueryClient>) {
   void queryClient.invalidateQueries({ queryKey: ["usuarios"] })
+  // As entidades trazem quantos usuários ocupam vaga: cadastrar, desativar ou
+  // transferir muda a conta que habilita o botão de cadastro (ADR-060 do back-end).
   void queryClient.invalidateQueries({ queryKey: chaves.entidades })
+  void queryClient.invalidateQueries({ queryKey: ["tenant"] })
 }
 
 export function useCriarUsuario() {

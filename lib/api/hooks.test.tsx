@@ -506,7 +506,21 @@ describe("cadastros", () => {
       await waitFor(() => expect(invalidadas(invalidou)).toContain(chave(["usuarios"])))
       // A contagem de servidores aparece no cartão da entidade.
       expect(invalidadas(invalidou)).toContain(chave(chaves.entidades))
+      // E a da entidade do coordenador decide se o botão de cadastro abre.
+      expect(invalidadas(invalidou)).toContain(chave(["tenant"]))
     }
+  })
+
+  it("mudar o limite de usuários recarrega as entidades e a entidade alterada", async () => {
+    const { wrapper, invalidou } = ambiente()
+    vi.mocked(api.atualizarLimiteDeUsuarios).mockResolvedValue({ id: ENTIDADE } as never)
+
+    const { result } = renderHook(() => hooks.useAtualizarLimiteDeUsuarios(), { wrapper })
+    result.current.mutate({ id: ENTIDADE, limiteUsuarios: 12 })
+
+    await waitFor(() => expect(invalidadas(invalidou)).toContain(chave(chaves.tenant(ENTIDADE))))
+    expect(api.atualizarLimiteDeUsuarios).toHaveBeenCalledWith(ENTIDADE, 12)
+    expect(invalidadas(invalidou)).toContain(chave(chaves.entidades))
   })
 
   it("salvar a configuração grava o tenant e recarrega a sessão", async () => {

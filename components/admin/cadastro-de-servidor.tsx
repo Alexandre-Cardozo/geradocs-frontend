@@ -4,6 +4,7 @@ import { useId, useState } from "react"
 
 import { Button, Dropdown, FormField, IconLock, Input } from "@/components/ui"
 import { formatCPF, validaCPF } from "@/lib/auth/cpf"
+import { avisoDeLimiteAtingido, limiteDeUsuariosAtingido } from "@/lib/dominio/entidade"
 import { validaEmail } from "@/lib/auth/email"
 import { PERFIL_ACESSO_LABEL, type PerfilAcesso } from "@/lib/types"
 import { erroCargo, erroDecreto, erroMatricula, erroNomeDePessoa } from "@/lib/validacao/campos"
@@ -33,8 +34,28 @@ export interface DadosDoCadastro {
  * vai entrar em vez de ter de deduzir.
  */
 export type EntidadeDoCadastro =
-  | { fixa: { id: string; nome: string } }
-  | { opcoes: { id: string; nome: string }[] }
+  | { fixa: EntidadeComVagas }
+  | { opcoes: EntidadeComVagas[] }
+
+/**
+ * A entidade com o que se sabe das vagas dela (ADR-060 do back-end). Sem a
+ * contagem, o formulário não presume nada e deixa a API decidir.
+ */
+export interface EntidadeComVagas {
+  id: string
+  nome: string
+  limiteUsuarios?: number
+  usuariosAtivos?: number
+}
+
+/**
+ * Quais perfis quem cadastra pode atribuir.
+ *
+ * <p>`apenasServidor` é o coordenador: ele cadastra servidores, e coordenadores
+ * são nomeados pelo administrador da plataforma. O campo continua na tela,
+ * travado, para que fique claro o perfil com que a pessoa vai entrar.
+ */
+export type PerfisDoCadastro = "servidorOuCoordenador" | "apenasServidor"
 
 /** Referência estável para "nada recusado": um `{}` novo a cada render apagaria o que a pessoa já corrigiu. */
 export const SEM_RECUSAS: RecusasDoCadastro = {}
@@ -52,6 +73,7 @@ export const SEM_RECUSAS: RecusasDoCadastro = {}
 export function CadastroDeServidor({
   titulo,
   entidade,
+  perfis = "servidorOuCoordenador",
   salvando,
   recusas,
   onCadastrar,
@@ -59,6 +81,7 @@ export function CadastroDeServidor({
 }: {
   titulo: string
   entidade: EntidadeDoCadastro
+  perfis?: PerfisDoCadastro
   salvando: boolean
   /** O que o servidor recusou na última tentativa, campo a campo. */
   recusas: RecusasDoCadastro
@@ -90,6 +113,15 @@ export function CadastroDeServidor({
   }
 
   const entidadeId = "fixa" in entidade ? entidade.fixa.id : entidadeEscolhida
+  const entidadeDoCadastro =
+    "fixa" in entidade ? entidade.fixa : entidade.opcoes.find((e) => e.id === entidadeEscolhida)
+  // O botão para aqui; a API recusa de qualquer jeito quem passar (409).
+  const lotada = entidadeDoCadastro !== undefined && limiteDeUsuariosAtingido(entidadeDoCadastro)
+  const avisoDeLotacao =
+    lotada && entidadeDoCadastro?.limiteUsuarios !== undefined
+      ? avisoDeLimiteAtingido(entidadeDoCadastro.limiteUsuarios)
+      : undefined
+  const perfilEnviado: PerfilAcesso = perfis === "apenasServidor" ? "servidor" : perfil
   const cpfValido = validaCPF(cpf)
   const emailValido = validaEmail(email)
   // O que se vê ao digitar. Tem precedência sobre a recusa do servidor, que é
@@ -103,13 +135,14 @@ export function CadastroDeServidor({
   const formatoOk = Object.values(errosDoFormato).every((erro) => erro === undefined)
   // Todo servidor cadastrado pertence a uma entidade: sem ela o cadastro não
   // tem lotação, e o servidor não teria processo nenhum para trabalhar.
-  const podeSalvar = nome.trim() !== "" && cpfValido && emailValido && entidadeId !== "" && formatoOk
+  const podeSalvar =
+    nome.trim() !== "" && cpfValido && emailValido && entidadeId !== "" && formatoOk && !lotada
 
   const salvar = () => {
     if (!podeSalvar) return
     onCadastrar({
       nome, cpf, email, cargo, matricula, decretoNomeacao: decreto,
-      perfilAcesso: perfil,
+      perfilAcesso: perfilEnviado,
       entidadeId,
     })
   }
@@ -153,19 +186,34 @@ export function CadastroDeServidor({
         >
           <Input value={decreto} onChange={(e) => alterar("appointmentDecree", setDecreto)(e.target.value)} placeholder="Ex: Decreto 1.234/2026" />
         </FormField>
-        <FormField label="Perfil de Acesso" required hint={recusa("profileAccess")}>
-          <Dropdown
-            value={perfil}
-            onChange={(v) => alterar("profileAccess", (p) => setPerfil(p as PerfilAcesso))(v)}
-            ariaLabel="Perfil de acesso"
-            options={[
-              { value: "servidor", label: PERFIL_ACESSO_LABEL.servidor },
-              { value: "coordenador", label: PERFIL_ACESSO_LABEL.coordenador },
-            ]}
-          />
-        </FormField>
+        {perfis === "apenasServidor" ? (
+          <FormField
+            label="Perfil de Acesso"
+            required
+            hint={recusa("profileAccess") ?? "Coordenadores são cadastrados pelo administrador da plataforma."}
+          >
+            <div className="relative">
+              <Input value={PERFIL_ACESSO_LABEL.servidor} disabled className="pr-9" />
+              <span className="pointer-events-none absolute top-1/2 right-3 flex -translate-y-1/2 text-text-muted">
+                <IconLock size={14} />
+              </span>
+            </div>
+          </FormField>
+        ) : (
+          <FormField label="Perfil de Acesso" required hint={recusa("profileAccess")}>
+            <Dropdown
+              value={perfil}
+              onChange={(v) => alterar("profileAccess", (p) => setPerfil(p as PerfilAcesso))(v)}
+              ariaLabel="Perfil de acesso"
+              options={[
+                { value: "servidor", label: PERFIL_ACESSO_LABEL.servidor },
+                { value: "coordenador", label: PERFIL_ACESSO_LABEL.coordenador },
+              ]}
+            />
+          </FormField>
+        )}
         {"fixa" in entidade ? (
-          <FormField label="Entidade" required hint="Fixa: a sua entidade.">
+          <FormField label="Entidade" required hint={avisoDeLotacao ?? "Fixa: a sua entidade."}>
             <div className="relative">
               <Input value={entidade.fixa.nome} disabled className="pr-9" />
               <span className="pointer-events-none absolute top-1/2 right-3 flex -translate-y-1/2 text-text-muted">
@@ -174,14 +222,19 @@ export function CadastroDeServidor({
             </div>
           </FormField>
         ) : (
-          <FormField label="Entidade" required>
+          <FormField label="Entidade" required hint={avisoDeLotacao}>
             <Dropdown
               value={entidadeEscolhida}
               onChange={setEntidadeEscolhida}
               ariaLabel="Entidade"
               options={[
                 { value: "", label: "Selecione a entidade..." },
-                ...entidade.opcoes.map((e) => ({ value: e.id, label: e.nome })),
+                ...entidade.opcoes.map((e) => ({
+                  value: e.id,
+                  // Avisada já na lista, para ninguém preencher o formulário
+                  // inteiro e só então descobrir que não há vaga.
+                  label: limiteDeUsuariosAtingido(e) ? `${e.nome} (limite atingido)` : e.nome,
+                })),
               ]}
             />
           </FormField>
@@ -191,8 +244,9 @@ export function CadastroDeServidor({
         <Button variant="secondary" onClick={onCancelar}>Cancelar</Button>
         <p id={motivoId} className="sr-only">
           Nome, CPF válido, e-mail válido e a entidade são obrigatórios, e cada
-          campo preenchido precisa estar no formato indicado. A senha é sorteada
-          pelo sistema e aparece depois de cadastrar.
+          campo preenchido precisa estar no formato indicado. A entidade precisa
+          ter vaga no limite de usuários do plano. A senha é sorteada pelo
+          sistema e aparece depois de cadastrar.
         </p>
         <Button disabled={salvando || !podeSalvar} ariaDescribedBy={motivoId} onClick={salvar}>
           {salvando ? "Salvando..." : "Cadastrar"}
