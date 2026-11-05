@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 import { Button, Dropdown, FormField, Input, Tag, Toggle } from "@/components/ui";
-import { IconBuilding, IconPlus, IconTrash } from "@/components/ui/icons";
+import { IconBan, IconBuilding, IconPlus } from "@/components/ui/icons";
 import { EmptyState, ErrorState, SkeletonRows } from "@/components/shared/estados";
 import { Th } from "@/components/shared/tabela";
 import { useToast } from "@/components/shared/providers";
@@ -214,9 +214,12 @@ export default function AdminEntidades() {
                           title={motivo}
                           disabled={remover.isPending || servidores > 0}
                           onClick={() => excluir(entidade.id, entidade.nome)}
-                          className="flex size-7 cursor-pointer items-center justify-center rounded-sm border border-border bg-ice text-danger transition-colors hover:bg-tint-danger-bg disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-ice"
+                          // Rótulo escrito, não lixeira: desativar não apaga a
+                          // entidade nem o que ela produziu.
+                          className="flex h-7 cursor-pointer items-center gap-1.5 rounded-sm border border-border bg-surface px-2.5 text-sm font-semibold whitespace-nowrap text-text-3 transition-colors hover:border-tint-danger-border-strong hover:bg-tint-danger-bg hover:text-danger disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-border disabled:hover:bg-surface disabled:hover:text-text-3"
                         >
-                          <IconTrash size={13} />
+                          <IconBan size={13} />
+                          Desativar
                         </button>
                       </td>
                     </tr>

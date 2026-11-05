@@ -308,6 +308,20 @@ describe("ficha do servidor", () => {
     expect(await screen.findByText("Decreto 1.234/2026")).toBeInTheDocument()
   })
 
+  /**
+   * Desativar tira o acesso, mas não apaga a conta. A lixeira que ficava aqui
+   * fazia o admin achar que excluía; o botão agora diz o que faz.
+   */
+  it("o botão de desativar diz o que faz, e não parece exclusão", async () => {
+    comCadastro()
+    renderizar(<AdminServidores />)
+
+    const botao = await screen.findByRole("button", { name: /Desativar Maria/ })
+
+    expect(botao).toHaveTextContent(/^Desativar$/)
+    expect(screen.queryByRole("button", { name: /Excluir|Remover/ })).not.toBeInTheDocument()
+  })
+
   it("desativar não abre a ficha de quem acabou de ser desativado", async () => {
     comCadastro()
     servidor.use(

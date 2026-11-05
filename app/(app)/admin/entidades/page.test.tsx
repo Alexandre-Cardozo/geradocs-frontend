@@ -141,6 +141,8 @@ describe("desativar entidade", () => {
 
     const botao = await screen.findByRole("button", { name: /Desativar Prefeitura Municipal/ })
     expect(botao).toBeEnabled()
+    // Escrito, e não uma lixeira: desativar não apaga a entidade.
+    expect(botao).toHaveTextContent(/^Desativar$/)
   })
 
   it("só autarquia e fundação podem ser qualificadas como agência executiva", async () => {

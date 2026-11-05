@@ -3,7 +3,7 @@
 import { useState } from "react"
 
 import { Button, Dropdown, InfoBanner, Input, Tag } from "@/components/ui"
-import { IconPlus, IconTrash } from "@/components/ui/icons"
+import { IconPlus, IconUserX } from "@/components/ui/icons"
 import { EmptyState, ErrorState, SkeletonRows } from "@/components/shared/estados"
 import { FotoDePerfil } from "@/components/shared/foto-de-perfil"
 import { Th } from "@/components/shared/tabela"
@@ -275,9 +275,13 @@ export default function AdminServidores() {
                             onSuccess: () => showToast(`${u.nome} desativado.`),
                           })
                         }}
-                        className="flex size-7 cursor-pointer items-center justify-center rounded-sm border border-border bg-ice text-danger transition-colors hover:bg-tint-danger-bg disabled:opacity-50"
+                        // Rótulo escrito e pessoa riscada, não lixeira: desativar
+                        // tira o acesso, mas a conta e a trilha dela continuam.
+                        // A lixeira fazia o admin hesitar achando que apagava.
+                        className="flex h-7 cursor-pointer items-center gap-1.5 rounded-sm border border-border bg-surface px-2.5 text-sm font-semibold whitespace-nowrap text-text-3 transition-colors hover:border-tint-danger-border-strong hover:bg-tint-danger-bg hover:text-danger disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        <IconTrash size={13} />
+                        <IconUserX size={13} />
+                        Desativar
                       </button>
                     </td>
                   </tr>
