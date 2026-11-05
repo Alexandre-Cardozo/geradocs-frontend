@@ -239,6 +239,9 @@ function tenantDa(organization: BackendOrganization | null | undefined): Tenant 
     id: organization.id,
     nome: organization.name ?? "",
     tipo: tipoDaEntidade(organization.entityType),
+    // A sessão traz o limite, mas não a contagem: quem precisa decidir se há
+    // vaga lê a entidade (`useConfigTenant`).
+    limiteUsuarios: organization.maxUsers,
     secretarias: [],
     timbrado: true,
     cabecalho: (organization.name ?? "").toUpperCase(),

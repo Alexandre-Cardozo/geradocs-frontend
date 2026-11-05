@@ -10,7 +10,8 @@ import { useToast } from "@/components/shared/providers"
 import { CadastroDeServidor, SEM_RECUSAS, type DadosDoCadastro } from "@/components/admin/cadastro-de-servidor"
 import { CredenciaisIniciais } from "@/components/admin/credenciais-iniciais"
 import { ApiError } from "@/lib/api/auth-client"
-import { useCriarUsuario, useSessao, useUsuarios } from "@/lib/api/hooks"
+import { useConfigTenant, useCriarUsuario, useSessao, useUsuarios } from "@/lib/api/hooks"
+import { avisoDeLimiteAtingido, limiteDeUsuariosAtingido } from "@/lib/dominio/entidade"
 import { formatCPF } from "@/lib/auth/cpf"
 import { formatDataHora } from "@/lib/format"
 import { PERFIL_ACESSO_LABEL } from "@/lib/types"
@@ -26,6 +27,10 @@ export default function Usuarios() {
   const showToast = useToast()
   const { data: sessao } = useSessao()
   const entidade = sessao?.entidade
+  // A entidade lida por inteiro, e não a da sessão: só ela traz quantos
+  // usuários ocupam vaga, que é o que decide se o cadastro abre (ADR-060 do back-end).
+  const { data: entidadeComVagas } = useConfigTenant(entidade?.id)
+  const lotada = entidadeComVagas !== undefined && limiteDeUsuariosAtingido(entidadeComVagas)
   const servidores = useUsuarios(entidade?.id)
   const criarServidor = useCriarUsuario()
 
@@ -79,7 +84,16 @@ export default function Usuarios() {
               na do coordenador: ele só cadastra na própria. */}
           <CadastroDeServidor
             titulo="Adicionar Servidor à Entidade"
-            entidade={{ fixa: { id: entidade?.id ?? "", nome: entidade?.nome ?? "" } }}
+            entidade={{
+              fixa: {
+                id: entidade?.id ?? "",
+                nome: entidade?.nome ?? "",
+                limiteUsuarios: entidadeComVagas?.limiteUsuarios,
+                usuariosAtivos: entidadeComVagas?.usuariosAtivos,
+              },
+            }}
+            // Coordenadores são nomeados pelo administrador da plataforma.
+            perfis="apenasServidor"
             salvando={criarServidor.isPending}
             recusas={criarServidor.error instanceof ApiError ? criarServidor.error.campos : SEM_RECUSAS}
             onCadastrar={salvar}
@@ -90,17 +104,34 @@ export default function Usuarios() {
 
       <div className="overflow-hidden rounded-card border border-border bg-surface">
         <div className="flex items-center justify-between border-b border-border-soft px-5 py-4">
-          <h3 className="m-0 font-display text-lg font-bold text-text-1">
-            Servidores da Entidade
-          </h3>
+          <div>
+            <h3 className="m-0 font-display text-lg font-bold text-text-1">
+              Servidores da Entidade
+            </h3>
+            {entidadeComVagas?.limiteUsuarios !== undefined && entidadeComVagas.usuariosAtivos !== undefined && (
+              <p className="m-0 mt-0.5 text-sm text-text-3">
+                {entidadeComVagas.usuariosAtivos} de {entidadeComVagas.limiteUsuarios} usuários do plano
+              </p>
+            )}
+          </div>
           <Button
             size="sm"
             icon={<IconPlus size={13} strokeWidth={2.5} />}
+            // No limite o botão para e diz por quê; a API recusa de qualquer
+            // jeito quem o reabilitar no navegador.
+            disabled={lotada && !novoServidor}
+            ariaDescribedBy={lotada ? "motivo-limite-de-usuarios" : undefined}
             onClick={() => abrirOuFecharCadastro(!novoServidor)}
           >
             Adicionar Servidor
           </Button>
         </div>
+        {lotada && entidadeComVagas?.limiteUsuarios !== undefined && (
+          <p id="motivo-limite-de-usuarios" className="m-0 border-b border-border-soft px-5 py-3 text-sm text-text-3">
+            {avisoDeLimiteAtingido(entidadeComVagas.limiteUsuarios)} Para cadastrar, desative um usuário
+            ou peça ao administrador da plataforma para ampliar o limite.
+          </p>
+        )}
         {servidores.isPending && <SkeletonRows rows={4} />}
         {servidores.isError && <ErrorState onRetry={() => void servidores.refetch()} />}
         {servidores.isSuccess && servidores.data.length === 0 && (

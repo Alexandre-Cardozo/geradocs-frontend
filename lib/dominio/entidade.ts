@@ -28,3 +28,45 @@ const TIPOS: Record<string, TipoEntidade> = {
 export function tipoDaEntidade(entityType: string | null | undefined): TipoEntidade {
   return (entityType ? TIPOS[entityType] : undefined) ?? "prefeitura"
 }
+
+/** A faixa do limite de usuários de uma entidade, a mesma do servidor (ADR-060 do back-end). */
+export const LIMITE_USUARIOS_MINIMO = 1
+export const LIMITE_USUARIOS_MAXIMO = 999
+
+/**
+ * Se a entidade já tem todos os usuários que o plano permite.
+ *
+ * <p>Só *affordance*: desabilita o botão e explica. Quem recusa de fato é a API
+ * (409 `USER_LIMIT_REACHED`), e reabilitar o botão no navegador não muda isso.
+ * Sem a contagem — a entidade da sessão não a traz — a tela não presume nada e
+ * deixa a API decidir.
+ */
+export function limiteDeUsuariosAtingido(entidade: {
+  limiteUsuarios?: number
+  usuariosAtivos?: number
+}): boolean {
+  const { limiteUsuarios, usuariosAtivos } = entidade
+  return limiteUsuarios !== undefined && usuariosAtivos !== undefined && usuariosAtivos >= limiteUsuarios
+}
+
+/** O aviso de limite atingido, com o número do plano. */
+export function avisoDeLimiteAtingido(limiteUsuarios: number): string {
+  const usuarios = limiteUsuarios === 1 ? "usuário" : "usuários"
+  return `Limite de ${limiteUsuarios} ${usuarios} atingido, conforme o plano da entidade.`
+}
+
+/**
+ * O limite como a pessoa digita: inteiro de 1 a 999.
+ *
+ * @returns o motivo da recusa, ou `undefined` quando o valor serve
+ */
+export function erroLimiteDeUsuarios(texto: string): string | undefined {
+  const limpo = texto.trim()
+  if (limpo === "") return "Informe o limite de usuários."
+  if (!/^\d+$/.test(limpo)) return "Use apenas números inteiros."
+  const valor = Number(limpo)
+  if (valor < LIMITE_USUARIOS_MINIMO || valor > LIMITE_USUARIOS_MAXIMO) {
+    return `O limite deve estar entre ${LIMITE_USUARIOS_MINIMO} e ${LIMITE_USUARIOS_MAXIMO}.`
+  }
+  return undefined
+}

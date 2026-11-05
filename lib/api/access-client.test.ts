@@ -15,6 +15,10 @@ const organizacao = {
   id: "1b7c8e10-2d3f-4a5b-8c9d-0e1f2a3b4c5d",
   name: "Prefeitura Municipal de Ecoporanga",
   unit: "Administração Central",
+  entityType: "CAMARA" as const,
+  executiveAgency: false,
+  maxUsers: 10,
+  activeUsers: 3,
   status: "ACTIVE" as const,
   version: 3,
 }
@@ -51,6 +55,21 @@ describe("listarEntidades", () => {
 
     expect(entidade?.nome).toBe("Prefeitura Municipal de Ecoporanga")
     expect(entidade?.id).toBe(organizacao.id)
+    // O plano e quantos ocupam vaga: é o que habilita o cadastro na tela.
+    expect(entidade?.limiteUsuarios).toBe(10)
+    expect(entidade?.usuariosAtivos).toBe(3)
+  })
+
+  it("contagem nula — a da sessão — não vira zero", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/organizations`, () => HttpResponse.json([{ ...organizacao, activeUsers: null }])),
+    )
+    const { listarEntidades } = await carregarClienteLimpo()
+
+    const [entidade] = await listarEntidades()
+
+    // Zero diria "há vaga" sem saber; ausente deixa a decisão para a API.
+    expect(entidade?.usuariosAtivos).toBeUndefined()
   })
 })
 
@@ -74,9 +93,10 @@ describe("criarEntidade", () => {
     )
     const { criarEntidade } = await carregarClienteLimpo()
 
-    const entidade = await criarEntidade({ nome: "  Prefeitura de Ecoporanga  ", tipo: "prefeitura" })
+    const entidade = await criarEntidade({ nome: "  Prefeitura de Ecoporanga  ", tipo: "prefeitura", limiteUsuarios: 25 })
 
     expect(corpo.name).toBe("Prefeitura de Ecoporanga")
+    expect(corpo.maxUsers).toBe(25)
     expect(entidade.nome).toBe(organizacao.name)
   })
 
@@ -90,7 +110,7 @@ describe("criarEntidade", () => {
     )
     const { criarEntidade } = await carregarClienteLimpo()
 
-    await criarEntidade({ nome: "Entidade", tipo: "camara" })
+    await criarEntidade({ nome: "Entidade", tipo: "camara", limiteUsuarios: 5 })
 
     // A unidade administrativa saiu do produto em 26/08/2026: o campo não é
     // pedido, não é exibido, e o cadastro não manda nada no lugar dele.
@@ -862,8 +882,41 @@ describe("atualizarEntidade", () => {
 
     expect(cabecalho).toBe('"3"')
     // Unidade não veio no patch: é reenviada como está, e não apagada.
-    expect(corpo).toEqual({ name: "Prefeitura de Ecoporanga", unit: organizacao.unit })
+    // Tipo e agência executiva também: ausentes, o servidor os leria como
+    // PREFEITURA e "não", e renomear uma câmara a transformaria em prefeitura.
+    // O limite fica de fora — só o administrador o manda.
+    expect(corpo).toEqual({
+      name: "Prefeitura de Ecoporanga",
+      unit: organizacao.unit,
+      entityType: "CAMARA",
+      executiveAgency: false,
+    })
     expect(tenant.nome).toBe("Prefeitura de Ecoporanga")
+  })
+
+  it("muda o limite de usuários quando pedido, mantendo o resto", async () => {
+    let corpo: Record<string, unknown> | undefined
+    servidor.use(
+      http.get(`${urlDaApi}/organizations/${organizacao.id}`, () =>
+        HttpResponse.json({ ...organizacao, entityType: "AUTARQUIA", executiveAgency: true }),
+      ),
+      http.patch(`${urlDaApi}/organizations/${organizacao.id}`, async ({ request }) => {
+        corpo = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json({ ...organizacao, maxUsers: 40 })
+      }),
+    )
+    const { atualizarEntidade } = await carregarClienteLimpo()
+
+    const tenant = await atualizarEntidade(organizacao.id, { limiteUsuarios: 40 })
+
+    expect(corpo).toEqual({
+      name: organizacao.name,
+      unit: organizacao.unit,
+      entityType: "AUTARQUIA",
+      executiveAgency: true,
+      maxUsers: 40,
+    })
+    expect(tenant.limiteUsuarios).toBe(40)
   })
 
   it("nome em branco não apaga o nome do órgão", async () => {
@@ -883,7 +936,7 @@ describe("atualizarEntidade", () => {
 
     // A unidade que o servidor guarda é reenviada como está: nenhuma tela a
     // mostra, e apagá-la de passagem seria decidir por quem não foi perguntado.
-    expect(corpo).toEqual({ name: organizacao.name, unit: organizacao.unit })
+    expect(corpo).toEqual({ name: organizacao.name, unit: organizacao.unit, entityType: "CAMARA", executiveAgency: false })
   })
 })
 
@@ -935,7 +988,7 @@ describe("edição de cadastro incompleto", () => {
 
     await atualizarEntidade(organizacao.id, { nome: "Prefeitura de Ecoporanga" })
 
-    expect(corpo).toEqual({ name: "Prefeitura de Ecoporanga", unit: null })
+    expect(corpo).toEqual({ name: "Prefeitura de Ecoporanga", unit: null, entityType: "CAMARA", executiveAgency: false })
   })
 })
 

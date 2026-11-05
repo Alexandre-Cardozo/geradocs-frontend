@@ -1521,6 +1521,8 @@ export interface components {
             /** @enum {string} */
             entityType?: "AUTARQUIA" | "CAMARA" | "CONSORCIO" | "FUNDACAO" | "OUTRO" | "PREFEITURA";
             executiveAgency?: boolean;
+            /** Format: int32 */
+            maxUsers: number;
             name: string;
             unit?: string;
         };
@@ -1899,6 +1901,8 @@ export interface components {
             title: string;
         };
         OrganizationResponse: {
+            /** Format: int64 */
+            activeUsers?: number;
             /** Format: date-time */
             createdAt: string;
             /** @enum {string} */
@@ -1906,6 +1910,8 @@ export interface components {
             executiveAgency: boolean;
             /** Format: uuid */
             id: string;
+            /** Format: int32 */
+            maxUsers: number;
             name: string;
             /** @enum {string} */
             status: "ACTIVE" | "INACTIVE";
@@ -2362,6 +2368,8 @@ export interface components {
             /** @enum {string} */
             entityType?: "AUTARQUIA" | "CAMARA" | "CONSORCIO" | "FUNDACAO" | "OUTRO" | "PREFEITURA";
             executiveAgency?: boolean;
+            /** Format: int32 */
+            maxUsers?: number;
             name: string;
             unit?: string;
         };

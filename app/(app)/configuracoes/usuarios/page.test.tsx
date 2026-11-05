@@ -1,11 +1,19 @@
 import { HttpResponse, http } from "msw"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 
 import Usuarios from "@/app/(app)/configuracoes/usuarios/page"
 import { sessaoServidor } from "@/lib/teste/fixtures-api"
 import { urlDaApi } from "@/lib/teste/handlers"
 import { renderizar, screen, userEvent, waitFor, porTextoInteiro } from "@/lib/teste/renderizar"
 import { servidor } from "@/lib/teste/servidor-msw"
+
+// O toast vive no provider do layout, fora destas telas: confere-se o que foi
+// mandado para ele.
+const avisos = vi.hoisted(() => vi.fn())
+vi.mock("@/components/shared/providers", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/components/shared/providers")>()),
+  useToast: () => avisos,
+}))
 
 /**
  * Usuários e permissões do órgão — rota própria desde 26/08/2026.
@@ -110,4 +118,86 @@ describe("usuários da entidade", () => {
     await waitFor(() => expect(entidade).toHaveValue(sessaoServidor.organization.name))
     expect(entidade).toBeDisabled()
   })
+
+  it("o coordenador cadastra só servidor: o perfil vem travado", async () => {
+    comCoordenador([])
+    let corpo: Record<string, unknown> | undefined
+    servidor.use(
+      http.post(`${urlDaApi}/users`, async ({ request }) => {
+        corpo = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json({ ...servidora, provisionalPassword: SENHA_DE_TESTE })
+      }),
+    )
+    renderizar(<Usuarios />)
+
+    await userEvent.click(await screen.findByRole("button", { name: /Adicionar Servidor/ }))
+
+    // Coordenadores são nomeados pelo administrador da plataforma (ADR-060 do back-end).
+    expect(screen.queryByRole("button", { name: /Perfil de acesso/ })).not.toBeInTheDocument()
+    expect(screen.getByDisplayValue("Servidor")).toBeDisabled()
+
+    await userEvent.type(screen.getByPlaceholderText("Nome do servidor"), "João da Silva")
+    await userEvent.type(screen.getByPlaceholderText("000.000.000-00"), "52998224725")
+    await userEvent.type(screen.getByPlaceholderText("email@prefeitura.gov.br"), "joao@ecoporanga.es.gov.br")
+    await userEvent.click(screen.getByRole("button", { name: "Cadastrar" }))
+
+    await waitFor(() => expect(corpo?.profileAccess).toBe("SERVIDOR"))
+  })
+
+  it("mostra quantos usuários do plano estão em uso", async () => {
+    comCoordenador([servidora])
+    comEntidadeDoCoordenador({ maxUsers: 5, activeUsers: 2 })
+    renderizar(<Usuarios />)
+
+    expect(await screen.findByText("2 de 5 usuários do plano")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /Adicionar Servidor/ })).toBeEnabled()
+  })
+
+  it("no limite do plano, o botão de adicionar fica desabilitado e diz o limite", async () => {
+    comCoordenador([servidora])
+    comEntidadeDoCoordenador({ maxUsers: 5, activeUsers: 5 })
+    renderizar(<Usuarios />)
+
+    const aviso = await screen.findByText(/Limite de 5 usuários atingido, conforme o plano da entidade/)
+    const botao = screen.getByRole("button", { name: /Adicionar Servidor/ })
+    expect(botao).toBeDisabled()
+    // O motivo fica ligado ao botão, para quem navega com leitor de tela.
+    expect(botao).toHaveAttribute("aria-describedby", aviso.id)
+  })
+
+  it("se o servidor recusar por limite, a mensagem dele aparece", async () => {
+    comCoordenador([])
+    comEntidadeDoCoordenador({ maxUsers: 5, activeUsers: 4 })
+    servidor.use(
+      http.post(`${urlDaApi}/users`, () =>
+        HttpResponse.json(
+          {
+            code: "USER_LIMIT_REACHED",
+            maxUsers: 5,
+            detail: "A entidade atingiu o limite de 5 usuários do plano.",
+          },
+          { status: 409, headers: { "content-type": "application/problem+json" } },
+        ),
+      ),
+    )
+    renderizar(<Usuarios />)
+
+    await userEvent.click(await screen.findByRole("button", { name: /Adicionar Servidor/ }))
+    await userEvent.type(screen.getByPlaceholderText("Nome do servidor"), "João da Silva")
+    await userEvent.type(screen.getByPlaceholderText("000.000.000-00"), "52998224725")
+    await userEvent.type(screen.getByPlaceholderText("email@prefeitura.gov.br"), "joao@ecoporanga.es.gov.br")
+    await userEvent.click(screen.getByRole("button", { name: "Cadastrar" }))
+
+    // Outro cadastro pode ter ocupado a última vaga entre a leitura e o clique.
+    await waitFor(() => expect(avisos).toHaveBeenCalledWith(expect.stringContaining("atingiu o limite de 5 usuários")))
+  })
 })
+
+function comEntidadeDoCoordenador(plano: { maxUsers: number; activeUsers: number }) {
+  servidor.use(
+    http.get(`${urlDaApi}/organizations/:id`, () =>
+      HttpResponse.json({ ...sessaoServidor.organization, ...plano, version: 1 }),
+    ),
+    http.get(`${urlDaApi}/organizations/:id/departments`, () => HttpResponse.json([])),
+  )
+}

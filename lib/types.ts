@@ -509,6 +509,17 @@ export interface Tenant {
   tipo: TipoEntidade
   /** Qualificada como agência executiva: dobra os limites de dispensa (Art. 75, § 2º). */
   agenciaExecutiva?: boolean
+  /**
+   * Máximo de usuários ativos que o plano admite, de 1 a 999 (ADR-060 do
+   * back-end). Só o administrador da plataforma define e altera.
+   */
+  limiteUsuarios?: number
+  /**
+   * Usuários que ocupam vaga agora — vínculo ativo e conta não desativada,
+   * pendentes de ativação inclusive. Ausente quando a entidade veio da sessão,
+   * que não traz a contagem; quem precisa dela lê `useConfigTenant`.
+   */
+  usuariosAtivos?: number
   secretarias: Secretaria[]
   /*
     O brasão não mora aqui. Ele é do timbre, e quem o quer o pede por
