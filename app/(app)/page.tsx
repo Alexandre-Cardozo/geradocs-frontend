@@ -102,7 +102,11 @@ export default function Dashboard() {
         mesmo lugar que o botão do topo — duas caixas ocupando um terço da tela
         para não dizer nada de novo.
       */}
-      {/* Processos recentes */}
+      {/*
+        Processos recentes — o servidor ordena pela última movimentação da
+        Trilha do Processo (escrever uma seção, concluir um documento também
+        contam), e a coluna da direita mostra a data desse mesmo evento.
+      */}
       <div className="overflow-hidden rounded-card border border-border bg-surface">
         <div className="flex items-center justify-between border-b border-border-soft px-5 py-4.5">
           <h3 className="m-0 font-display text-lg font-bold text-text-1">Processos Recentes</h3>
@@ -118,7 +122,7 @@ export default function Dashboard() {
             <table className="w-full min-w-[680px] border-collapse">
               <thead>
                 <tr className="bg-ice">
-                  {["Processo", "Secretaria", "Valor Est.", "Documentos", "Status", "Data"].map((h) => (
+                  {["Processo", "Secretaria", "Valor Est.", "Documentos", "Status", "Última Movimentação"].map((h) => (
                     <Th key={h} className="border-b border-border-soft">
                       {h}
                     </Th>
@@ -146,7 +150,7 @@ export default function Dashboard() {
                     <td className="px-4 py-3.25">
                       <StatusBadge status={p.status} size="sm" />
                     </td>
-                    <td className="px-4 py-3.25 text-sm text-text-muted">{formatData(p.atualizadoEm)}</td>
+                    <td className="px-4 py-3.25 text-sm text-text-muted">{formatData(p.ultimaMovimentacaoEm)}</td>
                   </tr>
                 ))}
               </tbody>

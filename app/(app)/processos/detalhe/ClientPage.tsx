@@ -580,8 +580,8 @@ export default function HubProcesso() {
             <dd className="m-0 mt-0.5 text-base text-text-1">{proc.responsavel}</dd>
           </div>
           <div>
-            <dt className="text-2xs font-semibold tracking-caps text-text-muted uppercase">Atualizado em</dt>
-            <dd className="m-0 mt-0.5 text-base text-text-1">{formatData(proc.atualizadoEm)}</dd>
+            <dt className="text-2xs font-semibold tracking-caps text-text-muted uppercase">Última Movimentação</dt>
+            <dd className="m-0 mt-0.5 text-base text-text-1">{formatData(proc.ultimaMovimentacaoEm)}</dd>
           </div>
 
           {/* A natureza escolhe a minuta da AGU do TR e do Contrato (ADR-053). */}

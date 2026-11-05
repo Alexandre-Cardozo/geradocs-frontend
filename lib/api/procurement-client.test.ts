@@ -57,6 +57,41 @@ describe("listarProcessos", () => {
     expect(resultado.itens[0]?.valorEstimado).toBe(485000)
   })
 
+  it("mantém a ordem do servidor e traz a última movimentação da trilha", async () => {
+    // O servidor ordena pela trilha; a interface não reordena por conta própria.
+    const mexidoAgora = {
+      ...processoApi,
+      id: "3f2b1a00-1111-4222-8333-000000000001",
+      lastActivityAt: "2026-11-05T09:00:00-03:00",
+    }
+    const parado = {
+      ...processoApi,
+      id: "3f2b1a00-1111-4222-8333-000000000002",
+      updatedAt: "2026-11-01T10:00:00-03:00",
+      lastActivityAt: "2026-11-01T10:00:00-03:00",
+    }
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes`, () => HttpResponse.json(pagina([mexidoAgora, parado]))),
+    )
+    const { listarProcessos } = await carregarClienteLimpo()
+
+    const { itens } = await listarProcessos({ porPagina: 5 })
+
+    expect(itens.map((p) => p.id)).toEqual([mexidoAgora.id, parado.id])
+    expect(itens[0]?.ultimaMovimentacaoEm).toBe("2026-11-05T09:00:00-03:00")
+    // A movimentação é da trilha, não da alteração dos dados.
+    expect(itens[0]?.atualizadoEm).toBe(processoApi.updatedAt)
+  })
+
+  it("servidor sem a última movimentação fica com a alteração dos dados", async () => {
+    servidor.use(http.get(`${urlDaApi}/procurement-processes`, () => HttpResponse.json(pagina())))
+    const { listarProcessos } = await carregarClienteLimpo()
+
+    const { itens } = await listarProcessos({})
+
+    expect(itens[0]?.ultimaMovimentacaoEm).toBe(processoApi.updatedAt)
+  })
+
   it("converte a paginação de base zero da API para base um da interface", async () => {
     let recebida: URL | undefined
     servidor.use(

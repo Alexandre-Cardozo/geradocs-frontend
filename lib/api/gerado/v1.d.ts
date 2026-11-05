@@ -2091,6 +2091,8 @@ export interface components {
             estimatedValue?: number;
             /** Format: uuid */
             id: string;
+            /** Format: date-time */
+            lastActivityAt: string;
             legalBasis?: string;
             /** @enum {string} */
             modality: "ACCREDITATION" | "AUCTION" | "COMPETITION" | "COMPETITIVE_DIALOGUE" | "CONTEST" | "DIRECT_AWARD_ARTICLE_75" | "ELECTRONIC_AUCTION" | "SOLE_SOURCE";
