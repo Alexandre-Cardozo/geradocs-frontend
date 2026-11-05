@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
 
 import { SearchInput, StatusBadge } from "@/components/ui"
-import { IconBell, IconMenu, IconPlus } from "@/components/ui/icons"
+import { IconMenu, IconPlus } from "@/components/ui/icons"
 import { usePerfil, useProcessos } from "@/lib/api/hooks"
 
 import { useRotaAtual } from "./use-rota-atual"
@@ -141,15 +141,6 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
           <BuscaGlobal />
         </div>
       )}
-
-      <button
-        type="button"
-        aria-label="Notificações"
-        className="relative flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-md border border-border bg-ice text-text-3"
-      >
-        <IconBell size={16} />
-        <span className="absolute top-1.75 right-1.75 size-1.75 rounded-full border-2 border-ice bg-danger" />
-      </button>
 
       {/* Ação global — só para quem opera o fluxo de processos */}
       {mostraProcessos && (
