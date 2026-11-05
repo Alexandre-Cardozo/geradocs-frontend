@@ -22,6 +22,7 @@ function processo(documentos: TipoDocumento[]): Processo {
     responsavel: "Maria Costa",
     criadoEm: "2026-08-20",
     atualizadoEm: "2026-08-21",
+    ultimaMovimentacaoEm: "2026-08-21",
     etpStatus: "Não iniciado",
     trStatus: "Não iniciado",
     documentos,

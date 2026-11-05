@@ -2192,6 +2192,10 @@
             "format" : "uuid",
             "type" : "string"
           },
+          "lastActivityAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
           "legalBasis" : {
             "type" : "string"
           },
@@ -2255,7 +2259,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "createdAt", "documents", "id", "modality", "objectDescription", "organizationId", "processNumber", "requiredDocuments", "requiredDocumentsDone", "stage", "status", "updatedAt", "urgency", "version" ],
+        "required" : [ "createdAt", "documents", "id", "lastActivityAt", "modality", "objectDescription", "organizationId", "processNumber", "requiredDocuments", "requiredDocumentsDone", "stage", "status", "updatedAt", "urgency", "version" ],
         "type" : "object"
       },
       "ProvisionalPasswordResponse" : {

@@ -183,7 +183,14 @@ export interface Processo {
   valorEstimado: number
   responsavel: string
   criadoEm: string
+  /** A última alteração dos dados do processo (objeto, valor, modalidade...). */
   atualizadoEm: string
+  /**
+   * A última movimentação: o evento mais recente da Trilha do Processo — a
+   * escrita de uma seção ou a conclusão de um documento também contam. É por
+   * ela que a lista de processos se ordena.
+   */
+  ultimaMovimentacaoEm: string
   etpStatus: StatusDocumento
   trStatus: StatusDocumento
   /** Documentos solicitados para o processo (definidos no wizard, editáveis no hub). */

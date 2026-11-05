@@ -62,6 +62,8 @@ interface ProcessoApi {
   closureNote?: string;
   createdAt: string;
   updatedAt: string;
+  /** O evento mais recente da trilha do processo; ordena a lista. */
+  lastActivityAt?: string;
   version: number;
 }
 
@@ -125,6 +127,8 @@ function mapear(item: ProcessoApi): Processo {
     responsavel: item.responsibleUserName,
     criadoEm: item.createdAt,
     atualizadoEm: item.updatedAt,
+    // Servidor anterior ao campo não o manda: a alteração dos dados é o melhor que se sabe.
+    ultimaMovimentacaoEm: item.lastActivityAt ?? item.updatedAt,
     etpStatus: "Não iniciado",
     trStatus: "Não iniciado",
     documentos: ordenar(item.documents.map((tipo) => tiposDaApi[tipo] as TipoDocumento)),
