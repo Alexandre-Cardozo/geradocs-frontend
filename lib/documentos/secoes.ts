@@ -345,6 +345,9 @@ const secoesAviso: SecaoDocumento[] = secoes([
     titulo: "Do Valor Estimado",
     fundamentoLegal: "Art. 23 e Art. 24, Lei 14.133/21",
     hint: "Informe o valor estimado da contratação ou, se a Administração optar pelo sigilo do orçamento, registre o sigilo e a justificativa.",
+    // O mesmo painel do ETP e do TR (§100): o valor sai dos itens, em tabela,
+    // e não redigitado. O sigilo continua possível: o texto é livre.
+    painel: "valor",
   },
   {
     titulo: "Do Prazo e da Forma de Envio das Propostas",

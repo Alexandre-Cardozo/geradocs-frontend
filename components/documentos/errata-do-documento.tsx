@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 
+import { TextoComTabelas } from "@/components/documentos/texto-com-tabelas"
 import { Button, Dropdown, InfoBanner } from "@/components/ui"
 import { useComparacaoDeVersoes, useVersoesComTexto } from "@/lib/api/hooks"
 import type { TipoDocumento } from "@/lib/types"
@@ -85,16 +86,16 @@ export function ErrataDoDocumento({
                   <dt className="text-2xs font-semibold tracking-caps text-text-muted uppercase">
                     Onde se lê
                   </dt>
-                  <dd className="m-0 mt-0.5 text-sm whitespace-pre-line text-text-3">
-                    {entrada.ondeSeLe ?? "(seção acrescentada nesta versão)"}
+                  <dd className="m-0 mt-0.5 text-sm text-text-3">
+                    <TextoComTabelas texto={entrada.ondeSeLe ?? "(seção acrescentada nesta versão)"} />
                   </dd>
                 </div>
                 <div>
                   <dt className="text-2xs font-semibold tracking-caps text-text-muted uppercase">
                     Leia-se
                   </dt>
-                  <dd className="m-0 mt-0.5 text-sm whitespace-pre-line text-text-1">
-                    {entrada.leiaSe ?? "(seção suprimida nesta versão)"}
+                  <dd className="m-0 mt-0.5 text-sm text-text-1">
+                    <TextoComTabelas texto={entrada.leiaSe ?? "(seção suprimida nesta versão)"} />
                   </dd>
                 </div>
               </dl>

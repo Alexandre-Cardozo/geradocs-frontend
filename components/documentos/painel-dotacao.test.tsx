@@ -192,7 +192,19 @@ describe("o parágrafo montado dos créditos", () => {
     // assinando no lugar de quem responde pelo processo.
     expect(texto).toContain("[Justificar a diferença de R$ 400.000,00")
     expect(texto).toContain("Art. 150")
-    expect(texto).toContain("Ficha 1245")
+    // Os créditos em tabela (§100), com a coluna da ficha porque ele a tem.
+    expect(texto).toContain(
+      "Unidade orçamentária | Programa de trabalho | Natureza da despesa | Fonte | Ficha | Exercício | Valor\n"
+        + "02.01 - Educação | 12.361.0004.2.045 | 3.3.90.30.00 | 1.500.1001 | 1245 | 2026 | R$ 850.000,00",
+    )
+    // Um crédito só não ganha linha de total: seria o mesmo número repetido.
+    expect(texto).not.toContain("Total |")
+  })
+
+  it("com dois créditos, a tabela fecha com o total", () => {
+    const texto = textoDaDotacao([credito, { ...credito, id: "d2", valor: "400.000,00" }], 1250000, 1250000)
+
+    expect(texto).toContain("Total |  |  |  |  |  | R$ 1.250.000,00")
   })
 
   it("cobertos, o parágrafo afirma a suficiência — e o TR ganha a previsão no PCA", () => {

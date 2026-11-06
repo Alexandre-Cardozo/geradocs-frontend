@@ -7,6 +7,7 @@ import { CaminhosDaSecao } from "@/components/documentos/caminhos-da-secao"
 import { InlineSpinner } from "@/components/shared/estados"
 import { useDotacoesDoProcesso, usePrevisaoNoPca, useProcesso } from "@/lib/api/hooks"
 import type { DotacaoOrcamentaria } from "@/lib/api/procurement-client"
+import { tabelaEmTexto } from "@/lib/dominio/tabela"
 import { formatBRL, parseValorBR } from "@/lib/format"
 import type { SecaoDocumento } from "@/lib/types"
 
@@ -190,18 +191,35 @@ export function textoDaDotacao(
   /** A citação do PCA, só no TR: a alínea 'j' pede as duas metades. */
   previsaoNoPca?: string,
 ): string {
-  const linhas = creditos.map(
-    (c) =>
-      `- ${c.unidadeOrcamentaria} · Programa de Trabalho ${c.programaDeTrabalho}`
-      + ` · Natureza da Despesa ${c.naturezaDaDespesa} · Fonte ${c.fonteDeRecurso}`
-      + `${c.ficha ? ` · Ficha ${c.ficha}` : ""} · Exercício ${c.exercicio}`
-      + ` · ${formatBRL(parseValorBR(c.valor))}`,
-  )
+  // Em tabela (§100): cada crédito com a classificação que o Art. 92, VIII
+  // pede. A coluna da ficha só entra quando algum crédito a tem.
+  const comFicha = creditos.some((c) => c.ficha)
+  const tabela = tabelaEmTexto([
+    [
+      "Unidade orçamentária",
+      "Programa de trabalho",
+      "Natureza da despesa",
+      "Fonte",
+      ...(comFicha ? ["Ficha"] : []),
+      "Exercício",
+      "Valor",
+    ],
+    ...creditos.map((c) => [
+      c.unidadeOrcamentaria,
+      c.programaDeTrabalho,
+      c.naturezaDaDespesa,
+      c.fonteDeRecurso,
+      ...(comFicha ? [c.ficha ?? ""] : []),
+      String(c.exercicio),
+      formatBRL(parseValorBR(c.valor)),
+    ]),
+    ...(creditos.length > 1 ? [["Total", "", "", "", ...(comFicha ? [""] : []), "", formatBRL(total)]] : []),
+  ])
   const falta = estimado - total
   return [
     "A despesa decorrente desta contratação correrá à conta dos seguintes créditos"
       + " orçamentários, na forma do Art. 92, VIII, da Lei 14.133/21:",
-    linhas.join("\n"),
+    tabela,
     `Total dos créditos indicados: ${formatBRL(total)}.`
       + ` Valor estimado da contratação: ${formatBRL(estimado)}.`,
     falta > 0

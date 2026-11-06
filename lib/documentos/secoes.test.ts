@@ -127,9 +127,13 @@ describe("painéis especiais", () => {
       em três documentos — TR 'j', Edital (Art. 150) e a cláusula do contrato
       (Art. 92, VIII) —, e escrevê-lo à mão nas três é como duas divergem.
 
+      O valor estimado do Aviso de Contratação Direta sai dos mesmos itens e da
+      mesma pesquisa (§100): é a mesma tabela do ETP e do TR.
+
       PCA e ATA continuam só no ETP: são incisos sem correspondente nos demais.
     */
     expect(comPainel.sort()).toEqual([
+      "Aviso:valor",
       "Contrato:dotacao",
       "Cotação:analise",
       "Cotação:coletas",

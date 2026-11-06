@@ -1356,3 +1356,18 @@ A etapa final tinha três mensagens sobre o mesmo assunto, em lugares diferentes
 A regra mora em `pendenciasDaGeracao` (`lib/dominio/secoes.ts`), e vale igual para todos os documentos.
 
 A dispensa também deixou de citar o Art. 18, § 2º fora do ETP: no quadro "Dispensar esta seção", na prévia e no papel (o servidor imprime, a prévia repete), a seção de Contrato, TR, Edital ou Aviso sai como "não se aplica a esta contratação", com o fundamento dela. No ETP, o texto é o de sempre.
+
+## 100. A memória de cálculo sai em tabela, na prévia e no papel
+
+Os ETP, TR e pesquisas de preços dos órgãos trazem a memória de cálculo em tabela, e a plataforma escrevia lista. As minutas da AGU já tinham tabelas, que saíam no papel com as barras. A ADR-062 do back-end define o formato e o desenho no PDF e no DOCX; aqui:
+
+- **O formato é texto.** A tabela é um bloco de linhas com as células separadas por `|`, e a primeira linha é o cabeçalho. As regras moram em `lib/dominio/tabela.ts` (`partesDoTexto`, `tabelaEmTexto`) e são as mesmas do servidor. O campo de edição continua texto: quem corrige um valor corrige na linha.
+- **A prévia desenha a tabela** (`TextoComTabelas`): cabeçalho destacado, número à direita, linha de total em negrito e rolagem lateral no celular. Vale também na errata e nos textos de outro modelo; o trecho recortado para inserir continua em texto.
+- **Os painéis escrevem tabela:**
+  - quantidades: Item, Secretaria, Quantidade, Unidade, com o total do item quando mais de uma secretaria o pediu;
+  - valor: Item, Quantidade, Unidade, Preço unitário, Origem do preço e Valor total, com a linha de total;
+  - Cotação: a série de preços (a coluna da validade só quando alguma proposta a tem), a análise crítica e o preço de referência. As notas entre colchetes vão em parágrafo depois da tabela, porque colchete dentro de célula some na leitura;
+  - dotação: a coluna da ficha só quando algum crédito a tem, e o total quando há mais de um crédito;
+  - a citação do PCA vem do servidor no mesmo formato.
+- **O que a estimativa relê continua legível.** A frase "Adotou-se como método de apuração a ..." fica fora da tabela, e a origem do preço traz o método por extenso na célula, que `metodoCitado` lê e `memoriaEmDia` troca como antes.
+- **O Aviso de Contratação Direta ganhou o painel de valor** em "Do Valor Estimado", como o ETP e o TR. O sigilo do orçamento continua possível, porque o texto é livre.
