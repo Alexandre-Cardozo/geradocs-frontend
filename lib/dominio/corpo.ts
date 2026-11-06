@@ -24,6 +24,8 @@ export interface BlocoDoDocumento {
   dispensada: boolean
   /** O número impresso; vazio quando a seção não é numerada, ausente quando é o `id`. */
   numero?: string
+  /** Subtópico de outra seção (ADR-061 do back-end): a prévia o mostra como item dela. */
+  subtopico?: boolean
 }
 
 /** O número que sai antes do título: o do modelo, ou o próprio `id`. */
@@ -59,6 +61,7 @@ export function corpoDoDocumento(secoes: SecaoDocumento[]): BlocoDoDocumento[] {
         texto: conteudo,
         dispensada: false,
         ...(secao.numero === undefined ? {} : { numero: secao.numero }),
+        ...(secao.secaoPai === undefined ? {} : { subtopico: true }),
       })
     }
   }

@@ -1,11 +1,8 @@
 "use client"
 
-import { Button, Dropdown, InfoBanner, Tag } from "@/components/ui"
-import { useToast } from "@/components/shared/providers"
-import { useAtualizarProcesso, useConferenciaDaDispensa } from "@/lib/api/hooks"
+import { InfoBanner, Tag } from "@/components/ui"
+import { useConferenciaDaDispensa } from "@/lib/api/hooks"
 import { formatBRL } from "@/lib/format"
-import { FUNDAMENTO_DA_DISPENSA, type FundamentoDaDispensa } from "@/lib/types"
-import { useState } from "react"
 
 /**
  * A conferência do valor contra o limite da dispensa (Art. 75, I e II).
@@ -29,17 +26,20 @@ export function ConferenciaDaDispensa({ processoId }: { processoId: string }) {
   // é pendência de coisa nenhuma, e o backend já não o declara.
   if (!dados.ehDispensa) return null
 
+  // O inciso se declara em "Editar Dados", com o resto da capa: aqui só se
+  // diz que, sem ele, o valor não é conferido.
   if (dados.fundamentoPendente) {
-    return <DeclararFundamento processoId={processoId} />
-  }
-
-  if (!dados.aplicavel) {
     return (
-      <div className="flex flex-wrap items-center gap-2">
-        <Tag tone="info">Dispensa sem limite de valor</Tag>
-      </div>
+      <InfoBanner tone="info">
+        Declare o inciso do Art. 75 desta dispensa em <strong>Editar Dados</strong>: sem ele, o valor não é
+        conferido contra o limite.
+      </InfoBanner>
     )
   }
+
+  // Outra hipótese do Art. 75 não tem teto: o campo Fundamento da Dispensa já
+  // diz "sem limite de valor", e não há o que conferir.
+  if (!dados.aplicavel) return null
 
   if (dados.limitePendente) {
     return (
@@ -82,73 +82,6 @@ export function ConferenciaDaDispensa({ processoId }: { processoId: string }) {
       <strong>{formatBRL(dados.limite ?? 0)}</strong> da dispensa ({dados.fundamentoLegal},{" "}
       {dados.decretoDoLimite}
       {dados.limiteDobrado ? ", em dobro" : ""}). Revise o fundamento ou o valor.
-    </InfoBanner>
-  )
-}
-
-/**
- * A declaração do inciso, quando ela ainda não veio.
- *
- * <p>Fica aqui, e não só no formulário de abertura, porque declarar o fundamento
- * é ato de quem conduz o processo e acontece quando ele souber — exigi-lo na
- * abertura faria inventar fundamento para poder seguir. Sem ele, a conferência
- * do valor simplesmente não acontece, e não acontecer em silêncio é o estado em
- * que a plataforma estava.
- */
-function DeclararFundamento({ processoId }: { processoId: string }) {
-  const atualizar = useAtualizarProcesso()
-  const showToast = useToast()
-  const [fundamento, setFundamento] = useState<FundamentoDaDispensa | "">("")
-
-  return (
-    <InfoBanner tone="info">
-      <div className="flex flex-col gap-2.5">
-        <span>Declare o inciso do Art. 75 desta dispensa.</span>
-        <div className="flex flex-wrap items-center gap-2.5">
-          <div className="min-w-[18rem] flex-1">
-            <Dropdown
-              value={fundamento}
-              onChange={(escolha) => setFundamento(escolha as FundamentoDaDispensa | "")}
-              ariaLabel="Fundamento da Dispensa"
-              options={[
-                { value: "", label: "Selecione o fundamento..." },
-                ...(Object.keys(FUNDAMENTO_DA_DISPENSA) as FundamentoDaDispensa[]).map(
-                  (chave) => ({ value: chave, label: FUNDAMENTO_DA_DISPENSA[chave] }),
-                ),
-              ]}
-            />
-          </div>
-          <Button
-            size="sm"
-            disabled={fundamento === "" || atualizar.isPending}
-            ariaDescribedBy="motivo-do-fundamento"
-            onClick={() =>
-              atualizar.mutate(
-                { id: processoId, fundamentoDaDispensa: fundamento as FundamentoDaDispensa },
-                {
-                  onSuccess: () => showToast("Fundamento da dispensa declarado."),
-                  onError: (erro) =>
-                    showToast(
-                      erro instanceof Error
-                        ? erro.message
-                        : "Não foi possível declarar o fundamento.",
-                    ),
-                },
-              )
-            }
-          >
-            {atualizar.isPending ? "Declarando..." : "Declarar"}
-          </Button>
-          <p
-            id="motivo-do-fundamento"
-            className={fundamento === "" ? "m-0 text-xs text-text-muted" : "sr-only"}
-          >
-            {fundamento === ""
-              ? "Escolha o inciso que fundamenta esta dispensa."
-              : "Tudo certo para declarar."}
-          </p>
-        </div>
-      </div>
     </InfoBanner>
   )
 }

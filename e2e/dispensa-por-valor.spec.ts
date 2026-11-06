@@ -107,9 +107,9 @@ test.describe("dispensa em razão do valor", () => {
 
     await page.goto(rota(`/processos/detalhe?id=${processo.id}`))
 
+    // Declara-se em "Editar Dados", com o resto da capa.
     await expect(page.getByText(/Declare o inciso do Art. 75/)).toBeVisible()
-    // Nasce travado: declarar sem escolher seria declarar o quê?
-    await expect(page.getByRole("button", { name: "Declarar" })).toBeDisabled()
+    await expect(page.getByRole("button", { name: "Declarar" })).toHaveCount(0)
   })
 
   test("o fracionamento aparece mesmo com o processo dentro do limite", async ({ page }) => {

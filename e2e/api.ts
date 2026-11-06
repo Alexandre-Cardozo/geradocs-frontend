@@ -217,6 +217,11 @@ export async function comProcessoEDocumento(page: Page) {
     }),
   )
   await page.route(`${API}/procurement-processes/*`, (rota) => rota.fulfill({ json: processo }))
+  // Os contextos da contratação (ADR-061): sem nenhum no catálogo, a capa
+  // mostra a lista vazia em vez de um erro em toda jornada que passa por ela.
+  await page.route(`${API}/procurement-processes/*/contracting-contexts`, (rota) =>
+    rota.fulfill({ json: { catalogVersion: "2026-11", contexts: [] } }),
+  )
   await page.route(`${API}/procurement-processes/*/documents/*`, (rota) =>
     rota.fulfill({ json: documento() }),
   )

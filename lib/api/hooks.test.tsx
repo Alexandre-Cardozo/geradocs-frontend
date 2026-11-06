@@ -377,15 +377,17 @@ describe("documento: seções, estrutura e geração", () => {
     )
   })
 
-  it("acrescentar, excluir e reordenar invalidam as mesmas consultas", async () => {
-    const acoes = ["acrescentar", "excluir", "reordenar"] as const
+  it("acrescentar, renomear, excluir e reordenar invalidam as mesmas consultas", async () => {
+    const acoes = ["acrescentar", "renomear", "excluir", "reordenar"] as const
     const entradas = [
       { titulo: "Memória de cálculo", ancora: "4", subtopico: true },
+      { secaoId: "4.1", titulo: "Novo título" },
       "4.1",
       ["4.1", "4.2"],
     ]
     const funcoes = [
       api.acrescentarSecaoDoDocumento,
+      api.renomearSecaoDoDocumento,
       api.excluirSecaoDoDocumento,
       api.reordenarSecoesDoDocumento,
     ] as const

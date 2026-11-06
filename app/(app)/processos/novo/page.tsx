@@ -47,12 +47,12 @@ import {
   regraDe,
   totalSecoes,
 } from "@/lib/documentos";
+import { NaturezaDoObjetoEmPilulas } from "@/components/processos/natureza-do-objeto";
 import { rotuloDaModalidade } from "@/lib/dominio";
 import { formatBRL, parseValorBR } from "@/lib/format";
 import {
   FORMA_DA_DISPENSA,
   FUNDAMENTO_DA_DISPENSA,
-  NATUREZA_DO_OBJETO,
   type NaturezaDoObjeto,
   MODALIDADE_LABEL,
   type FormaDaDispensa,
@@ -708,18 +708,14 @@ export default function NovoProcesso() {
                   )}
                 </FormField>
 
-                <FormField label="Natureza do Objeto" hint="Escolhe a minuta da AGU do TR e do Contrato.">
-                  <Dropdown
-                    value={naturezaDoObjeto}
-                    onChange={(valor) => setNaturezaDoObjeto(valor as NaturezaDoObjeto | "")}
-                    ariaLabel="Natureza do Objeto"
-                    options={[
-                      { value: "", label: "Não informar agora" },
-                      ...(Object.keys(NATUREZA_DO_OBJETO) as NaturezaDoObjeto[]).map((chave) => ({
-                        value: chave,
-                        label: NATUREZA_DO_OBJETO[chave],
-                      })),
-                    ]}
+                <FormField
+                  label="Natureza do Objeto"
+                  hint="Escolhe a minuta da AGU do TR e do Contrato e traz ao ETP os tópicos dela."
+                >
+                  <NaturezaDoObjetoEmPilulas
+                    valor={naturezaDoObjeto}
+                    onChange={setNaturezaDoObjeto}
+                    rotuloVazio="Não informar agora"
                   />
                 </FormField>
 

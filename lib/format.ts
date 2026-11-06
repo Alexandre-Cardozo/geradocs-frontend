@@ -196,13 +196,13 @@ export function formatData(iso: string): string {
 /**
  * Data e hora no formato brasileiro, no horário de Brasília.
  *
- * "2024-07-03T19:42:00Z" → "03/07/2024 — 16:42". Data pura não tem hora a
+ * "2024-07-03T19:42:00Z" → "03/07/2024 às 16:42". Data pura não tem hora a
  * mostrar e sai só com o dia.
  */
 export function formatDataHora(iso: string): string {
   if (SO_DATA.test(iso)) return diaBR(iso)
   const local = emBrasilia(iso)
-  return local ? `${diaBR(local.slice(0, 10))} — ${local.slice(11, 16)}` : iso
+  return local ? `${diaBR(local.slice(0, 10))} às ${local.slice(11, 16)}` : iso
 }
 
 /**

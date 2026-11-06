@@ -41,7 +41,9 @@ export function PreviaDoDocumento({
               {numeroImpresso(bloco) !== "" && (
                 <span className="font-mono text-xs text-text-muted">{numeroImpresso(bloco)}.</span>
               )}
-              <span className="text-base font-semibold text-text-1">{bloco.titulo}</span>
+              <span className={`font-semibold text-text-1 ${bloco.subtopico ? "text-sm" : "text-base"}`}>
+                {bloco.titulo}
+              </span>
               {bloco.dispensada && (
                 <span className="rounded-sm bg-tint-royal-bg px-1.5 py-0.5 text-2xs font-semibold text-royal">
                   Dispensada

@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useState } from "react"
 
-import { Button, ChoiceCard, Dropdown, InfoBanner, ProgressBar, StatusBadge, Tag, Textarea } from "@/components/ui"
+import { Button, ChoiceCard, Dropdown, InfoBanner, MoneyInput, ProgressBar, Tag, Textarea } from "@/components/ui"
 import {
   IconArrowRight,
   IconCheckCircle,
@@ -12,7 +12,6 @@ import {
   IconEye,
   IconFile,
   IconFileText,
-  IconPencil,
   IconPlus,
 } from "@/components/ui/icons"
 import { ErrorState, LoadingState } from "@/components/shared/estados"
@@ -20,16 +19,22 @@ import { useToast } from "@/components/shared/providers"
 import {
   useAtualizarProcesso,
   useConfigTenant,
+  useConfirmarContextos,
+  useContextosDaContratacao,
   useDocumentos,
   useEncerrarProcesso,
   useParecerDFD,
   useProcesso,
   useSecoes,
+  useServidoresDoOrgao,
+  useSessao,
 } from "@/lib/api/hooks"
 import { ConciliacaoDeValores } from "@/components/processos/conciliacao-de-valores"
 import { ResumoDaEstimativa } from "@/components/processos/resumo-da-estimativa"
 import { ConferenciaDaDispensa } from "@/components/processos/conferencia-da-dispensa"
 import { ConsolidacaoDaDemanda } from "@/components/processos/consolidacao-da-demanda"
+import { ContextosDaContratacao } from "@/components/processos/contextos-da-contratacao"
+import { NaturezaDoObjetoEmPilulas } from "@/components/processos/natureza-do-objeto"
 import { DfdsDoProcesso } from "@/components/processos/dfds-do-processo"
 import { DotacoesDoProcesso } from "@/components/processos/dotacoes-do-processo"
 import { EncerramentoComPendencias } from "@/components/processos/encerramento-com-pendencias"
@@ -54,15 +59,20 @@ import {
   rotuloDaModalidade,
   rotuloDaVersao,
 } from "@/lib/dominio"
-import { formatBRL, formatData } from "@/lib/format"
+import { formatBRL, formatDataHora, formatNumeroBR, parseValorBR } from "@/lib/format"
 import { opcoesDeSecretaria } from "@/lib/secretarias/opcoes"
 import {
   NATUREZA_DO_OBJETO,
   type NaturezaDoObjeto,
   FORMA_DA_DISPENSA,
+  FUNDAMENTO_DA_DISPENSA,
+  type FundamentoDaDispensa,
   MODALIDADE_LABEL,
   type FormaDaDispensa,
   type Modalidade,
+  type Processo,
+  STATUS_PROCESSO_LABEL,
+  type StatusProcesso,
   type TipoDocumento,
 } from "@/lib/types"
 
@@ -92,12 +102,22 @@ export default function HubProcesso() {
   }
 
   const [editando, setEditando] = useState(false)
+  // Os tópicos que cada natureza traz ao ETP, para a dica da escolha, e os
+  // contextos declarados, que a edição da capa grava junto (ADR-061).
+  const contextos = useContextosDaContratacao(processoId)
+  const confirmarContextos = useConfirmarContextos(processoId)
+  const [contextosEscolhidos, setContextosEscolhidos] = useState<string[]>([])
   const [objeto, setObjeto] = useState("")
   const [objetoDemanda, setObjetoDemanda] = useState("")
   const [secretaria, setSecretaria] = useState("")
+  const [responsavel, setResponsavel] = useState("")
+  const [valor, setValor] = useState("")
+  const [fundamento, setFundamento] = useState<FundamentoDaDispensa | "">("")
+  // Quem pode responder pelo processo: os colegas, quem está logado e o atual.
+  const servidores = useServidoresDoOrgao(editando)
+  const sessao = useSessao()
   const [naturezaDoObjeto, setNaturezaDoObjeto] = useState<NaturezaDoObjeto | "">("")
-  // Modalidade escolhida mas ainda não aplicada: fica pendente enquanto o
-  // alerta de impacto está na tela.
+  // A modalidade em edição; o impacto da troca aparece antes de salvar.
   const [novaModalidade, setNovaModalidade] = useState<Modalidade | null>(null)
   // Na dispensa, a forma (direta ou com disputa) decide os documentos tanto
   // quanto a modalidade — e trocá-la passa pelo mesmo alerta (ADR-046).
@@ -105,33 +125,37 @@ export default function HubProcesso() {
   const [confirmandoEncerramento, setConfirmandoEncerramento] = useState(false)
   const [montandoJuntada, setMontandoJuntada] = useState(false)
 
+  const declarados = (contextos.data?.contextos ?? []).filter((c) => c.confirmado).map((c) => c.codigo)
+
+  /**
+   * Abre a edição da capa inteira: um lugar só para mudar o bloco principal,
+   * e um "Salvar" que grava tudo junto.
+   */
   const abrirEdicao = () => {
     if (!processo.data) return
     setObjeto(processo.data.objeto)
     setObjetoDemanda(processo.data.objetoDemanda ?? "")
     setSecretaria(processo.data.secretariaId ?? "")
+    setResponsavel(processo.data.responsavelId ?? "")
+    setValor(formatNumeroBR(processo.data.valorEstimado))
+    setFundamento(processo.data.fundamentoDaDispensa ?? "")
     setNaturezaDoObjeto(processo.data.naturezaDoObjeto ?? "")
+    setNovaModalidade(processo.data.modalidade)
+    setNovaForma(processo.data.formaDaDispensa ?? "")
+    setContextosEscolhidos(declarados)
     setEditando(true)
   }
 
-  const salvarEdicao = () => {
-    atualizar.mutate(
-      {
-        id: processoId,
-        objeto: objeto.trim() || undefined,
-        objetoDemanda: objetoDemanda.trim(),
-        // A troca de secretaria vai para a trilha; mantida, nem é enviada.
-        secretariaId: secretaria && secretaria !== processo.data?.secretariaId ? secretaria : undefined,
-        naturezaDoObjeto: naturezaDoObjeto === "" ? null : naturezaDoObjeto,
-      },
-      {
-        onSuccess: () => {
-          setEditando(false)
-          showToast("Dados do processo atualizados.")
-        },
-      }
-    )
+  const cancelarEdicao = () => {
+    setEditando(false)
+    setNovaModalidade(null)
   }
+
+  // Pelo estado atual: cliques seguidos nas pílulas não se perdem.
+  const alternarContexto = (codigo: string) =>
+    setContextosEscolhidos((atual) =>
+      atual.includes(codigo) ? atual.filter((c) => c !== codigo) : [...atual, codigo],
+    )
 
   if (processo.isPending) return <LoadingState label="Carregando processo..." />
   if (processo.isError || !processo.data) {
@@ -157,30 +181,55 @@ export default function HubProcesso() {
       ? null
       : impactoTrocaModalidade(proc.modalidade, novaModalidade, proc.documentos, tiposGeradosAgora, formas)
 
-  const abrirTrocaDeModalidade = () => {
-    setNovaModalidade(proc.modalidade)
-    setNovaForma(proc.formaDaDispensa ?? "")
-  }
+  const trocaDeModalidade = novaModalidade !== null && impacto !== null && houveTroca(proc.modalidade, novaModalidade, formas)
+  const encerrado = proc.status === "concluido"
+  const pendente = atualizar.isPending || confirmarContextos.isPending
+  // Moeda em reais, positiva e com duas casas: a máscara do campo já garante o
+  // formato, e aqui só falta o maior que zero.
+  const valorValido = !editando || parseValorBR(valor) > 0
 
-  // A troca acrescenta o que a nova modalidade exige e não tira nada (ADR-047).
-  const aplicarModalidade = () => {
-    if (!novaModalidade || !impacto) return
-    atualizar.mutate(
-      {
+  /**
+   * Grava a capa inteira de uma vez: os dados do processo (com a troca de
+   * modalidade, que acrescenta o que a nova exige e não tira nada, ADR-047) e
+   * depois os contextos, se mudaram.
+   */
+  const salvarEdicao = async () => {
+    try {
+      await atualizar.mutateAsync({
         id: processoId,
-        modalidade: novaModalidade,
-        ...(formas.para ? { formaDaDispensa: formas.para } : {}),
-        documentos: impacto.documentos,
-      },
-      {
-        onSuccess: () => {
-          setNovaModalidade(null)
-          showToast(
-            `Modalidade alterada para ${rotuloDaModalidade(novaModalidade, formas.para)}. A troca está na trilha.`,
-          )
-        },
-      },
-    )
+        objeto: objeto.trim() || undefined,
+        objetoDemanda: objetoDemanda.trim(),
+        // A troca de secretaria vai para a trilha; mantida, nem é enviada.
+        secretariaId: secretaria && secretaria !== proc.secretariaId ? secretaria : undefined,
+        // Como a secretaria: só a troca vai, e para a trilha.
+        responsavelId: responsavel && responsavel !== proc.responsavelId ? responsavel : undefined,
+        naturezaDoObjeto: naturezaDoObjeto === "" ? null : naturezaDoObjeto,
+        valorEstimado: valor,
+        // O inciso só existe na dispensa; fora dela, o que estava fica como estava.
+        ...(paraDispensa ? { fundamentoDaDispensa: fundamento === "" ? null : fundamento } : {}),
+        ...(trocaDeModalidade && novaModalidade && impacto
+          ? {
+              modalidade: novaModalidade,
+              ...(formas.para ? { formaDaDispensa: formas.para } : {}),
+              documentos: impacto.documentos,
+            }
+          : {}),
+      })
+      const mudaramOsContextos =
+        contextosEscolhidos.length !== declarados.length || contextosEscolhidos.some((c) => !declarados.includes(c))
+      if (!encerrado && mudaramOsContextos) {
+        await confirmarContextos.mutateAsync(contextosEscolhidos)
+      }
+      setEditando(false)
+      showToast(
+        trocaDeModalidade && novaModalidade
+          ? `Dados do processo atualizados. Modalidade alterada para ${rotuloDaModalidade(novaModalidade, formas.para)}; a troca está na trilha.`
+          : "Dados do processo atualizados.",
+      )
+      setNovaModalidade(null)
+    } catch (erro) {
+      showToast(erro instanceof Error ? erro.message : "Não foi possível salvar os dados do processo.")
+    }
   }
 
   const adicionarDocumento = (tipo: TipoDocumento) => {
@@ -241,6 +290,11 @@ export default function HubProcesso() {
     (t) => !proc.documentos.includes(t),
   )
   const tiposGerados = docsGerados.map((d) => d.tipo)
+  const obrigatoriosDaModalidade = proc.documentos.filter((t) => ehObrigatorio(proc.modalidade, t, proc.formaDaDispensa))
+  const cartoesDosDocumentos = agruparAnexos(proc.documentos).flatMap((grupo, i) => [
+    { tipo: grupo.tipo, numero: `${i + 1}.`, anexo: false },
+    ...grupo.anexos.map((anexo, j) => ({ tipo: anexo, numero: `${i + 1}.${j + 1}`, anexo: true })),
+  ])
   const dfdVerificado = parecer.data != null
 
   /**
@@ -298,6 +352,20 @@ export default function HubProcesso() {
             <div className="font-display text-md font-bold text-text-1">
               <span className="mr-1.5 font-mono text-xs text-text-muted">{numero}</span>
               {meta.titulo}
+              {/*
+                O que a modalidade exige leva o asterisco, como campo obrigatório
+                de formulário: diz quais contam em "1 de 2 obrigatórios" sem
+                crescer o cartão. A legenda fica no cabeçalho do bloco.
+              */}
+              {ehObrigatorio(proc.modalidade, tipo, proc.formaDaDispensa) && (
+                <span
+                  className="ml-0.5 text-royal"
+                  title={`Obrigatório em ${rotuloDaModalidade(proc.modalidade, proc.formaDaDispensa)}`}
+                >
+                  <span aria-hidden="true">*</span>
+                  <span className="sr-only"> (obrigatório)</span>
+                </span>
+              )}
             </div>
             <div className="mt-0.5 font-mono text-xs text-text-muted">
               {meta.fundamento}
@@ -428,39 +496,14 @@ export default function HubProcesso() {
       <div className="mb-6 rounded-card border border-border bg-surface p-5 lg:p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2.5">
-              <span className="font-mono text-xs text-text-muted">{proc.numero}</span>
-              <StatusBadge status={proc.status} size="sm" />
-              <ProgressoDosObrigatorios processo={proc} />
-              {/*
-                A troca fica **colada na modalidade**, que é o que ela muda, e
-                em ícone: como texto azul solto na linha ela competia com o
-                "Editar Dados" — dois azuis lado a lado, e o secundário com mais
-                palavras que o principal. Aqui ela some de vista sem sair do
-                alcance: quem procura trocar a modalidade olha para a modalidade.
-              */}
-              <span className="inline-flex items-center gap-1">
-                <Tag tone="info">{rotuloDaModalidade(proc.modalidade, proc.formaDaDispensa)}</Tag>
-                {proc.status !== "concluido" && novaModalidade === null && (
-                  <button
-                    type="button"
-                    aria-label="Trocar modalidade"
-                    title="Trocar modalidade"
-                    onClick={abrirTrocaDeModalidade}
-                    className="flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-sm border border-border bg-ice text-text-3 transition-colors hover:bg-border-soft hover:text-royal"
-                  >
-                    <IconPencil size={12} />
-                  </button>
-                )}
-              </span>
-            </div>
-            {!editando ? (
+            {/*
+              Só o número e o título no topo: status e modalidade são campos da
+              capa, como os outros, e os obrigatórios moram em Documentos do
+              Processo, que é do que eles falam.
+            */}
+            <span className="font-mono text-xs text-text-muted">{proc.numero}</span>
+            {!editando && (
               <h1 className="mt-2 mb-0 font-display text-2xl font-extrabold tracking-tight break-words text-text-1">{proc.objeto}</h1>
-            ) : (
-              <div className="mt-3 max-w-xl">
-                <label className="mb-1 block text-sm font-semibold text-text-2">Descrição do Processo</label>
-                <Textarea value={objeto} onChange={(e) => setObjeto(e.target.value)} rows={2} />
-              </div>
             )}
           </div>
           {!editando ? (
@@ -469,170 +512,219 @@ export default function HubProcesso() {
             </Button>
           ) : (
             <div className="flex gap-2">
-              <Button variant="secondary" size="sm" onClick={() => setEditando(false)}>
+              <p id="motivo-salvar-capa" className="sr-only">
+                {!valorValido
+                  ? "Informe um valor estimado maior que zero."
+                  : "Escolha a forma da dispensa: direta ou com disputa."}
+              </p>
+              <Button variant="secondary" size="sm" disabled={pendente} onClick={cancelarEdicao}>
                 Cancelar
               </Button>
-              <Button size="sm" disabled={atualizar.isPending} onClick={salvarEdicao}>
-                {atualizar.isPending ? "Salvando..." : "Salvar"}
+              <Button
+                size="sm"
+                disabled={pendente || !trocaDefinida || !valorValido}
+                ariaDescribedBy={trocaDefinida && valorValido ? undefined : "motivo-salvar-capa"}
+                onClick={() => void salvarEdicao()}
+              >
+                {pendente ? "Salvando..." : "Salvar"}
               </Button>
             </div>
           )}
         </div>
 
-        {novaModalidade !== null && (
-          <div className="mt-5 flex flex-col gap-3 rounded-xl border border-border bg-ice p-4">
-            <div className="max-w-sm">
-              <label className="mb-1 block text-sm font-semibold text-text-2">Nova modalidade</label>
-              <Dropdown
-                value={novaModalidade}
-                onChange={(v) => setNovaModalidade(v as Modalidade)}
-                ariaLabel="Nova modalidade do processo"
-                options={Object.entries(MODALIDADE_LABEL).map(([value, label]) => ({ value, label }))}
+        {/*
+          Tudo é campo, em linhas que ocupam a largura toda: primeiro o que se
+          lê (status, valor, movimentação), depois o que se escolhe em lista
+          (modalidade, secretaria, responsável), e por fim o que se descreve.
+        */}
+        <div className="mt-4 flex flex-col gap-4">
+          {editando && (
+            <dl className="m-0">
+<Campo rotulo="Descrição do Processo" editando>
+              <Textarea
+                value={objeto}
+                onChange={(e) => setObjeto(e.target.value)}
+                rows={2}
+                ariaLabel="Descrição do Processo"
               />
-            </div>
+            </Campo>
+          </dl>
+          )}
 
-            {paraDispensa && (
-              <div role="group" aria-label="Forma da dispensa" className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
-                {(Object.keys(FORMA_DA_DISPENSA) as FormaDaDispensa[]).map((chave) => (
-                  <ChoiceCard
-                    key={chave}
-                    size="small"
-                    title={FORMA_DA_DISPENSA[chave].titulo}
-                    desc={FORMA_DA_DISPENSA[chave].descricao}
-                    selected={novaForma === chave}
-                    onClick={() => setNovaForma(chave)}
-                  />
-                ))}
-              </div>
-            )}
+          <dl className="m-0 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <Campo rotulo="Status">
+              <Tag tone={TOM_DO_STATUS[proc.status]}>{STATUS_PROCESSO_LABEL[proc.status]}</Tag>
+            </Campo>
+            <Campo rotulo="Valor Estimado" editando={editando}>
+              {editando ? (
+                <MoneyInput value={valor} onChange={setValor} ariaLabel="Valor estimado" />
+              ) : (
+                formatBRL(proc.valorEstimado)
+              )}
+            </Campo>
+            <Campo rotulo="Última Movimentação">{formatDataHora(proc.ultimaMovimentacaoEm)}</Campo>
+          </dl>
 
-            {/*
-              A troca não tira nada (ADR-047): diz o que entra para elaboração e
-              o que fica sem estar previsto, e quem não for usar retira depois.
-            */}
-            {impacto && houveTroca(proc.modalidade, novaModalidade, formas) && (
-              <InfoBanner tone="info">
-                <ul className="m-0 flex list-disc flex-col gap-1 pl-4">
-                  <li>
-                    {impacto.entram.length > 0 ? (
-                      <>
-                        <strong>Entram para elaboração:</strong>{" "}
-                        {impacto.entram.map((t) => CATALOGO[t].titulo).join(", ")}.
-                      </>
-                    ) : (
-                      "Nenhum documento novo."
-                    )}
-                  </li>
-                  {impacto.naoPrevistos.length > 0 && (
-                    <li>
-                      <strong>Continuam, sem serem exigidos:</strong>{" "}
-                      {impacto.naoPrevistos.map((t) => CATALOGO[t].titulo).join(", ")}. Retire-os se não forem
-                      usados.
-                    </li>
-                  )}
-                </ul>
-              </InfoBanner>
-            )}
-            <div className="flex flex-wrap gap-2.5">
-              <p id="motivo-trocar-modalidade" className="sr-only">
-                {trocaDefinida
-                  ? "Escolha uma modalidade, ou forma da dispensa, diferente da atual."
-                  : "Escolha a forma da dispensa: direta ou com disputa."}
-              </p>
-              <Button
-                disabled={
-                  atualizar.isPending || !trocaDefinida || !houveTroca(proc.modalidade, novaModalidade, formas)
-                }
-                ariaDescribedBy="motivo-trocar-modalidade"
-                onClick={aplicarModalidade}
-              >
-                {atualizar.isPending ? "Trocando..." : "Trocar modalidade"}
-              </Button>
-              <Button variant="ghost" onClick={() => setNovaModalidade(null)}>
-                Cancelar
-              </Button>
-            </div>
-          </div>
-        )}
-
-        <dl className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div>
-            <dt className="text-2xs font-semibold tracking-caps text-text-muted uppercase">Secretaria</dt>
-            {!editando ? (
-              <dd className="m-0 mt-0.5 text-base text-text-1">{proc.secretaria}</dd>
-            ) : (
-              <dd className="m-0 mt-1">
+          <dl className="m-0 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <Campo rotulo="Modalidade" editando={editando && !encerrado && novaModalidade !== null}>
+              {editando && !encerrado && novaModalidade !== null ? (
+                <Dropdown
+                  value={novaModalidade}
+                  onChange={(v) => setNovaModalidade(v as Modalidade)}
+                  ariaLabel="Modalidade do processo"
+                  options={Object.entries(MODALIDADE_LABEL).map(([value, label]) => ({ value, label }))}
+                />
+              ) : (
+                <Tag tone="info">{rotuloDaModalidade(proc.modalidade, proc.formaDaDispensa)}</Tag>
+              )}
+            </Campo>
+            <Campo rotulo="Secretaria" editando={editando}>
+              {editando ? (
                 <Dropdown
                   value={secretaria}
                   onChange={setSecretaria}
                   ariaLabel="Secretaria requisitante"
                   options={opcoesDeSecretaria(tenant?.secretarias ?? [], proc)}
                 />
-              </dd>
-            )}
-          </div>
-          <div>
-            <dt className="text-2xs font-semibold tracking-caps text-text-muted uppercase">Valor Estimado</dt>
-            <dd className="m-0 mt-0.5 font-mono text-base font-semibold text-petroleum">{formatBRL(proc.valorEstimado)}</dd>
-          </div>
-          <div>
-            <dt className="text-2xs font-semibold tracking-caps text-text-muted uppercase">Responsável</dt>
-            <dd className="m-0 mt-0.5 text-base text-text-1">{proc.responsavel}</dd>
-          </div>
-          <div>
-            <dt className="text-2xs font-semibold tracking-caps text-text-muted uppercase">Última Movimentação</dt>
-            <dd className="m-0 mt-0.5 text-base text-text-1">{formatData(proc.ultimaMovimentacaoEm)}</dd>
-          </div>
-
-          {/* A natureza escolhe a minuta da AGU do TR e do Contrato (ADR-053). */}
-          <div className="sm:col-span-2">
-            <dt className="text-2xs font-semibold tracking-caps text-text-muted uppercase">Natureza do Objeto</dt>
-            {!editando ? (
-              <dd className="m-0 mt-0.5 text-base text-text-1">
-                {proc.naturezaDoObjeto ? (
-                  NATUREZA_DO_OBJETO[proc.naturezaDoObjeto]
-                ) : (
-                  <span className="text-text-faint">Não informada</span>
-                )}
-              </dd>
-            ) : (
-              <dd className="m-0 mt-1 max-w-md">
+              ) : (
+                proc.secretaria
+              )}
+            </Campo>
+            <Campo rotulo="Responsável" editando={editando}>
+              {editando ? (
                 <Dropdown
-                  value={naturezaDoObjeto}
-                  onChange={(valor) => setNaturezaDoObjeto(valor as NaturezaDoObjeto | "")}
-                  ariaLabel="Natureza do Objeto"
+                  value={responsavel}
+                  onChange={setResponsavel}
+                  ariaLabel="Responsável pelo processo"
+                  options={opcoesDeResponsavel(proc, sessao.data?.usuario, servidores.data ?? [])}
+                />
+              ) : (
+                proc.responsavel
+              )}
+            </Campo>
+          </dl>
+
+          {editando && novaModalidade !== null && paraDispensa && (
+            <div role="group" aria-label="Forma da dispensa" className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
+              {(Object.keys(FORMA_DA_DISPENSA) as FormaDaDispensa[]).map((chave) => (
+                <ChoiceCard
+                  key={chave}
+                  size="small"
+                  title={FORMA_DA_DISPENSA[chave].titulo}
+                  desc={FORMA_DA_DISPENSA[chave].descricao}
+                  selected={novaForma === chave}
+                  onClick={() => setNovaForma(chave)}
+                />
+              ))}
+            </div>
+          )}
+
+          {/*
+            O inciso do Art. 75 é o que decide se há teto de valor: por valor
+            (I e II) a conferência compara com o limite do exercício; nas outras
+            hipóteses (emergência, fornecedor exclusivo) não há teto (§77).
+          */}
+          {(editando ? paraDispensa : proc.modalidade === "Dispensa Art. 75") && (
+            <dl className="m-0">
+<Campo rotulo="Fundamento da Dispensa" editando={editando}>
+              {editando ? (
+                <Dropdown
+                  value={fundamento}
+                  onChange={(v) => setFundamento(v as FundamentoDaDispensa | "")}
+                  ariaLabel="Fundamento da Dispensa"
                   options={[
-                    { value: "", label: "Não informada" },
-                    ...(Object.keys(NATUREZA_DO_OBJETO) as NaturezaDoObjeto[]).map((chave) => ({
+                    { value: "", label: "Não declarado" },
+                    ...(Object.keys(FUNDAMENTO_DA_DISPENSA) as FundamentoDaDispensa[]).map((chave) => ({
                       value: chave,
-                      label: NATUREZA_DO_OBJETO[chave],
+                      label: FUNDAMENTO_DA_DISPENSA[chave],
                     })),
                   ]}
                 />
-              </dd>
-            )}
-          </div>
+              ) : proc.fundamentoDaDispensa ? (
+                <Tag tone="info">{FUNDAMENTO_DA_DISPENSA[proc.fundamentoDaDispensa]}</Tag>
+              ) : (
+                <span className="text-text-faint">Não declarado</span>
+              )}
+            </Campo>
+          </dl>
+          )}
 
-          {/* Objeto da Demanda — trabalha junto com o DFD, alimenta o ETP */}
-          <div className="sm:col-span-2 lg:col-span-4">
-            <dt className="text-2xs font-semibold tracking-caps text-text-muted uppercase">Objeto da Demanda</dt>
-            {!editando ? (
-              <dd className="m-0 mt-0.5 text-base text-text-1">
-                {proc.objetoDemanda ? proc.objetoDemanda : <span className="text-text-faint">Não informado</span>}
-              </dd>
+          {/*
+            A troca não tira nada (ADR-047): diz o que entra para elaboração e o
+            que fica sem estar previsto, e quem não for usar retira depois.
+          */}
+          {editando && impacto && trocaDeModalidade && (
+            <InfoBanner tone="info">
+              <ul className="m-0 flex list-disc flex-col gap-1 pl-4">
+                <li>
+                  {impacto.entram.length > 0 ? (
+                    <>
+                      <strong>Entram para elaboração:</strong>{" "}
+                      {impacto.entram.map((t) => CATALOGO[t].titulo).join(", ")}.
+                    </>
+                  ) : (
+                    "Nenhum documento novo."
+                  )}
+                </li>
+                {impacto.naoPrevistos.length > 0 && (
+                  <li>
+                    <strong>Continuam, sem serem exigidos:</strong>{" "}
+                    {impacto.naoPrevistos.map((t) => CATALOGO[t].titulo).join(", ")}. Retire-os se não forem usados.
+                  </li>
+                )}
+              </ul>
+            </InfoBanner>
+          )}
+
+          {/*
+            A natureza escolhe a minuta da AGU do TR e do Contrato (ADR-053) e
+            traz ao ETP os tópicos dela (ADR-061). Em pílulas, como os contextos.
+          */}
+          <dl className="m-0">
+<Campo rotulo="Natureza do Objeto" editando={editando}>
+            {editando ? (
+              <NaturezaDoObjetoEmPilulas
+                valor={naturezaDoObjeto}
+                onChange={setNaturezaDoObjeto}
+                topicos={contextos.data?.topicosDaNatureza}
+              />
+            ) : proc.naturezaDoObjeto ? (
+              <Tag tone="info">{NATUREZA_DO_OBJETO[proc.naturezaDoObjeto]}</Tag>
             ) : (
-              <dd className="m-0 mt-1.5 max-w-2xl">
-                <Textarea
-                  value={objetoDemanda}
-                  onChange={(e) => setObjetoDemanda(e.target.value)}
-                  rows={3}
-                  placeholder="Ex: Aquisição de 150 microcomputadores tipo desktop e periféricos para os laboratórios..."
-                />
-              </dd>
+              <span className="text-text-faint">Não informada</span>
             )}
-          </div>
+          </Campo>
+          </dl>
 
-        </dl>
+          {/* Os contextos da contratação (ADR-061): campo da capa, como a natureza. */}
+          <dl className="m-0">
+<ContextosDaContratacao
+            processoId={processoId}
+            editando={editando && !encerrado}
+            marcados={contextosEscolhidos}
+            onAlternar={alternarContexto}
+          />
+          </dl>
+
+          {/* Objeto da Demanda: trabalha junto com o DFD e alimenta o ETP. */}
+          <dl className="m-0">
+<Campo rotulo="Objeto da Demanda" editando={editando}>
+            {editando ? (
+              <Textarea
+                value={objetoDemanda}
+                onChange={(e) => setObjetoDemanda(e.target.value)}
+                rows={3}
+                ariaLabel="Objeto da Demanda"
+                placeholder="Ex: Aquisição de 150 microcomputadores tipo desktop e periféricos para os laboratórios..."
+              />
+            ) : proc.objetoDemanda ? (
+              proc.objetoDemanda
+            ) : (
+              <span className="text-text-faint">Não informado</span>
+            )}
+          </Campo>
+          </dl>
+        </div>
 
         {/*
           A conferência do valor contra o limite da dispensa. Informa e não
@@ -713,7 +805,18 @@ export default function HubProcesso() {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <div className="min-w-0">
           <h2 className="m-0 font-display text-lg font-bold text-text-1">Documentos do Processo</h2>
-          <span className="text-sm text-text-3">Elabore na ordem indicada.</span>
+          {/* A dica diz quais são, e cada cartão obrigatório leva o asterisco. */}
+          <span
+            className="mt-1 inline-flex items-start gap-2.5"
+            title={`Obrigatórios nesta modalidade: ${obrigatoriosDaModalidade.map((t) => CATALOGO[t].titulo).join(", ")}.`}
+          >
+            <ProgressoDosObrigatorios processo={proc} barra />
+            {obrigatoriosDaModalidade.length > 0 && (
+              <span className="text-xs whitespace-nowrap text-text-muted" aria-hidden="true">
+                <span className="text-royal">*</span> obrigatório nesta modalidade
+              </span>
+            )}
+          </span>
         </div>
         {/*
           A juntada só existe com documento gerado: nada é gerado nela (ADR-048).
@@ -747,19 +850,16 @@ export default function HubProcesso() {
         />
       )}
 
+      {/*
+        Um cartão por documento, na ordem do fluxo, cada um com metade da
+        linha: o anexo vem logo depois do principal, numerado sob ele (4.1) e
+        com a etiqueta "Anexo do Edital", e os cartões de uma linha têm a mesma
+        altura, sem buraco entre eles.
+      */}
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        {agruparAnexos(proc.documentos).map((grupo, i) => (
-          <div key={grupo.tipo} className="flex flex-col gap-2">
-            {cartaoDocumento(grupo.tipo, `${i + 1}.`)}
-            {/*
-              A minuta de contrato vem sob o Edital, de que é anexo (Art. 18,
-              VI), e não como mais um cartão solto na grade.
-            */}
-            {grupo.anexos.map((anexo, j) => (
-              <div key={anexo} className="ml-4 border-l-2 border-border pl-3 sm:ml-6 sm:pl-4">
-                {cartaoDocumento(anexo, `${i + 1}.${j + 1}`, true)}
-              </div>
-            ))}
+        {cartoesDosDocumentos.map((cartao) => (
+          <div key={cartao.tipo} className="flex flex-col [&>*]:flex-1">
+            {cartaoDocumento(cartao.tipo, cartao.numero, cartao.anexo)}
           </div>
         ))}
       </div>
@@ -847,4 +947,46 @@ export default function HubProcesso() {
       </div>
     </div>
   )
+}
+
+/** O tom da etiqueta de status, no formato das outras etiquetas da capa. */
+const TOM_DO_STATUS: Record<StatusProcesso, "neutral" | "info" | "violet" | "success"> = {
+  rascunho: "neutral",
+  em_elaboracao: "info",
+  pronto_para_encerrar: "violet",
+  concluido: "success",
+}
+
+/** Um campo da capa: rótulo e valor, no mesmo desenho para todos. */
+function Campo({
+  rotulo,
+  editando = false,
+  children,
+}: {
+  rotulo: string
+  editando?: boolean
+  children: React.ReactNode
+}) {
+  return (
+    <div>
+      <dt className="text-2xs font-semibold tracking-caps text-text-muted uppercase">{rotulo}</dt>
+      <dd className={`m-0 text-base text-text-1 ${editando ? "mt-1" : "mt-0.5"}`}>{children}</dd>
+    </div>
+  )
+}
+
+/**
+ * Quem pode responder pelo processo: o atual, quem está logado e os colegas
+ * do órgão, sem repetir. O servidor confere que é servidor ativo do órgão.
+ */
+function opcoesDeResponsavel(
+  processo: Processo,
+  eu: { id: string; nome: string } | undefined,
+  colegas: { id: string; nome: string }[],
+): { value: string; label: string }[] {
+  const opcoes = new Map<string, string>()
+  if (processo.responsavelId) opcoes.set(processo.responsavelId, processo.responsavel)
+  if (eu) opcoes.set(eu.id, eu.nome)
+  for (const colega of colegas) opcoes.set(colega.id, colega.nome)
+  return [...opcoes].map(([value, label]) => ({ value, label }))
 }
