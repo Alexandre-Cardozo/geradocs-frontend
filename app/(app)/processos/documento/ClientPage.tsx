@@ -790,7 +790,7 @@ export default function EditorDocumento() {
           {/*
             A dispensa vale para toda seção dispensável, tenha painel ou não. A
             do inciso II tem painel próprio e ficava sem a ação: a lei permite
-            dispensá-la (Art. 18, § 2º) e a tela não oferecia o caminho. A seção
+            dispensá-la e a tela não oferecia o caminho. A seção
             acrescentada pelo servidor não se dispensa: o servidor recusa, e ela
             se exclui na etapa final.
           */}
@@ -798,6 +798,7 @@ export default function EditorDocumento() {
             <div className="mt-4">
               <DispensaDeSecao
                 secao={active}
+                tipo={tipo}
                 pendente={salvar.isPending}
                 onDispensar={(justificativa) =>
                   salvar.mutate({

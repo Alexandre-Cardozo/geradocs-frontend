@@ -42,6 +42,24 @@ describe("corpo do documento", () => {
     ])
   })
 
+  it("a prévia do Contrato mostra a dispensa como o servidor imprime, sem o Art. 18", () => {
+    const corpo = corpoDoDocumento(
+      [
+        secao({
+          id: "18",
+          obrigatoria: false,
+          fundamentoLegal: "Art. 122, Lei 14.133/21",
+          justificativaDispensa: "A execução é pessoal.",
+        }),
+      ],
+      "Contrato",
+    )
+
+    expect(corpo[0]?.texto).toMatch(/: não se aplica a esta contratação\./)
+    expect(corpo[0]?.texto).not.toContain("Art. 18")
+    expect(corpo[0]?.texto).toContain("Fundamento da seção: Art. 122, Lei 14.133/21.")
+  })
+
   it("a seção dispensada vira parágrafo, em vez de sumir", () => {
     const corpo = corpoDoDocumento([
       secao({ id: "1", conteudo: "Necessidade descrita." }),

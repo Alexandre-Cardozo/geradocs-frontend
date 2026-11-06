@@ -99,4 +99,13 @@ describe("dispensa de seção", () => {
 
     expect(screen.getByRole("button", { name: /dispensar esta seção/i })).toBeDisabled()
   })
+
+  it("fora do ETP, não cita o Art. 18, § 2º", () => {
+    renderizar(
+      <DispensaDeSecao secao={SECAO} tipo="Contrato" pendente={false} onDispensar={vi.fn()} onDesfazer={vi.fn()} />,
+    )
+
+    expect(screen.getByText(/sai no documento como não aplicável/)).toBeInTheDocument()
+    expect(screen.queryByText(/Art\. 18/)).not.toBeInTheDocument()
+  })
 })

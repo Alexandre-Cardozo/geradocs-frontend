@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest"
 
 import { EtapaFinal } from "@/components/documentos/etapa-final"
 import { urlDaApi } from "@/lib/teste/handlers"
-import { renderizar, screen, userEvent } from "@/lib/teste/renderizar"
+import { renderizar, screen, userEvent, within } from "@/lib/teste/renderizar"
 import { servidor } from "@/lib/teste/servidor-msw"
 import type { SecaoDocumento } from "@/lib/types"
 
@@ -38,13 +38,14 @@ function renderizarEtapa(
   secoes: SecaoDocumento[],
   jaGerado = false,
   versao: { alterado?: boolean; retificacaoExigida?: boolean } = {},
+  tipo: "ETP" | "Contrato" = "ETP",
 ) {
   const gerar = vi.fn()
   const visualizar = vi.fn()
   renderizar(
     <EtapaFinal
       processoId={PROCESSO}
-      tipo="ETP"
+      tipo={tipo}
       secoes={secoes}
       jaGerado={jaGerado}
       versaoAtual={jaGerado ? 2 : 0}
@@ -67,12 +68,13 @@ describe("etapa final do documento", () => {
 
     const gerar = await screen.findByRole("button", { name: /Finalizar e Gerar/ })
     expect(gerar).toBeDisabled()
-    expect(screen.getByText(/Seções obrigatórias pendentes/)).toBeInTheDocument()
-    expect(screen.getByText(/Seção 13/)).toBeInTheDocument()
+    expect(screen.getByText(/Para gerar, falta preencher/).parentElement).toHaveTextContent(
+      "Para gerar, falta preencher: Seção 13.",
+    )
     // Guarda-corpo nº 7: motivo desenhado e não anunciado só existe para quem
     // enxerga a tela.
     const descrito = gerar.getAttribute("aria-describedby")
-    expect(document.getElementById(descrito as string)).toHaveTextContent(/Faltam seções/)
+    expect(document.getElementById(descrito as string)).toHaveTextContent("Faltam seções obrigatórias: Seção 13.")
   })
 
   it("com as indispensáveis resolvidas, gera", async () => {
@@ -93,10 +95,62 @@ describe("etapa final do documento", () => {
       secao("13", true, "Completo", "Posicionamento."),
     ])
 
-    // Sumir sem registro é o que o Art. 18, § 2º não aceita — mas travar aqui
+    // Sumir sem registro é o que o Art. 18, § 2º não aceita, mas travar aqui
     // transformaria orientação em obstáculo.
-    expect(await screen.findByText(/Em branco e sem dispensa/)).toBeInTheDocument()
+    expect((await screen.findByText(/em branco e sem dispensa/)).parentElement).toHaveTextContent(
+      "Ficam fora do documento, em branco e sem dispensa: Seção 3. Se não se aplicam, dispense-as com justificativa (Art. 18, § 2º).",
+    )
     expect(screen.getByRole("button", { name: /Finalizar e Gerar/ })).toBeEnabled()
+  })
+
+  it("obrigatória pendente e dispensável em branco vão num aviso só, junto do botão", async () => {
+    renderizarEtapa([
+      secao("1", true, "Não iniciado"),
+      secao("3", false, "Não iniciado"),
+      { ...secao("3.1", false, "Não iniciado"), titulo: "Convenção Coletiva", origem: "servidor", secaoPai: "3" },
+    ])
+
+    const aviso = (await screen.findByText(/Para gerar, falta preencher/)).closest("ul")!
+    const itens = within(aviso).getAllByRole("listitem")
+    expect(itens.map((item) => item.textContent)).toEqual([
+      "Para gerar, falta preencher: Seção 1.",
+      "Ficam fora do documento, em branco e sem dispensa: Seção 3. Se não se aplicam, dispense-as com justificativa (Art. 18, § 2º).",
+      "Acrescentadas em branco, também ficam fora: Convenção Coletiva. Preencha ou exclua.",
+    ])
+    // Um só: nem o aviso de cima, nem a etiqueta de opcionais omitidas.
+    expect(screen.getAllByText(/Para gerar, falta preencher/)).toHaveLength(1)
+    expect(screen.queryByText(/serão omitidas/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Seções obrigatórias pendentes/)).not.toBeInTheDocument()
+  })
+
+  it("a acrescentada em branco não é mandada dispensar, que o servidor recusa", async () => {
+    renderizarEtapa([
+      secao("1", true, "Completo", "Necessidade."),
+      { ...secao("1+1", false, "Não iniciado"), titulo: "Palavrinhas", origem: "servidor" },
+    ])
+
+    expect(await screen.findByText(/Acrescentadas em branco/)).toBeInTheDocument()
+    expect(screen.queryByText(/dispense-as/)).not.toBeInTheDocument()
+  })
+
+  it("fora do ETP, a dispensa não cita o Art. 18, § 2º, que é do ETP", async () => {
+    renderizarEtapa(
+      [secao("PC01", true, "Completo", "Objeto."), secao("PC04", false, "Não iniciado")],
+      false,
+      {},
+      "Contrato",
+    )
+
+    expect((await screen.findByText(/em branco e sem dispensa/)).parentElement).toHaveTextContent(
+      "Ficam fora do documento, em branco e sem dispensa: Seção PC04. Se não se aplicam, dispense-as com justificativa.",
+    )
+  })
+
+  it("com tudo resolvido, não há aviso", async () => {
+    renderizarEtapa([secao("1", true, "Completo", "Necessidade."), secao("3", false, "Completo", "", "Não se aplica.")])
+
+    expect(await screen.findByRole("button", { name: /Finalizar e Gerar/ })).toBeEnabled()
+    expect(screen.queryByText(/falta preencher|ficam fora|também ficam fora/i)).not.toBeInTheDocument()
   })
 
   /*

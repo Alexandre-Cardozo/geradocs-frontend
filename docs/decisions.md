@@ -1344,3 +1344,15 @@ O ETP de uma locação de veículos com motorista saía igual ao de uma compra d
 - **O número vem do servidor e segue a estrutura.** A seção acrescentada depois da 1 vira a 2 e as seguintes andam uma casa; o subtópico continua os itens do texto da mãe (depois do 3.6, o 3.7). O trilho, a prévia e o arquivo mostram o mesmo número. Na prévia, o título do subtópico sai um nível abaixo do da seção.
 - **Acrescentar seção** fica recolhido atrás de um botão na etapa final, e a recusa do servidor aparece. As acrescentadas ficam agrupadas pela seção-mãe, com ações de ícone: renomear (o lápis abre o título no lugar; Enter salva, Esc cancela), subir, descer e excluir, que valem dentro do grupo. A estrutura muda também depois de concluído, como o texto. No trilho, a seção acrescentada leva o rótulo "Adicional" (antes "Sua").
 - **"Gerar com IA" e a revisão com IA funcionam nas seções acrescentadas.** Antes o servidor respondia que a seção não existia.
+
+## 99. A etapa final avisa num lugar só, junto do botão de gerar
+
+A etapa final tinha três mensagens sobre o mesmo assunto, em lugares diferentes: "Seções obrigatórias pendentes" no topo, "Em branco e sem dispensa" perto do botão e a etiqueta "Seções opcionais em branco serão omitidas do documento" depois dele. Agora é um aviso só, azul, logo acima do botão, com até três linhas:
+
+- **Para gerar, falta preencher:** as indispensáveis em branco. Só elas travam a geração, e o botão as anuncia ao leitor de tela.
+- **Ficam fora do documento, em branco e sem dispensa:** as dispensáveis do catálogo. Não travam; se não se aplicam, dispensam-se com justificativa. A citação do Art. 18, § 2º só aparece no ETP, que é o documento de que ela trata.
+- **Acrescentadas em branco, também ficam fora:** as seções e subtópicos que o servidor acrescentou. Antes elas caíam na linha de cima, que mandava dispensá-las, e o servidor recusa dispensar seção acrescentada: ela se preenche ou se exclui.
+
+A regra mora em `pendenciasDaGeracao` (`lib/dominio/secoes.ts`), e vale igual para todos os documentos.
+
+A dispensa também deixou de citar o Art. 18, § 2º fora do ETP: no quadro "Dispensar esta seção", na prévia e no papel (o servidor imprime, a prévia repete), a seção de Contrato, TR, Edital ou Aviso sai como "não se aplica a esta contratação", com o fundamento dela. No ETP, o texto é o de sempre.
