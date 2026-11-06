@@ -133,3 +133,20 @@ describe("estimativa de valor e memória de cálculo", () => {
     expect(enumerar(["Cotação", "ETP", "TR"])).toBe("Cotação, ETP e TR")
   })
 })
+
+describe("a memória em tabela (§100)", () => {
+  const memoria = [
+    "O valor estimado da contratação resulta dos preços unitários apurados na pesquisa de preços:",
+    "Item | Quantidade | Unidade | Preço unitário | Origem do preço | Valor total",
+    "Papel A4 | 10 | resma | R$ 30,00 | mediana dos preços obtidos de 3 preço(s) coletado(s) | R$ 300,00",
+    "Total |  |  |  |  | R$ 300,00",
+    "Fonte de pesquisa de preços: Painel de Preços.",
+  ].join("\n\n")
+
+  it("o método citado na célula da tabela é lido e trocado como no texto corrido", () => {
+    expect(metodoCitado(memoria)).toBe("mediana")
+    const emDia = memoriaEmDia(memoria, { metodo: "media" }, { metodo: "diferente", fonte: null })
+    expect(emDia).toContain("| média dos preços obtidos de 3 preço(s) coletado(s) |")
+    expect(metodoCitado(emDia)).toBe("media")
+  })
+})

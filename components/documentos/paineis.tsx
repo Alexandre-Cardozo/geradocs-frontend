@@ -34,6 +34,7 @@ import {
   ROTULO_DO_METODO,
   type MetodoDeApuracao,
 } from "@/lib/dominio/pesquisa-de-precos"
+import { tabelaEmTexto } from "@/lib/dominio/tabela"
 import { rotuloDaUnidade } from "@/lib/dominio/unidades"
 import { formatBRL, formatNumeroBR, parseValorBR, SEM_VALOR } from "@/lib/format"
 import type { ModoATA, PainelSecao, Processo, SecaoDocumento } from "@/lib/types"
@@ -302,19 +303,23 @@ function TabelaDeQuantidades({ itens }: { itens: ItemConsolidado[] }) {
  * levou àquela quantidade.
  */
 export function memoriaDasQuantidades(itens: ItemConsolidado[]): string {
-  const linhas = itens.map((item) => {
-    const origens = item.porSecretaria
-      .map((o) => `${o.secretaria} (${formatNumeroBR(o.quantidade)} ${o.unidade})`)
-      .join("; ")
-    const total = item.somavel
-      ? `${formatNumeroBR(item.total)} ${item.unidade}`
-      : "total não somável: as secretarias usaram unidades diferentes"
-    return `- ${item.descricao}: ${total}. Origem: ${origens}.`
-  })
+  // Em tabela (§100): uma linha por pedido de secretaria e, quando mais de uma
+  // pediu o mesmo item, a linha do total dele. Unidades divergentes não somam,
+  // e a linha do total diz isso em vez de afirmar um número.
+  const linhas = itens.flatMap((item) => [
+    ...item.porSecretaria.map((o) => [item.descricao, o.secretaria, formatNumeroBR(o.quantidade), o.unidade]),
+    ...(item.porSecretaria.length > 1
+      ? [
+          item.somavel
+            ? [`Total de ${item.descricao}`, "", formatNumeroBR(item.total), item.unidade]
+            : [`Total de ${item.descricao}`, "não somável: as secretarias usaram unidades diferentes", "", ""],
+        ]
+      : []),
+  ])
   return [
     "As quantidades abaixo resultam da consolidação dos Documentos de Formalização de Demanda "
       + "apresentados pelas secretarias requisitantes:",
-    ...linhas,
+    tabelaEmTexto([["Item", "Secretaria", "Quantidade", "Unidade"], ...linhas]),
     "[Descrever o critério que fundamenta as quantidades (histórico de consumo, demanda "
       + "projetada, número de unidades atendidas) e os documentos que lhe dão suporte.]",
   ].join("\n\n")
@@ -576,14 +581,17 @@ export function memoriaDoValor(
   fonte: string,
   metodo: MetodoDeApuracao = "media",
 ): string {
+  // Em tabela (§100). A origem de cada preço fica na linha dele, com a frase
+  // do método por extenso: é ela que a estimativa relê (metodoCitado) e troca
+  // quando o método do processo muda (memoriaEmDia).
   const linhas = itens.map((item) => {
     const unitario = item.precoApurado ?? parseValorBR(item.valorUnitario ?? "0")
     const subtotal = parseValorBR(item.quantidade) * unitario
     const origem =
       item.precoApurado != null
-        ? ` (${ROTULO_DO_METODO[metodo].toLowerCase()} de ${item.precosColetados} preço(s) coletado(s))`
-        : " (estimativa preliminar do DFD)"
-    return `- ${item.descricao}: ${item.quantidade} ${item.unidade} × ${formatBRL(unitario)}${origem} = ${formatBRL(subtotal)}.`
+        ? `${ROTULO_DO_METODO[metodo].toLowerCase()} de ${item.precosColetados} preço(s) coletado(s)`
+        : "estimativa preliminar do DFD"
+    return [item.descricao, item.quantidade, item.unidade, formatBRL(unitario), origem, formatBRL(subtotal)]
   })
   const daPesquisa = itens.filter((item) => item.precoApurado != null).length
   const partes = [
@@ -593,7 +601,11 @@ export function memoriaDoValor(
         + " Demanda:"
       : "O valor estimado da contratação resulta dos preços unitários referenciais aplicados às "
         + "quantidades consolidadas dos Documentos de Formalização de Demanda:",
-    ...linhas,
+    tabelaEmTexto([
+      ["Item", "Quantidade", "Unidade", "Preço unitário", "Origem do preço", "Valor total"],
+      ...linhas,
+      ["Total", "", "", "", "", formatBRL(total)],
+    ]),
     `Valor total estimado: ${formatBRL(total)}.`,
     ...(daPesquisa < itens.length
       ? [

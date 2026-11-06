@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react"
 
+import { TextoComTabelas } from "@/components/documentos/texto-com-tabelas"
 import { Button, ChoiceCard, InfoBanner } from "@/components/ui"
 import { InlineSpinner } from "@/components/shared/estados"
 import { useToast } from "@/components/shared/providers"
@@ -324,7 +325,12 @@ export function TextosDeOutroModelo({
         {textos.map((texto) => (
           <li key={texto.secao} className="flex flex-col gap-1.5 border-t border-border-soft pt-3">
             <span className="font-semibold text-text-1">{texto.titulo}</span>
-            <span className={`whitespace-pre-line text-text-3 ${onInserir ? "line-clamp-3" : ""}`}>{texto.texto}</span>
+            {/* O recorte de três linhas é para escolher o que inserir; só leitura, o texto sai inteiro, com as tabelas. */}
+            {onInserir ? (
+              <span className="line-clamp-3 whitespace-pre-line text-text-3">{texto.texto}</span>
+            ) : (
+              <TextoComTabelas texto={texto.texto} className="text-text-3" />
+            )}
             {onInserir && (
               <span>
                 <Button size="sm" variant="ghost" onClick={() => onInserir(texto.texto)}>

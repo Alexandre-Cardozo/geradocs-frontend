@@ -3,6 +3,8 @@ import { describe, expect, it, vi } from "vitest"
 
 import { PainelDaSecao } from "@/components/documentos/paineis"
 import { secoesPorTipoBase } from "@/lib/documentos"
+import { metodoCitado } from "@/lib/dominio/estimativa"
+import { partesDoTexto } from "@/lib/dominio/tabela"
 import { SEM_VALOR } from "@/lib/format"
 import { comEstimativaQueGrava } from "@/lib/teste/estimativa"
 import { urlDaApi } from "@/lib/teste/handlers"
@@ -137,8 +139,14 @@ describe("painel de quantidades", () => {
     await userEvent.click(await screen.findByRole("button", { name: /a partir dos DFDs/ }))
 
     const texto = setRascunho.mock.calls[0]?.[0] as string
-    expect(texto).toContain("Papel A4")
-    expect(texto).toContain("Educação")
+    // Em tabela (§100), que a prévia, o PDF e o DOCX desenham como tabela.
+    expect(partesDoTexto(texto)).toContainEqual({
+      tipo: "tabela",
+      linhas: [
+        ["Item", "Secretaria", "Quantidade", "Unidade"],
+        ["Papel A4", "Educação", "1.500,00", "RESMA"],
+      ],
+    })
     // O critério é de quem conduz o processo: fica marcado, e não inventado.
     expect(texto).toContain("[Descrever o critério")
   })
@@ -531,5 +539,18 @@ describe("o valor apurado na pesquisa", () => {
     // memória afirmar uma pesquisa que não houve.
     expect(texto).toContain("média dos preços obtidos de 3 preço(s) coletado(s)")
     expect(texto).toContain("preços unitários apurados na pesquisa de preços")
+    // A origem vai na linha do item, dentro da tabela, e o método continua
+    // legível para a estimativa: é dele que sai o aviso de memória desatualizada.
+    const tabela = partesDoTexto(texto).find((parte) => parte.tipo === "tabela")
+    expect(tabela?.tipo === "tabela" && tabela.linhas[0]).toEqual([
+      "Item",
+      "Quantidade",
+      "Unidade",
+      "Preço unitário",
+      "Origem do preço",
+      "Valor total",
+    ])
+    expect(tabela?.tipo === "tabela" && tabela.linhas.at(-1)?.[0]).toBe("Total")
+    expect(metodoCitado(texto)).toBe("media")
   })
 })

@@ -19,6 +19,8 @@ import type { ColetaDePreco } from "@/lib/api/procurement-client"
 import { formatBRL, formatData, parseValorBR } from "@/lib/format"
 import type { MetodoDaEstimativa } from "@/lib/types"
 
+import { tabelaEmTexto } from "./tabela"
+
 /** O conjunto mínimo que o Art. 6º exige para média, mediana ou menor valor. */
 export const MINIMO_DE_PRECOS = 3
 
@@ -188,22 +190,26 @@ export function textoDasFontes(
  * documento da pesquisa, item a item, com a fonte, a data e quem deu o preço.
  */
 export function textoDaSerie(itens: ItemPesquisado[]): string {
-  const blocos = itens.map((item) => {
-    const linhas = item.coletas.map((c) => {
-      const quando = formatData(c.coletadoEm)
-      const quem = c.fornecedor ? ` · ${c.fornecedor}` : ""
-      const doc = c.documentoDoFornecedor ? ` (${c.documentoDoFornecedor})` : ""
-      const validade = c.validaAte
-        ? ` · proposta válida até ${formatData(c.validaAte)}`
-        : ""
-      return `  - ${c.fonte}${quem}${doc} · ${quando} · ${formatBRL(parseValorBR(c.valorUnitario))}${validade}`
-    })
-    return `${item.item} (${item.precos.length} preço(s) obtido(s)):\n${linhas.join("\n")}`
-  })
+  // Em tabela (§100): é o mapa de preços que o controle confere linha a linha.
+  // A coluna da validade só entra quando alguma proposta a declarou.
+  const comValidade = itens.some((item) => item.coletas.some((c) => c.validaAte))
+  const linhas = itens.flatMap((item) =>
+    item.coletas.map((c) => [
+      item.item,
+      c.fonte,
+      c.fornecedor ? `${c.fornecedor}${c.documentoDoFornecedor ? ` (${c.documentoDoFornecedor})` : ""}` : "",
+      formatData(c.coletadoEm),
+      ...(comValidade ? [c.validaAte ? formatData(c.validaAte) : ""] : []),
+      formatBRL(parseValorBR(c.valorUnitario)),
+    ]),
+  )
   return [
     "Os preços a seguir foram obtidos das fontes consultadas, com a identificação da"
       + " origem e a data da coleta, na forma do Art. 3º da IN SEGES/ME nº 65/2021:",
-    blocos.join("\n\n"),
+    tabelaEmTexto([
+      ["Item", "Fonte", "Fornecedor", "Data da coleta", ...(comValidade ? ["Válida até"] : []), "Valor unitário"],
+      ...linhas,
+    ]),
   ].join("\n\n")
 }
 
@@ -217,39 +223,44 @@ export function textoDaSerie(itens: ItemPesquisado[]): string {
  * fundamenta é quem responde pelos autos.
  */
 export function textoDaAnaliseCritica(itens: ItemPesquisado[]): string {
-  const blocos = itens.map((item) => {
-    const variacao =
-      item.menor > 0 ? ((item.maior - item.menor) / item.menor) * 100 : 0
-    const linhas = [
-      `${item.item}: ${item.precos.length} preço(s) obtido(s).`
-        + ` Menor ${formatBRL(item.menor)}, maior ${formatBRL(item.maior)},`
-        + ` média ${formatBRL(item.media)}, mediana ${formatBRL(item.mediana)}.`
-        + ` Variação entre o menor e o maior: ${variacao.toFixed(1).replace(".", ",")}%.`,
-    ]
-    if (item.serieCurta) {
-      linhas.push(
-        `  [Justificar a apuração sobre conjunto de menos de três preços: o Art. 6º da`
-          + ` IN SEGES/ME nº 65/2021 exige três ou mais, e o § 5º admite menos apenas`
-          + ` mediante justificativa do gestor responsável aprovada pela autoridade`
-          + ` competente.]`,
-      )
-    }
-    if (item.paraExame.length > 0) {
-      const destoantes = item.paraExame
-        .map((c) => `${formatBRL(parseValorBR(c.valorUnitario))} (${c.fonte})`)
-        .join("; ")
-      linhas.push(
-        `  Preços que destoam da mediana e merecem exame: ${destoantes}.`
-          + ` [Descrever o critério adotado para mantê-los ou desconsiderá-los.`
-          + ` O Art. 6º, § 3º exige critério fundamentado e descrito no processo.]`,
-      )
-    }
-    return linhas.join("\n")
-  })
+  const percentual = (item: ItemPesquisado) =>
+    `${(item.menor > 0 ? ((item.maior - item.menor) / item.menor) * 100 : 0).toFixed(1).replace(".", ",")}%`
+  // O retrato vai em tabela; o que pede juízo de quem assina vai em parágrafo,
+  // item a item, porque colchete dentro de célula some na leitura.
+  const notas = itens.flatMap((item) => [
+    ...(item.serieCurta
+      ? [
+          `${item.item}: [Justificar a apuração sobre conjunto de menos de três preços: o Art. 6º da`
+            + ` IN SEGES/ME nº 65/2021 exige três ou mais, e o § 5º admite menos apenas`
+            + ` mediante justificativa do gestor responsável aprovada pela autoridade`
+            + ` competente.]`,
+        ]
+      : []),
+    ...(item.paraExame.length > 0
+      ? [
+          `${item.item}: preços que destoam da mediana e merecem exame: `
+            + item.paraExame.map((c) => `${formatBRL(parseValorBR(c.valorUnitario))} (${c.fonte})`).join("; ")
+            + `. [Descrever o critério adotado para mantê-los ou desconsiderá-los.`
+            + ` O Art. 6º, § 3º exige critério fundamentado e descrito no processo.]`,
+        ]
+      : []),
+  ])
   return [
     "Procedeu-se à análise crítica dos preços obtidos, na forma do Art. 6º da"
       + " IN SEGES/ME nº 65/2021:",
-    blocos.join("\n\n"),
+    tabelaEmTexto([
+      ["Item", "Preços", "Menor", "Maior", "Média", "Mediana", "Variação"],
+      ...itens.map((item) => [
+        item.item,
+        String(item.precos.length),
+        formatBRL(item.menor),
+        formatBRL(item.maior),
+        formatBRL(item.media),
+        formatBRL(item.mediana),
+        percentual(item),
+      ]),
+    ]),
+    ...notas,
   ].join("\n\n")
 }
 
@@ -267,23 +278,31 @@ export function textoDoPrecoDeReferencia(
   quantidadePor: (item: string) => number | undefined,
 ): string {
   let total = 0
+  const semQuantidade: string[] = []
   const linhas = itens.map((item) => {
     const unitario = apurar(item, metodo)
     const quantidade = quantidadePor(item.item)
-    if (quantidade != null) total += unitario * quantidade
-    return (
-      `- ${item.item}: ${formatBRL(unitario)}`
-      + ` (${ROTULO_DO_METODO[metodo].toLowerCase()}, sobre ${item.precos.length} preço(s))`
-      + (quantidade != null
-        ? ` × ${quantidade} = ${formatBRL(unitario * quantidade)}`
-        : " · [Informar a quantidade deste item na consolidação da demanda.]")
-    )
+    if (quantidade == null) semQuantidade.push(item.item)
+    else total += unitario * quantidade
+    return [
+      item.item,
+      String(item.precos.length),
+      formatBRL(unitario),
+      quantidade == null ? "" : String(quantidade).replace(".", ","),
+      quantidade == null ? "" : formatBRL(unitario * quantidade),
+    ]
   })
   return [
+    // A frase do método é a que a estimativa relê (metodoDeclarado): fica fora da tabela.
     `Adotou-se como método de apuração a ${ROTULO_DO_METODO[metodo].toLowerCase()},`
       + " na forma do Art. 6º da IN SEGES/ME nº 65/2021, resultando nos seguintes preços"
       + " de referência:",
-    linhas.join("\n"),
+    tabelaEmTexto([
+      ["Item", "Preços", "Preço unitário", "Quantidade", "Valor total"],
+      ...linhas,
+      ["Total", "", "", "", formatBRL(total)],
+    ]),
+    ...semQuantidade.map((item) => `${item}: [Informar a quantidade deste item na consolidação da demanda.]`),
     `Preço de referência total da contratação: ${formatBRL(total)}.`,
   ].join("\n\n")
 }

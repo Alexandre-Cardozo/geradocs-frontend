@@ -14,6 +14,13 @@ import {
   textoDoPrecoDeReferencia,
 } from "@/lib/dominio/pesquisa-de-precos"
 import type { ColetaDePreco } from "@/lib/api/procurement-client"
+import { partesDoTexto } from "@/lib/dominio/tabela"
+
+/** A primeira tabela do texto, como a prévia e os impressores a leem. */
+function tabelaDe(texto: string): string[][] | undefined {
+  const parte = partesDoTexto(texto).find((p) => p.tipo === "tabela")
+  return parte?.tipo === "tabela" ? parte.linhas : undefined
+}
 
 /**
  * A pesquisa de preços (IN SEGES/ME nº 65/2021).
@@ -163,11 +170,19 @@ describe("o parágrafo da série de preços", () => {
     )
 
     expect(texto).toContain("Art. 3º da IN SEGES/ME nº 65/2021")
-    expect(texto).toContain("Papel A4 (2 preço(s) obtido(s))")
-    expect(texto).toContain("Papelaria Central (12.345.678/0001-90)")
-    expect(texto).toContain("20/08/2026")
-    expect(texto).toContain("proposta válida até 20/10/2026")
-    expect(texto).toContain("R$ 24,00")
+    // O mapa de preços em tabela (§100), uma linha por preço coletado.
+    expect(tabelaDe(texto)).toEqual([
+      ["Item", "Fonte", "Fornecedor", "Data da coleta", "Válida até", "Valor unitário"],
+      ["Papel A4", "Pesquisa direta", "Papelaria Central (12.345.678/0001-90)", "20/08/2026", "20/10/2026", "R$ 24,00"],
+      ["Papel A4", "Painel de Preços", "", "20/08/2026", "", "R$ 25,00"],
+    ])
+  })
+
+  it("sem proposta com validade, a série não abre coluna de validade em branco", () => {
+    const texto = textoDaSerie(porItem([coleta("Papel A4", "Painel de Preços", "25,00", { fornecedor: "Loja" })]))
+
+    expect(tabelaDe(texto)?.[0]).toEqual(["Item", "Fonte", "Fornecedor", "Data da coleta", "Valor unitário"])
+    expect(tabelaDe(texto)?.[1]?.[2]).toBe("Loja")
   })
 })
 
@@ -188,8 +203,10 @@ describe("a análise crítica", () => {
     )
 
     expect(texto).toContain("Art. 6º da IN SEGES/ME nº 65/2021")
-    expect(texto).toContain("3 preço(s) obtido(s)")
-    expect(texto).toContain("Variação entre o menor e o maior: 275,0%")
+    expect(tabelaDe(texto)).toEqual([
+      ["Item", "Preços", "Menor", "Maior", "Média", "Mediana", "Variação"],
+      ["Papel A4", "3", "R$ 24,00", "R$ 90,00", "R$ 46,33", "R$ 25,00", "275,0%"],
+    ])
     // O § 3º exige critério "fundamentado e descrito no processo": a plataforma
     // aponta, quem decide escreve.
     expect(texto).toContain("[Descrever o critério adotado")
@@ -235,9 +252,13 @@ describe("a memória de cálculo do preço de referência", () => {
     const texto = textoDoPrecoDeReferencia(serie, "mediana", () => 100)
 
     expect(texto).toContain("mediana dos preços obtidos")
-    expect(texto).toContain("R$ 30,00")
-    expect(texto).toContain("× 100 = R$ 3.000,00")
+    const tabela = tabelaDe(texto)
+    expect(tabela?.[0]).toEqual(["Item", "Preços", "Preço unitário", "Quantidade", "Valor total"])
+    expect(tabela?.[1]?.slice(2)).toEqual(["R$ 30,00", "100", "R$ 3.000,00"])
+    expect(tabela?.at(-1)).toEqual(["Total", "", "", "", "R$ 3.000,00"])
     expect(texto).toContain("Preço de referência total da contratação: R$ 3.000,00")
+    // A frase do método fica fora da tabela: é dela que o método volta.
+    expect(metodoDeclarado(texto)).toBe("mediana")
   })
 
   it("sem quantidade conhecida, deixa a lacuna em vez de somar zero", () => {

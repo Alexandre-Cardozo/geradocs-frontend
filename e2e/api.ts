@@ -279,7 +279,9 @@ export async function comProcessoEDocumento(page: Page) {
 /** A citação como o servidor a compõe, com o item previsto e o que ficou de fora. */
 export const CITACAO_PCA = [
   "A presente contratação está prevista no Plano de Contratações Anual de 2026, nos seguintes itens:",
-  "- Item 2026-0142: Papel A4 75 g/m2, resma com 500 folhas (quantidade prevista: 1200 RESMA; valor estimado: R$ 28.800,00).",
+  // Em tabela, como o servidor passou a escrever (ADR-062 do back-end, §100).
+  "Item do plano | Objeto | Quantidade prevista | Unidade | Valor estimado\n"
+    + "2026-0142 | Papel A4 75 g/m2, resma com 500 folhas | 1200 | RESMA | R$ 28.800,00",
   "Os itens a seguir não constam do plano:",
   "- Cimento CP-II 50 kg.",
   "Quanto a eles, registra-se: [justificar a contratação não prevista no Plano de Contratações Anual].",

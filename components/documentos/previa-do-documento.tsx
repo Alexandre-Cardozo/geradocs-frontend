@@ -1,4 +1,5 @@
 import type { AberturaDoDocumento } from "@/lib/api/authoring-client"
+import { TextoComTabelas } from "@/components/documentos/texto-com-tabelas"
 import { numeroImpresso, type BlocoDoDocumento } from "@/lib/dominio"
 
 /**
@@ -50,7 +51,7 @@ export function PreviaDoDocumento({
                 </span>
               )}
             </div>
-            <p className="m-0 mt-1 text-sm whitespace-pre-line text-text-3">{bloco.texto}</p>
+            <TextoComTabelas texto={bloco.texto} className="mt-1 text-sm text-text-3" />
           </li>
         ))}
       </ol>

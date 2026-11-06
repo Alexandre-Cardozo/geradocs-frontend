@@ -229,7 +229,7 @@ test.describe("elaboração do ETP", () => {
     // costas: quem assina revisa, ajusta e grava (ADR-039). A justificativa do
     // que ficou de fora vem entre colchetes, em vez de sumir.
     const secao = page.getByLabel("O que vai para a seção")
-    await expect(secao).toHaveValue(/Item 2026-0142/)
+    await expect(secao).toHaveValue(/2026-0142 \| Papel A4/)
     await expect(secao).toHaveValue(
       /\[justificar a contratação não prevista no Plano de Contratações Anual\]/,
     )
@@ -239,7 +239,13 @@ test.describe("elaboração do ETP", () => {
     await page.getByRole("button", { name: /Seção 2 do ETP/ }).first().click()
 
     // E depois de salvo, está no documento.
-    await expect(page.getByLabel("O que vai para a seção")).toHaveValue(/Item 2026-0142/)
+    await expect(page.getByLabel("O que vai para a seção")).toHaveValue(/2026-0142 \| Papel A4/)
+
+    // Na prévia, os itens citados saem como tabela, e não com as barras (§100):
+    // é o mesmo desenho que o PDF e o DOCX imprimem.
+    await page.getByRole("button", { name: /Revisão e Geração/ }).click()
+    await expect(page.getByRole("columnheader", { name: "Item do plano" })).toBeVisible()
+    await expect(page.getByRole("cell", { name: "R$ 28.800,00" })).toBeVisible()
   })
 
   test("a etapa final fecha a trilha, e é dela que o documento se gera", async ({ page }) => {
