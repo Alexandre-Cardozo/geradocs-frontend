@@ -35,7 +35,7 @@ import {
   type MetodoDeApuracao,
 } from "@/lib/dominio/pesquisa-de-precos"
 import { rotuloDaUnidade } from "@/lib/dominio/unidades"
-import { formatBRL, formatNumeroBR, parseValorBR } from "@/lib/format"
+import { formatBRL, formatNumeroBR, parseValorBR, SEM_VALOR } from "@/lib/format"
 import type { ModoATA, PainelSecao, Processo, SecaoDocumento } from "@/lib/types"
 
 /**
@@ -154,7 +154,7 @@ export function rascunhoDaNecessidade(processo: Processo, dfds: DfdAnexado[]): s
     `A presente contratação tem por objeto ${processo.objetoDemanda ?? processo.objeto}, `
       + `demanda formalizada ${origem} por meio dos respectivos Documentos de Formalização de `
       + "Demanda juntados a este processo.",
-    "[Descrever o problema a ser resolvido sob a perspectiva do interesse público — a situação "
+    "[Descrever o problema a ser resolvido sob a perspectiva do interesse público: a situação "
       + "atual, o que ela impede ou compromete no serviço prestado, e a consequência de a "
       + "contratação não se realizar.]",
   ]
@@ -211,7 +211,7 @@ function PainelQuantidades({
         </InfoBanner>
       ) : itens.length === 0 ? (
         <InfoBanner tone="warning">
-          Nenhum item nos DFDs — cadastre na Demanda Consolidada.
+          Nenhum item nos DFDs. Cadastre na Demanda Consolidada.
         </InfoBanner>
       ) : (
         <div className="flex flex-col gap-3">
@@ -284,7 +284,7 @@ function TabelaDeQuantidades({ itens }: { itens: ItemConsolidado[] }) {
                   Unidades divergentes não somam: mostrar um total ali seria a
                   plataforma afirmando um número que ninguém pode usar.
                 */}
-                {item.somavel ? formatNumeroBR(item.total) : "—"}
+                {item.somavel ? formatNumeroBR(item.total) : SEM_VALOR}
               </td>
             </tr>
           ))}
@@ -308,15 +308,15 @@ export function memoriaDasQuantidades(itens: ItemConsolidado[]): string {
       .join("; ")
     const total = item.somavel
       ? `${formatNumeroBR(item.total)} ${item.unidade}`
-      : "total não somável — as secretarias usaram unidades diferentes"
+      : "total não somável: as secretarias usaram unidades diferentes"
     return `- ${item.descricao}: ${total}. Origem: ${origens}.`
   })
   return [
     "As quantidades abaixo resultam da consolidação dos Documentos de Formalização de Demanda "
       + "apresentados pelas secretarias requisitantes:",
     ...linhas,
-    "[Descrever o critério que fundamenta as quantidades — histórico de consumo, demanda "
-      + "projetada, número de unidades atendidas — e os documentos que lhe dão suporte.]",
+    "[Descrever o critério que fundamenta as quantidades (histórico de consumo, demanda "
+      + "projetada, número de unidades atendidas) e os documentos que lhe dão suporte.]",
   ].join("\n\n")
 }
 
@@ -411,7 +411,7 @@ function PainelValor({
         <InlineSpinner label="Somando os itens precificados..." />
       ) : itens.length === 0 ? (
         <InfoBanner tone="warning">
-          Nenhum item nos DFDs — cadastre na Demanda Consolidada.
+          Nenhum item nos DFDs. Cadastre na Demanda Consolidada.
         </InfoBanner>
       ) : (
         <div className="flex flex-col gap-3">
@@ -725,7 +725,7 @@ export function PainelATA() {
                         <span className="flex text-success">
                           <IconCheckCircle size={16} strokeWidth={2.5} />
                         </span>
-                        <span className="text-base font-bold text-tint-success-fg">Parecer da IA — ATA Válida</span>
+                        <span className="text-base font-bold text-tint-success-fg">Parecer da IA: ATA Válida</span>
                       </div>
                       <p className="m-0 text-sm leading-[1.6] text-tint-success-fg-soft">
                         A ATA analisada está vigente, com objeto compatível ao ETP e dentro dos limites legais para

@@ -198,7 +198,7 @@ export async function acervoDoNome(): Promise<DocumentoGerado[]> {
       processoId: documento.processId,
       processoNumero: documento.processNumber,
       processoObjeto: documento.processObject,
-      titulo: `${documento.processNumber} — ${documento.processObject}`,
+      titulo: `${documento.processNumber} · ${documento.processObject}`,
       tipo,
       geradoEm: documento.generatedAt,
       status: "final" as const,

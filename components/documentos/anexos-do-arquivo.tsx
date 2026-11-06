@@ -33,7 +33,7 @@ export function AnexosDoArquivo({ processoId, tipo }: { processoId: string; tipo
           Anexos ao final do {tipo}:{" "}
           <strong>
             {incluidos
-              .map((a) => `Anexo ${a.numero} — ${CATALOGO[a.tipo].titulo} (v${a.versao})`)
+              .map((a) => `Anexo ${a.numero}: ${CATALOGO[a.tipo].titulo} (v${a.versao})`)
               .join(" · ")}
           </strong>
           .

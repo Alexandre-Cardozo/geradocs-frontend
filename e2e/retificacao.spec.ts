@@ -116,7 +116,7 @@ test.describe("retificação de documento já gerado", () => {
     await expect(page.getByText(/Alterado desde a última geração/)).toBeVisible()
 
     await page.getByRole("button", { name: "Revisão e Geração", exact: true }).click()
-    await expect(page.getByText("Nova Versão — v3")).toBeVisible()
+    await expect(page.getByText("Nova Versão (v3)")).toBeVisible()
     // O texto mudou: o aviso de que a v3 sairia igual à v2 não aparece.
     await expect(page.getByText(/Sem edições desde a v2/)).toHaveCount(0)
 
@@ -133,7 +133,7 @@ test.describe("retificação de documento já gerado", () => {
       rectificationKind: "MATERIAL_ERROR",
       rectificationDetail: "Quantidade da seção 1: 1.200 → 1.000 resmas.",
     })
-    await expect(page.getByText("ETP retificado — v3 · RETIFICADO.")).toBeVisible()
+    await expect(page.getByText("ETP retificado (v3 · RETIFICADO).")).toBeVisible()
     await expect(page).toHaveURL(/\/documentos\/documento\/?\?/)
   })
 
@@ -162,7 +162,7 @@ test.describe("retificação de documento já gerado", () => {
     await comEtpGerado(page)
 
     await page.goto(rota(`/documentos/documento?processo=${processo.id}&tipo=etp`))
-    await expect(page.getByText("Errata — Facultativa")).toBeVisible()
+    await expect(page.getByText("Errata (facultativa)")).toBeVisible()
     await expect(page.getByText("Onde se lê (versão)")).toBeVisible()
 
     await page.getByRole("button", { name: "Retificar", exact: true }).click()

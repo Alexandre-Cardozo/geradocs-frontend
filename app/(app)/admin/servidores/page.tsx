@@ -94,7 +94,7 @@ export default function AdminServidores() {
    * ele não é digitado em lugar nenhum do produto.
    */
   const nomeEntidade = (id: string | null) =>
-    (id ? entidades.data?.find((e) => e.id === id)?.nome : null) ?? "—"
+    (id ? entidades.data?.find((e) => e.id === id)?.nome : null) ?? "Sem entidade"
 
   return (
     <div className="w-full p-4 sm:p-5 lg:p-7">
@@ -252,12 +252,12 @@ export default function AdminServidores() {
                       </button>
                     </td>
                     <td className="px-4 py-3.25 font-mono text-sm text-text-3">{u.cpf.includes("*") ? u.cpf : formatCPF(u.cpf)}</td>
-                    <td className="px-4 py-3.25 font-mono text-sm text-text-3">{u.matricula ?? "—"}</td>
+                    <td className="px-4 py-3.25 font-mono text-sm text-text-3">{u.matricula ?? "Não informada"}</td>
                     <td className="px-4 py-3.25 text-sm text-text-3">{nomeEntidade(u.entidadeId)}</td>
                     <td className="px-4 py-3.25">
                       <Tag tone={perfilTone(u.perfilAcesso)}>{PERFIL_ACESSO_LABEL[u.perfilAcesso]}</Tag>
                     </td>
-                    <td className="px-4 py-3.25 text-sm text-text-3">{u.ultimoAcesso ? formatDataHora(u.ultimoAcesso) : "—"}</td>
+                    <td className="px-4 py-3.25 text-sm text-text-3">{u.ultimoAcesso ? formatDataHora(u.ultimoAcesso) : "Nunca acessou"}</td>
                     <td className="px-4 py-3.25">
                       <button
                         type="button"

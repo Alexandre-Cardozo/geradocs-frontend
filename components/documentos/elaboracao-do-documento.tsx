@@ -254,7 +254,7 @@ export function ElaboracaoDoDocumento({
               }
               options={[
                 { value: "padrao", label: atoAnterior ? `Manter: ${atoAnterior}` : `Sem ${rotulo.toLowerCase()}` },
-                ...vigentes.map((n) => ({ value: `norma:${n.id}`, label: `${citacaoDaNorma(n)} — ${n.ementa}` })),
+                ...vigentes.map((n) => ({ value: `norma:${n.id}`, label: `${citacaoDaNorma(n)}: ${n.ementa}` })),
                 { value: "digitado", label: `Digitar ${rotulo.toLowerCase()} que não está em Normas do Órgão` },
               ]}
             />

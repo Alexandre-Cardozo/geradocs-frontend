@@ -163,7 +163,7 @@ export function CredenciaisIniciais({
           <IconLock size={14} />
         </span>
         <span>
-          A senha aparece <strong>só agora</strong> — depois de fechar, só dá para redefini-la. No
+          A senha aparece <strong>só agora</strong>. Depois de fechar, só dá para redefini-la. No
           primeiro acesso, o sistema pede para {nome.split(" ")[0]} criar uma senha nova.
         </span>
       </p>

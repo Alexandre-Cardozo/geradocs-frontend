@@ -18,5 +18,5 @@ export function numeroDeDocumento(ano: number | string, sequencia: number): stri
 
 /** Título do arquivo gerado: tipo e objeto do processo. */
 export function tituloDoDocumento(tipo: string, objeto: string): string {
-  return `${tipo} — ${objeto}`
+  return `${tipo}: ${objeto}`
 }

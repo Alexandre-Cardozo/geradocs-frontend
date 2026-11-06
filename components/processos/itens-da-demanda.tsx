@@ -210,10 +210,10 @@ export function ItensDaDemanda({ processoId }: { processoId: string }) {
                           {vinculado.item.quantidade}
                         </td>
                         <td className="px-2.5 py-2 font-mono text-xs text-text-3">
-                          {/* "—" e não "R$ 0,00": não estimado é diferente de zero. */}
+                          {/* "Não estimado" e não "R$ 0,00": não estimado é diferente de zero. */}
                           {vinculado.item.valorUnitario
                             ? `R$ ${vinculado.item.valorUnitario}`
-                            : "—"}
+                            : "Não estimado"}
                         </td>
                         <td className="px-2.5 py-2 text-xs text-text-3">
                           <span className="block font-mono text-text-1">

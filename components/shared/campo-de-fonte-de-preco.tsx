@@ -54,7 +54,7 @@ export function CampoDeFonteDePreco({
           { value: "", label: "Selecione a fonte..." },
           ...FONTES_DE_PRECO.map((fonte) => ({
             value: fonte.rotulo,
-            label: `${fonte.rotulo} — ${fonte.fundamento}`,
+            label: `${fonte.rotulo} (${fonte.fundamento})`,
           })),
           { value: OUTRA_FONTE, label: "Outra (informar)" },
         ]}
@@ -63,7 +63,7 @@ export function CampoDeFonteDePreco({
         <Input
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          ariaLabel={`${ariaLabel} — informe qual`}
+          ariaLabel={`${ariaLabel}: informe qual`}
           placeholder="Ex: cotação obtida junto ao consórcio intermunicipal"
         />
       )}

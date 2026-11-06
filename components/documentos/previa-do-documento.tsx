@@ -22,7 +22,7 @@ export function PreviaDoDocumento({
   if (blocos.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-border bg-surface px-4 py-3.5 text-sm text-text-muted">
-        Nenhuma seção preenchida ou dispensada até aqui — o documento sairia vazio.
+        Nenhuma seção preenchida ou dispensada até aqui. O documento sairia vazio.
       </div>
     )
   }

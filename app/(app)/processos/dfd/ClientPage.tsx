@@ -169,7 +169,7 @@ export default function VerificacaoDFD() {
         </div>
         <div className="flex-1">
           <div className="mb-1 font-display text-panel font-extrabold text-on-dark">
-            Etapa Inicial — Verificação do DFD pela IA
+            Etapa Inicial: Verificação do DFD pela IA
           </div>
           <p className="m-0 text-base text-on-dark-60">
             Completude, conformidade legal e aderência ao PCA.
@@ -285,9 +285,9 @@ export default function VerificacaoDFD() {
           <div className="rounded-card border border-border bg-surface px-6 py-5.5">
             <div className="mb-5 flex items-start gap-5">
               <div className="flex-1">
-                <h3 className="m-0 mb-1 font-display text-lg font-bold text-text-1">Parecer da IA — DFD Analisado</h3>
+                <h3 className="m-0 mb-1 font-display text-lg font-bold text-text-1">Parecer da IA: DFD Analisado</h3>
                 <p className="m-0 text-base text-text-3">
-                  {parecer.data.arquivo} · Analisado em {formatDataHora(parecer.data.analisadoEm).replace(" — ", " às ")}
+                  {parecer.data.arquivo} · Analisado em {formatDataHora(parecer.data.analisadoEm)}
                 </p>
                 {/*
                   O parecer é o dado fabricado que mais engana: nota, achados e

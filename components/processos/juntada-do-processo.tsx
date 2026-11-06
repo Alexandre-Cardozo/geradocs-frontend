@@ -142,7 +142,7 @@ export function JuntadaDoProcesso({
                   >
                     {marcado && <IconCheck size={12} strokeWidth={3} />}
                   </span>
-                  <span className="w-6 shrink-0 font-mono text-sm text-text-muted">{marcado ? `${posicao + 1}.` : "—"}</span>
+                  <span className="w-6 shrink-0 font-mono text-sm text-text-muted">{marcado ? `${posicao + 1}.` : ""}</span>
                   <span className="min-w-0">
                     <span className={`block text-base font-semibold ${item.disponivel ? "text-text-1" : "text-text-muted"}`}>
                       {titulo}
@@ -150,7 +150,7 @@ export function JuntadaDoProcesso({
                     </span>
                     {!item.disponivel && (
                       <span className="block text-xs text-text-muted">
-                        Sem arquivo {formato} na geração vigente — gere o documento em {formato} para incluí-lo.
+                        Sem arquivo {formato} na geração vigente. Gere o documento em {formato} para incluí-lo.
                       </span>
                     )}
                   </span>

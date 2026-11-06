@@ -203,7 +203,7 @@ export default function Sidebar({
           <span className="block min-w-0 flex-1">
             <span className="block truncate text-sm font-semibold text-on-dark">
               {entidade?.nome ??
-                (perfil === "admin_geral" ? "Administração GovPro" : "—")}
+                (perfil === "admin_geral" ? "Administração GovPro" : "")}
             </span>
             <span className="block text-2xs text-on-dark-40">
               {/* O tipo, e não a unidade administrativa: aquele campo não
@@ -260,7 +260,7 @@ export default function Sidebar({
         >
           <FotoDePerfil
             usuarioId={usuario?.id}
-            iniciais={usuario?.iniciais ?? "—"}
+            iniciais={usuario?.iniciais ?? "?"}
             tamanho={36}
             className="shrink-0 text-base"
           />

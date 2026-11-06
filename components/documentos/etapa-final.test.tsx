@@ -354,7 +354,7 @@ describe("etapa final: quem elaborou", () => {
 
     await userEvent.click(await screen.findByRole("button", { name: "Decreto" }))
     await userEvent.click(
-      await screen.findByRole("option", { name: "Decreto nº 10.210, de 05/03/2025 — Regulamenta a Lei 14.133/21" }),
+      await screen.findByRole("option", { name: "Decreto nº 10.210, de 05/03/2025: Regulamenta a Lei 14.133/21" }),
     )
     await userEvent.click(screen.getByRole("button", { name: /Finalizar e Gerar/ }))
 

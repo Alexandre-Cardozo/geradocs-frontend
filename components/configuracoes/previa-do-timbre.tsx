@@ -93,7 +93,7 @@ export function PreviaDoTimbre({
         <p className="mt-3 mb-0 text-center text-xs text-text-muted">
           {timbrado
             ? "Assim o timbre aparecerá nos documentos gerados."
-            : "Timbre desativado — documentos sem brasão."}
+            : "Timbre desativado: documentos sem brasão."}
         </p>
       </div>
     </div>

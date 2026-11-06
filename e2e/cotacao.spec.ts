@@ -151,7 +151,7 @@ test.describe("pesquisa de preços", () => {
 
     await abrir(page, "Preços Coletados")
 
-    await expect(page.getByText("Destoa da mediana — examine")).toBeVisible()
+    await expect(page.getByText("Destoa da mediana, examine")).toBeVisible()
     // Continua na série: o Art. 6º, § 3º exige critério fundamentado e descrito
     // no processo, e quem o descreve é quem responde pelos autos.
     await expect(page.getByText("R$ 90,00")).toBeVisible()

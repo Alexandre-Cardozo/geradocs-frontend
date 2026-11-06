@@ -73,8 +73,8 @@ describe("usuários da entidade", () => {
 
     expect(await screen.findByRole("columnheader", { name: "Matrícula" })).toBeInTheDocument()
     expect(screen.getByText("MAT-4471")).toBeInTheDocument()
-    // Sem matrícula, um traço — e não uma célula vazia que parece erro de carga.
-    expect(screen.getByText("—", { selector: "td" })).toBeInTheDocument()
+    // Sem matrícula, diz isso, e não uma célula vazia que parece erro de carga.
+    expect(screen.getByText("Não informada", { selector: "td" })).toBeInTheDocument()
   })
 
   it("a senha de primeiro acesso aparece depois de cadastrar", async () => {

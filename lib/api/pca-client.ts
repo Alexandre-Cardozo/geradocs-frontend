@@ -29,7 +29,7 @@ export const FORMA_DA_PREVISAO: Record<FormaDaPrevisao, { rotulo: string; explic
   },
   ALARGADA: {
     rotulo: "Encontrado no PCA",
-    explicacao: "Apontado por aproximação — confira se é este.",
+    explicacao: "Apontado por aproximação. Confira se é este.",
   },
   DECLARADA: {
     rotulo: "Informado por você",

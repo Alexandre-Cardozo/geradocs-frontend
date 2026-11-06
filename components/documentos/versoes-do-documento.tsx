@@ -38,7 +38,7 @@ export function VersoesDoDocumento({
   if (versoes.data.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-border bg-surface px-4 py-3.5 text-sm text-text-muted">
-        Este documento ainda não foi gerado — não há versão para mostrar.
+        Este documento ainda não foi gerado, então não há versão para mostrar.
       </div>
     )
   }

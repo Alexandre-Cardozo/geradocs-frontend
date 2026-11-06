@@ -138,7 +138,7 @@ export function paragrafoDeDispensa(secao: SecaoDispensada, tipo: TipoDocumento 
     )
   }
   return (
-    `${secao.titulo} — dispensado nos termos do Art. 18, § 2º, da Lei 14.133/21. ` +
+    `${secao.titulo}: dispensado nos termos do Art. 18, § 2º, da Lei 14.133/21. ` +
     `Fundamento da seção: ${secao.fundamentoLegal}. Justificativa: ${justificativa}`
   )
 }

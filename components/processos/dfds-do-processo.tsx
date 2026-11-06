@@ -164,7 +164,7 @@ function RegistrarDfd({
               value={identificacao}
               onChange={(e) => setIdentificacao(e.target.value)}
               ariaLabel="Identificação do DFD"
-              placeholder="Ex: DFD 003/2026 — Educação"
+              placeholder="Ex: DFD 003/2026 (Educação)"
             />
           </FormField>
         </div>
@@ -505,7 +505,7 @@ function FichaNoDfd({ dfd }: { dfd: DfdAnexado }) {
     ficha.endereco,
     ficha.secretario &&
       `Secretário(a): ${ficha.secretario}${ficha.cpfDoSecretario ? ` (CPF ${ficha.cpfDoSecretario})` : ""}${
-        ficha.decretoDeNomeacao ? ` — ${ficha.decretoDeNomeacao}` : ""
+        ficha.decretoDeNomeacao ? `, ${ficha.decretoDeNomeacao}` : ""
       }`,
   ].filter(Boolean);
   return (
@@ -514,7 +514,7 @@ function FichaNoDfd({ dfd }: { dfd: DfdAnexado }) {
       {partes.length > 0 && <span className="block leading-normal">{partes.join(" · ")}</span>}
       {faltam.length > 0 && (
         <span className="block text-text-muted">
-          Ficha da secretaria sem {faltam.join(", ")} — o coordenador completa em Configurações › Secretarias.
+          Ficha da secretaria sem {faltam.join(", ")}. O coordenador completa em Configurações › Secretarias.
         </span>
       )}
     </div>

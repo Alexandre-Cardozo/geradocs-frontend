@@ -42,7 +42,7 @@ function UsuariosDaEntidade({ usuarios }: { usuarios: Usuario[] }) {
           </span>
           <span className="min-w-0 flex-1">
             <span className="block truncate text-base font-semibold text-text-1">{u.nome}</span>
-            <span className="block truncate text-xs text-text-muted">{u.cargo || "—"}</span>
+            <span className="block truncate text-xs text-text-muted">{u.cargo || "Cargo não informado"}</span>
           </span>
           <Tag tone={u.perfilAcesso === "coordenador" ? "success" : "neutral"}>
             {PERFIL_ACESSO_LABEL[u.perfilAcesso]}

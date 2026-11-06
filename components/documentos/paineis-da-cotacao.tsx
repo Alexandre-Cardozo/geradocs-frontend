@@ -39,6 +39,7 @@ import {
   formatData,
   paraCampoDataHora,
   parseValorBR,
+  SEM_VALOR,
 } from "@/lib/format"
 import type { SecaoDocumento } from "@/lib/types"
 
@@ -223,7 +224,7 @@ export function PainelDasColetas(props: PropsDoPainel) {
               <div className="flex flex-wrap items-center gap-2">
                 <h4 className="m-0 font-display text-sm font-bold text-text-1">{item.item}</h4>
                 {item.serieCurta && (
-                  <Tag tone="warning">Menos de três preços — Art. 6º, § 5º exige justificativa</Tag>
+                  <Tag tone="warning">Menos de três preços: o Art. 6º, § 5º exige justificativa</Tag>
                 )}
               </div>
               <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
@@ -299,7 +300,7 @@ function LinhaDaColeta({
             {formatBRL(parseValorBR(coleta.valorUnitario))}
           </span>
           <span className="text-sm text-text-1">{coleta.fonte}</span>
-          {paraExame && <Tag tone="warning">Destoa da mediana — examine</Tag>}
+          {paraExame && <Tag tone="warning">Destoa da mediana, examine</Tag>}
         </div>
         <p className="m-0 mt-0.5 text-xs text-text-3">
           {formatData(coleta.coletadoEm)}
@@ -405,7 +406,7 @@ function FormularioDaColeta({
     dados.item.trim() === ""
       ? "Informe a que item este preço se refere."
       : dados.fonte.trim() === ""
-        ? "Escolha a fonte consultada — o Art. 3º da IN exige a caracterização das fontes."
+        ? "Escolha a fonte consultada. O Art. 3º da IN exige a caracterização das fontes."
         : parseValorBR(dados.valorUnitario) <= 0
           ? "Informe o preço obtido."
           : dados.coletadoEm.trim() === ""
@@ -726,10 +727,10 @@ export function PainelDoPrecoDeReferencia(props: PropsDoPainel) {
                           {formatBRL(unitario)}
                         </td>
                         <td className="py-2 pr-3 text-right font-mono text-text-3">
-                          {quantidade ?? "—"}
+                          {quantidade ?? SEM_VALOR}
                         </td>
                         <td className="py-2 text-right font-mono font-semibold text-petroleum">
-                          {quantidade == null ? "—" : formatBRL(unitario * quantidade)}
+                          {quantidade == null ? SEM_VALOR : formatBRL(unitario * quantidade)}
                         </td>
                       </tr>
                     )

@@ -76,7 +76,7 @@ export function NovaVersaoDoDocumento({
   return (
     <div className="flex flex-col gap-4 rounded-card border border-border bg-surface p-5">
       <div>
-        <div className="font-display text-md font-bold text-text-1">Nova Versão — v{versaoAtual + 1}</div>
+        <div className="font-display text-md font-bold text-text-1">Nova Versão (v{versaoAtual + 1})</div>
         <p className="m-0 mt-0.5 text-sm text-text-3">
           A v{versaoAtual} fica no histórico. Diga como esta versão entra nele.
         </p>

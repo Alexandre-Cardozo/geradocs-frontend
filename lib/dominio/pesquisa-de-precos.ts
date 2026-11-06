@@ -174,8 +174,8 @@ export function textoDasFontes(
       ? []
       : [
           "[Justificar a impossibilidade de utilizar os parâmetros dos incisos I e II do"
-            + " Art. 23, § 1º — sistemas oficiais de preços e contratações similares da"
-            + " Administração —, cuja preferência o Art. 5º, § 1º da IN SEGES/ME nº 65/2021"
+            + " Art. 23, § 1º (sistemas oficiais de preços e contratações similares da"
+            + " Administração), cuja preferência o Art. 5º, § 1º da IN SEGES/ME nº 65/2021"
             + " estabelece.]",
         ]),
   ].join("\n\n")
@@ -240,8 +240,8 @@ export function textoDaAnaliseCritica(itens: ItemPesquisado[]): string {
         .join("; ")
       linhas.push(
         `  Preços que destoam da mediana e merecem exame: ${destoantes}.`
-          + ` [Descrever o critério adotado para mantê-los ou desconsiderá-los —`
-          + ` o Art. 6º, § 3º exige critério fundamentado e descrito no processo.]`,
+          + ` [Descrever o critério adotado para mantê-los ou desconsiderá-los.`
+          + ` O Art. 6º, § 3º exige critério fundamentado e descrito no processo.]`,
       )
     }
     return linhas.join("\n")

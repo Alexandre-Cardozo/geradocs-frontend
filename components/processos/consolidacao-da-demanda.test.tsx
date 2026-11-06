@@ -2,6 +2,7 @@ import { HttpResponse, http } from "msw"
 import { describe, expect, it } from "vitest"
 
 import { ConsolidacaoDaDemanda } from "@/components/processos/consolidacao-da-demanda"
+import { SEM_VALOR } from "@/lib/format"
 import { urlDaApi } from "@/lib/teste/handlers"
 import { renderizar, screen, waitFor } from "@/lib/teste/renderizar"
 import { servidor } from "@/lib/teste/servidor-msw"
@@ -82,7 +83,7 @@ describe("consolidação da demanda", () => {
     // A consequência é o que separa alerta de ruído; a origem é o que permite
     // perguntar à secretaria certa.
     expect(await screen.findByText(/Não é possível somar as quantidades/i)).toBeInTheDocument()
-    expect(screen.getByText("Unidades divergentes — Papel A4")).toBeInTheDocument()
+    expect(screen.getByText("Unidades divergentes: Papel A4")).toBeInTheDocument()
   })
 
   it("sem divergência, mostra o total como bom", async () => {
@@ -131,7 +132,7 @@ describe("consolidação da demanda", () => {
 
     // Célula vazia se lê como dado faltando; o traço diz "não pediu".
     expect(await screen.findByText("Caneta")).toBeInTheDocument()
-    expect(screen.getAllByText("—")).toHaveLength(2)
+    expect(screen.getAllByText(SEM_VALOR)).toHaveLength(2)
   })
 
   it("sem item informado, não desenha nada: quem diz o que falta são os blocos de baixo", async () => {

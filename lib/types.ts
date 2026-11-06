@@ -120,7 +120,7 @@ export const FORMA_DA_DISPENSA: Record<FormaDaDispensa, { titulo: string; descri
   DISPUTE: {
     titulo: "Dispensa com Disputa",
     descricao:
-      "Aviso em sítio eletrônico oficial por no mínimo 3 dias úteis e seleção da proposta mais vantajosa (Art. 75, § 3º): a dispensa eletrônica, preferencial nas dispensas por valor (Art. 75, I e II). Documentos como os do pregão.",
+      "Aviso em sítio eletrônico oficial por no mínimo 3 dias úteis e seleção da proposta mais vantajosa (Art. 75, § 3º). É a dispensa eletrônica, preferencial nas dispensas por valor (Art. 75, I e II). Documentos como os do pregão.",
   },
 }
 

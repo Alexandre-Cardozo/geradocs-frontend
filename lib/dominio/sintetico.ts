@@ -49,7 +49,7 @@ export interface DadoSintetico {
 export const DADOS_SINTETICOS: Record<CampoSintetico, DadoSintetico> = {
   parecerDfd: {
     rotulo: "Parecer do DFD",
-    origem: "Achados e nota fixos, iguais para todo processo — nenhum modelo leu este arquivo.",
+    origem: "Achados e nota fixos, iguais para todo processo. Nenhum modelo leu este arquivo.",
     saiEm: "Bloco 12",
   },
 }

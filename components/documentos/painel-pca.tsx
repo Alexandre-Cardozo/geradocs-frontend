@@ -217,7 +217,7 @@ function ItemDoPca({ achado }: { achado: AchadoDoPca }) {
     <>
       <div className="font-semibold text-text-2">{achado.demanda}</div>
       <p className="m-0 mt-0.5 text-sm text-text-2">
-        <strong>{forma.rotulo}</strong> — item {achado.codigo}
+        <strong>{forma.rotulo}</strong>, item {achado.codigo}
         {achado.descricao ? `: ${achado.descricao}` : ""}
         {achado.quantidade != null &&
           ` · ${achado.quantidade}${achado.unidade ? ` ${achado.unidade}` : ""}`}

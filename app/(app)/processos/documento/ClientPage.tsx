@@ -634,7 +634,7 @@ export default function EditorDocumento() {
                     onSuccess: (doc) => {
                       showToast(
                         retificacao
-                          ? `${tipo} retificado — ${rotuloDaVersao(doc.versao)}.`
+                          ? `${tipo} retificado (${rotuloDaVersao(doc.versao)}).`
                           : `${tipo} ${regerar ? "regerado" : "gerado"}.`,
                       )
                       router.push(rotaDoDocumentoGerado(processoId, tipo, true))

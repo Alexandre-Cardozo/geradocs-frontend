@@ -166,7 +166,7 @@ export default function Usuarios() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3.25 font-mono text-sm text-text-3">{u.matricula ?? "—"}</td>
+                    <td className="px-4 py-3.25 font-mono text-sm text-text-3">{u.matricula ?? "Não informada"}</td>
                     <td className="px-4 py-3.25 text-sm text-text-3">{u.cargo}</td>
                     <td className="px-4 py-3.25">
                       <Tag tone={u.perfilAcesso === "coordenador" ? "success" : "neutral"}>
@@ -174,7 +174,7 @@ export default function Usuarios() {
                       </Tag>
                     </td>
                     <td className="px-4 py-3.25 text-sm text-text-muted">
-                      {u.ultimoAcesso ? formatDataHora(u.ultimoAcesso) : "—"}
+                      {u.ultimoAcesso ? formatDataHora(u.ultimoAcesso) : "Nunca acessou"}
                     </td>
                   </tr>
                 ))}

@@ -114,8 +114,8 @@ export function FichaDoServidor({
           </dd>
         </div>
         <Campo rotulo="E-mail" valor={servidor.email} />
-        <Campo rotulo="Matrícula" valor={servidor.matricula ?? "—"} />
-        <Campo rotulo="Decreto de nomeação" valor={servidor.decretoNomeacao ?? "—"} />
+        <Campo rotulo="Matrícula" valor={servidor.matricula ?? "Não informada"} />
+        <Campo rotulo="Decreto de nomeação" valor={servidor.decretoNomeacao ?? "Não informado"} />
         <Campo rotulo="Entidade" valor={entidade} />
         <Campo
           rotulo="Último acesso"

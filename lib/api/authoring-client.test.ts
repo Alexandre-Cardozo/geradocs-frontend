@@ -720,12 +720,12 @@ describe("modelo de estrutura", () => {
       { sectionCode: "7", title: "Antiga", text: "Texto.", dispensed: false, headingNumber: "7" },
     ],
     structureModel: { code: "AGU-EDITAL-PC", version: "2025-11", title: "Minuta AGU", publishedIn: "nov/2025" },
-    structureTitle: "Minuta AGU — Pregão (nov/2025)",
+    structureTitle: "Minuta AGU: Pregão (nov/2025)",
     availableModels: [
       {
         code: "AGU-EDITAL-PC",
         version: "2025-11",
-        title: "Minuta AGU — Pregão",
+        title: "Minuta AGU: Pregão",
         description: "Menor preço.",
         publishedIn: "nov/2025",
         sectionCount: 17,
@@ -748,12 +748,12 @@ describe("modelo de estrutura", () => {
 
     const documento = await abrirDocumento(PROCESSO, "Edital")
 
-    expect(documento.estrutura).toEqual({ titulo: "Minuta AGU — Pregão (nov/2025)", codigoDoModelo: "AGU-EDITAL-PC" })
+    expect(documento.estrutura).toEqual({ titulo: "Minuta AGU: Pregão (nov/2025)", codigoDoModelo: "AGU-EDITAL-PC" })
     expect(documento.modelos).toEqual([
       {
         codigo: "AGU-EDITAL-PC",
         versao: "2025-11",
-        titulo: "Minuta AGU — Pregão",
+        titulo: "Minuta AGU: Pregão",
         descricao: "Menor preço.",
         publicadoEm: "nov/2025",
         quantidadeDeSecoes: 17,

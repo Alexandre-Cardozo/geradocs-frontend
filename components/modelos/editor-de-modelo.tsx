@@ -110,7 +110,7 @@ function Formulario({
           value={dados.titulo}
           onChange={(e) => setDados({ ...dados, titulo: e.target.value })}
           ariaLabel="Título"
-          placeholder="Ex.: Edital do Município — Pregão"
+          placeholder="Ex.: Edital do Município (Pregão)"
         />
         {tentou && erros.titulo && <ValidationMsg type="error" msg={erros.titulo} />}
       </FormField>

@@ -41,7 +41,7 @@ export const parecerDFDBase: Omit<ParecerDFD, "processoId" | "arquivo"> = {
       severidade: "info",
       descricao:
         "Justificativa da necessidade alinhada com o planejamento institucional.",
-      fundamentacao: "PCA 2025 — item 47",
+      fundamentacao: "PCA 2025, item 47",
     },
     {
       tipo: "alerta",

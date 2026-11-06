@@ -132,7 +132,7 @@ describe("preços coletados", () => {
 
     expect(await screen.findByText("Papel A4")).toBeInTheDocument()
     expect(
-      screen.getByText("Menos de três preços — Art. 6º, § 5º exige justificativa"),
+      screen.getByText("Menos de três preços: o Art. 6º, § 5º exige justificativa"),
     ).toBeInTheDocument()
   })
 
@@ -144,7 +144,7 @@ describe("preços coletados", () => {
     ])
     renderizarPainel(PainelDasColetas, "Preços Coletados")
 
-    expect(await screen.findByText("Destoa da mediana — examine")).toBeInTheDocument()
+    expect(await screen.findByText("Destoa da mediana, examine")).toBeInTheDocument()
     // Continua na lista: descartar exige critério descrito (Art. 6º, § 3º).
     expect(screen.getByText("R$ 90,00")).toBeInTheDocument()
   })

@@ -38,7 +38,7 @@ describe("anexos do arquivo do Edital", () => {
     comProcesso(["TR", "EDITAL", "CONTRATO"], [{ documentType: "TR", documentVersion: 2 }])
     renderizar(<AnexosDoArquivo processoId={processoApi.id} tipo="Edital" />)
 
-    expect(await screen.findByText(/Anexo I — Termo de Referência \(v2\)/)).toBeInTheDocument()
+    expect(await screen.findByText(/Anexo I: Termo de Referência \(v2\)/)).toBeInTheDocument()
     expect(screen.getByText("Minuta de Contrato")).toBeInTheDocument()
     expect(screen.getByText(/Fora do arquivo por ainda não ter versão gerada/)).toBeInTheDocument()
   })
@@ -54,7 +54,7 @@ describe("anexos do arquivo do Edital", () => {
     renderizar(<AnexosDoArquivo processoId={processoApi.id} tipo="Edital" />)
 
     expect(
-      await screen.findByText(/Anexo I — Termo de Referência \(v1\) · Anexo II — Minuta de Contrato \(v1\)/),
+      await screen.findByText(/Anexo I: Termo de Referência \(v1\) · Anexo II: Minuta de Contrato \(v1\)/),
     ).toBeInTheDocument()
     expect(screen.queryByText(/Ainda sem versão gerada/)).not.toBeInTheDocument()
   })
