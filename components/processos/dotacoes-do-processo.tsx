@@ -192,9 +192,9 @@ function FormularioDaDotacao({
     dados.unidadeOrcamentaria.trim() === ""
       ? "Informe a unidade orçamentária responsável pelo crédito."
       : dados.programaDeTrabalho.trim() === ""
-        ? "Informe o programa de trabalho — é a classificação funcional programática do Art. 92, VIII."
+        ? "Informe o programa de trabalho, que é a classificação funcional programática do Art. 92, VIII."
         : dados.naturezaDaDespesa.trim() === ""
-          ? "Informe a natureza da despesa — é dela que sai a categoria econômica do Art. 92, VIII."
+          ? "Informe a natureza da despesa, de onde sai a categoria econômica do Art. 92, VIII."
           : dados.fonteDeRecurso.trim() === ""
             ? "Informe a fonte ou destinação de recurso."
             : parseValorBR(dados.valor) <= 0
@@ -243,7 +243,7 @@ function FormularioDaDotacao({
               value={dados.unidadeOrcamentaria}
               onChange={(e) => trocar("unidadeOrcamentaria", e.target.value)}
               ariaLabel="Unidade Orçamentária"
-              placeholder="Ex: 02.01 — Secretaria Municipal de Educação"
+              placeholder="Ex: 02.01 - Secretaria Municipal de Educação"
             />
           </FormField>
         </div>
@@ -266,7 +266,7 @@ function FormularioDaDotacao({
               value={dados.naturezaDaDespesa}
               onChange={(e) => trocar("naturezaDaDespesa", e.target.value)}
               ariaLabel="Natureza da Despesa"
-              placeholder="Ex: 3.3.90.30.00 — Material de Consumo"
+              placeholder="Ex: 3.3.90.30.00 - Material de Consumo"
             />
           </FormField>
         </div>
@@ -276,7 +276,7 @@ function FormularioDaDotacao({
               value={dados.fonteDeRecurso}
               onChange={(e) => trocar("fonteDeRecurso", e.target.value)}
               ariaLabel="Fonte de Recurso"
-              placeholder="Ex: 1.500.1001 — Recursos Ordinários"
+              placeholder="Ex: 1.500.1001 - Recursos Ordinários"
             />
           </FormField>
         </div>

@@ -4,6 +4,7 @@ import { InfoBanner } from "@/components/ui"
 import { Th } from "@/components/shared/tabela"
 import { INCONGRUENCIA } from "@/lib/api/procurement-client"
 import { useConsolidacaoDaDemanda } from "@/lib/api/hooks"
+import { SEM_VALOR } from "@/lib/format"
 
 /**
  * A demanda consolidada de vários DFDs: item × secretaria × total.
@@ -44,7 +45,7 @@ export function ConsolidacaoDaDemanda({ processoId }: { processoId: string }) {
           {consolidacao.data.incongruencias.map((incongruencia, i) => (
             <InfoBanner key={`${incongruencia.item}-${incongruencia.tipo}-${i}`} tone="warning">
               <div className="font-semibold">
-                {INCONGRUENCIA[incongruencia.tipo].rotulo} — {incongruencia.item}
+                {INCONGRUENCIA[incongruencia.tipo].rotulo}: {incongruencia.item}
               </div>
               <p className="m-0 mt-1">{INCONGRUENCIA[incongruencia.tipo].consequencia}</p>
               <ul className="m-0 mt-1.5 flex list-disc flex-col gap-0.5 pl-4">
@@ -82,7 +83,7 @@ export function ConsolidacaoDaDemanda({ processoId }: { processoId: string }) {
                   const pedido = item.porSecretaria.find((d) => d.secretaria === secretaria)
                   return (
                     <td key={secretaria} className="px-4 py-3 font-mono text-sm text-text-3">
-                      {pedido ? `${pedido.quantidade} ${pedido.unidade}` : "—"}
+                      {pedido ? `${pedido.quantidade} ${pedido.unidade}` : SEM_VALOR}
                     </td>
                   )
                 })}
@@ -94,7 +95,7 @@ export function ConsolidacaoDaDemanda({ processoId }: { processoId: string }) {
                     // sem ver o que já foi pedido; mostrá-lo como bom faria a
                     // Cotação sair com um número que ninguém pode usar.
                     <span className="text-tint-warning-fg">
-                      <span className="line-through">{item.total}</span> — unidades divergentes
+                      <span className="line-through">{item.total}</span> (unidades divergentes)
                     </span>
                   )}
                 </td>

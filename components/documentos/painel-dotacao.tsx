@@ -112,7 +112,7 @@ export function PainelDotacao({
             {pca.previsto ? (
               <Tag tone="success">A contratação consta do plano</Tag>
             ) : (
-              <Tag tone="warning">Há demanda sem previsão — justifique na seção</Tag>
+              <Tag tone="warning">Há demanda sem previsão: justifique na seção</Tag>
             )}
           </div>
         )}

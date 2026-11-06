@@ -30,11 +30,11 @@ describe("retificação", () => {
   it("o título carrega o rótulo, porque o arquivo sai da plataforma", () => {
     // O badge da tela não viaja junto com o arquivo anexado ao processo no
     // sistema da entidade. O título, sim.
-    expect(tituloComRotuloDeVersao("ETP — Aquisição de notebooks", 1)).toBe(
-      "ETP — Aquisição de notebooks",
+    expect(tituloComRotuloDeVersao("ETP: Aquisição de notebooks", 1)).toBe(
+      "ETP: Aquisição de notebooks",
     )
-    expect(tituloComRotuloDeVersao("ETP — Aquisição de notebooks", 3)).toBe(
-      "ETP — Aquisição de notebooks (RETIFICADO — v3)",
+    expect(tituloComRotuloDeVersao("ETP: Aquisição de notebooks", 3)).toBe(
+      "ETP: Aquisição de notebooks (RETIFICADO, v3)",
     )
   })
 

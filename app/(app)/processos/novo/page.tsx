@@ -101,7 +101,7 @@ const modalidades: Array<{
   {
     key: "dispensa",
     valor: "Dispensa Art. 75",
-    desc: "Hipóteses do Art. 75 da Lei 14.133/21 — direta ou com disputa",
+    desc: "Hipóteses do Art. 75 da Lei 14.133/21, direta ou com disputa",
     icon: <IconZap size={22} />,
   },
   {

@@ -391,7 +391,7 @@ export const INCONGRUENCIA: Record<TipoDeIncongruencia, { rotulo: string; conseq
   },
   SPECIFICATION: {
     rotulo: "Especificações divergentes",
-    consequencia: "Pode não ser o mesmo item — comprá-los como um só entregaria o errado para alguém.",
+    consequencia: "Pode não ser o mesmo item: comprá-los como um só entregaria o errado para alguém.",
   },
   UNIT_PRICE: {
     rotulo: "Preços unitários divergentes",

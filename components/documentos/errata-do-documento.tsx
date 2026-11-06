@@ -33,14 +33,14 @@ export function ErrataDoDocumento({
   if (disponiveis.length < 2) {
     return (
       <div className="rounded-xl border border-dashed border-border bg-surface px-4 py-3.5 text-sm text-text-muted">
-        A errata compara duas versões — este documento ainda tem só uma.
+        A errata compara duas versões, e este documento ainda tem só uma.
       </div>
     )
   }
 
   const opcoes = disponiveis.map((versao) => ({
     value: String(versao.versao),
-    label: `v${versao.versao} — ${versao.nota}`,
+    label: `v${versao.versao} · ${versao.nota}`,
   }))
 
   return (
@@ -86,7 +86,7 @@ export function ErrataDoDocumento({
                     Onde se lê
                   </dt>
                   <dd className="m-0 mt-0.5 text-sm whitespace-pre-line text-text-3">
-                    {entrada.ondeSeLe ?? "— (seção acrescentada nesta versão)"}
+                    {entrada.ondeSeLe ?? "(seção acrescentada nesta versão)"}
                   </dd>
                 </div>
                 <div>
@@ -94,7 +94,7 @@ export function ErrataDoDocumento({
                     Leia-se
                   </dt>
                   <dd className="m-0 mt-0.5 text-sm whitespace-pre-line text-text-1">
-                    {entrada.leiaSe ?? "— (seção suprimida nesta versão)"}
+                    {entrada.leiaSe ?? "(seção suprimida nesta versão)"}
                   </dd>
                 </div>
               </dl>

@@ -35,7 +35,7 @@ function documento(processoId: string, tipo: TipoDocumento): DocumentoGerado {
     id: `DOC-2026-000${tipo.length}`,
     entidadeId: "PREF-001",
     processoId,
-    titulo: `${tipo} — Aquisição`,
+    titulo: `${tipo}: Aquisição`,
     tipo,
     geradoEm: "2026-08-21T10:00:00",
     status: "final",

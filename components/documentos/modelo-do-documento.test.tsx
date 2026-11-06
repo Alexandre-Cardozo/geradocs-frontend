@@ -25,8 +25,8 @@ const modelo = (codigo: string, titulo: string, atual = false): ModeloDeEstrutur
   atual,
 })
 
-const PC = modelo("AGU-EDITAL-PC", "Minuta AGU — Pregão e Concorrência")
-const TP = modelo("AGU-EDITAL-TP", "Minuta AGU — Técnica e Preço")
+const PC = modelo("AGU-EDITAL-PC", "Minuta AGU: Pregão e Concorrência")
+const TP = modelo("AGU-EDITAL-TP", "Minuta AGU: Técnica e Preço")
 
 /** Grava o código pedido na troca e devolve o documento. */
 function comTroca() {

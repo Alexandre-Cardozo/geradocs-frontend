@@ -15,7 +15,7 @@ const MODELOS = [
   {
     code: "AGU-EDITAL-PC",
     version: "2025-11",
-    title: "Minuta AGU — Pregão e Concorrência (menor preço ou maior desconto)",
+    title: "Minuta AGU: Pregão e Concorrência (menor preço ou maior desconto)",
     description: "Pregão ou concorrência julgados por menor preço ou maior desconto.",
     publishedIn: "nov/2025",
     sectionCount: 2,
@@ -23,7 +23,7 @@ const MODELOS = [
   {
     code: "AGU-EDITAL-TP",
     version: "2026-04",
-    title: "Minuta AGU — Concorrência (técnica e preço)",
+    title: "Minuta AGU: Concorrência (técnica e preço)",
     description: "Concorrência julgada por técnica e preço.",
     publishedIn: "abr/2026",
     sectionCount: 2,
@@ -63,7 +63,7 @@ function edital(modelo: string | null) {
     silentGaps: [],
     body: [],
     structureModel: modelo === null ? null : { code: modelo, version: "2026-04", title: "Minuta AGU", publishedIn: "abr/2026" },
-    structureTitle: modelo === null ? "Estrutura GeraDocs (Lei 14.133/21)" : "Minuta AGU — Concorrência (técnica e preço) (abr/2026)",
+    structureTitle: modelo === null ? "Estrutura GeraDocs (Lei 14.133/21)" : "Minuta AGU: Concorrência (técnica e preço) (abr/2026)",
     availableModels: MODELOS.map((m) => ({ ...m, current: m.code === modelo })),
     modelChoiceRequired: modelo === null,
     rectificationRequired: false,
@@ -97,7 +97,7 @@ test("na concorrência, a minuta é escolhida antes e estrutura o Edital", async
   await page.getByRole("button", { name: "Usar Esta Minuta" }).click()
 
   // O editor abre na primeira seção da minuta, e o preâmbulo não tem número.
-  await expect(page.getByText("Minuta AGU — Concorrência (técnica e preço) (abr/2026)")).toBeVisible()
+  await expect(page.getByText("Minuta AGU: Concorrência (técnica e preço) (abr/2026)")).toBeVisible()
   await expect(page.getByRole("heading", { name: "Preâmbulo", level: 2 })).toBeVisible()
   await expect(page.getByText("Seção 1 de 2 · Art. 25, caput, Lei 14.133/21")).toBeVisible()
 

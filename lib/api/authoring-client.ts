@@ -625,7 +625,7 @@ export async function historicoDeVersoes(
     versao: versao.version,
     geradoEm: versao.generatedAt,
     // O tamanho do arquivo só existe quando o arquivo existir (Bloco 11).
-    tamanho: "—",
+    tamanho: "",
     nota: versao.note,
   }));
 }

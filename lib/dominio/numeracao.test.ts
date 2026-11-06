@@ -28,7 +28,7 @@ describe("numeroDeDocumento", () => {
 })
 
 describe("tituloDoDocumento", () => {
-  it("junta tipo e objeto com travessão", () => {
-    expect(tituloDoDocumento("ETP", "Aquisição de material")).toBe("ETP — Aquisição de material")
+  it("junta tipo e objeto com dois-pontos", () => {
+    expect(tituloDoDocumento("ETP", "Aquisição de material")).toBe("ETP: Aquisição de material")
   })
 })

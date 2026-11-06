@@ -888,10 +888,10 @@ describe("dotação orçamentária", () => {
 
   const daApi = {
     id: "b1c2d3e4-0000-4111-8222-333344445555",
-    budgetUnit: "02.01 — Secretaria Municipal de Educação",
+    budgetUnit: "02.01 - Secretaria Municipal de Educação",
     workProgram: "12.361.0004.2.045",
-    expenseNature: "3.3.90.30.00 — Material de Consumo",
-    resourceSource: "1.500.1001 — Recursos Ordinários",
+    expenseNature: "3.3.90.30.00 - Material de Consumo",
+    resourceSource: "1.500.1001 - Recursos Ordinários",
     ledgerCode: "1245",
     fiscalYear: 2026,
     amount: 1250000,
@@ -918,10 +918,10 @@ describe("dotação orçamentária", () => {
   })
 
   const dados = {
-    unidadeOrcamentaria: "  02.01 — Secretaria Municipal de Educação  ",
+    unidadeOrcamentaria: "  02.01 - Secretaria Municipal de Educação  ",
     programaDeTrabalho: " 12.361.0004.2.045 ",
-    naturezaDaDespesa: " 3.3.90.30.00 — Material de Consumo ",
-    fonteDeRecurso: " 1.500.1001 — Recursos Ordinários ",
+    naturezaDaDespesa: " 3.3.90.30.00 - Material de Consumo ",
+    fonteDeRecurso: " 1.500.1001 - Recursos Ordinários ",
     ficha: "  ",
     exercicio: 2026,
     valor: "1.250.000,00",

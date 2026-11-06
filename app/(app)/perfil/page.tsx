@@ -128,11 +128,11 @@ export default function MeuPerfil() {
 
             <dl className="m-0 grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2">
               <Dado rotulo="Nome completo" valor={usuario.nome} />
-              <Dado rotulo="CPF" valor={usuario.cpf ? formatCPF(usuario.cpf) : "—"} />
+              <Dado rotulo="CPF" valor={usuario.cpf ? formatCPF(usuario.cpf) : "Não informado"} />
               <Dado rotulo="E-mail" valor={usuario.email} />
-              <Dado rotulo="Cargo" valor={usuario.cargo || "—"} />
-              <Dado rotulo="Matrícula" valor={usuario.matricula ?? "—"} />
-              <Dado rotulo="Decreto de nomeação" valor={usuario.decretoNomeacao ?? "—"} />
+              <Dado rotulo="Cargo" valor={usuario.cargo || "Não informado"} />
+              <Dado rotulo="Matrícula" valor={usuario.matricula ?? "Não informada"} />
+              <Dado rotulo="Decreto de nomeação" valor={usuario.decretoNomeacao ?? "Não informado"} />
               {entidade && <Dado rotulo="Entidade" valor={entidade.nome} />}
               {usuario.secretaria && <Dado rotulo="Secretaria" valor={usuario.secretaria} />}
             </dl>

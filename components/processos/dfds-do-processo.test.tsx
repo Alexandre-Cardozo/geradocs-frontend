@@ -323,7 +323,7 @@ describe("dfd: data prevista e ficha da secretaria", () => {
     expect(screen.getByText(/^(Em \d+ dias?|Vence hoje|Venceu há \d+ dias?)$/)).toBeInTheDocument()
     expect(
       screen.getByText(
-        "UG 020101 · educacao@x.gov.br · Rua Central, 10 · Secretário(a): Ana Souza (CPF ***.982.247-**) — Decreto nº 1.234/2025",
+        "UG 020101 · educacao@x.gov.br · Rua Central, 10 · Secretário(a): Ana Souza (CPF ***.982.247-**), Decreto nº 1.234/2025",
       ),
     ).toBeInTheDocument()
   })
@@ -333,7 +333,7 @@ describe("dfd: data prevista e ficha da secretaria", () => {
     comDfds([dfd("d-1", "DFD 003/2026", "Secretaria de Educação", [])])
     renderizar(<DfdsDoProcesso processoId={PROCESSO} />)
 
-    expect(await screen.findByText(/sem e-mail, endereço, UG, secretário — o coordenador completa/)).toBeInTheDocument()
+    expect(await screen.findByText(/sem e-mail, endereço, UG, secretário\. O coordenador completa/)).toBeInTheDocument()
     expect(screen.getByText("Não informada")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /Data prevista de conclusão de DFD 003\/2026/ })).toHaveTextContent(
       "Informar",

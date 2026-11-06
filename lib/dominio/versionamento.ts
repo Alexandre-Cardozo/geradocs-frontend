@@ -60,5 +60,5 @@ export function foiRetificado(versao: number): boolean {
  * encaminhado. Fora daqui, o badge não viaja junto — o título, sim.
  */
 export function tituloComRotuloDeVersao(titulo: string, versao: number): string {
-  return foiRetificado(versao) ? `${titulo} (RETIFICADO — v${versao})` : titulo
+  return foiRetificado(versao) ? `${titulo} (RETIFICADO, v${versao})` : titulo
 }

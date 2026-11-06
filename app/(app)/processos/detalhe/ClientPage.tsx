@@ -757,7 +757,7 @@ export default function HubProcesso() {
           <span className="min-w-0 flex-1">
             <span className="block font-display text-md font-bold text-text-1">Verificação do DFD pela IA</span>
             <span className="block text-sm text-text-3">
-              {dfdVerificado ? "Parecer emitido — clique para revisar os achados." : "Etapa inicial — analise o DFD antes de elaborar os documentos."}
+              {dfdVerificado ? "Parecer emitido. Clique para revisar os achados." : "Etapa inicial: analise o DFD antes de elaborar os documentos."}
             </span>
           </span>
           {dfdVerificado ? <Tag tone="success">Concluída</Tag> : <Tag tone="info">Disponível</Tag>}

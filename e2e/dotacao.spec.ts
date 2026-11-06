@@ -15,10 +15,10 @@ const API = "**/api/v1"
 
 const CREDITO = {
   id: "b1c2d3e4-0000-4111-8222-333344445555",
-  budgetUnit: "02.01 — Secretaria Municipal de Educação",
+  budgetUnit: "02.01 - Secretaria Municipal de Educação",
   workProgram: "12.361.0004.2.045",
-  expenseNature: "3.3.90.30.00 — Material de Consumo",
-  resourceSource: "1.500.1001 — Recursos Ordinários",
+  expenseNature: "3.3.90.30.00 - Material de Consumo",
+  resourceSource: "1.500.1001 - Recursos Ordinários",
   ledgerCode: "1245",
   fiscalYear: 2026,
   amount: 485000,
@@ -124,7 +124,7 @@ test.describe("dotação orçamentária", () => {
     // A travessia: o mesmo crédito, na cláusula que o Art. 92, VIII exige.
     await page.goto(rota(`/processos/documento?id=${processo.id}&tipo=contrato`))
     await page.getByRole("button", { name: /Da Dotação Orçamentária/ }).first().click()
-    await expect(page.getByText("3.3.90.30.00 — Material de Consumo").first()).toBeVisible()
+    await expect(page.getByText("3.3.90.30.00 - Material de Consumo").first()).toBeVisible()
   })
 
   test("sem crédito, a seção diz que a ausência é causa de nulidade", async ({ page }) => {

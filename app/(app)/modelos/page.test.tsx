@@ -16,7 +16,7 @@ const minuta = {
   code: "AGU-EDITAL-PC",
   version: "2025-11",
   documentType: "EDITAL",
-  title: "Minuta AGU — Pregão",
+  title: "Minuta AGU: Pregão",
   description: "Menor preço.",
   publishedIn: "nov/2025",
   source: "AGU",
@@ -86,7 +86,7 @@ describe("modelos do órgão", () => {
     renderizar(<ModelosDoOrgao />)
 
     expect(await screen.findByRole("heading", { name: "Edital do Município" })).toBeInTheDocument()
-    expect(screen.getByText(/sobre Minuta AGU — Pregão \(2025-11\)/)).toBeInTheDocument()
+    expect(screen.getByText(/sobre Minuta AGU: Pregão \(2025-11\)/)).toBeInTheDocument()
     expect(screen.getByText("Lei Municipal 1.234/2024.")).toBeInTheDocument()
     expect(screen.getByText(/A AGU publicou a versão abr\/2026 desta minuta/)).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: "Novo Modelo" })).not.toBeInTheDocument()
@@ -108,7 +108,7 @@ describe("modelos do órgão", () => {
 
     await userEvent.click(await screen.findByRole("button", { name: "Novo Modelo" }))
     await userEvent.click(screen.getByRole("button", { name: /Minuta da AGU de Base/ }))
-    await userEvent.click(await screen.findByRole("option", { name: /Minuta AGU — Pregão/ }))
+    await userEvent.click(await screen.findByRole("option", { name: /Minuta AGU: Pregão/ }))
     const objeto = await screen.findByRole("textbox", { name: /Do Objeto/ })
     expect(objeto).toHaveValue("O objeto é [objeto].")
 

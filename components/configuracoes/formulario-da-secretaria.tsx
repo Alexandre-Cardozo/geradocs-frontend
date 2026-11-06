@@ -157,7 +157,7 @@ export function FormularioDaSecretaria({
               value={ficha.cpfNovo}
               onChange={(e) => alterar("cpfNovo", formatCPF(e.target.value))}
               inputMode="numeric"
-              placeholder={cpfGuardado ? `Atual: ${cpfGuardado} — digite para trocar` : "Ex.: 000.000.000-00"}
+              placeholder={cpfGuardado ? `Atual: ${cpfGuardado}. Digite para trocar` : "Ex.: 000.000.000-00"}
             />
             {erro("cpfNovo")}
           </FormField>

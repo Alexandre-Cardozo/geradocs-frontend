@@ -26,7 +26,7 @@ function tituloDaRota(pathname: string): string {
   if (pathname.startsWith("/modelos")) return "Modelos do Órgão"
   if (pathname.startsWith("/configuracoes/timbre")) return "Timbre dos Documentos"
   if (pathname.startsWith("/configuracoes/secretarias")) return "Secretarias do Órgão"
-  if (pathname.startsWith("/configuracoes/pca")) return "PCA — Plano de Contratações"
+  if (pathname.startsWith("/configuracoes/pca")) return "Plano de Contratações (PCA)"
   if (pathname.startsWith("/configuracoes/usuarios")) return "Usuários e Permissões"
   if (pathname.startsWith("/configuracoes")) return "Configurações da Entidade"
   if (pathname.startsWith("/admin/entidades")) return "Entidades"

@@ -65,7 +65,7 @@ export function CampoDeUnidade({
         <Input
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          ariaLabel={`${ariaLabel} — informe qual`}
+          ariaLabel={`${ariaLabel}: informe qual`}
           placeholder="Ex: BLOCO"
         />
       )}

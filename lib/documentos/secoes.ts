@@ -94,7 +94,7 @@ const secoesETP: SecaoDocumento[] = secoes([
   {
     titulo: "Estimativa das Quantidades",
     fundamentoLegal: "Art. 18, § 1º, IV, Lei 14.133/21",
-    hint: "Informe as quantidades com a memória de cálculo e os documentos que lhe dão suporte — histórico de consumo, demanda projetada e interdependências com outras contratações.",
+    hint: "Informe as quantidades com a memória de cálculo e os documentos que lhe dão suporte: histórico de consumo, demanda projetada e interdependências com outras contratações.",
     painel: "quantidades",
   },
   {
@@ -107,7 +107,7 @@ const secoesETP: SecaoDocumento[] = secoes([
   {
     titulo: "Estimativa do Valor da Contratação",
     fundamentoLegal: "Art. 18, § 1º, VI, Lei 14.133/21",
-    hint: "Apresente o valor estimado acompanhado dos preços unitários referenciais, das memórias de cálculo e dos documentos de suporte — em regra, a Cotação de Mercado do processo.",
+    hint: "Apresente o valor estimado acompanhado dos preços unitários referenciais, das memórias de cálculo e dos documentos de suporte (em regra, a Cotação de Mercado do processo).",
     painel: "valor",
   },
   {
@@ -130,7 +130,7 @@ const secoesETP: SecaoDocumento[] = secoes([
   {
     titulo: "Providências Prévias à Contratação",
     fundamentoLegal: "Art. 18, § 1º, X, Lei 14.133/21",
-    hint: "Aponte as providências a serem adotadas antes da celebração do contrato — adequação do ambiente, capacitação de servidores, ajustes de infraestrutura.",
+    hint: "Aponte as providências a serem adotadas antes da celebração do contrato, como adequação do ambiente, capacitação de servidores e ajustes de infraestrutura.",
     opcional: true,
   },
   {
@@ -311,7 +311,7 @@ const secoesEdital: SecaoDocumento[] = secoes([
   {
     titulo: "Das Disposições Finais e dos Anexos",
     fundamentoLegal: "Art. 25, § 3º, Lei 14.133/21",
-    hint: "Relacione os anexos que integram o edital — Termo de Referência, minuta de contrato, modelo de proposta e matriz de riscos, quando houver — e registre a divulgação no PNCP (Art. 54).",
+    hint: "Relacione os anexos que integram o edital (Termo de Referência, minuta de contrato, modelo de proposta e matriz de riscos, quando houver) e registre a divulgação no PNCP (Art. 54).",
   },
   {
     titulo: "Da Matriz de Alocação de Riscos",

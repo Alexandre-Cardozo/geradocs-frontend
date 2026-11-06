@@ -20,10 +20,10 @@ const PROCESSO = "3f2b1a00-1111-4222-8333-444455556666"
 
 const daApi = {
   id: "b1c2d3e4-0000-4111-8222-333344445555",
-  budgetUnit: "02.01 — Secretaria Municipal de Educação",
+  budgetUnit: "02.01 - Secretaria Municipal de Educação",
   workProgram: "12.361.0004.2.045",
-  expenseNature: "3.3.90.30.00 — Material de Consumo",
-  resourceSource: "1.500.1001 — Recursos Ordinários",
+  expenseNature: "3.3.90.30.00 - Material de Consumo",
+  resourceSource: "1.500.1001 - Recursos Ordinários",
   ledgerCode: "1245",
   fiscalYear: 2026,
   amount: 850000,
@@ -101,7 +101,7 @@ describe("painel de dotação", () => {
     renderizarPainel(tipo, titulo)
 
     expect(await screen.findByText("12.361.0004.2.045")).toBeInTheDocument()
-    expect(screen.getByText("3.3.90.30.00 — Material de Consumo")).toBeInTheDocument()
+    expect(screen.getByText("3.3.90.30.00 - Material de Consumo")).toBeInTheDocument()
   })
 
   it("sem crédito declarado, a seção diz que a ausência é causa de nulidade", async () => {
@@ -146,7 +146,7 @@ describe("painel de dotação", () => {
     renderizarPainel("TR", "Adequação Orçamentária")
 
     expect(
-      await screen.findByText("Há demanda sem previsão — justifique na seção"),
+      await screen.findByText("Há demanda sem previsão: justifique na seção"),
     ).toBeInTheDocument()
   })
 
@@ -175,7 +175,7 @@ describe("painel de dotação", () => {
 describe("o parágrafo montado dos créditos", () => {
   const credito: DotacaoOrcamentaria = {
     id: "b1",
-    unidadeOrcamentaria: "02.01 — Educação",
+    unidadeOrcamentaria: "02.01 - Educação",
     programaDeTrabalho: "12.361.0004.2.045",
     naturezaDaDespesa: "3.3.90.30.00",
     fonteDeRecurso: "1.500.1001",

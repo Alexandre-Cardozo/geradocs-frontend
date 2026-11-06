@@ -214,9 +214,9 @@ export default function Documentos() {
   return (
     <div className="w-full p-4 sm:p-5 lg:p-7">
       <div className="mb-6 grid grid-cols-1 gap-3 xs:grid-cols-3">
-        <StatCard label="Total de Documentos" value={r ? String(r.total) : "—"} icon={IconFileText} tone="royal" />
-        <StatCard label="Gerados este Mês" value={r ? String(r.esteMes) : "—"} icon={IconCalendar} tone="teal" />
-        <StatCard label="Armazenamento Usado" value={r ? `${r.armazenamentoMB} MB` : "—"} icon={IconDatabase} tone="success" />
+        <StatCard label="Total de Documentos" value={r ? String(r.total) : "..."} icon={IconFileText} tone="royal" />
+        <StatCard label="Gerados este Mês" value={r ? String(r.esteMes) : "..."} icon={IconCalendar} tone="teal" />
+        <StatCard label="Armazenamento Usado" value={r ? `${r.armazenamentoMB} MB` : "..."} icon={IconDatabase} tone="success" />
       </div>
 
       {/*
@@ -363,11 +363,11 @@ export default function Documentos() {
                       <DocPill status={doc.tipo} classes={CATALOGO[doc.tipo].chip} />
                     </td>
                     <td className="px-4 py-3.25 text-sm text-text-3">
-                      {doc.arquivos.map((arquivo) => arquivo.formato).join(" + ") || "—"}
+                      {doc.arquivos.map((arquivo) => arquivo.formato).join(" + ") || "Sem arquivo"}
                     </td>
                     <td className="px-4 py-3.25 text-sm whitespace-nowrap text-text-3">{formatDataHora(doc.geradoEm)}</td>
                     <td className="px-4 py-3.25 font-mono text-sm text-text-muted">
-                      {doc.arquivos.length > 0 ? formatarBytes(totalDeBytes(doc.arquivos)) : "—"}
+                      {doc.arquivos.length > 0 ? formatarBytes(totalDeBytes(doc.arquivos)) : "Sem arquivo"}
                     </td>
                     <td className="px-4 py-3.25">
                       <div className="flex items-center gap-1.5">

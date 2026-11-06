@@ -101,7 +101,7 @@ describe("juntada dos documentos do processo", () => {
     await userEvent.click(screen.getByRole("button", { name: "DOCX" }))
 
     expect(screen.getByRole("button", { name: "Incluir Termo de Referência na juntada" })).toBeDisabled()
-    expect(screen.getAllByText(/gere o documento em DOCX para incluí-lo/)).toHaveLength(2)
+    expect(screen.getAllByText(/Gere o documento em DOCX para incluí-lo/)).toHaveLength(2)
     expect(screen.getByRole("button", { name: /Baixar Juntada em DOCX \(1 documento\)/ })).toBeEnabled()
   })
 

@@ -1,4 +1,7 @@
-/** Formatação pt-BR — IDs e valores monetários em monospace com formato exato. */
+/** Formatação pt-BR: IDs e valores monetários em monospace com formato exato. */
+
+/** Célula numérica sem valor. Um só lugar, para a tela não misturar símbolos. */
+export const SEM_VALOR = "-"
 
 const brl = new Intl.NumberFormat("pt-BR", {
   style: "currency",

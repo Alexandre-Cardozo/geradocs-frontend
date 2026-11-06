@@ -63,7 +63,7 @@ export function CartaoDeNorma({ norma, coordenador }: { norma: Norma; coordenado
       {
         onSuccess: (atualizada) => {
           fechar()
-          showToast(`Arquivo substituído — versão ${atualizada.arquivo.versao}. A anterior continua guardada.`)
+          showToast(`Arquivo substituído pela versão ${atualizada.arquivo.versao}. A anterior continua guardada.`)
         },
         onError: (erro) => showToast(mensagem(erro, "Não foi possível enviar o arquivo.")),
       },
@@ -111,7 +111,7 @@ export function CartaoDeNorma({ norma, coordenador }: { norma: Norma; coordenado
           {!norma.vigente && (
             <p className="m-0 mt-1.5 text-sm text-text-3">
               Revogada em {formatData(norma.revogadaEm ?? norma.atualizadaEm)}
-              {norma.observacaoDaRevogacao ? ` — ${norma.observacaoDaRevogacao}` : ""}.
+              {norma.observacaoDaRevogacao ? `: ${norma.observacaoDaRevogacao}` : ""}.
             </p>
           )}
         </div>

@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest"
 
 import { PainelDaSecao } from "@/components/documentos/paineis"
 import { secoesPorTipoBase } from "@/lib/documentos"
+import { SEM_VALOR } from "@/lib/format"
 import { comEstimativaQueGrava } from "@/lib/teste/estimativa"
 import { urlDaApi } from "@/lib/teste/handlers"
 import { renderizar, screen, userEvent } from "@/lib/teste/renderizar"
@@ -118,7 +119,7 @@ describe("painel de quantidades", () => {
     // Mostrar um total ali seria a plataforma afirmando um número que ninguém
     // pode usar.
     expect(await screen.findByText("Papel A4")).toBeInTheDocument()
-    expect(screen.getByText("—")).toBeInTheDocument()
+    expect(screen.getByText(SEM_VALOR)).toBeInTheDocument()
   })
 
   it("escreve a memória de cálculo a partir dos DFDs, dizendo de onde veio cada quantidade", async () => {

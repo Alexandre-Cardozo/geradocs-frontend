@@ -215,7 +215,7 @@ export default function DocumentoGerado() {
               Facultativa. Morava no painel de retificação da capa, antes de a
               versão nova existir — e a errata compara versões já geradas.
             */}
-            <Bloco titulo="Errata — Facultativa">
+            <Bloco titulo="Errata (facultativa)">
               <ErrataDoDocumento processoId={processoId} tipo={tipo} />
             </Bloco>
           </div>
