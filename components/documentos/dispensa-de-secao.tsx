@@ -3,16 +3,17 @@
 import { useId, useState } from "react"
 
 import { Button, InfoBanner, Textarea } from "@/components/ui"
-import type { SecaoDocumento } from "@/lib/types"
+import type { SecaoDocumento, TipoDocumento } from "@/lib/types"
 
 /**
- * Dispensar uma seção do ETP.
+ * Dispensar uma seção dispensável.
  *
  * O Art. 18, § 2º admite deixar de detalhar incisos **mediante justificativa**.
  * Sem registrá-la, a seção em branco simplesmente não entra no documento — e
  * quem lê depois não distingue o inciso que não se aplica daquele que ninguém
  * preencheu. A justificativa vira um parágrafo no lugar da seção, citando o
- * fundamento.
+ * fundamento. Fora do ETP o Art. 18, § 2º não vale: a seção sai como não
+ * aplicável, com o fundamento dela.
  *
  * Só aparece em seção dispensável e em branco: dispensar o que é indispensável
  * não é opção do § 2º, e dispensar o que já está escrito seria contradizer o
@@ -20,11 +21,14 @@ import type { SecaoDocumento } from "@/lib/types"
  */
 export function DispensaDeSecao({
   secao,
+  tipo = "ETP",
   pendente,
   onDispensar,
   onDesfazer,
 }: {
   secao: SecaoDocumento
+  /** O documento: só o ETP cita o Art. 18, § 2º. */
+  tipo?: TipoDocumento
   pendente: boolean
   onDispensar: (justificativa: string) => void
   onDesfazer: () => void
@@ -60,7 +64,9 @@ export function DispensaDeSecao({
           Dispensar esta seção
         </Button>
         <span className="text-sm text-text-muted">
-          Dispensável mediante justificativa (Art. 18, § 2º).
+          {tipo === "ETP"
+            ? "Dispensável mediante justificativa (Art. 18, § 2º)."
+            : "Dispensável mediante justificativa: sai no documento como não aplicável."}
         </span>
       </div>
     )

@@ -12,7 +12,7 @@
  */
 
 import { foiDispensada, paragrafoDeDispensa } from "./secoes"
-import type { SecaoDocumento } from "@/lib/types"
+import type { SecaoDocumento, TipoDocumento } from "@/lib/types"
 
 export interface BlocoDoDocumento {
   /** Ordinal da seção no documento. */
@@ -40,14 +40,14 @@ export function numeroImpresso(bloco: { id: string; numero?: string }): string {
  * não decisão, e anunciá-la como dispensa inventaria uma justificativa que
  * ninguém deu.
  */
-export function corpoDoDocumento(secoes: SecaoDocumento[]): BlocoDoDocumento[] {
+export function corpoDoDocumento(secoes: SecaoDocumento[], tipo: TipoDocumento = "ETP"): BlocoDoDocumento[] {
   const blocos: BlocoDoDocumento[] = []
   for (const secao of secoes) {
     if (foiDispensada(secao)) {
       blocos.push({
         id: secao.id,
         titulo: secao.titulo,
-        texto: paragrafoDeDispensa(secao),
+        texto: paragrafoDeDispensa(secao, tipo),
         dispensada: true,
         ...(secao.numero === undefined ? {} : { numero: secao.numero }),
       })

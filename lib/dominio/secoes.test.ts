@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  pendenciasDaGeracao,
   concluidas,
   dispensadasSemJustificativa,
   foiDispensada,
@@ -146,6 +147,26 @@ describe("dispensa de seção", () => {
     expect(paragrafo).toContain("Contratação de item único, sem métrica aplicável.")
   })
 
+  it("fora do ETP, a dispensa sai como não aplicável e não cita o Art. 18, § 2º", () => {
+    const secao = {
+      id: "18",
+      titulo: "Da Subcontratação",
+      fundamentoLegal: "Art. 122, Lei 14.133/21",
+      obrigatoria: false,
+      origem: "catalogo" as const,
+      status: "Completo" as const,
+      conteudo: "",
+      justificativaDispensa: "  A execução é pessoal.  ",
+    }
+
+    expect(paragrafoDeDispensa(secao, "Contrato")).toBe(
+      "Da Subcontratação: não se aplica a esta contratação. Fundamento da seção: Art. 122, Lei 14.133/21. Justificativa: A execução é pessoal.",
+    )
+    // No ETP, o texto de sempre.
+    expect(paragrafoDeDispensa(secao, "ETP")).toBe(paragrafoDeDispensa(secao))
+    expect(paragrafoDeDispensa(secao)).toContain("dispensado nos termos do Art. 18, § 2º")
+  })
+
   it("seção dispensada conta como resolvida no trilho", () => {
     // "Em revisão" seria mentira: não há o que revisar. A dispensa é decisão
     // tomada, e deixá-la como pendente faria o progresso nunca fechar.
@@ -184,5 +205,23 @@ describe("subtópicos", () => {
 
   it("sem seção nenhuma, o progresso é zero", () => {
     expect(progresso([])).toBe(0)
+  })
+})
+
+describe("pendências da geração", () => {
+  const base = { obrigatoria: false, origem: "catalogo" as const, conteudo: "", status: "Não iniciado" as const }
+  it("separa o que trava, o que sai sem registro e o acrescentado em branco", () => {
+    const pendencias = pendenciasDaGeracao([
+      { ...base, id: "1", titulo: "Necessidade", obrigatoria: true },
+      { ...base, id: "2", titulo: "PCA" },
+      { ...base, id: "3", titulo: "Requisitos", justificativaDispensa: "Não se aplica.", status: "Completo" },
+      { ...base, id: "3.1", titulo: "Convenção", origem: "servidor", secaoPai: "3" },
+      { ...base, id: "3.2", titulo: "Escrita", origem: "servidor", secaoPai: "3", conteudo: "Texto." },
+    ])
+
+    expect(pendencias.obrigatorias.map((s) => s.id)).toEqual(["1"])
+    // A dispensada não é lacuna; a acrescentada não se dispensa.
+    expect(pendencias.semDispensa.map((s) => s.id)).toEqual(["2"])
+    expect(pendencias.acrescentadasEmBranco.map((s) => s.id)).toEqual(["3.1"])
   })
 })

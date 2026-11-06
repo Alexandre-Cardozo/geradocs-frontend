@@ -8,7 +8,7 @@
  * servidor.
  */
 
-import type { SecaoDocumento, StatusDocumento } from "@/lib/types"
+import type { SecaoDocumento, StatusDocumento, TipoDocumento } from "@/lib/types"
 
 /**
  * Status resultante de salvar uma seção.
@@ -89,18 +89,54 @@ export function dispensadasSemJustificativa(secoes: SecaoDocumento[]): SecaoDocu
 }
 
 /**
+ * O que a etapa final diz antes de gerar, num aviso só.
+ *
+ * Eram três mensagens sobre o mesmo assunto, em lugares diferentes da tela: as
+ * obrigatórias pendentes no topo, as dispensáveis em branco embaixo e uma
+ * etiqueta de "opcionais omitidas" depois do botão. E o aviso de baixo listava
+ * também a seção acrescentada pelo servidor, mandando dispensá-la, o que o
+ * servidor recusa: a acrescentada não se dispensa, se exclui.
+ */
+export interface PendenciasDaGeracao {
+  /** Indispensáveis por preencher: só elas travam a geração. */
+  obrigatorias: SecaoDocumento[]
+  /** Dispensáveis do catálogo em branco e sem justificativa: saem sem registro. */
+  semDispensa: SecaoDocumento[]
+  /** Acrescentadas pelo servidor em branco: saem do documento; preencha ou exclua. */
+  acrescentadasEmBranco: SecaoDocumento[]
+}
+
+export function pendenciasDaGeracao(secoes: SecaoDocumento[]): PendenciasDaGeracao {
+  return {
+    obrigatorias: obrigatoriasPendentes(secoes),
+    semDispensa: dispensadasSemJustificativa(secoes).filter((secao) => secao.origem === "catalogo"),
+    acrescentadasEmBranco: secoes.filter((secao) => secao.origem === "servidor" && secao.conteudo.trim() === ""),
+  }
+}
+
+/**
  * O parágrafo que entra no documento no lugar da seção dispensada.
  *
  * Ele existe porque a alternativa é pior: hoje a seção em branco desaparece do
  * documento gerado, e quem audita não consegue distinguir o inciso que não se
  * aplica daquele que ninguém preencheu. O texto cita o fundamento literalmente,
  * como o resto do documento.
+ *
+ * O Art. 18, § 2º é do ETP, e só ele o cita. Nos outros documentos a seção sai
+ * como não aplicável, com o fundamento da própria seção: é o texto que o
+ * servidor imprime, e a prévia mostra o mesmo.
  */
-export function paragrafoDeDispensa(secao: SecaoDispensada): string {
+export function paragrafoDeDispensa(secao: SecaoDispensada, tipo: TipoDocumento = "ETP"): string {
   // Sem fallback: o tipo garante que a justificativa existe, porque a função só
   // é alcançável através de `foiDispensada`. Um `?? ""` aqui seria um caminho
-  // que nenhuma entrada percorre — e esconderia um chamador errado.
+  // que nenhuma entrada percorre e esconderia um chamador errado.
   const justificativa = secao.justificativaDispensa.trim()
+  if (tipo !== "ETP") {
+    return (
+      `${secao.titulo}: não se aplica a esta contratação. ` +
+      `Fundamento da seção: ${secao.fundamentoLegal}. Justificativa: ${justificativa}`
+    )
+  }
   return (
     `${secao.titulo} — dispensado nos termos do Art. 18, § 2º, da Lei 14.133/21. ` +
     `Fundamento da seção: ${secao.fundamentoLegal}. Justificativa: ${justificativa}`

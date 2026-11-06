@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 
-import { Button, InfoBanner, Tag } from "@/components/ui"
+import { Button, InfoBanner } from "@/components/ui"
 import { IconDownload, IconEye } from "@/components/ui/icons"
 import { AnexosDoArquivo } from "@/components/documentos/anexos-do-arquivo"
 import { ElaboracaoDoDocumento } from "@/components/documentos/elaboracao-do-documento"
@@ -17,8 +17,7 @@ import {
 import { PreviaDoDocumento } from "@/components/documentos/previa-do-documento"
 import {
   corpoDoDocumento,
-  dispensadasSemJustificativa,
-  obrigatoriasPendentes,
+  pendenciasDaGeracao,
   podeGerar,
   type Retificacao,
 } from "@/lib/dominio"
@@ -100,21 +99,36 @@ export function EtapaFinal({
   }
   const retificando = retificacaoDa(novaVersao) != null
 
-  const pendentes = obrigatoriasPendentes(secoes)
   const pronto = podeGerar(secoes)
-  const lacunas = dispensadasSemJustificativa(secoes)
-  const opcionaisEmBranco = secoes.some((s) => !s.obrigatoria && s.status !== "Completo")
+  const { obrigatorias, semDispensa, acrescentadasEmBranco } = pendenciasDaGeracao(secoes)
+  const titulos = (lista: SecaoDocumento[]) => lista.map((s) => s.titulo).join(", ")
+  // O Art. 18, § 2º é o que admite dispensar inciso do ETP; nos outros
+  // documentos a citação seria de outra lei.
+  const fundamentoDaDispensa = tipo === "ETP" ? " (Art. 18, § 2º)" : ""
+  const avisos = [
+    obrigatorias.length > 0 && (
+      <>
+        <strong>Para gerar, falta preencher:</strong> {titulos(obrigatorias)}.
+      </>
+    ),
+    semDispensa.length > 0 && (
+      <>
+        <strong>Ficam fora do documento, em branco e sem dispensa:</strong> {titulos(semDispensa)}. Se não se
+        aplicam, dispense-as com justificativa{fundamentoDaDispensa}.
+      </>
+    ),
+    acrescentadasEmBranco.length > 0 && (
+      <>
+        <strong>Acrescentadas em branco, também ficam fora:</strong> {titulos(acrescentadasEmBranco)}. Preencha ou
+        exclua.
+      </>
+    ),
+  ].filter(Boolean)
 
   return (
     <div className="flex flex-col gap-4">
-      {!pronto && (
-        <InfoBanner tone="warning">
-          Seções obrigatórias pendentes: <strong>{pendentes.map((s) => s.titulo).join(", ")}</strong>.
-        </InfoBanner>
-      )}
-
       <EstruturaDoDocumento processoId={processoId} tipo={tipo} secoes={secoes} />
-      <PreviaDoDocumento blocos={corpoDoDocumento(secoes)} abertura={abertura} />
+      <PreviaDoDocumento blocos={corpoDoDocumento(secoes, tipo)} abertura={abertura} />
       {abertura?.objeto && abertura.objetoDaDescricao && (
         /*
           A descrição do processo costuma ser um título curto, digitado ao criar
@@ -155,17 +169,28 @@ export function EtapaFinal({
         />
       )}
 
-      {lacunas.length > 0 && (
+      {/*
+        Um aviso só, junto do botão que ele explica: o que trava a geração e o
+        que sai do documento sem registro.
+      */}
+      {avisos.length > 0 && (
         <InfoBanner tone="info">
-          Em branco e sem dispensa: <strong>{lacunas.map((s) => s.titulo).join(", ")}</strong>.
-          Dispense-as com justificativa (Art. 18, § 2º).
+          {avisos.length === 1 ? (
+            <span>{avisos[0]}</span>
+          ) : (
+            <ul className="m-0 flex list-disc flex-col gap-1 pl-4">
+              {avisos.map((aviso, i) => (
+                <li key={i}>{aviso}</li>
+              ))}
+            </ul>
+          )}
         </InfoBanner>
       )}
 
       <div className="flex flex-wrap items-center justify-end gap-2.5">
         {/* O motivo já está no aviso acima; aqui é só para o leitor de tela. */}
         <p id="motivo-da-geracao" className="sr-only">
-          {pronto ? "Tudo certo para gerar." : "Faltam seções obrigatórias."}
+          {pronto ? "Tudo certo para gerar." : `Faltam seções obrigatórias: ${titulos(obrigatorias)}.`}
         </p>
         {versaoNova ? (
           <>
@@ -207,11 +232,6 @@ export function EtapaFinal({
         )}
       </div>
 
-      {!jaGerado && pronto && opcionaisEmBranco && (
-        <div className="flex justify-end">
-          <Tag tone="info">Seções opcionais em branco serão omitidas do documento</Tag>
-        </div>
-      )}
     </div>
   )
 }
