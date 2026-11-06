@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest"
 import NovoProcesso from "@/app/(app)/processos/novo/page"
 import { sessaoServidor } from "@/lib/teste/fixtures-api"
 import { urlDaApi } from "@/lib/teste/handlers"
-import { renderizar, screen, userEvent, waitFor } from "@/lib/teste/renderizar"
+import { renderizar, screen, userEvent, waitFor, within } from "@/lib/teste/renderizar"
 import { servidor } from "@/lib/teste/servidor-msw"
 
 /**
@@ -273,9 +273,13 @@ describe("novo processo: a natureza do objeto", () => {
     await userEvent.type(screen.getByPlaceholderText(/Modernização dos laboratórios/), "Reforma da escola")
     await userEvent.type(screen.getByPlaceholderText(/Aquisição de 150 microcomputadores/), "Reforma")
 
-    expect(screen.getByRole("button", { name: "Natureza do Objeto" })).toHaveTextContent("Não informar agora")
-    await userEvent.click(screen.getByRole("button", { name: "Natureza do Objeto" }))
-    await userEvent.click(await screen.findByRole("option", { name: "Obras e serviços de engenharia" }))
+    // Em pílulas, como os contextos: nada vem marcado além de "Não informar agora".
+    const naturezas = screen.getByRole("radiogroup", { name: "Natureza do Objeto" })
+    expect(within(naturezas).getByRole("radio", { checked: true })).toHaveTextContent("Não informar agora")
+    const obra = within(naturezas).getByRole("radio", { name: "Obras e serviços de engenharia" })
+    expect(obra).toHaveAttribute("title", expect.stringContaining("minutas de obras da AGU"))
+    await userEvent.click(obra)
+    expect(obra).toHaveAttribute("aria-checked", "true")
     await userEvent.click(screen.getByRole("button", { name: /Continuar/ }))
     await userEvent.click(await screen.findByRole("button", { name: /Criar Processo/ }))
 

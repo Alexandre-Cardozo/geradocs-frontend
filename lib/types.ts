@@ -63,9 +63,9 @@ export type FundamentoDaDispensa = "VALUE_ENGINEERING" | "VALUE_GENERAL" | "OTHE
 
 /** O que a tela oferece ao declarar o fundamento, com o inciso citado. */
 export const FUNDAMENTO_DA_DISPENSA: Record<FundamentoDaDispensa, string> = {
-  VALUE_ENGINEERING: "Valor — obras e serviços de engenharia (Art. 75, I)",
-  VALUE_GENERAL: "Valor — compras e demais serviços (Art. 75, II)",
-  OTHER: "Outra hipótese do Art. 75 (emergência, fornecedor exclusivo, etc.)",
+  VALUE_ENGINEERING: "Por valor: obras e serviços de engenharia (Art. 75, I)",
+  VALUE_GENERAL: "Por valor: compras e demais serviços (Art. 75, II)",
+  OTHER: "Outra hipótese do Art. 75, sem limite de valor (emergência, fornecedor exclusivo etc.)",
 }
 
 /**
@@ -85,6 +85,20 @@ export const NATUREZA_DO_OBJETO: Record<NaturezaDoObjeto, string> = {
 }
 
 /**
+ * O que é cada natureza e o que ela muda, para a dica da escolha. Os tópicos
+ * que ela traz ao ETP vêm do catálogo do servidor (ADR-061), e não daqui.
+ */
+export const DESCRICAO_DA_NATUREZA: Record<NaturezaDoObjeto, string> = {
+  GOODS: "Compra de bens (Art. 6º, X). Usa as minutas de compras da AGU no TR e no Contrato.",
+  SERVICES:
+    "Serviço sem empregados à disposição exclusiva do órgão (Art. 6º, XI). Usa as minutas de serviços da AGU no TR e no Contrato.",
+  SERVICES_WITH_DEDICATED_LABOR:
+    "Empregados da contratada à disposição exclusiva do órgão (Art. 6º, XVI). Usa as minutas de mão de obra da AGU e traz ao ETP os tópicos trabalhistas.",
+  WORKS_AND_ENGINEERING:
+    "Obra ou serviço de engenharia (Art. 6º, XII e XXI). Usa as minutas de obras da AGU e traz ao ETP os tópicos de engenharia.",
+}
+
+/**
  * A forma da dispensa de licitação (ADR-046 do back-end).
  *
  * <p>As duas são contratação direta (Art. 72), mas se instruem de modo
@@ -101,12 +115,12 @@ export const FORMA_DA_DISPENSA: Record<FormaDaDispensa, { titulo: string; descri
   DIRECT: {
     titulo: "Dispensa Direta",
     descricao:
-      "Contratação direta do fornecedor, sem disputa — como na emergência (Art. 75, VIII) ou na licitação deserta (Art. 75, III). Instruída pelo Art. 72, com ETP só se for o caso.",
+      "Contratação direta do fornecedor, sem disputa, como na emergência (Art. 75, VIII) ou na licitação deserta (Art. 75, III). Instruída pelo Art. 72, com ETP só se for o caso.",
   },
   DISPUTE: {
     titulo: "Dispensa com Disputa",
     descricao:
-      "Aviso em sítio eletrônico oficial por no mínimo 3 dias úteis e seleção da proposta mais vantajosa (Art. 75, § 3º) — a dispensa eletrônica, preferencial nas dispensas por valor (Art. 75, I e II). Documentos como os do pregão.",
+      "Aviso em sítio eletrônico oficial por no mínimo 3 dias úteis e seleção da proposta mais vantajosa (Art. 75, § 3º): a dispensa eletrônica, preferencial nas dispensas por valor (Art. 75, I e II). Documentos como os do pregão.",
   },
 }
 
@@ -182,6 +196,8 @@ export interface Processo {
   /** Valor estimado em centavos não — em reais (number); formatar com formatBRL. */
   valorEstimado: number
   responsavel: string
+  /** O id de quem responde pelo processo; a capa o troca (ADR-061). */
+  responsavelId?: string
   criadoEm: string
   /** A última alteração dos dados do processo (objeto, valor, modalidade...). */
   atualizadoEm: string
@@ -275,10 +291,22 @@ export interface SecaoDocumento {
    */
   origem: "catalogo" | "servidor"
   /**
+   * Seção do servidor incluída a partir de um tópico de contexto da
+   * contratação (ADR-061 do back-end): tem fundamento e orientação do
+   * catálogo curado.
+   */
+  doContexto?: true
+  /**
+   * A seção de que esta é subtópico (3.1 é do 3). Ausente nas seções. O
+   * subtópico complementa a seção-mãe e não conta como seção.
+   */
+  secaoPai?: string
+  /**
    * Fundamento citado literalmente (ex.: "Art. 18, § 1º, I, Lei 14.133/21").
    *
-   * Ausente em seção criada pelo servidor: a lei não a conhece, e inventar um
-   * fundamento seria mentir sobre o que a norma diz.
+   * Ausente em seção criada à mão pelo servidor: a lei não a conhece, e
+   * inventar um fundamento seria mentir sobre o que a norma diz. Presente no
+   * tópico de contexto, que vem do catálogo curado (ADR-061).
    */
   fundamentoLegal?: string
   /**
@@ -370,6 +398,8 @@ export type EventoProcesso =
   | "documento_baixado"
   | "juntada_exportada"
   | "dfd_anexado"
+  // ADR-061: o servidor confirma o que a plataforma sugere, e fica registrado.
+  | "contextos_confirmados"
 
 /**
  * Um evento da trilha, como o servidor o registrou.

@@ -46,6 +46,7 @@ import {
   abrirDocumento,
   type DocumentoEmElaboracao,
   acrescentarSecao,
+  incluirTopicoDoContexto,
   compararVersoes as compararVersoesNaApi,
   concluirDocumento,
   corpoDaVersaoVigente,
@@ -55,6 +56,7 @@ import {
   historicoDeVersoes,
   previaDaTrocaDeModelo,
   reordenarSecoes,
+  renomearSecao,
   salvarSecao,
   trocarModeloDoDocumento,
   justificarDesvio as justificarDesvioDoDocumento,
@@ -234,14 +236,16 @@ export interface AtualizarProcessoInput {
   id: string
   /** O id da secretaria requisitante, quando a capa a troca. */
   secretariaId?: string
+  /** O id de quem responde pelo processo, quando a capa o troca. */
+  responsavelId?: string
   objeto?: string
   objetoDemanda?: string
   documentos?: Array<TipoDocumento>
   modalidade?: Modalidade
   /** O valor estimado, no formato do formulário — a conciliação o adota (§75). */
   valorEstimado?: string
-  /** O inciso do Art. 75, declarado depois da abertura (§77). */
-  fundamentoDaDispensa?: FundamentoDaDispensa
+  /** O inciso do Art. 75, declarado depois da abertura (§77); `null` retira. */
+  fundamentoDaDispensa?: FundamentoDaDispensa | null
   /** Direta ou com disputa (ADR-046); trocá-la muda os documentos cabíveis. */
   formaDaDispensa?: FormaDaDispensa
   /** A natureza do objeto (ADR-053); `null` retira a declaração. */
@@ -286,6 +290,7 @@ export async function atualizarProcesso(input: AtualizarProcessoInput): Promise<
     formaDaDispensa: input.formaDaDispensa,
     naturezaDoObjeto: input.naturezaDoObjeto,
     secretariaId: input.secretariaId,
+    responsavelId: input.responsavelId,
     motivo,
   })
 }
@@ -549,6 +554,11 @@ export async function acrescentarSecaoDoDocumento(
   return acrescentarSecao(processoId, tipo, titulo, ancora, subtopico)
 }
 
+/** Restaura o subtópico de um contexto declarado que foi tirado do documento (ADR-061). */
+export async function incluirTopicoDoContextoNoDocumento(processoId: string, tipo: TipoDocumento, codigo: string) {
+  return incluirTopicoDoContexto(processoId, tipo, codigo)
+}
+
 /** Exclui uma seção criada pelo servidor. As do catálogo têm a dispensa. */
 export async function excluirSecaoDoDocumento(
   processoId: string,
@@ -556,6 +566,16 @@ export async function excluirSecaoDoDocumento(
   secaoId: string,
 ) {
   return excluirSecao(processoId, tipo, secaoId)
+}
+
+/** Troca o título de uma seção acrescentada (ADR-061). */
+export async function renomearSecaoDoDocumento(
+  processoId: string,
+  tipo: TipoDocumento,
+  secaoId: string,
+  titulo: string,
+) {
+  return renomearSecao(processoId, tipo, secaoId, titulo)
 }
 
 /** Reordena as seções criadas pelo servidor. As do catálogo seguem a lei. */

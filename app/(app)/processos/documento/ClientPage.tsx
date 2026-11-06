@@ -24,6 +24,7 @@ import { CaminhosDaSecao } from "@/components/documentos/caminhos-da-secao"
 import { OrientacaoDaIaContexto } from "@/components/documentos/orientacao-da-ia"
 import { DispensaDeSecao } from "@/components/documentos/dispensa-de-secao"
 import { EtapaFinal } from "@/components/documentos/etapa-final"
+import { TopicosDoContexto } from "@/components/documentos/topicos-do-contexto"
 import { AlteracoesDaMinuta, JustificativaDoDesvio } from "@/components/documentos/justificativa-da-minuta"
 import { RevisaoComIa } from "@/components/documentos/revisao-com-ia"
 import {
@@ -45,7 +46,7 @@ import {
   foiRetificado,
   rotuloDaVersao,
 } from "@/lib/dominio"
-import { concluidas, progresso } from "@/lib/dominio"
+import { concluidas, progresso, secoesPrincipais } from "@/lib/dominio"
 import { type SecaoDocumento, type StatusDocumento } from "@/lib/types"
 
 const statusRail: Record<StatusDocumento, { dot: string; chip: string }> = {
@@ -179,8 +180,12 @@ export default function EditorDocumento() {
     setRascunho(active?.conteudo ?? "")
   }
 
+  // O subtópico complementa a seção-mãe (ADR-061 do back-end): não conta no
+  // "Seção N de M", mas conta no progresso, porque vai ao papel.
+  const principais = secoesPrincipais(lista)
   const completedCount = concluidas(lista).length
   const progress = progresso(lista)
+  const comSubtopicos = principais.length < lista.length
 
 
   /**
@@ -381,7 +386,7 @@ export default function EditorDocumento() {
               </div>
             )}
           </div>
-          <ProgressBar percent={progress} label={`Progresso do ${tipo}`} sub={`${completedCount} de ${lista.length} seções concluídas`} />
+          <ProgressBar percent={progress} label={`Progresso do ${tipo}`} sub={`${completedCount} de ${lista.length} ${comSubtopicos ? "seções e subtópicos concluídos" : "seções concluídas"}`} />
         </div>
 
         {/*
@@ -393,6 +398,39 @@ export default function EditorDocumento() {
           {lista.map((s) => {
             const cfg = statusRail[s.status]
             const isActive = activeSection === s.id
+            if (s.secaoPai !== undefined) {
+              // Subtópico: recuado sob a seção-mãe e menor, para não se passar
+              // por mais uma seção; o número dá lugar ao ✓ quando concluído,
+              // como nas seções.
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => trocarSecao(s.id)}
+                  className={`mb-0.5 flex w-52 shrink-0 cursor-pointer items-center gap-2 rounded-md py-1.5 pr-2.5 pl-2 text-left transition-colors lg:ml-7 lg:w-auto ${
+                    isActive ? "border border-tint-royal-border bg-tint-royal-bg" : "border border-transparent bg-transparent"
+                  }`}
+                >
+                  <span
+                    className={`flex h-4.5 min-w-4.5 shrink-0 items-center justify-center rounded-sm px-0.5 font-mono text-2xs font-bold ${cfg.chip}`}
+                  >
+                    {s.status === "Completo" ? (
+                      <span className="flex text-success" aria-label="Concluído">
+                        <IconCheck size={9} strokeWidth={3} />
+                      </span>
+                    ) : (
+                      numeroNoTrilho(s)
+                    )}
+                  </span>
+                  <span
+                    className={`block min-w-0 flex-1 text-xs leading-snug ${isActive ? "font-semibold text-royal-hover" : "text-text-3"}`}
+                  >
+                    {s.titulo}
+                  </span>
+                  <span className={`size-1.5 shrink-0 rounded-full ${cfg.dot}`} />
+                </button>
+              )
+            }
             return (
               <button
                 key={s.id}
@@ -415,9 +453,9 @@ export default function EditorDocumento() {
                   <span className={`block text-sm leading-snug ${isActive ? "font-semibold text-royal-hover" : "font-medium text-text-2"}`}>
                     {s.titulo}
                     {s.origem === "servidor" ? (
-                      // Distinta de "Opt.": a do servidor não é dispensável pela
-                      // lei, é uma seção que ele criou.
-                      <span className="ml-1.25 text-2xs font-semibold text-text-muted">Sua</span>
+                      // Distinta de "Opt.": a acrescentada não é dispensável pela
+                      // lei, é uma seção que o servidor criou.
+                      <span className="ml-1.25 text-2xs font-semibold text-text-muted">Adicional</span>
                     ) : foiDispensada(s) ? (
                       // "Dispensada" e não "Opt.": o trilho precisa distinguir a
                       // seção que pode ficar em branco daquela que já foi
@@ -471,7 +509,11 @@ export default function EditorDocumento() {
             <div className="mb-0.5 text-xs text-text-muted">
               {naEtapaFinal
                 ? `Etapa final · ${meta.titulo}`
-                : `Seção ${lista.findIndex((s) => s.id === activeSection) + 1} de ${lista.length}${active?.fundamentoLegal ? ` · ${active.fundamentoLegal}` : ""}`}
+                : `${
+                    active?.secaoPai !== undefined
+                      ? `Subtópico ${numeroNoTrilho(active)} de ${lista.find((s) => s.id === active.secaoPai)?.titulo ?? `Seção ${active.secaoPai}`}`
+                      : `Seção ${principais.findIndex((s) => s.id === activeSection) + 1} de ${principais.length}`
+                  }${active?.fundamentoLegal ? ` · ${active.fundamentoLegal}` : ""}`}
             </div>
             <h2 className="m-0 font-display text-panel font-bold text-text-1">
               {naEtapaFinal ? "Revisão e Geração" : active?.titulo}
@@ -527,6 +569,21 @@ export default function EditorDocumento() {
                 .
               </span>
             </InfoBanner>
+          )}
+
+          {/*
+            Os subtópicos dos contextos que alguém tirou (ADR-061): uma linha,
+            só enquanto houver o que restaurar. Os demais entram sozinhos.
+          */}
+          {documento.data && documento.data.topicosDoContexto.some((topico) => topico.secao === undefined) && (
+            <div className="mb-4">
+              <TopicosDoContexto
+                processoId={processoId}
+                tipo={tipo}
+                topicos={documento.data.topicosDoContexto}
+                secoes={lista}
+              />
+            </div>
           )}
 
           {/*
@@ -733,9 +790,11 @@ export default function EditorDocumento() {
           {/*
             A dispensa vale para toda seção dispensável, tenha painel ou não. A
             do inciso II tem painel próprio e ficava sem a ação: a lei permite
-            dispensá-la (Art. 18, § 2º) e a tela não oferecia o caminho.
+            dispensá-la (Art. 18, § 2º) e a tela não oferecia o caminho. A seção
+            acrescentada pelo servidor não se dispensa: o servidor recusa, e ela
+            se exclui na etapa final.
           */}
-          {active && !active.obrigatoria && rascunho.trim() === "" && (
+          {active && !active.obrigatoria && active.origem === "catalogo" && rascunho.trim() === "" && (
             <div className="mt-4">
               <DispensaDeSecao
                 secao={active}

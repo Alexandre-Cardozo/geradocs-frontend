@@ -112,21 +112,21 @@ describe("datas", () => {
   })
 
   it("mostra o instante do servidor no horário de Brasília (UTC−3)", () => {
-    expect(formatDataHora("2024-07-03T19:42:00Z")).toBe("03/07/2024 — 16:42")
-    expect(formatDataHora("2024-07-03T19:42:00.123456789Z")).toBe("03/07/2024 — 16:42")
-    expect(formatDataHora("2024-07-03T21:42:00+02:00")).toBe("03/07/2024 — 16:42")
+    expect(formatDataHora("2024-07-03T19:42:00Z")).toBe("03/07/2024 às 16:42")
+    expect(formatDataHora("2024-07-03T19:42:00.123456789Z")).toBe("03/07/2024 às 16:42")
+    expect(formatDataHora("2024-07-03T21:42:00+02:00")).toBe("03/07/2024 às 16:42")
   })
 
   it("muda o dia quando, em Brasília, ainda é o dia anterior", () => {
     // 02:30 UTC do dia 8 é 23:30 do dia 7 em Brasília.
     expect(formatData("2024-07-08T02:30:00Z")).toBe("07/07/2024")
-    expect(formatDataHora("2024-07-08T02:30:00Z")).toBe("07/07/2024 — 23:30")
+    expect(formatDataHora("2024-07-08T02:30:00Z")).toBe("07/07/2024 às 23:30")
     expect(formatData("2024-07-08T03:00:00Z")).toBe("08/07/2024")
-    expect(formatDataHora("2024-07-08T03:00:00Z")).toBe("08/07/2024 — 00:00")
+    expect(formatDataHora("2024-07-08T03:00:00Z")).toBe("08/07/2024 às 00:00")
   })
 
   it("lê data e hora sem fuso como hora de Brasília", () => {
-    expect(formatDataHora("2024-07-03T16:42:00")).toBe("03/07/2024 — 16:42")
+    expect(formatDataHora("2024-07-03T16:42:00")).toBe("03/07/2024 às 16:42")
     expect(formatData("2024-07-05T16:42:00-03:00")).toBe("05/07/2024")
   })
 

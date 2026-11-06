@@ -412,6 +412,49 @@ describe("atualizarProcessoReal", () => {
     expect(corpos[1]?.departmentId).toBe("outra-secretaria")
   })
 
+  it("o inciso da dispensa vai quando a capa o declara, e nulo o retira", async () => {
+    const corpos: Record<string, unknown>[] = []
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id`, () => HttpResponse.json(processoApi)),
+      http.patch(`${urlDaApi}/procurement-processes/:id`, async ({ request }) => {
+        corpos.push((await request.json()) as Record<string, unknown>)
+        return HttpResponse.json(processoApi)
+      }),
+    )
+    const { atualizarProcessoReal, obterProcesso } = await carregarClienteLimpo()
+    const atual = await obterProcesso(processoApi.id)
+
+    await atualizarProcessoReal(atual, { fundamentoDaDispensa: "OTHER" })
+    await atualizarProcessoReal(atual, { fundamentoDaDispensa: null })
+
+    expect(corpos.map((corpo) => corpo.dispensationGround)).toEqual(["OTHER", null])
+  })
+
+  it("o responsável só vai quando a capa o troca, e o id dele vem na leitura", async () => {
+    const corpos: Record<string, unknown>[] = []
+    const RESPONSAVEL = "7a1b2c3d-1111-4222-8333-444455556666"
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id`, () =>
+        HttpResponse.json({ ...processoApi, responsibleUserId: RESPONSAVEL }),
+      ),
+      http.patch(`${urlDaApi}/procurement-processes/:id`, async ({ request }) => {
+        corpos.push((await request.json()) as Record<string, unknown>)
+        return HttpResponse.json({ ...processoApi, responsibleUserId: null })
+      }),
+    )
+    const { atualizarProcessoReal, obterProcesso } = await carregarClienteLimpo()
+    const atual = await obterProcesso(processoApi.id)
+    expect(atual.responsavelId).toBe(RESPONSAVEL)
+
+    await atualizarProcessoReal(atual, { objeto: "Descrição revisada" })
+    const depois = await atualizarProcessoReal(atual, { responsavelId: "outro-servidor" })
+
+    expect(corpos[0]).not.toHaveProperty("responsibleUserId")
+    expect(corpos[1]?.responsibleUserId).toBe("outro-servidor")
+    // Sem o id na resposta, a capa não inventa um.
+    expect(depois.responsavelId).toBeUndefined()
+  })
+
   it("a conciliação adota o valor da demanda, no formato do formulário", async () => {
     let corpo: Record<string, unknown> = {}
     servidor.use(
@@ -629,6 +672,12 @@ describe("trilha: a elaboração aparece junto do cadastro", () => {
           { event: "SECTION_DISPENSED", actorName: "Maria", occurredAt: "2026-08-26T10:00:00Z", reason: "ETP · seção 3 dispensada: sem alternativa" },
           { event: "SECTION_WRITTEN", actorName: "Maria", occurredAt: "2026-08-26T09:00:00Z", reason: "ETP · seção 1" },
           { event: "DFD_ATTACHED", actorName: "Maria", occurredAt: "2026-08-26T08:00:00Z", reason: "DFD.pdf · 3 item(ns)" },
+          {
+            event: "CONTRACTING_CONTEXTS_CONFIRMED",
+            actorName: "Maria",
+            occurredAt: "2026-08-26T07:00:00Z",
+            reason: "Contextos da contratação confirmados: Serviço com Condutor de Veículo",
+          },
         ]),
       ),
     )
@@ -644,6 +693,7 @@ describe("trilha: a elaboração aparece junto do cadastro", () => {
       "secao_dispensada",
       "secao_escrita",
       "dfd_anexado",
+      "contextos_confirmados",
     ])
     expect(trilha[2]?.comentario).toContain("sem alternativa")
   })

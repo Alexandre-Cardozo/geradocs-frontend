@@ -157,20 +157,24 @@ export function MoneyInput({
   placeholder = "0,00",
   className = "",
   id,
+  ariaLabel,
 }: {
   value?: string
   onChange?: (valor: string) => void
   placeholder?: string
   className?: string
   id?: string
+  /** O nome do campo, quando ele está fora de um `FormField`. */
+  ariaLabel?: string
 }) {
-  const rotulo = useRotuloDoCampo()
+  const rotulo = useRotuloDoCampo(ariaLabel)
   return (
     <div className="relative">
       <span className="absolute top-1/2 left-3 -translate-y-1/2 text-base font-semibold text-text-3">R$</span>
       <input
         id={id}
         aria-labelledby={rotulo}
+        aria-label={ariaLabel}
         value={value}
         onChange={(e) => onChange?.(mascaraValorBR(e.target.value))}
         onBlur={(e) => onChange?.(normalizaValorBR(e.target.value))}
@@ -232,6 +236,7 @@ export function Textarea({
   className = "",
   id,
   ref,
+  ariaLabel,
 }: {
   value?: string
   onChange?: (e: ChangeEvent<HTMLTextAreaElement>) => void
@@ -241,13 +246,16 @@ export function Textarea({
   id?: string
   /** Para quem precisa levar o cursor até aqui — o editor de seção faz isso. */
   ref?: Ref<HTMLTextAreaElement>
+  /** O nome do campo, quando ele está fora de um `FormField`. */
+  ariaLabel?: string
 }) {
-  const rotulo = useRotuloDoCampo()
+  const rotulo = useRotuloDoCampo(ariaLabel)
   return (
     <textarea
       ref={ref}
       id={id}
       aria-labelledby={rotulo}
+      aria-label={ariaLabel}
       value={value}
       onChange={onChange}
       placeholder={placeholder}

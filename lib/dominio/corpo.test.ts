@@ -28,6 +28,20 @@ describe("corpo do documento", () => {
     expect(corpo.map((b) => b.id)).toEqual(["1", "2", "3"])
   })
 
+  it("o subtópico escrito sai marcado, com o número que o servidor deu", () => {
+    const corpo = corpoDoDocumento([
+      secao({ id: "1", conteudo: "1.1. Item da mãe." }),
+      secao({ id: "1.1", conteudo: "Texto do subtópico.", secaoPai: "1", numero: "1.2" }),
+      secao({ id: "1+1", conteudo: "Seção nova.", numero: "2" }),
+    ])
+
+    expect(corpo.map((b) => [b.numero, b.subtopico])).toEqual([
+      [undefined, undefined],
+      ["1.2", true],
+      ["2", undefined],
+    ])
+  })
+
   it("a seção dispensada vira parágrafo, em vez de sumir", () => {
     const corpo = corpoDoDocumento([
       secao({ id: "1", conteudo: "Necessidade descrita." }),

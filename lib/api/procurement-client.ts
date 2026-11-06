@@ -40,6 +40,7 @@ interface ProcessoApi {
   departmentId: string;
   departmentName: string;
   responsibleUserName: string;
+  responsibleUserId?: string | null;
   objectDescription: string;
   demandObject?: string;
   modality: string;
@@ -125,6 +126,7 @@ function mapear(item: ProcessoApi): Processo {
     ...(item.dispensationForm ? { formaDaDispensa: item.dispensationForm } : {}),
     ...(item.objectNature ? { naturezaDoObjeto: item.objectNature } : {}),
     responsavel: item.responsibleUserName,
+    ...(item.responsibleUserId ? { responsavelId: item.responsibleUserId } : {}),
     criadoEm: item.createdAt,
     atualizadoEm: item.updatedAt,
     // Servidor anterior ao campo não o manda: a alteração dos dados é o melhor que se sabe.
@@ -272,6 +274,8 @@ export async function atualizarProcessoReal(
     motivo?: string;
     /** A secretaria requisitante; ausente, o servidor mantém a atual. */
     secretariaId?: string;
+    /** Quem responde pelo processo; ausente, o servidor mantém o atual. */
+    responsavelId?: string;
   },
 ): Promise<Processo> {
   const processo = await requisicaoProtegida<ProcessoApi>(
@@ -311,6 +315,7 @@ export async function atualizarProcessoReal(
         changeNote: mudancas.motivo ?? null,
         // Só quando muda: a troca vai para a trilha, e reenviar a mesma não diz nada.
         ...(mudancas.secretariaId ? { departmentId: mudancas.secretariaId } : {}),
+        ...(mudancas.responsavelId ? { responsibleUserId: mudancas.responsavelId } : {}),
       }),
     },
   );
@@ -476,6 +481,7 @@ const EVENTOS_DA_TRILHA: Record<string, EventoProcesso> = {
   DOCUMENT_DOWNLOADED: "documento_baixado",
   BUNDLE_EXPORTED: "juntada_exportada",
   DFD_ATTACHED: "dfd_anexado",
+  CONTRACTING_CONTEXTS_CONFIRMED: "contextos_confirmados",
 }
 
 interface TrilhaDaApi {

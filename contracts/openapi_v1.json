@@ -201,7 +201,7 @@
       "AuditEntryResponse" : {
         "properties" : {
           "action" : {
-            "enum" : [ "AI_GUIDANCE_BLOCKED", "AI_GUIDANCE_USED", "BUDGET_APPROPRIATION_DECLARED", "BUDGET_APPROPRIATION_REMOVED", "BUDGET_APPROPRIATION_UPDATED", "BUNDLE_EXPORTED", "DEPARTMENT_CREATED", "DEPARTMENT_DEACTIVATED", "DEPARTMENT_UPDATED", "DFD_ATTACHED", "DFD_REMOVED", "DFD_UPDATED", "DOCUMENT_DOWNLOADED", "DOCUMENT_FINALIZED", "DOCUMENT_GENERATED", "DOCUMENT_MODEL_JUSTIFIED", "DOCUMENT_STRUCTURE_CHANGED", "LOGIN_FAILED", "LOGIN_SUCCEEDED", "ORGANIZATION_CREATED", "ORGANIZATION_DEACTIVATED", "ORGANIZATION_LETTERHEAD_UPDATED", "ORGANIZATION_UPDATED", "PASSWORD_RESET_COMPLETED", "PASSWORD_RESET_REQUESTED", "PCA_IMPORTED", "PRICE_QUOTE_RECORDED", "PRICE_QUOTE_REMOVED", "PRICE_QUOTE_UPDATED", "PROCUREMENT_PROCESS_CLOSED", "PROCUREMENT_PROCESS_CREATED", "PROCUREMENT_PROCESS_REOPENED", "PROCUREMENT_PROCESS_UPDATED", "REGULATION_ADDED", "REGULATION_FILE_REPLACED", "REGULATION_REINSTATED", "REGULATION_REMOVED", "REGULATION_REVOKED", "REGULATION_UPDATED", "SECTION_DISPENSED", "SECTION_WRITTEN", "STRUCTURE_MODEL_DEACTIVATED", "STRUCTURE_MODEL_PUBLISHED", "TEMPLATE_PUBLISHED", "USER_CPF_REVEALED", "USER_CREATED", "USER_DEACTIVATED", "USER_ORGANIZATION_TRANSFERRED", "USER_PASSWORD_RESET", "USER_UPDATED" ],
+            "enum" : [ "AI_GUIDANCE_BLOCKED", "AI_GUIDANCE_USED", "BUDGET_APPROPRIATION_DECLARED", "BUDGET_APPROPRIATION_REMOVED", "BUDGET_APPROPRIATION_UPDATED", "BUNDLE_EXPORTED", "CONTRACTING_CONTEXTS_CONFIRMED", "DEPARTMENT_CREATED", "DEPARTMENT_DEACTIVATED", "DEPARTMENT_UPDATED", "DFD_ATTACHED", "DFD_REMOVED", "DFD_UPDATED", "DOCUMENT_DOWNLOADED", "DOCUMENT_FINALIZED", "DOCUMENT_GENERATED", "DOCUMENT_MODEL_JUSTIFIED", "DOCUMENT_STRUCTURE_CHANGED", "LOGIN_FAILED", "LOGIN_SUCCEEDED", "ORGANIZATION_CREATED", "ORGANIZATION_DEACTIVATED", "ORGANIZATION_LETTERHEAD_UPDATED", "ORGANIZATION_UPDATED", "PASSWORD_RESET_COMPLETED", "PASSWORD_RESET_REQUESTED", "PCA_IMPORTED", "PRICE_QUOTE_RECORDED", "PRICE_QUOTE_REMOVED", "PRICE_QUOTE_UPDATED", "PROCUREMENT_PROCESS_CLOSED", "PROCUREMENT_PROCESS_CREATED", "PROCUREMENT_PROCESS_REOPENED", "PROCUREMENT_PROCESS_UPDATED", "REGULATION_ADDED", "REGULATION_FILE_REPLACED", "REGULATION_REINSTATED", "REGULATION_REMOVED", "REGULATION_REVOKED", "REGULATION_UPDATED", "SECTION_DISPENSED", "SECTION_WRITTEN", "STRUCTURE_MODEL_DEACTIVATED", "STRUCTURE_MODEL_PUBLISHED", "TEMPLATE_PUBLISHED", "USER_CPF_REVEALED", "USER_CREATED", "USER_DEACTIVATED", "USER_ORGANIZATION_TRANSFERRED", "USER_PASSWORD_RESET", "USER_UPDATED" ],
             "type" : "string"
           },
           "actorId" : {
@@ -462,6 +462,22 @@
         },
         "type" : "object"
       },
+      "ConfirmContextsRequest" : {
+        "properties" : {
+          "codes" : {
+            "items" : {
+              "maxLength" : 60,
+              "minLength" : 1,
+              "type" : "string"
+            },
+            "maxItems" : 30,
+            "minItems" : 0,
+            "type" : "array"
+          }
+        },
+        "required" : [ "codes" ],
+        "type" : "object"
+      },
       "ConsolidatedItemView" : {
         "properties" : {
           "byDepartment" : {
@@ -484,6 +500,88 @@
           }
         },
         "required" : [ "byDepartment", "description", "summable", "total", "unit" ],
+        "type" : "object"
+      },
+      "ContextTopicView" : {
+        "properties" : {
+          "anchorSectionCode" : {
+            "type" : "string"
+          },
+          "code" : {
+            "type" : "string"
+          },
+          "contexts" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "hint" : {
+            "type" : "string"
+          },
+          "legalBasis" : {
+            "type" : "string"
+          },
+          "sectionCode" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "anchorSectionCode", "code", "contexts", "hint", "legalBasis", "title" ],
+        "type" : "object"
+      },
+      "ContextView" : {
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "confirmed" : {
+            "type" : "boolean"
+          },
+          "confirmedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "confirmedInCatalogVersion" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "topics" : {
+            "items" : {
+              "$ref" : "#/components/schemas/TopicView"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "code", "confirmed", "description", "title", "topics" ],
+        "type" : "object"
+      },
+      "ContractingContextsResponse" : {
+        "properties" : {
+          "catalogVersion" : {
+            "type" : "string"
+          },
+          "contexts" : {
+            "items" : {
+              "$ref" : "#/components/schemas/ContextView"
+            },
+            "type" : "array"
+          },
+          "natures" : {
+            "items" : {
+              "$ref" : "#/components/schemas/NatureView"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "catalogVersion", "contexts", "natures" ],
         "type" : "object"
       },
       "CpfResponse" : {
@@ -1135,6 +1233,12 @@
           "changedSinceVersion" : {
             "type" : "boolean"
           },
+          "contextTopics" : {
+            "items" : {
+              "$ref" : "#/components/schemas/ContextTopicView"
+            },
+            "type" : "array"
+          },
           "currentVersion" : {
             "format" : "int32",
             "type" : "integer"
@@ -1207,7 +1311,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableModels", "body", "canGenerate", "changedSinceVersion", "currentVersion", "documentType", "finalized", "id", "modelChoiceRequired", "modelJustificationRequired", "opening", "otherModelTexts", "pendingRequiredSections", "processId", "progress", "rectificationRequired", "sections", "silentGaps", "structureTitle" ],
+        "required" : [ "availableModels", "body", "canGenerate", "changedSinceVersion", "contextTopics", "currentVersion", "documentType", "finalized", "id", "modelChoiceRequired", "modelJustificationRequired", "opening", "otherModelTexts", "pendingRequiredSections", "processId", "progress", "rectificationRequired", "sections", "silentGaps", "structureTitle" ],
         "type" : "object"
       },
       "DocumentTemplate" : {
@@ -1643,6 +1747,25 @@
             "type" : "string"
           }
         },
+        "type" : "object"
+      },
+      "NatureView" : {
+        "properties" : {
+          "label" : {
+            "type" : "string"
+          },
+          "nature" : {
+            "enum" : [ "GOODS", "SERVICES", "SERVICES_WITH_DEDICATED_LABOR", "WORKS_AND_ENGINEERING" ],
+            "type" : "string"
+          },
+          "topics" : {
+            "items" : {
+              "$ref" : "#/components/schemas/TopicView"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "label", "nature", "topics" ],
         "type" : "object"
       },
       "NewerModelView" : {
@@ -2463,6 +2586,17 @@
         "required" : [ "createdAt", "currentFile", "id", "kind", "kindLabel", "status", "title", "updatedAt", "version" ],
         "type" : "object"
       },
+      "RenameSectionRequest" : {
+        "properties" : {
+          "title" : {
+            "maxLength" : 200,
+            "minLength" : 1,
+            "type" : "string"
+          }
+        },
+        "required" : [ "title" ],
+        "type" : "object"
+      },
       "ReopenProcurementProcessRequest" : {
         "properties" : {
           "reason" : {
@@ -2591,6 +2725,9 @@
           },
           "origin" : {
             "enum" : [ "AD_HOC", "CATALOG" ],
+            "type" : "string"
+          },
+          "parentSectionCode" : {
             "type" : "string"
           },
           "position" : {
@@ -2887,6 +3024,28 @@
         "required" : [ "documentType", "id", "publishedAt", "template", "version" ],
         "type" : "object"
       },
+      "TopicView" : {
+        "properties" : {
+          "anchorSectionCode" : {
+            "type" : "string"
+          },
+          "code" : {
+            "type" : "string"
+          },
+          "documentType" : {
+            "enum" : [ "AVISO", "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+            "type" : "string"
+          },
+          "legalBasis" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "anchorSectionCode", "code", "documentType", "legalBasis", "title" ],
+        "type" : "object"
+      },
       "TransferUserOrganizationRequest" : {
         "properties" : {
           "confirmed" : {
@@ -3079,6 +3238,10 @@
           },
           "objectNature" : {
             "enum" : [ "GOODS", "SERVICES", "SERVICES_WITH_DEDICATED_LABOR", "WORKS_AND_ENGINEERING" ],
+            "type" : "string"
+          },
+          "responsibleUserId" : {
+            "format" : "uuid",
             "type" : "string"
           },
           "urgency" : {
@@ -3306,7 +3469,7 @@
           "name" : "action",
           "required" : false,
           "schema" : {
-            "enum" : [ "AI_GUIDANCE_BLOCKED", "AI_GUIDANCE_USED", "BUDGET_APPROPRIATION_DECLARED", "BUDGET_APPROPRIATION_REMOVED", "BUDGET_APPROPRIATION_UPDATED", "BUNDLE_EXPORTED", "DEPARTMENT_CREATED", "DEPARTMENT_DEACTIVATED", "DEPARTMENT_UPDATED", "DFD_ATTACHED", "DFD_REMOVED", "DFD_UPDATED", "DOCUMENT_DOWNLOADED", "DOCUMENT_FINALIZED", "DOCUMENT_GENERATED", "DOCUMENT_MODEL_JUSTIFIED", "DOCUMENT_STRUCTURE_CHANGED", "LOGIN_FAILED", "LOGIN_SUCCEEDED", "ORGANIZATION_CREATED", "ORGANIZATION_DEACTIVATED", "ORGANIZATION_LETTERHEAD_UPDATED", "ORGANIZATION_UPDATED", "PASSWORD_RESET_COMPLETED", "PASSWORD_RESET_REQUESTED", "PCA_IMPORTED", "PRICE_QUOTE_RECORDED", "PRICE_QUOTE_REMOVED", "PRICE_QUOTE_UPDATED", "PROCUREMENT_PROCESS_CLOSED", "PROCUREMENT_PROCESS_CREATED", "PROCUREMENT_PROCESS_REOPENED", "PROCUREMENT_PROCESS_UPDATED", "REGULATION_ADDED", "REGULATION_FILE_REPLACED", "REGULATION_REINSTATED", "REGULATION_REMOVED", "REGULATION_REVOKED", "REGULATION_UPDATED", "SECTION_DISPENSED", "SECTION_WRITTEN", "STRUCTURE_MODEL_DEACTIVATED", "STRUCTURE_MODEL_PUBLISHED", "TEMPLATE_PUBLISHED", "USER_CPF_REVEALED", "USER_CREATED", "USER_DEACTIVATED", "USER_ORGANIZATION_TRANSFERRED", "USER_PASSWORD_RESET", "USER_UPDATED" ],
+            "enum" : [ "AI_GUIDANCE_BLOCKED", "AI_GUIDANCE_USED", "BUDGET_APPROPRIATION_DECLARED", "BUDGET_APPROPRIATION_REMOVED", "BUDGET_APPROPRIATION_UPDATED", "BUNDLE_EXPORTED", "CONTRACTING_CONTEXTS_CONFIRMED", "DEPARTMENT_CREATED", "DEPARTMENT_DEACTIVATED", "DEPARTMENT_UPDATED", "DFD_ATTACHED", "DFD_REMOVED", "DFD_UPDATED", "DOCUMENT_DOWNLOADED", "DOCUMENT_FINALIZED", "DOCUMENT_GENERATED", "DOCUMENT_MODEL_JUSTIFIED", "DOCUMENT_STRUCTURE_CHANGED", "LOGIN_FAILED", "LOGIN_SUCCEEDED", "ORGANIZATION_CREATED", "ORGANIZATION_DEACTIVATED", "ORGANIZATION_LETTERHEAD_UPDATED", "ORGANIZATION_UPDATED", "PASSWORD_RESET_COMPLETED", "PASSWORD_RESET_REQUESTED", "PCA_IMPORTED", "PRICE_QUOTE_RECORDED", "PRICE_QUOTE_REMOVED", "PRICE_QUOTE_UPDATED", "PROCUREMENT_PROCESS_CLOSED", "PROCUREMENT_PROCESS_CREATED", "PROCUREMENT_PROCESS_REOPENED", "PROCUREMENT_PROCESS_UPDATED", "REGULATION_ADDED", "REGULATION_FILE_REPLACED", "REGULATION_REINSTATED", "REGULATION_REMOVED", "REGULATION_REVOKED", "REGULATION_UPDATED", "SECTION_DISPENSED", "SECTION_WRITTEN", "STRUCTURE_MODEL_DEACTIVATED", "STRUCTURE_MODEL_PUBLISHED", "TEMPLATE_PUBLISHED", "USER_CPF_REVEALED", "USER_CREATED", "USER_DEACTIVATED", "USER_ORGANIZATION_TRANSFERRED", "USER_PASSWORD_RESET", "USER_UPDATED" ],
             "type" : "string"
           }
         }, {
@@ -5451,6 +5614,68 @@
         "tags" : [ "document-bundle-controller" ]
       }
     },
+    "/api/v1/procurement-processes/{processId}/contracting-contexts" : {
+      "get" : {
+        "operationId" : "view",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ContractingContextsResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "contracting-context-controller" ]
+      },
+      "put" : {
+        "operationId" : "confirm",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ConfirmContextsRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ContractingContextsResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "contracting-context-controller" ]
+      }
+    },
     "/api/v1/procurement-processes/{processId}/documents/{documentType}" : {
       "get" : {
         "operationId" : "open",
@@ -5468,6 +5693,48 @@
           "required" : true,
           "schema" : {
             "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DocumentResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "document-authoring-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/context-topics/{topicCode}" : {
+      "post" : {
+        "operationId" : "addContextTopic",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "documentType",
+          "required" : true,
+          "schema" : {
+            "enum" : [ "AVISO", "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "topicCode",
+          "required" : true,
+          "schema" : {
             "type" : "string"
           }
         } ],
@@ -6009,6 +6276,58 @@
             "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/ModelJustificationRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DocumentResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "document-authoring-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/sections/{sectionCode}/title" : {
+      "put" : {
+        "operationId" : "renameSection",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "documentType",
+          "required" : true,
+          "schema" : {
+            "enum" : [ "AVISO", "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "sectionCode",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RenameSectionRequest"
               }
             }
           },

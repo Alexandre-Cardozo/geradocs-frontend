@@ -8,6 +8,7 @@ import {
   paragrafoDeDispensa,
   podeGerar,
   progresso,
+  secoesPrincipais,
   statusAposDispensar,
   statusAposEditar,
 } from "@/lib/dominio"
@@ -161,5 +162,27 @@ describe("dispensa de seção", () => {
     // A justificativa é a porta de saída do § 2º, e ela não alcança os incisos
     // que o próprio § 2º torna indispensáveis.
     expect(podeGerar(lista)).toBe(false)
+  })
+})
+
+/** O subtópico complementa a seção-mãe e não conta como seção (ADR-061 do back-end). */
+describe("subtópicos", () => {
+  const base = { obrigatoria: false, origem: "servidor" as const, conteudo: "" }
+  const secoes = [
+    { ...base, id: "1", titulo: "Necessidade", status: "Completo" as const, origem: "catalogo" as const },
+    { ...base, id: "3", titulo: "Requisitos", status: "Não iniciado" as const, origem: "catalogo" as const },
+    { ...base, id: "3.1", titulo: "Convenção", status: "Não iniciado" as const, secaoPai: "3" },
+    { ...base, id: "3.2", titulo: "Habilitação", status: "Completo" as const, secaoPai: "3" },
+  ]
+
+  it("ficam fora das seções, mas contam no progresso", () => {
+    expect(secoesPrincipais(secoes).map((s) => s.id)).toEqual(["1", "3"])
+    // 2 de 4: o subtópico vai ao papel, e em branco é trabalho por fazer.
+    expect(progresso(secoes)).toBe(50)
+    expect(progresso(secoes.slice(2))).toBe(50)
+  })
+
+  it("sem seção nenhuma, o progresso é zero", () => {
+    expect(progresso([])).toBe(0)
   })
 })

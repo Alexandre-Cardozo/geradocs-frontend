@@ -564,6 +564,136 @@ describe("seções criadas pelo servidor", () => {
     expect(excluida).toContain("/sections/2.1")
     expect(ordem).toEqual(["2.2", "2.1"])
   })
+
+  it("renomear manda o título novo para a rota da seção", async () => {
+    let caminho = ""
+    let corpo: unknown
+    servidor.use(
+      http.put(
+        `${urlDaApi}/procurement-processes/:id/documents/:tipo/sections/:secao/title`,
+        async ({ request }) => {
+          caminho = new URL(request.url).pathname
+          corpo = await request.json()
+          return HttpResponse.json(documentoApi)
+        },
+      ),
+    )
+    const { renomearSecao } = await carregarClienteLimpo()
+
+    const documento = await renomearSecao(PROCESSO, "ETP", "1+1", "Memória de cálculo")
+
+    expect(caminho).toContain("/sections/1%2B1/title")
+    expect(corpo).toEqual({ title: "Memória de cálculo" })
+    expect(documento.tipo).toBe("ETP")
+  })
+})
+
+/** Os tópicos que os contextos da contratação exigem (ADR-061 do back-end). */
+describe("tópicos do contexto da contratação", () => {
+  const topicoApi = {
+    code: "CONVENCAO_COLETIVA",
+    title: "Convenção ou Acordo Coletivo de Trabalho Aplicável",
+    legalBasis: "Art. 135, II, Lei 14.133/21",
+    hint: "Indique a convenção.",
+    anchorSectionCode: "3",
+    contexts: ["Serviço com Condutor de Veículo"],
+  }
+
+  it("traduz os tópicos, diz onde o incluído está e marca a seção que veio dele", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id/documents/:tipo`, () =>
+        HttpResponse.json({
+          ...documentoApi,
+          sections: [
+            secaoApi("3", 3, false),
+            {
+              sectionCode: "3.1",
+              position: 4,
+              title: topicoApi.title,
+              legalBasis: topicoApi.legalBasis,
+              hint: topicoApi.hint,
+              required: false,
+              origin: "AD_HOC",
+              content: "",
+              resolved: false,
+              parentSectionCode: "3",
+            },
+            {
+              sectionCode: "3.2",
+              position: 5,
+              title: "Memória de cálculo",
+              required: false,
+              origin: "AD_HOC",
+              content: "",
+              resolved: false,
+            },
+          ],
+          contextTopics: [
+            { ...topicoApi, sectionCode: "3.1" },
+            { ...topicoApi, code: "HABILITACAO_DO_CONDUTOR", title: "Habilitação", sectionCode: null },
+          ],
+        }),
+      ),
+    )
+    const { abrirDocumento } = await carregarClienteLimpo()
+
+    const documento = await abrirDocumento(PROCESSO, "ETP")
+
+    expect(documento.topicosDoContexto).toEqual([
+      {
+        codigo: "CONVENCAO_COLETIVA",
+        titulo: "Convenção ou Acordo Coletivo de Trabalho Aplicável",
+        fundamentoLegal: "Art. 135, II, Lei 14.133/21",
+        orientacao: "Indique a convenção.",
+        ancora: "3",
+        contextos: ["Serviço com Condutor de Veículo"],
+        secao: "3.1",
+      },
+      {
+        codigo: "HABILITACAO_DO_CONDUTOR",
+        titulo: "Habilitação",
+        fundamentoLegal: "Art. 135, II, Lei 14.133/21",
+        orientacao: "Indique a convenção.",
+        ancora: "3",
+        contextos: ["Serviço com Condutor de Veículo"],
+      },
+    ])
+    // O tópico tem fundamento do catálogo curado; a criada à mão, não.
+    expect(documento.secoes.find((s) => s.id === "3.1")).toMatchObject({
+      origem: "servidor",
+      doContexto: true,
+      fundamentoLegal: "Art. 135, II, Lei 14.133/21",
+    })
+    expect(documento.secoes.find((s) => s.id === "3.2")?.doContexto).toBeUndefined()
+    // O subtópico diz a seção-mãe; a seção do catálogo não tem mãe.
+    expect(documento.secoes.find((s) => s.id === "3.1")?.secaoPai).toBe("3")
+    expect(documento.secoes.find((s) => s.id === "3")?.secaoPai).toBeUndefined()
+  })
+
+  it("documento sem contexto confirmado não tem tópico", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id/documents/:tipo`, () => HttpResponse.json(documentoApi)),
+    )
+    const { abrirDocumento } = await carregarClienteLimpo()
+
+    expect((await abrirDocumento(PROCESSO, "ETP")).topicosDoContexto).toEqual([])
+  })
+
+  it("incluir o tópico fala com a rota do tópico", async () => {
+    let caminho = ""
+    servidor.use(
+      http.post(`${urlDaApi}/procurement-processes/:id/documents/:tipo/context-topics/:codigo`, ({ request }) => {
+        caminho = new URL(request.url).pathname
+        return HttpResponse.json({ ...documentoApi, contextTopics: [{ ...topicoApi, sectionCode: "3.1" }] })
+      }),
+    )
+    const { incluirTopicoDoContexto } = await carregarClienteLimpo()
+
+    const documento = await incluirTopicoDoContexto(PROCESSO, "ETP", "CONVENCAO_COLETIVA")
+
+    expect(caminho).toContain("/documents/ETP/context-topics/CONVENCAO_COLETIVA")
+    expect(documento.topicosDoContexto[0]?.secao).toBe("3.1")
+  })
 })
 
 /**

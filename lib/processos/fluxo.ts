@@ -57,6 +57,7 @@ export const EVENTO_LABEL: Record<EventoProcesso, string> = {
   documento_baixado: "Documento Baixado",
   juntada_exportada: "Juntada Exportada",
   dfd_anexado: "DFD Anexado",
+  contextos_confirmados: "Contextos da Contratação",
 }
 
 /** A transição que sai de `de` sob `evento`, se existir. */

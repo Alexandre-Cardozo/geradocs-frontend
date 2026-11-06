@@ -25,6 +25,7 @@ import {
   removerFotoDePerfil,
 } from "@/lib/api/avatar-client"
 import { iaDisponivel } from "@/lib/api/ai-client"
+import { confirmarContextos, contextosDoProcesso } from "@/lib/api/contextos-client"
 import {
   desativarModelo,
   detalheDoModelo,
@@ -96,6 +97,7 @@ export const chaves = {
   timbre: (entidadeId: string | undefined) => ["timbre", entidadeId] as const,
   brasao: (entidadeId: string | undefined) => ["brasao", entidadeId] as const,
   trilha: (processoId: string) => ["trilha", processoId] as const,
+  contextos: (processoId: string) => ["contextos-da-contratacao", processoId] as const,
   auditoria: (params: api.ConsultaAuditoria) => ["auditoria", params] as const,
   servidoresDoOrgao: ["servidores-do-orgao"] as const,
   juntadas: (processoId?: string) => ["juntadas", processoId ?? "todas"] as const,
@@ -483,10 +485,10 @@ export function useCorpoDocumento(processoId: string, tipo: TipoDocumento) {
 }
 
 /**
- * Acrescentar, excluir e reordenar as seções que o servidor cria.
+ * Acrescentar, renomear, excluir e reordenar as seções que o servidor cria.
  *
- * As três invalidam as mesmas consultas porque mexem na mesma coisa — a
- * estrutura do documento — e separar as invalidações deixaria a tela mostrando
+ * Todas invalidam as mesmas consultas porque mexem na mesma coisa, a
+ * estrutura do documento, e separar as invalidações deixaria a tela mostrando
  * uma estrutura e o corpo de outra.
  */
 export function useEstruturaDoDocumento(processoId: string, tipo: TipoDocumento) {
@@ -509,7 +511,45 @@ export function useEstruturaDoDocumento(processoId: string, tipo: TipoDocumento)
       api.reordenarSecoesDoDocumento(processoId, tipo, secoesNaOrdem),
     onSuccess: invalidar,
   })
-  return { acrescentar, excluir, reordenar }
+  const renomear = useMutation({
+    mutationFn: (input: { secaoId: string; titulo: string }) =>
+      api.renomearSecaoDoDocumento(processoId, tipo, input.secaoId, input.titulo),
+    onSuccess: invalidar,
+  })
+  /** Restaura o subtópico de um contexto declarado que foi tirado (ADR-061). */
+  const incluirTopico = useMutation({
+    mutationFn: (codigo: string) => api.incluirTopicoDoContextoNoDocumento(processoId, tipo, codigo),
+    onSuccess: invalidar,
+  })
+  return { acrescentar, renomear, excluir, reordenar, incluirTopico }
+}
+
+/**
+ * Os contextos da contratação do processo (ADR-061): o que a plataforma sugere
+ * e o que o servidor confirmou.
+ */
+export function useContextosDaContratacao(processoId: string) {
+  return useQuery({
+    queryKey: chaves.contextos(processoId),
+    queryFn: () => contextosDoProcesso(processoId),
+    enabled: processoId !== "",
+  })
+}
+
+/**
+ * Confirma os contextos. Os documentos do processo passam a oferecer outros
+ * tópicos, e a confirmação entra na trilha: os dois são recarregados.
+ */
+export function useConfirmarContextos(processoId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (codigos: string[]) => confirmarContextos(processoId, codigos),
+    onSuccess: (contextos) => {
+      queryClient.setQueryData(chaves.contextos(processoId), contextos)
+      void queryClient.invalidateQueries({ queryKey: ["secoes", processoId] })
+      void queryClient.invalidateQueries({ queryKey: chaves.trilha(processoId) })
+    },
+  })
 }
 
 /** A demanda consolidada dos DFDs do processo. */

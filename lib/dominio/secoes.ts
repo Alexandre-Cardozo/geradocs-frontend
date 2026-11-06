@@ -27,7 +27,19 @@ export function concluidas(secoes: SecaoDocumento[]): SecaoDocumento[] {
   return secoes.filter((secao) => secao.status === "Completo")
 }
 
-/** Percentual inteiro de conclusão. Documento sem seção nenhuma é 0, não 100. */
+/**
+ * As seções do documento, sem os subtópicos (ADR-061 do back-end).
+ *
+ * O subtópico (3.1, 3.2) complementa a seção-mãe: não conta no "Seção N de M".
+ */
+export function secoesPrincipais(secoes: SecaoDocumento[]): SecaoDocumento[] {
+  return secoes.filter((secao) => secao.secaoPai === undefined)
+}
+
+/**
+ * Percentual inteiro de conclusão, das seções e dos subtópicos: o subtópico vai
+ * ao papel, e em branco é trabalho por fazer. Sem seção nenhuma é 0, não 100.
+ */
 export function progresso(secoes: SecaoDocumento[]): number {
   if (secoes.length === 0) return 0
   return Math.round((concluidas(secoes).length / secoes.length) * 100)

@@ -52,6 +52,8 @@ interface SecaoApi {
   /** As cláusulas da minuta que não estão no texto (ADR-055). */
   modelDeviation?: { clauses: number; missing: string[] } | null;
   modelDeviationJustification?: string | null;
+  /** A seção de que esta é subtópico (ADR-061); nula nas seções. */
+  parentSectionCode?: string | null;
 }
 
 interface ModeloApi {
@@ -102,6 +104,33 @@ interface DocumentoApi {
     objectText?: string | null;
     objectSource: string;
   };
+  /** Os tópicos que os contextos confirmados exigem (ADR-061). */
+  contextTopics?: {
+    code: string;
+    title: string;
+    legalBasis: string;
+    hint: string;
+    anchorSectionCode: string;
+    contexts: string[];
+    sectionCode?: string | null;
+  }[];
+}
+
+/**
+ * Um tópico que os contextos da contratação confirmados exigem do documento
+ * (ADR-061 do back-end): convenção coletiva, habilitação do condutor, etc.
+ */
+export interface TopicoExigido {
+  codigo: string;
+  titulo: string;
+  fundamentoLegal: string;
+  orientacao: string;
+  /** A seção do catálogo sob a qual ele entra, como subtópico. */
+  ancora: string;
+  /** Os contextos confirmados que o exigem. */
+  contextos: string[];
+  /** A seção em que já foi incluído; ausente enquanto não foi. */
+  secao?: string;
 }
 
 /**
@@ -158,6 +187,8 @@ export interface DocumentoEmElaboracao {
   /** A versão mais nova da minuta que o documento segue, quando a AGU publicou outra. */
   versaoMaisNova?: { codigo: string; versao: string; titulo: string; publicadoEm: string };
   abertura?: AberturaDoDocumento;
+  /** Os tópicos que os contextos confirmados exigem deste documento (ADR-061). */
+  topicosDoContexto: TopicoExigido[];
 }
 
 /** Texto de outro modelo, com a seção atual a que ele pertence. */
@@ -196,7 +227,7 @@ function status(secao: SecaoApi): StatusDocumento {
  * @param tipo necessário para achar o painel do editor: ele é declarado no
  *             catálogo da tela, não no contrato, e a junção é pelo código
  */
-function mapearSecao(secao: SecaoApi, tipo: TipoDocumento): SecaoDocumento {
+function mapearSecao(secao: SecaoApi, tipo: TipoDocumento, doContexto: Set<string>): SecaoDocumento {
   // Seção criada pelo servidor não tem painel: painel assiste inciso da lei,
   // e a lei não conhece a seção que ele inventou.
   const painel =
@@ -209,6 +240,10 @@ function mapearSecao(secao: SecaoApi, tipo: TipoDocumento): SecaoDocumento {
     status: status(secao),
     obrigatoria: secao.required,
     origem: secao.origin === "AD_HOC" ? "servidor" : "catalogo",
+    // O tópico de contexto é seção do servidor com fundamento do catálogo
+    // curado (ADR-061): a tela o distingue da criada à mão.
+    ...(doContexto.has(secao.sectionCode) ? { doContexto: true } : {}),
+    ...(secao.parentSectionCode ? { secaoPai: secao.parentSectionCode } : {}),
     conteudo: secao.content,
     ...(secao.hint ? { hint: secao.hint } : {}),
     ...(secao.legalBasis ? { fundamentoLegal: secao.legalBasis } : {}),
@@ -240,6 +275,8 @@ function mapearAbertura(abertura: NonNullable<DocumentoApi["opening"]>): Abertur
 }
 
 function mapear(documento: DocumentoApi, tipo: TipoDocumento): DocumentoEmElaboracao {
+  const topicos = documento.contextTopics ?? [];
+  const doContexto = new Set(topicos.flatMap((topico) => (topico.sectionCode ? [topico.sectionCode] : [])));
   return {
     processoId: documento.processId,
     tipo,
@@ -254,7 +291,9 @@ function mapear(documento: DocumentoApi, tipo: TipoDocumento): DocumentoEmElabor
     podeGerar: documento.canGenerate,
     // Ordenadas pela posição do catálogo: é a ordem em que o documento sai
     // impresso, e não a ordem em que o banco devolveu.
-    secoes: [...documento.sections].sort((a, b) => a.position - b.position).map((secao) => mapearSecao(secao, tipo)),
+    secoes: [...documento.sections]
+      .sort((a, b) => a.position - b.position)
+      .map((secao) => mapearSecao(secao, tipo, doContexto)),
     pendentes: documento.pendingRequiredSections,
     lacunas: documento.silentGaps,
     corpo: documento.body.map((bloco) => ({
@@ -304,6 +343,15 @@ function mapear(documento: DocumentoApi, tipo: TipoDocumento): DocumentoEmElabor
         }
       : {}),
     ...(documento.opening ? { abertura: mapearAbertura(documento.opening) } : {}),
+    topicosDoContexto: topicos.map((topico) => ({
+      codigo: topico.code,
+      titulo: topico.title,
+      fundamentoLegal: topico.legalBasis,
+      orientacao: topico.hint,
+      ancora: topico.anchorSectionCode,
+      contextos: topico.contexts,
+      ...(topico.sectionCode ? { secao: topico.sectionCode } : {}),
+    })),
   };
 }
 
@@ -690,6 +738,25 @@ export async function acrescentarSecao(
   );
 }
 
+/**
+ * Restaura o tópico exigido por um contexto declarado que o servidor tirou do
+ * documento (ADR-061), como subtópico da âncora, com o fundamento e a
+ * orientação do catálogo.
+ */
+export async function incluirTopicoDoContexto(
+  processoId: string,
+  tipo: TipoDocumento,
+  codigo: string,
+): Promise<DocumentoEmElaboracao> {
+  return mapear(
+    await requisicaoProtegida<DocumentoApi>(
+      `${rota(processoId, tipo)}/context-topics/${encodeURIComponent(codigo)}`,
+      { method: "POST" },
+    ),
+    tipo,
+  );
+}
+
 /** Exclui uma seção criada pelo servidor. As do catálogo têm a dispensa. */
 export async function excluirSecao(
   processoId: string,
@@ -700,6 +767,22 @@ export async function excluirSecao(
     await requisicaoProtegida<DocumentoApi>(
       `${rota(processoId, tipo)}/sections/${encodeURIComponent(secaoId)}`,
       { method: "DELETE" },
+    ),
+    tipo,
+  );
+}
+
+/** Troca o título de uma seção acrescentada; o código e o texto ficam. */
+export async function renomearSecao(
+  processoId: string,
+  tipo: TipoDocumento,
+  secaoId: string,
+  titulo: string,
+): Promise<DocumentoEmElaboracao> {
+  return mapear(
+    await requisicaoProtegida<DocumentoApi>(
+      `${rota(processoId, tipo)}/sections/${encodeURIComponent(secaoId)}/title`,
+      { method: "PUT", body: JSON.stringify({ title: titulo }) },
     ),
     tipo,
   );
