@@ -2765,7 +2765,7 @@ export interface operations {
     listBundles: {
         parameters: {
             query?: {
-                processId?: string;
+                processId?: null | string;
             };
             header?: never;
             path?: never;
@@ -3407,7 +3407,7 @@ export interface operations {
                 page?: number;
                 search?: string;
                 size?: number;
-                stage?: "CLOSED" | "DRAFT" | "IN_PROGRESS" | "READY_TO_CLOSE";
+                stage?: "CLOSED" | "DRAFT" | "IN_PROGRESS" | "READY_TO_CLOSE" | null;
                 status?: "CLOSED" | "DRAFT";
             };
             header?: never;

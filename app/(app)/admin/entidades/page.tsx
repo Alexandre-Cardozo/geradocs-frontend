@@ -17,6 +17,7 @@ import {
 import { erroLimiteDeUsuarios, limiteDeUsuariosAtingido } from "@/lib/dominio/entidade";
 import { TIPO_ENTIDADE_LABEL, type Tenant, type TipoEntidade } from "@/lib/types";
 import { erroNomeInstitucional } from "@/lib/validacao/campos";
+import { SEM_VALOR } from "@/lib/format";
 
 const TIPOS = Object.entries(TIPO_ENTIDADE_LABEL).map(([value, label]) => ({ value, label }));
 
@@ -116,7 +117,7 @@ export default function AdminEntidades() {
 
   const usoDoPlano = (entidade: Tenant) =>
     entidade.limiteUsuarios === undefined
-      ? "—"
+      ? SEM_VALOR
       : `${entidade.usuariosAtivos ?? 0} de ${entidade.limiteUsuarios}`;
 
   return (

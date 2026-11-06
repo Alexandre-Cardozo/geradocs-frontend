@@ -3703,7 +3703,7 @@
           "required" : false,
           "schema" : {
             "format" : "uuid",
-            "type" : "string"
+            "type" : [ "null", "string" ]
           }
         } ],
         "responses" : {
@@ -4553,7 +4553,7 @@
           "required" : false,
           "schema" : {
             "enum" : [ "CLOSED", "DRAFT", "IN_PROGRESS", "READY_TO_CLOSE" ],
-            "type" : "string"
+            "type" : [ "null", "string" ]
           }
         }, {
           "in" : "query",
