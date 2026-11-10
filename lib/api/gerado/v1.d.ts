@@ -1548,6 +1548,7 @@ export interface components {
         };
         ConsolidatedItemView: {
             byDepartment: components["schemas"]["DepartmentDemandView"][];
+            catalogCode?: string;
             description: string;
             summable: boolean;
             total: number;
@@ -1647,6 +1648,7 @@ export interface components {
             items: components["schemas"]["ConsolidatedItemView"][];
         };
         DemandItemRequest: {
+            catalogCode?: string;
             /** Format: int32 */
             deliveryDays?: number;
             description: string;
@@ -1656,6 +1658,7 @@ export interface components {
             unitPrice?: number;
         };
         DemandItemView: {
+            catalogCode?: string;
             /** Format: int32 */
             deliveryDays?: number;
             description: string;
@@ -1913,7 +1916,7 @@ export interface components {
         IncongruenceView: {
             itemDescription: string;
             /** @enum {string} */
-            kind: "DELIVERY_DEADLINE" | "SPECIFICATION" | "UNIT" | "UNIT_PRICE";
+            kind: "CATALOG_CODE" | "DELIVERY_DEADLINE" | "SPECIFICATION" | "UNIT" | "UNIT_PRICE";
             values: components["schemas"]["DivergentValueView"][];
         };
         Item: {

@@ -1371,3 +1371,11 @@ Os ETP, TR e pesquisas de preços dos órgãos trazem a memória de cálculo em 
   - a citação do PCA vem do servidor no mesmo formato.
 - **O que a estimativa relê continua legível.** A frase "Adotou-se como método de apuração a ..." fica fora da tabela, e a origem do preço traz o método por extenso na célula, que `metodoCitado` lê e `memoriaEmDia` troca como antes.
 - **O Aviso de Contratação Direta ganhou o painel de valor** em "Do Valor Estimado", como o ETP e o TR. O sigilo do orçamento continua possível, porque o texto é livre.
+
+## 101. A tabela se edita em grade, leva o CATMAT/CATSER e é conferida depois da IA
+
+Continuação do §100, com a ADR-063 do back-end:
+
+- **Editor de tabela** (`TabelasDaSecao`). Embaixo do campo de texto de toda seção, inclusive os dos painéis, uma linha compacta: "Tabelas", um "Editar tabela N" por tabela do texto e "Inserir tabela". O editor abre ali mesmo, em grade: cabeçalho e linhas, acrescentar linha e coluna, tirar linha (enquanto sobra uma além do cabeçalho) e coluna (enquanto sobram duas). "Salvar tabela" devolve ao texto no formato de sempre; "Inserir no texto" põe a nova no fim, entre linhas em branco; excluir pede confirmação. O texto da seção só grava com o salvar da seção, como qualquer edição. As regras moram em `lib/dominio/tabela.ts` (`tabelasDoTexto`, `substituirTabela`, `inserirTabela`, `problemaDaTabela`).
+- **CATMAT/CATSER no item do DFD.** Campo opcional no formulário de itens, só dígitos e até nove. Aparece sob o nome do item na lista, na consolidação e no painel de quantidades, e vira coluna nas memórias de quantidade e de valor quando algum item o tem. Códigos diferentes para o mesmo item entram nas incongruências da consolidação.
+- **O que a IA devolve é conferido.** `avisoDasTabelas` compara as tabelas antes e depois: na revisão com IA, a sugestão que muda ou tira tabela vem com aviso; no "Gerar com IA", o aviso sai assim que a resposta chega. Não trava nada: a revisão pode corrigir um número de propósito, e quem decide é quem assina.

@@ -812,6 +812,26 @@ describe("listarDfds — data prevista e ficha da secretaria", () => {
     })
   })
 
+  it("traz o CATMAT/CATSER do item, e o item sem código fica sem ele", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id/dfds`, () =>
+        HttpResponse.json([
+          {
+            ...base,
+            items: [
+              { description: "Papel A4", unit: "RESMA", quantity: 10, catalogCode: "461777" },
+              { description: "Caneta", unit: "UN", quantity: 5 },
+            ],
+          },
+        ]),
+      ),
+    )
+    const { listarDfds } = await carregarClienteLimpo()
+
+    const [dfd] = await listarDfds(PROCESSO)
+    expect(dfd?.itens.map((item) => item.codigoCatalogo)).toEqual(["461777", undefined])
+  })
+
   it("sem os campos novos (servidor anterior), vira ausência", async () => {
     servidor.use(http.get(`${urlDaApi}/procurement-processes/:id/dfds`, () => HttpResponse.json([base])))
     const { listarDfds } = await carregarClienteLimpo()
@@ -873,6 +893,22 @@ describe("atualizarItensDoDfd", () => {
     // conta os dois de formas diferentes.
     expect(corpo.items?.[0]?.unitPrice).toBeNull()
     expect((corpo as { expectedCompletionDate?: string | null }).expectedCompletionDate).toBeNull()
+    // Sem CATMAT/CATSER, o campo vai nulo (ADR-063 do back-end).
+    expect(corpo.items?.[0]?.catalogCode).toBeNull()
+  })
+
+  it("manda o CATMAT/CATSER quando ele foi informado", async () => {
+    const corpo = capturar()
+    const { atualizarItensDoDfd } = await carregarClienteLimpo()
+
+    await atualizarItensDoDfd(
+      PROCESSO,
+      "d-1",
+      [{ descricao: "Papel A4", unidade: "RESMA", quantidade: "1", codigoCatalogo: " 461777 " }],
+      null,
+    )
+
+    expect(corpo.items?.[0]?.catalogCode).toBe("461777")
   })
 })
 

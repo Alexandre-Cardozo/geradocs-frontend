@@ -1,6 +1,18 @@
 import { describe, expect, it } from "vitest"
 
-import { colunaNumerica, linhaTotalizadora, partesDoTexto, tabelaEmTexto } from "./tabela"
+import {
+  avisoDasTabelas,
+  colunaNumerica,
+  inserirTabela,
+  linhaTotalizadora,
+  partesDoTexto,
+  problemaDaTabela,
+  substituirTabela,
+  tabelaEmBranco,
+  tabelaEmTexto,
+  tabelasDoTexto,
+  tabelasNaoMantidas,
+} from "./tabela"
 
 describe("partesDoTexto", () => {
   it("texto sem barra continua um parágrafo por linha", () => {
@@ -128,5 +140,113 @@ describe("linhas com barra que não formam tabela", () => {
       { tipo: "paragrafo", texto: "|---|" },
       { tipo: "paragrafo", texto: "Depois" },
     ])
+  })
+})
+
+describe("o editor de tabela (§101)", () => {
+  const texto = "Abertura.\n\nA | B\n1 | 2\n\nFonte: X | Y\n\nC | D | E\n\nFim."
+
+  it("acha cada tabela e o trecho do texto que ela ocupa", () => {
+    expect(tabelasDoTexto(texto)).toEqual([
+      {
+        inicio: 2,
+        fim: 4,
+        linhas: [
+          ["A", "B"],
+          ["1", "2"],
+        ],
+      },
+      { inicio: 7, fim: 8, linhas: [["C", "D", "E"]] },
+    ])
+    // A tabela que abre o texto também.
+    expect(tabelasDoTexto("A | B | C\nx")).toEqual([{ inicio: 0, fim: 1, linhas: [["A", "B", "C"]] }])
+  })
+
+  it("troca só a tabela escolhida, e o resto fica como estava", () => {
+    expect(
+      substituirTabela(texto, 0, [
+        ["A", "B"],
+        ["3", "4"],
+        ["5", "6"],
+      ]),
+    ).toBe("Abertura.\n\nA | B\n3 | 4\n5 | 6\n\nFonte: X | Y\n\nC | D | E\n\nFim.")
+    expect(substituirTabela(texto, 5, [["x", "y"]])).toBe(texto)
+  })
+
+  it("tirar a tabela leva junto a linha em branco que a separava", () => {
+    expect(substituirTabela(texto, 0, null)).toBe("Abertura.\n\nFonte: X | Y\n\nC | D | E\n\nFim.")
+    expect(substituirTabela("A | B\n1 | 2\n\nFim.", 0, null)).toBe("Fim.")
+    expect(substituirTabela("Fim.\n\nA | B\n1 | 2", 0, null)).toBe("Fim.")
+    expect(substituirTabela("Fim.\nA | B\n1 | 2\nDepois", 0, null)).toBe("Fim.\nDepois")
+  })
+
+  it("insere no fim, ou depois da linha do cursor, sempre entre linhas em branco", () => {
+    const nova = [
+      ["X", "Y"],
+      ["1", "2"],
+    ]
+    expect(inserirTabela("", nova)).toBe("X | Y\n1 | 2")
+    expect(inserirTabela("Texto.", nova)).toBe("Texto.\n\nX | Y\n1 | 2")
+    expect(inserirTabela("Texto.\n", nova)).toBe("Texto.\n\nX | Y\n1 | 2")
+    expect(inserirTabela("Um.\nDois.", nova, 1)).toBe("Um.\n\nX | Y\n1 | 2\n\nDois.")
+    expect(inserirTabela("Um.\n\nDois.", nova, 1)).toBe("Um.\n\nX | Y\n1 | 2\n\nDois.")
+  })
+
+  it("com o cursor dentro de outra tabela, entra depois dela em vez de parti-la", () => {
+    const comTabela = "A | B\n1 | 2\n3 | 4\nFim."
+    expect(
+      inserirTabela(
+        comTabela,
+        [
+          ["X", "Y"],
+          ["5", "6"],
+        ],
+        7,
+      ),
+    ).toBe("A | B\n1 | 2\n3 | 4\n\nX | Y\n5 | 6\n\nFim.")
+    expect(
+      tabelasDoTexto(
+        inserirTabela(
+          comTabela,
+          [
+            ["X", "Y"],
+            ["5", "6"],
+          ],
+          7,
+        ),
+      ),
+    ).toHaveLength(2)
+  })
+
+  it("a tabela nova vem com cabeçalho a renomear, e o editor recusa o que não seria tabela", () => {
+    expect(problemaDaTabela(tabelaEmBranco())).toBeNull()
+    expect(problemaDaTabela([["Só uma"], [""]])).toMatch(/duas colunas/)
+    expect(problemaDaTabela([])).toMatch(/duas colunas/)
+    expect(problemaDaTabela([["A", "B"]])).toMatch(/uma linha além do cabeçalho/)
+    expect(
+      problemaDaTabela([
+        [" ", ""],
+        ["1", "2"],
+      ]),
+    ).toMatch(/nome às colunas/)
+  })
+})
+
+describe("a conferência das tabelas que a IA devolve (§101)", () => {
+  const antes = "Memória:\n\nItem | Total\nPapel | R$ 10,00\n\nA | B\n1 | 2"
+
+  it("tabela mantida igual, mesmo com o texto em volta reescrito, não avisa", () => {
+    expect(avisoDasTabelas(antes, "Texto revisto.\n\nA | B\n1 | 2\n\nItem | Total\nPapel | R$ 10,00")).toBeNull()
+    expect(avisoDasTabelas("Sem tabela.", "Outro texto.")).toBeNull()
+  })
+
+  it("número mudado ou tabela tirada avisa, uma ou várias", () => {
+    expect(tabelasNaoMantidas(antes, "Item | Total\nPapel | R$ 11,00\n\nA | B\n1 | 2")).toBe(1)
+    expect(avisoDasTabelas(antes, "Item | Total\nPapel | R$ 11,00\n\nA | B\n1 | 2")).toMatch(
+      /alterou ou tirou 1 tabela /,
+    )
+    expect(avisoDasTabelas(antes, "Tudo em texto corrido.")).toMatch(/alterou ou tirou 2 tabelas/)
+    // Duas tabelas iguais em antes contam as duas: uma só em depois não cobre ambas.
+    expect(tabelasNaoMantidas("A | B\n1 | 2\n\nA | B\n1 | 2", "A | B\n1 | 2")).toBe(1)
   })
 })

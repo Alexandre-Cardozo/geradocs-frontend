@@ -87,7 +87,7 @@ export function FormularioDeNorma({
           value={dados.observacao}
           onChange={(e) => alterar("observacao", e.target.value)}
           rows={2}
-          placeholder="Opcional. Ex.: aplica-se somente às contratações de obras."
+          placeholder="Ex.: aplica-se somente às contratações de obras."
         />
         {tentou && erros.observacao && <ValidationMsg type="error" msg={erros.observacao} />}
       </FormField>

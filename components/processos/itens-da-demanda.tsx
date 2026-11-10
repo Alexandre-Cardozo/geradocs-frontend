@@ -201,6 +201,11 @@ export function ItensDaDemanda({ processoId }: { processoId: string }) {
                       <tr key={chave} className="border-b border-border-soft last:border-b-0">
                         <td className="px-2.5 py-2 font-medium text-text-1">
                           {vinculado.item.descricao}
+                          {vinculado.item.codigoCatalogo && (
+                            <span className="block font-mono text-2xs font-normal text-text-muted">
+                              CATMAT/CATSER {vinculado.item.codigoCatalogo}
+                            </span>
+                          )}
                         </td>
                         <td className="px-2.5 py-2 text-xs text-text-3">
                           {/* Unidade fora da lista aparece como foi gravada. */}
@@ -299,6 +304,7 @@ function FormularioDoItem({
   const [unidade, setUnidade] = useState(inicial?.item.unidade ?? "")
   const [quantidade, setQuantidade] = useState(inicial?.item.quantidade ?? "")
   const [valorUnitario, setValorUnitario] = useState(inicial?.item.valorUnitario ?? "")
+  const [codigoCatalogo, setCodigoCatalogo] = useState(inicial?.item.codigoCatalogo ?? "")
   // Com um DFD só não há escolha a fazer, e deixar o campo em branco seria
   // pedir à pessoa que confirmasse o óbvio.
   const [dfdId, setDfdId] = useState(inicial?.dfd.id ?? (dfds.length === 1 ? dfds[0]!.id : ""))
@@ -339,12 +345,12 @@ function FormularioDoItem({
         <FormField label="Quantidade" required>
           <QuantityInput value={quantidade} onChange={setQuantidade} />
         </FormField>
-        <FormField label="Valor unitário" hint="Opcional.">
+        <FormField label="Valor unitário">
           <MoneyInput value={valorUnitario} onChange={setValorUnitario} />
         </FormField>
       </div>
 
-      <div className="mt-2.5 max-w-md">
+      <div className="mt-2.5 grid grid-cols-1 items-start gap-2.5 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <FormField label="DFD em que foi pedido" required>
           <Dropdown
             value={dfdId}
@@ -357,6 +363,19 @@ function FormularioDoItem({
                 label: `${dfd.nomeDoArquivo} · ${dfd.secretaria}`,
               })),
             ]}
+          />
+        </FormField>
+        {/*
+          O código do catálogo federal: CATMAT (material) ou CATSER (serviço).
+          É a coluna que a minuta da AGU pede na tabela do objeto, e o que o
+          Painel de Preços usa para achar o mesmo item. Só dígitos, até nove.
+        */}
+        <FormField label="CATMAT/CATSER">
+          <Input
+            value={codigoCatalogo}
+            onChange={(e) => setCodigoCatalogo(e.target.value.replace(/\D/g, "").slice(0, 9))}
+            inputMode="numeric"
+            placeholder="Ex: 461777"
           />
         </FormField>
       </div>
@@ -380,6 +399,7 @@ function FormularioDoItem({
                 quantidade,
                 // Vazio é "não estimado", e não zero: zero é um preço.
                 ...(valorUnitario === "" ? {} : { valorUnitario }),
+                ...(codigoCatalogo === "" ? {} : { codigoCatalogo }),
               },
               destino,
             )

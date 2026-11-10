@@ -1,7 +1,7 @@
 import { HttpResponse, http } from "msw"
 import { describe, expect, it, vi } from "vitest"
 
-import { PainelDaSecao } from "@/components/documentos/paineis"
+import { PainelDaSecao, memoriaDoValor } from "@/components/documentos/paineis"
 import { secoesPorTipoBase } from "@/lib/documentos"
 import { metodoCitado } from "@/lib/dominio/estimativa"
 import { partesDoTexto } from "@/lib/dominio/tabela"
@@ -101,6 +101,51 @@ describe("painel de quantidades", () => {
     expect(screen.getByText(/Educação: 1\.200,00/)).toBeInTheDocument()
     expect(screen.getByText("1.500,00")).toBeInTheDocument()
     expect(screen.getByText("Resma (RESMA)")).toBeInTheDocument()
+  })
+
+  it("com CATMAT/CATSER informado, a memória ganha a coluna do código", async () => {
+    comConsolidacao([
+      {
+        description: "Papel A4",
+        unit: "RESMA",
+        total: 150,
+        summable: true,
+        catalogCode: "461777",
+        byDepartment: [
+          { departmentName: "Educação", quantity: 100, unit: "RESMA" },
+          { departmentName: "Saúde", quantity: 50, unit: "RESMA" },
+        ],
+      },
+      {
+        description: "Caneta",
+        unit: "UN",
+        total: 10,
+        summable: false,
+        byDepartment: [
+          { departmentName: "Educação", quantity: 5, unit: "UN" },
+          { departmentName: "Saúde", quantity: 5, unit: "CX" },
+        ],
+      },
+    ])
+    const { setRascunho } = renderizarPainel("quantidades")
+
+    // O código aparece também na tabela do painel, sob o nome do item.
+    expect(await screen.findByText("CATMAT/CATSER 461777")).toBeInTheDocument()
+    await userEvent.click(await screen.findByRole("button", { name: /a partir dos DFDs/ }))
+
+    const texto = setRascunho.mock.calls[0]?.[0] as string
+    expect(partesDoTexto(texto)).toContainEqual({
+      tipo: "tabela",
+      linhas: [
+        ["Item", "CATMAT/CATSER", "Secretaria", "Quantidade", "Unidade"],
+        ["Papel A4", "461777", "Educação", "100,00", "RESMA"],
+        ["Papel A4", "461777", "Saúde", "50,00", "RESMA"],
+        ["Total de Papel A4", "", "", "150,00", "RESMA"],
+        ["Caneta", "", "Educação", "5,00", "UN"],
+        ["Caneta", "", "Saúde", "5,00", "CX"],
+        ["Total de Caneta", "", "não somável: as secretarias usaram unidades diferentes", "", ""],
+      ],
+    })
   })
 
   it("unidades divergentes não viram um total somado", async () => {
@@ -552,5 +597,34 @@ describe("o valor apurado na pesquisa", () => {
     ])
     expect(tabela?.tipo === "tabela" && tabela.linhas.at(-1)?.[0]).toBe("Total")
     expect(metodoCitado(texto)).toBe("media")
+  })
+})
+
+describe("a memória do valor com CATMAT/CATSER", () => {
+  it("abre a coluna do código só quando algum item o tem", () => {
+    const comCodigo = memoriaDoValor(
+      [
+        { descricao: "Papel A4", unidade: "RESMA", quantidade: "10", valorUnitario: "25,00", codigoCatalogo: "461777" },
+        { descricao: "Caneta", unidade: "UN", quantidade: "5", valorUnitario: "2,00" },
+      ],
+      260,
+      0,
+      "Painel de Preços",
+    )
+    const tabela = partesDoTexto(comCodigo).find((parte) => parte.tipo === "tabela")
+    expect(tabela?.tipo === "tabela" && tabela.linhas.map((linha) => linha[1])).toEqual([
+      "CATMAT/CATSER",
+      "461777",
+      "",
+      "",
+    ])
+
+    const semCodigo = memoriaDoValor(
+      [{ descricao: "Caneta", unidade: "UN", quantidade: "5", valorUnitario: "2,00" }],
+      10,
+      0,
+      "Painel de Preços",
+    )
+    expect(semCodigo).not.toContain("CATMAT")
   })
 })

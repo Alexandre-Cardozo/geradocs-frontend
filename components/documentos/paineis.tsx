@@ -38,6 +38,7 @@ import { tabelaEmTexto } from "@/lib/dominio/tabela"
 import { rotuloDaUnidade } from "@/lib/dominio/unidades"
 import { formatBRL, formatNumeroBR, parseValorBR, SEM_VALOR } from "@/lib/format"
 import type { ModoATA, PainelSecao, Processo, SecaoDocumento } from "@/lib/types"
+import { TabelasDaSecao } from "@/components/documentos/tabelas-da-secao"
 
 /**
  * Painéis especiais do editor de documentos.
@@ -117,6 +118,7 @@ function PainelNecessidade({
             placeholder="Descreva o problema a ser resolvido, e não a solução pretendida..."
           />
         </FormField>
+        <TabelasDaSecao texto={rascunho} onChange={setRascunho} />
 
         <CaminhosDaSecao
           gerando={gerando}
@@ -229,6 +231,9 @@ function PainelQuantidades({
             placeholder="Ex: Quantidade estimada com base no levantamento realizado junto às 30 unidades escolares da rede municipal. Média de 5 equipamentos por unidade, considerando substituição de equipamentos com mais de 8 anos de uso..."
           />
         </FormField>
+        <div className="mt-2">
+          <TabelasDaSecao texto={rascunho} onChange={setRascunho} />
+        </div>
       </div>
 
       <div className="mt-4">
@@ -273,7 +278,14 @@ function TabelaDeQuantidades({ itens }: { itens: ItemConsolidado[] }) {
         <tbody>
           {itens.map((item) => (
             <tr key={item.descricao} className="border-t border-border-soft">
-              <td className="px-2.5 py-2 font-medium text-text-1">{item.descricao}</td>
+              <td className="px-2.5 py-2 font-medium text-text-1">
+                {item.descricao}
+                {item.codigoCatalogo && (
+                  <span className="block font-mono text-2xs font-normal text-text-muted">
+                    CATMAT/CATSER {item.codigoCatalogo}
+                  </span>
+                )}
+              </td>
               <td className="px-2.5 py-2 text-xs text-text-3">{rotuloDaUnidade(item.unidade)}</td>
               <td className="px-2.5 py-2 text-xs text-text-3">
                 {item.porSecretaria
@@ -306,20 +318,35 @@ export function memoriaDasQuantidades(itens: ItemConsolidado[]): string {
   // Em tabela (§100): uma linha por pedido de secretaria e, quando mais de uma
   // pediu o mesmo item, a linha do total dele. Unidades divergentes não somam,
   // e a linha do total diz isso em vez de afirmar um número.
+  // A coluna do CATMAT/CATSER só entra quando algum item o tem (ADR-063 do back-end).
+  const comCodigo = itens.some((item) => item.codigoCatalogo)
+  const codigo = (item: ItemConsolidado) => (comCodigo ? [item.codigoCatalogo ?? ""] : [])
   const linhas = itens.flatMap((item) => [
-    ...item.porSecretaria.map((o) => [item.descricao, o.secretaria, formatNumeroBR(o.quantidade), o.unidade]),
+    ...item.porSecretaria.map((o) => [
+      item.descricao,
+      ...codigo(item),
+      o.secretaria,
+      formatNumeroBR(o.quantidade),
+      o.unidade,
+    ]),
     ...(item.porSecretaria.length > 1
       ? [
           item.somavel
-            ? [`Total de ${item.descricao}`, "", formatNumeroBR(item.total), item.unidade]
-            : [`Total de ${item.descricao}`, "não somável: as secretarias usaram unidades diferentes", "", ""],
+            ? [`Total de ${item.descricao}`, ...(comCodigo ? [""] : []), "", formatNumeroBR(item.total), item.unidade]
+            : [
+                `Total de ${item.descricao}`,
+                ...(comCodigo ? [""] : []),
+                "não somável: as secretarias usaram unidades diferentes",
+                "",
+                "",
+              ],
         ]
       : []),
   ])
   return [
     "As quantidades abaixo resultam da consolidação dos Documentos de Formalização de Demanda "
       + "apresentados pelas secretarias requisitantes:",
-    tabelaEmTexto([["Item", "Secretaria", "Quantidade", "Unidade"], ...linhas]),
+    tabelaEmTexto([["Item", ...(comCodigo ? ["CATMAT/CATSER"] : []), "Secretaria", "Quantidade", "Unidade"], ...linhas]),
     "[Descrever o critério que fundamenta as quantidades (histórico de consumo, demanda "
       + "projetada, número de unidades atendidas) e os documentos que lhe dão suporte.]",
   ].join("\n\n")
@@ -477,6 +504,9 @@ function PainelValor({
             placeholder="Ex: Valor de referência apurado pela mediana de 5 preços coletados no PNCP entre 01/06 e 15/06, descartado 1 preço excessivamente elevado..."
           />
         </FormField>
+        <div className="mt-2">
+          <TabelasDaSecao texto={rascunho} onChange={setRascunho} />
+        </div>
       </div>
 
       <AvisoDaMemoria
@@ -518,6 +548,7 @@ function PainelValor({
                           valorUnitario: item.valorUnitario,
                           precoApurado: item.precoApurado,
                           precosColetados: item.precosColetados,
+                          ...(item.codigoCatalogo ? { codigoCatalogo: item.codigoCatalogo } : {}),
                         })),
                         total,
                         valorDeclarado,
@@ -575,6 +606,7 @@ export function memoriaDoValor(
     valorUnitario?: string
     precoApurado?: number | null
     precosColetados?: number
+    codigoCatalogo?: string
   }>,
   total: number,
   declarado: number,
@@ -584,6 +616,7 @@ export function memoriaDoValor(
   // Em tabela (§100). A origem de cada preço fica na linha dele, com a frase
   // do método por extenso: é ela que a estimativa relê (metodoCitado) e troca
   // quando o método do processo muda (memoriaEmDia).
+  const comCodigo = itens.some((item) => item.codigoCatalogo)
   const linhas = itens.map((item) => {
     const unitario = item.precoApurado ?? parseValorBR(item.valorUnitario ?? "0")
     const subtotal = parseValorBR(item.quantidade) * unitario
@@ -591,7 +624,15 @@ export function memoriaDoValor(
       item.precoApurado != null
         ? `${ROTULO_DO_METODO[metodo].toLowerCase()} de ${item.precosColetados} preço(s) coletado(s)`
         : "estimativa preliminar do DFD"
-    return [item.descricao, item.quantidade, item.unidade, formatBRL(unitario), origem, formatBRL(subtotal)]
+    return [
+      item.descricao,
+      ...(comCodigo ? [item.codigoCatalogo ?? ""] : []),
+      item.quantidade,
+      item.unidade,
+      formatBRL(unitario),
+      origem,
+      formatBRL(subtotal),
+    ]
   })
   const daPesquisa = itens.filter((item) => item.precoApurado != null).length
   const partes = [
@@ -602,9 +643,17 @@ export function memoriaDoValor(
       : "O valor estimado da contratação resulta dos preços unitários referenciais aplicados às "
         + "quantidades consolidadas dos Documentos de Formalização de Demanda:",
     tabelaEmTexto([
-      ["Item", "Quantidade", "Unidade", "Preço unitário", "Origem do preço", "Valor total"],
+      [
+        "Item",
+        ...(comCodigo ? ["CATMAT/CATSER"] : []),
+        "Quantidade",
+        "Unidade",
+        "Preço unitário",
+        "Origem do preço",
+        "Valor total",
+      ],
       ...linhas,
-      ["Total", "", "", "", "", formatBRL(total)],
+      ["Total", ...(comCodigo ? [""] : []), "", "", "", "", formatBRL(total)],
     ]),
     `Valor total estimado: ${formatBRL(total)}.`,
     ...(daPesquisa < itens.length
