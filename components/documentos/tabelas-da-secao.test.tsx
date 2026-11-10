@@ -25,7 +25,7 @@ const campo = () => screen.getByLabelText("Texto da seção") as HTMLTextAreaEle
 
 /** O editor de tabela da seção (§101): grade que devolve ao texto no formato de sempre. */
 describe("editor de tabela da seção", () => {
-  it("insere uma tabela nova no fim do texto, entre linhas em branco", async () => {
+  it("insere uma tabela nova no fim do texto, sem linha em branco (§102)", async () => {
     renderizar(<ComTexto inicial="Texto da seção." />)
 
     await userEvent.click(screen.getByRole("button", { name: "Inserir tabela" }))
@@ -35,7 +35,7 @@ describe("editor de tabela da seção", () => {
     await userEvent.type(screen.getByLabelText("Linha 1, coluna 1"), "Papel A4")
     await userEvent.click(screen.getByRole("button", { name: "Inserir no texto" }))
 
-    expect(campo().value).toBe("Texto da seção.\n\nItem | Coluna 2 | Coluna 3\nPapel A4 |  | ")
+    expect(campo().value).toBe("Texto da seção.\nItem | Coluna 2 | Coluna 3\nPapel A4 |  | ")
     // De volta à linha compacta, agora com a tabela para editar.
     expect(screen.getByRole("button", { name: "Editar tabela 1" })).toBeInTheDocument()
   })

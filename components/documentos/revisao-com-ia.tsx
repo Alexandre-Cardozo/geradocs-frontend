@@ -8,7 +8,7 @@ import { useToast } from "@/components/shared/providers"
 import { useAtualizarSecao, useIaDisponivel, useRevisarSecao } from "@/lib/api/hooks"
 import { compararRevisao, revisaoMudouOTexto } from "@/lib/documentos/revisao"
 import type { SecaoDocumento, TipoDocumento } from "@/lib/types"
-import { avisoDasTabelas } from "@/lib/dominio/tabela"
+import { avisoDasTabelas, semLinhasEmBranco } from "@/lib/dominio/tabela"
 
 type Sugestao = { secaoId: string; titulo: string; atual: string; sugerido: string }
 
@@ -68,7 +68,13 @@ export function RevisaoComIa({
       try {
         const sugerido = await revisar.mutateAsync({ secaoId: secao.id, texto: secao.conteudo })
         if (revisaoMudouOTexto(secao.conteudo, sugerido)) {
-          parcial.sugestoes.push({ secaoId: secao.id, titulo: secao.titulo, atual: secao.conteudo, sugerido })
+          // A sugestão vem sem linhas em branco, como o editor grava (§102).
+          parcial.sugestoes.push({
+            secaoId: secao.id,
+            titulo: secao.titulo,
+            atual: secao.conteudo,
+            sugerido: semLinhasEmBranco(sugerido),
+          })
         } else {
           parcial.semMudanca++
         }

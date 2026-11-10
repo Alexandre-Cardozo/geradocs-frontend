@@ -322,7 +322,7 @@ describe("painel de valor", () => {
     await userEvent.click(screen.getByRole("button", { name: "Incluir na Memória" }))
 
     expect(setRascunho).toHaveBeenCalledWith(
-      "Memória escrita à mão.\n\nFonte de pesquisa de preços: Painel de Preços do Governo Federal"
+      "Memória escrita à mão.\nFonte de pesquisa de preços: Painel de Preços do Governo Federal"
         + " (Compras.gov.br) (Art. 23, § 1º, I, Lei 14.133/21).",
     )
   })

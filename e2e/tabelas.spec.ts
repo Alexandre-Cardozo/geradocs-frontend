@@ -34,7 +34,7 @@ test("a tabela inserida pelo editor vai ao texto, grava e aparece como tabela na
   ).toEqual([])
 
   await page.getByRole("button", { name: "Inserir no texto" }).click()
-  await expect(editor).toHaveValue("Necessidade com memória.\n\nItem | Quantidade\nPapel A4 | 120")
+  await expect(editor).toHaveValue("Necessidade com memória.\nItem | Quantidade\nPapel A4 | 120")
   await expect(page.getByRole("button", { name: "Editar tabela 1" })).toBeVisible()
 
   await page.getByRole("button", { name: /Salvar Rascunho/ }).click()

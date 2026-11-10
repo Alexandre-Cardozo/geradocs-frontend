@@ -2,6 +2,7 @@ import { HttpResponse, http } from "msw"
 import { describe, expect, it } from "vitest"
 
 import { DotacoesDoProcesso } from "@/components/processos/dotacoes-do-processo"
+import { anoBrasilia } from "@/lib/format"
 import { urlDaApi } from "@/lib/teste/handlers"
 import { renderizar, screen, userEvent, waitFor } from "@/lib/teste/renderizar"
 import { servidor } from "@/lib/teste/servidor-msw"
@@ -99,11 +100,18 @@ describe("dotações do processo", () => {
     await userEvent.type(screen.getByLabelText(/Valor Previsto/), "850000")
     expect(motivo()).toBe("Tudo certo para gravar.")
 
+    // O exercício vem no ano atual e se escolhe numa lista de anos, sem digitar.
+    const exercicio = screen.getByRole("button", { name: /Exercício/ })
+    expect(exercicio).toHaveTextContent(String(anoBrasilia()))
+    await userEvent.click(exercicio)
+    await userEvent.click(screen.getByRole("option", { name: String(anoBrasilia() + 1) }))
+
     await userEvent.click(screen.getByRole("button", { name: "Declarar Dotação" }))
 
     await waitFor(() => expect(enviado).not.toBeNull())
     expect(enviado!.workProgram).toBe("12.361.0004.2.045")
     expect(enviado!.amount).toBe(850000)
+    expect(enviado!.fiscalYear).toBe(anoBrasilia() + 1)
   })
 
   it("corrige o crédito no mesmo registro, sem retirar e declarar de novo", async () => {

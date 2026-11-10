@@ -30,13 +30,14 @@ describe("texto com tabelas", () => {
     expect(screen.getByText("Fim da memória.")).toBeInTheDocument()
   })
 
-  it("texto sem tabela continua um parágrafo só, com as quebras", () => {
-    renderizar(<TextoComTabelas texto={"Primeira linha.\nSegunda linha."} />)
+  it("cada linha é um parágrafo, e a linha em branco não abre espaço (§102)", () => {
+    const { container } = renderizar(<TextoComTabelas texto={"Primeira linha.\n\n  \nSegunda linha.\n"} />)
 
     expect(screen.queryByRole("table")).not.toBeInTheDocument()
-    const paragrafo = screen.getByText(/Primeira linha\./)
-    expect(paragrafo.tagName).toBe("P")
-    expect(paragrafo.textContent).toBe("Primeira linha.\nSegunda linha.")
+    expect([...container.querySelectorAll("p")].map((p) => p.textContent)).toEqual([
+      "Primeira linha.",
+      "Segunda linha.",
+    ])
   })
 
   it("a prévia do documento desenha a tabela da seção", () => {

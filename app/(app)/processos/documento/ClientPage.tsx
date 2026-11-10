@@ -49,7 +49,7 @@ import {
 import { concluidas, progresso, secoesPrincipais } from "@/lib/dominio"
 import { type SecaoDocumento, type StatusDocumento } from "@/lib/types"
 import { TabelasDaSecao } from "@/components/documentos/tabelas-da-secao"
-import { avisoDasTabelas } from "@/lib/dominio/tabela"
+import { avisoDasTabelas, semLinhasEmBranco } from "@/lib/dominio/tabela"
 
 const statusRail: Record<StatusDocumento, { dot: string; chip: string }> = {
   "Completo": { dot: "bg-success", chip: "bg-tint-success-bg text-tint-success-fg" },
@@ -179,7 +179,9 @@ export default function EditorDocumento() {
   const [secaoSincronizada, setSecaoSincronizada] = useState<string | null>(null)
   if (secoes.isSuccess && activeSection !== secaoSincronizada) {
     setSecaoSincronizada(activeSection)
-    setRascunho(active?.conteudo ?? "")
+    // O editor abre sem as linhas em branco (§102): os tópicos seguem juntos,
+    // como saem na prévia e no papel.
+    setRascunho(semLinhasEmBranco(active?.conteudo ?? ""))
   }
 
   // O subtópico complementa a seção-mãe (ADR-061 do back-end): não conta no
@@ -208,14 +210,16 @@ export default function EditorDocumento() {
    */
   const gravacaoDa = (secao: SecaoDocumento) => ({
     secaoId: secao.id,
-    conteudo: rascunho,
+    conteudo: semLinhasEmBranco(rascunho),
     ...(rascunho.trim() === "" && foiDispensada(secao)
       ? { justificativaDispensa: secao.justificativaDispensa }
       : {}),
   })
 
   /** Há texto na tela que ainda não está gravado na seção. */
-  const naoGravado = active != null && rascunho !== (active.conteudo ?? "")
+  // A linha em branco não conta (§102): o texto gravado antes dela continua o mesmo.
+  const igualAoGravado = active != null && semLinhasEmBranco(rascunho) === semLinhasEmBranco(active.conteudo ?? "")
+  const naoGravado = active != null && !igualAoGravado
 
   /**
    * Vai para outra seção guardando antes o que estava escrito.
@@ -259,7 +263,7 @@ export default function EditorDocumento() {
       { secaoId, rascunho, orientacao: texto },
       {
         onSuccess: (secaoGerada) => {
-          if (secaoAtivaRef.current === secaoId) setRascunho(secaoGerada.conteudo)
+          if (secaoAtivaRef.current === secaoId) setRascunho(semLinhasEmBranco(secaoGerada.conteudo))
           // As instruções pedem que a IA mantenha as tabelas (ADR-062 do
           // back-end); a tela confere, e avisa quando não manteve (§101).
           const aviso = avisoDasTabelas(rascunho, secaoGerada.conteudo)
@@ -677,7 +681,11 @@ export default function EditorDocumento() {
             <SectionBlock title={active.titulo} hint={active.hint ?? ""}>
               {(active.textoDaMinuta || active.notasDaMinuta) && (
                 <div className="mb-3">
-                  <ApoioDaMinuta secao={active} rascunho={rascunho} setRascunho={setRascunho} />
+                  <ApoioDaMinuta
+                    secao={active}
+                    rascunho={rascunho}
+                    setRascunho={(texto) => setRascunho(semLinhasEmBranco(texto))}
+                  />
                 </div>
               )}
               {active.desvioDaMinuta && (
@@ -685,7 +693,7 @@ export default function EditorDocumento() {
                   <JustificativaDoDesvio processoId={processoId} tipo={tipo} secao={active} />
                 </div>
               )}
-              {active.status === "Completo" && rascunho === active.conteudo && active.conteudo !== "" ? (
+              {active.status === "Completo" && igualAoGravado && active.conteudo !== "" ? (
                 // Concluída já aparece no ✓ da lista de seções; um cartão aqui
                 // repetia o aviso em cima do texto (§96).
                 <div className="flex flex-col gap-3">
@@ -832,7 +840,7 @@ export default function EditorDocumento() {
           {!naEtapaFinal && active && (
             <TextosDeOutroModelo
               textos={(documento.data?.textosDeOutroModelo ?? []).filter((texto) => texto.secaoAlvo === active.id)}
-              onInserir={(texto) => setRascunho(rascunho.trim() === "" ? texto : `${rascunho}\n\n${texto}`)}
+              onInserir={(texto) => setRascunho(semLinhasEmBranco(`${rascunho}\n${texto}`))}
             />
           )}
           {naEtapaFinal && (
