@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 
-import { Button, FormField, Input, MoneyInput, Tag } from "@/components/ui"
+import { Button, Dropdown, FormField, Input, MoneyInput, Tag } from "@/components/ui"
 import { IconPlus, IconTrash } from "@/components/ui/icons"
 import { useToast } from "@/components/shared/providers"
 import {
@@ -13,6 +13,7 @@ import {
 } from "@/lib/api/hooks"
 import type { DadosDaDotacao, DotacaoOrcamentaria } from "@/lib/api/procurement-client"
 import { anoBrasilia, formatBRL, parseValorBR } from "@/lib/format"
+import { exerciciosDaDotacao } from "@/lib/processos/exercicio-da-dotacao"
 
 /**
  * O cadastro de dotação orçamentária do processo.
@@ -292,11 +293,15 @@ function FormularioDaDotacao({
         </div>
         <div className="min-w-0">
           <FormField label="Exercício" required>
-            <Input
+            {/* Escolhido numa lista: ano fora da faixa não chega a ser digitado. */}
+            <Dropdown
               value={String(dados.exercicio)}
-              onChange={(e) => trocar("exercicio", Number(e.target.value.replace(/\D/g, "")) || 0)}
+              onChange={(ano) => trocar("exercicio", Number(ano))}
+              options={exerciciosDaDotacao(dotacao?.exercicio).map((ano) => ({
+                value: String(ano),
+                label: String(ano),
+              }))}
               ariaLabel="Exercício"
-              placeholder="Ex: 2026"
             />
           </FormField>
         </div>

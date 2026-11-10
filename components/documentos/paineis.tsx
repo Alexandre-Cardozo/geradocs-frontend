@@ -172,7 +172,7 @@ export function rascunhoDaNecessidade(processo: Processo, dfds: DfdAnexado[]): s
     "[Indicar o alinhamento da contratação com o planejamento da unidade e com os instrumentos "
       + "de planejamento do órgão.]",
   )
-  return partes.join("\n\n")
+  return partes.join("\n")
 }
 
 /**
@@ -349,7 +349,7 @@ export function memoriaDasQuantidades(itens: ItemConsolidado[]): string {
     tabelaEmTexto([["Item", ...(comCodigo ? ["CATMAT/CATSER"] : []), "Secretaria", "Quantidade", "Unidade"], ...linhas]),
     "[Descrever o critério que fundamenta as quantidades (histórico de consumo, demanda "
       + "projetada, número de unidades atendidas) e os documentos que lhe dão suporte.]",
-  ].join("\n\n")
+  ].join("\n")
 }
 
 /**
@@ -683,7 +683,7 @@ export function memoriaDoValor(
     "[Anexar os documentos de suporte da pesquisa de preços e registrar eventuais preços "
       + "descartados por excessividade ou inexequibilidade.]",
   )
-  return partes.join("\n\n")
+  return partes.join("\n")
 }
 
 const modosATA: Array<{ key: ModoATA; label: string; desc: string }> = [

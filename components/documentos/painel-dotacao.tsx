@@ -232,5 +232,5 @@ export function textoDaDotacao(
       : "Os créditos indicados suportam integralmente a despesa estimada no exercício.",
     // A outra metade da alínea 'j'. Vazia nos demais documentos, que não a pedem.
     ...(previsaoNoPca ? [previsaoNoPca] : []),
-  ].join("\n\n")
+  ].join("\n")
 }

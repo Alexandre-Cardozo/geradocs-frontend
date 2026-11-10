@@ -141,10 +141,29 @@ export function substituirTabela(texto: string, indice: number, novas: string[][
 }
 
 /**
+ * O texto sem as linhas em branco (§102): os tópicos seguem um depois do outro,
+ * no editor, na prévia e no papel. Fica só a linha em branco entre duas
+ * tabelas, que é o que as mantém separadas.
+ */
+export function semLinhasEmBranco(texto: string): string {
+  const linhas = texto.split("\n")
+  const ficam: string[] = []
+  linhas.forEach((linha, i) => {
+    if (linha.trim() !== "") {
+      ficam.push(linha)
+      return
+    }
+    const proxima = linhas.slice(i + 1).find((l) => l.trim() !== "")
+    if (ficam.at(-1)?.includes("|") && proxima?.includes("|")) ficam.push("")
+  })
+  return ficam.join("\n")
+}
+
+/**
  * Põe a tabela no texto depois da linha em que está o cursor (`posicao`, em
- * caracteres), ou no fim. Vai entre linhas em branco, senão grudaria no
- * parágrafo vizinho; com o cursor dentro de outra tabela, entra depois dela,
- * em vez de parti-la em duas.
+ * caracteres), ou no fim, sem linha em branco em volta (§102). Com o cursor
+ * dentro de outra tabela, entra depois dela, em vez de parti-la em duas; ao
+ * lado de outra tabela, fica a linha em branco que separa as duas.
  */
 export function inserirTabela(texto: string, linhas: string[][], posicao?: number): string {
   const tabelaNova = tabelaEmTexto(linhas).split("\n")
@@ -155,13 +174,7 @@ export function inserirTabela(texto: string, linhas: string[][], posicao?: numbe
   if (dentro) ultima = dentro.fim - 1
   const antes = existentes.slice(0, ultima + 1)
   const depois = existentes.slice(ultima + 1)
-  return [
-    ...antes,
-    ...(antes.at(-1) === "" ? [] : [""]),
-    ...tabelaNova,
-    ...(depois.length === 0 || depois[0] === "" ? [] : [""]),
-    ...depois,
-  ].join("\n")
+  return semLinhasEmBranco([...antes, "", ...tabelaNova, "", ...depois].join("\n"))
 }
 
 /** A tabela nova do editor: três colunas, o cabeçalho a renomear e uma linha. */

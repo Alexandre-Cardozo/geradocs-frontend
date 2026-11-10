@@ -1376,6 +1376,21 @@ Os ETP, TR e pesquisas de preços dos órgãos trazem a memória de cálculo em 
 
 Continuação do §100, com a ADR-063 do back-end:
 
-- **Editor de tabela** (`TabelasDaSecao`). Embaixo do campo de texto de toda seção, inclusive os dos painéis, uma linha compacta: "Tabelas", um "Editar tabela N" por tabela do texto e "Inserir tabela". O editor abre ali mesmo, em grade: cabeçalho e linhas, acrescentar linha e coluna, tirar linha (enquanto sobra uma além do cabeçalho) e coluna (enquanto sobram duas). "Salvar tabela" devolve ao texto no formato de sempre; "Inserir no texto" põe a nova no fim, entre linhas em branco; excluir pede confirmação. O texto da seção só grava com o salvar da seção, como qualquer edição. As regras moram em `lib/dominio/tabela.ts` (`tabelasDoTexto`, `substituirTabela`, `inserirTabela`, `problemaDaTabela`).
+- **Editor de tabela** (`TabelasDaSecao`). Embaixo do campo de texto de toda seção, inclusive os dos painéis, uma linha compacta com um "Editar tabela N" por tabela do texto e "Inserir tabela", sem rótulo. O editor abre ali mesmo, em grade: cabeçalho e linhas, acrescentar linha e coluna, tirar linha (enquanto sobra uma além do cabeçalho) e coluna (enquanto sobram duas). "Salvar tabela" devolve ao texto no formato de sempre; "Inserir no texto" põe a nova no fim (sem linha em branco, §102); excluir pede confirmação. O texto da seção só grava com o salvar da seção, como qualquer edição. As regras moram em `lib/dominio/tabela.ts` (`tabelasDoTexto`, `substituirTabela`, `inserirTabela`, `problemaDaTabela`).
 - **CATMAT/CATSER no item do DFD.** Campo opcional no formulário de itens, só dígitos e até nove. Aparece sob o nome do item na lista, na consolidação e no painel de quantidades, e vira coluna nas memórias de quantidade e de valor quando algum item o tem. Códigos diferentes para o mesmo item entram nas incongruências da consolidação.
 - **O que a IA devolve é conferido.** `avisoDasTabelas` compara as tabelas antes e depois: na revisão com IA, a sugestão que muda ou tira tabela vem com aviso; no "Gerar com IA", o aviso sai assim que a resposta chega. Não trava nada: a revisão pode corrigir um número de propósito, e quem decide é quem assina.
+
+## 102. O texto da seção não tem linha em branco
+
+Pedido de quem usa: os tópicos seguem um depois do outro, sem buraco, na tela e no papel.
+
+- **No editor.** O rascunho abre sem as linhas em branco (`semLinhasEmBranco`, em `lib/dominio/tabela.ts`), e é assim que a seção grava. O texto que a plataforma escreve também vem sem elas: painéis, "Inserir tabela", texto da minuta, texto de outro modelo, "Gerar com IA" e a sugestão da revisão com IA. A digitação fica livre; a linha em branco que alguém deixar some ao gravar.
+- **Entre duas tabelas a linha em branco fica.** É ela que separa uma tabela da outra; sem ela, as duas viravam uma.
+- **Na prévia.** Cada linha é um parágrafo, com o mesmo respiro curto do PDF entre eles, e a linha em branco do texto antigo não abre espaço.
+- **Não precisa regravar nada.** O texto já gravado com linhas em branco sai junto na prévia, no PDF e no DOCX (ADR-062 do back-end), e só a diferença de linha em branco não conta como alteração por gravar.
+- **Editor de tabela** com todos os botões numa linha só.
+
+## 103. O exercício da dotação se escolhe numa lista
+
+- **Lista de anos, e não campo livre.** "Exercício" é um `Dropdown` com o ano atual (Brasília) já marcado, o anterior e os quatro seguintes, que são os do plano plurianual. O ano de uma dotação já gravada fora dessa faixa continua na lista, para a correção não trocar o ano sem pedido (`exerciciosDaDotacao`, em `lib/processos`).
+- **De onde vinha o "2100".** O back-end aceita exercício de 2000 a 2100, uma peneira contra erro de digitação. Com o campo livre, "30906" chegava ao servidor, e o toast mostrava a mensagem padrão da validação, que não dizia o campo. Agora a lista não deixa digitar, e o servidor diz "O exercício precisa estar entre 2000 e 2100." para quem chamar a API direto.

@@ -180,7 +180,7 @@ export function textoDasFontes(
             + " Administração), cuja preferência o Art. 5º, § 1º da IN SEGES/ME nº 65/2021"
             + " estabelece.]",
         ]),
-  ].join("\n\n")
+  ].join("\n")
 }
 
 /**
@@ -210,7 +210,7 @@ export function textoDaSerie(itens: ItemPesquisado[]): string {
       ["Item", "Fonte", "Fornecedor", "Data da coleta", ...(comValidade ? ["Válida até"] : []), "Valor unitário"],
       ...linhas,
     ]),
-  ].join("\n\n")
+  ].join("\n")
 }
 
 /**
@@ -261,7 +261,7 @@ export function textoDaAnaliseCritica(itens: ItemPesquisado[]): string {
       ]),
     ]),
     ...notas,
-  ].join("\n\n")
+  ].join("\n")
 }
 
 /**
@@ -304,7 +304,7 @@ export function textoDoPrecoDeReferencia(
     ]),
     ...semQuantidade.map((item) => `${item}: [Informar a quantidade deste item na consolidação da demanda.]`),
     `Preço de referência total da contratação: ${formatBRL(total)}.`,
-  ].join("\n\n")
+  ].join("\n")
 }
 
 /** A linha que a memória de cálculo guarda — e de onde o método volta. */

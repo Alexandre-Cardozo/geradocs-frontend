@@ -3,28 +3,23 @@ import { colunaNumerica, linhaTotalizadora, partesDoTexto } from "@/lib/dominio/
 /**
  * O texto da seção com as tabelas desenhadas como tabela (§100).
  *
- * As linhas comuns continuam juntas num parágrafo com as quebras preservadas,
- * como a prévia sempre mostrou; só as linhas com "|" que formam tabela viram
- * `<table>`, no mesmo desenho do PDF: cabeçalho destacado, número à direita e a
- * linha de total em negrito.
+ * Cada linha é um parágrafo, com o mesmo respiro curto do PDF entre eles; a
+ * linha em branco não abre espaço (§102), para os tópicos seguirem um depois
+ * do outro como no papel. As linhas com "|" que formam tabela viram `<table>`,
+ * no mesmo desenho do PDF: cabeçalho destacado, número à direita e a linha de
+ * total em negrito.
  */
 export function TextoComTabelas({ texto, className = "" }: { texto: string; className?: string }) {
-  const blocos: ({ tipo: "texto"; linhas: string[] } | { tipo: "tabela"; linhas: string[][] })[] = []
-  for (const parte of partesDoTexto(texto)) {
-    const ultimo = blocos.at(-1)
-    if (parte.tipo === "tabela") blocos.push(parte)
-    else if (ultimo?.tipo === "texto") ultimo.linhas.push(parte.texto)
-    else blocos.push({ tipo: "texto", linhas: [parte.texto] })
-  }
+  const partes = partesDoTexto(texto).filter((parte) => parte.tipo === "tabela" || parte.texto.trim() !== "")
   return (
-    <div className={className}>
-      {blocos.map((bloco, i) =>
-        bloco.tipo === "texto" ? (
-          <p key={i} className="m-0 whitespace-pre-line">
-            {bloco.linhas.join("\n")}
+    <div className={`flex flex-col gap-1.5 ${className}`}>
+      {partes.map((parte, i) =>
+        parte.tipo === "paragrafo" ? (
+          <p key={i} className="m-0">
+            {parte.texto}
           </p>
         ) : (
-          <Tabela key={i} linhas={bloco.linhas} />
+          <Tabela key={i} linhas={parte.linhas} />
         ),
       )}
     </div>
@@ -36,7 +31,7 @@ function Tabela({ linhas }: { linhas: string[][] }) {
   const aDireita = cabecalho.map((_, c) => colunaNumerica(linhas, c))
   const alinhar = (c: number) => (aDireita[c] ? "text-right" : "text-left")
   return (
-    <div className="my-1.5 overflow-x-auto rounded-md border border-border">
+    <div className="overflow-x-auto rounded-md border border-border">
       <table className="w-full border-collapse text-xs">
         <thead>
           <tr className="bg-ice">

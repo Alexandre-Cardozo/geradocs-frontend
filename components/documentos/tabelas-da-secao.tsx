@@ -41,8 +41,7 @@ export function TabelasDaSecao({ texto, onChange }: { texto: string; onChange: (
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5 text-xs text-text-muted">
-      <span className="font-semibold">Tabelas</span>
+    <div className="flex flex-wrap items-center gap-1.5">
       {tabelas.map((tabela, i) => (
         <Button
           key={tabela.inicio}
@@ -136,6 +135,7 @@ function EditorDeTabela({
           </tbody>
         </table>
       </div>
+      {/* Uma linha só de botões: a grade acima já ocupa o espaço. */}
       <div className="flex flex-wrap items-center gap-2">
         <Button size="sm" variant="secondary" icon={<IconPlus size={13} />} onClick={maisLinha}>
           Linha
@@ -143,8 +143,7 @@ function EditorDeTabela({
         <Button size="sm" variant="secondary" icon={<IconPlus size={13} />} onClick={maisColuna}>
           Coluna
         </Button>
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
+        <span aria-hidden="true" className="mx-1 h-5 w-px bg-border" />
         <Button size="sm" disabled={problema !== null} ariaDescribedBy={motivoId} onClick={() => onSalvar(linhas)}>
           {nova ? "Inserir no texto" : "Salvar tabela"}
         </Button>
@@ -167,10 +166,10 @@ function EditorDeTabela({
               Excluir tabela
             </Button>
           ))}
-        <p id={motivoId} className={problema ? "m-0 text-xs text-text-muted" : "sr-only"}>
-          {problema ?? "A tabela volta ao texto da seção. Salve a seção para gravar."}
-        </p>
       </div>
+      <p id={motivoId} className={problema ? "m-0 text-xs text-text-muted" : "sr-only"}>
+        {problema ?? "A tabela volta ao texto da seção. Salve a seção para gravar."}
+      </p>
     </div>
   )
 }

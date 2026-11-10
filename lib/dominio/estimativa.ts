@@ -104,7 +104,7 @@ export function memoriaEmDia(
     }
   }
   if (divergencias.metodo === "ausente" && estimativa.metodo) {
-    texto = `${texto.trimEnd()}\n\n${linhaDoMetodo(estimativa.metodo)}`
+    texto = `${texto.trimEnd()}\n${linhaDoMetodo(estimativa.metodo)}`
   }
   if (divergencias.fonte && estimativa.fonte) {
     const linha = linhaDaFonte(estimativa.fonte)
@@ -114,7 +114,7 @@ export function memoriaEmDia(
       linhas[indice] = linha
       texto = linhas.join("\n")
     } else {
-      texto = `${texto.trimEnd()}\n\n${linha}`
+      texto = `${texto.trimEnd()}\n${linha}`
     }
   }
   return texto

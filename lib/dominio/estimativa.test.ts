@@ -105,7 +105,7 @@ describe("estimativa de valor e memória de cálculo", () => {
       divergenciasDaMemoria("Texto à mão.", estimativa, true),
     )
 
-    expect(emDia).toBe(`Texto à mão.\n\n${linhaDoMetodo("menor")}\n\n${linhaDaFonte(PAINEL)}`)
+    expect(emDia).toBe(`Texto à mão.\n${linhaDoMetodo("menor")}\n${linhaDaFonte(PAINEL)}`)
   })
 
   it("sem divergência, ou sem o valor do processo, o texto não muda", () => {

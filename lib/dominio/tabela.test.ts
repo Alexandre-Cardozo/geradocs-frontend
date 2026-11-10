@@ -7,6 +7,7 @@ import {
   linhaTotalizadora,
   partesDoTexto,
   problemaDaTabela,
+  semLinhasEmBranco,
   substituirTabela,
   tabelaEmBranco,
   tabelaEmTexto,
@@ -186,10 +187,10 @@ describe("o editor de tabela (§101)", () => {
       ["1", "2"],
     ]
     expect(inserirTabela("", nova)).toBe("X | Y\n1 | 2")
-    expect(inserirTabela("Texto.", nova)).toBe("Texto.\n\nX | Y\n1 | 2")
-    expect(inserirTabela("Texto.\n", nova)).toBe("Texto.\n\nX | Y\n1 | 2")
-    expect(inserirTabela("Um.\nDois.", nova, 1)).toBe("Um.\n\nX | Y\n1 | 2\n\nDois.")
-    expect(inserirTabela("Um.\n\nDois.", nova, 1)).toBe("Um.\n\nX | Y\n1 | 2\n\nDois.")
+    expect(inserirTabela("Texto.", nova)).toBe("Texto.\nX | Y\n1 | 2")
+    expect(inserirTabela("Texto.\n", nova)).toBe("Texto.\nX | Y\n1 | 2")
+    expect(inserirTabela("Um.\nDois.", nova, 1)).toBe("Um.\nX | Y\n1 | 2\nDois.")
+    expect(inserirTabela("Um.\n\nDois.", nova, 1)).toBe("Um.\nX | Y\n1 | 2\nDois.")
   })
 
   it("com o cursor dentro de outra tabela, entra depois dela em vez de parti-la", () => {
@@ -203,7 +204,7 @@ describe("o editor de tabela (§101)", () => {
         ],
         7,
       ),
-    ).toBe("A | B\n1 | 2\n3 | 4\n\nX | Y\n5 | 6\n\nFim.")
+    ).toBe("A | B\n1 | 2\n3 | 4\n\nX | Y\n5 | 6\nFim.")
     expect(
       tabelasDoTexto(
         inserirTabela(
@@ -248,5 +249,24 @@ describe("a conferência das tabelas que a IA devolve (§101)", () => {
     expect(avisoDasTabelas(antes, "Tudo em texto corrido.")).toMatch(/alterou ou tirou 2 tabelas/)
     // Duas tabelas iguais em antes contam as duas: uma só em depois não cobre ambas.
     expect(tabelasNaoMantidas("A | B\n1 | 2\n\nA | B\n1 | 2", "A | B\n1 | 2")).toBe(1)
+  })
+})
+
+describe("semLinhasEmBranco", () => {
+  it("tira as linhas em branco, inclusive as de espaços, do começo e do fim", () => {
+    expect(semLinhasEmBranco("\nUm.\n\n  \nDois.\n\n")).toBe("Um.\nDois.")
+    expect(semLinhasEmBranco("")).toBe("")
+  })
+
+  it("tira a linha em branco entre texto e tabela, que continua tabela", () => {
+    const limpo = semLinhasEmBranco("Quantidades:\n\nItem | Qtd\nPapel | 1\n\nFim.")
+    expect(limpo).toBe("Quantidades:\nItem | Qtd\nPapel | 1\nFim.")
+    expect(tabelasDoTexto(limpo)).toHaveLength(1)
+  })
+
+  it("guarda uma linha em branco entre duas tabelas, que senão virariam uma", () => {
+    const limpo = semLinhasEmBranco("A | B\n1 | 2\n\n\nX | Y\n3 | 4")
+    expect(limpo).toBe("A | B\n1 | 2\n\nX | Y\n3 | 4")
+    expect(tabelasDoTexto(limpo)).toHaveLength(2)
   })
 })
