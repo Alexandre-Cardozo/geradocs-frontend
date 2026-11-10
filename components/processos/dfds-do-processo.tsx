@@ -169,7 +169,7 @@ function RegistrarDfd({
           </FormField>
         </div>
         <div className="min-w-0">
-          <FormField label="Arquivo assinado" hint="Opcional.">
+          <FormField label="Arquivo assinado">
             <div className="flex items-center gap-2.5">
               <input
                 ref={campoDeArquivo}

@@ -48,6 +48,8 @@ import {
 } from "@/lib/dominio"
 import { concluidas, progresso, secoesPrincipais } from "@/lib/dominio"
 import { type SecaoDocumento, type StatusDocumento } from "@/lib/types"
+import { TabelasDaSecao } from "@/components/documentos/tabelas-da-secao"
+import { avisoDasTabelas } from "@/lib/dominio/tabela"
 
 const statusRail: Record<StatusDocumento, { dot: string; chip: string }> = {
   "Completo": { dot: "bg-success", chip: "bg-tint-success-bg text-tint-success-fg" },
@@ -258,6 +260,10 @@ export default function EditorDocumento() {
       {
         onSuccess: (secaoGerada) => {
           if (secaoAtivaRef.current === secaoId) setRascunho(secaoGerada.conteudo)
+          // As instruções pedem que a IA mantenha as tabelas (ADR-062 do
+          // back-end); a tela confere, e avisa quando não manteve (§101).
+          const aviso = avisoDasTabelas(rascunho, secaoGerada.conteudo)
+          if (aviso) showToast(aviso)
           setOrientacao({ secao: secaoId, texto, avisos: secaoGerada.avisosDaOrientacao })
         },
         // Com orientação, a recusa da curadoria aparece no próprio campo, com o
@@ -682,7 +688,10 @@ export default function EditorDocumento() {
               {active.status === "Completo" && rascunho === active.conteudo && active.conteudo !== "" ? (
                 // Concluída já aparece no ✓ da lista de seções; um cartão aqui
                 // repetia o aviso em cima do texto (§96).
-                <Textarea value={rascunho} onChange={(e) => setRascunho(e.target.value)} rows={6} />
+                <div className="flex flex-col gap-3">
+                  <Textarea value={rascunho} onChange={(e) => setRascunho(e.target.value)} rows={6} />
+                  <TabelasDaSecao texto={rascunho} onChange={setRascunho} />
+                </div>
               ) : (
                 <div className="flex flex-col gap-3">
                   <Textarea
@@ -692,6 +701,7 @@ export default function EditorDocumento() {
                     rows={6}
                     placeholder="Preencha o conteúdo desta seção..."
                   />
+                  <TabelasDaSecao texto={rascunho} onChange={setRascunho} />
                   {/*
                     A IA fica **sempre**: sem modelo configurado o botão vem
                     desabilitado com o motivo (ADR-029), e com texto na tela ela

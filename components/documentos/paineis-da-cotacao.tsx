@@ -42,6 +42,7 @@ import {
   SEM_VALOR,
 } from "@/lib/format"
 import type { SecaoDocumento } from "@/lib/types"
+import { TabelasDaSecao } from "@/components/documentos/tabelas-da-secao"
 
 /**
  * Os parâmetros prioritários do Art. 23, § 1º — incisos I e II.
@@ -137,6 +138,7 @@ export function PainelDasFontes(props: PropsDoPainel) {
           rows={6}
           placeholder="Preencha o conteúdo desta seção..."
         />
+        <TabelasDaSecao texto={props.rascunho} onChange={props.setRascunho} />
         <CaminhosDaSecao
           gerando={props.gerando}
           onGerarComIa={props.onGerarComIa}
@@ -259,6 +261,7 @@ export function PainelDasColetas(props: PropsDoPainel) {
           rows={6}
           placeholder="Preencha o conteúdo desta seção..."
         />
+        <TabelasDaSecao texto={props.rascunho} onChange={props.setRascunho} />
         <CaminhosDaSecao
           gerando={props.gerando}
           onGerarComIa={props.onGerarComIa}
@@ -646,6 +649,7 @@ export function PainelDaAnaliseCritica(props: PropsDoPainel) {
           rows={6}
           placeholder="Preencha o conteúdo desta seção..."
         />
+        <TabelasDaSecao texto={props.rascunho} onChange={props.setRascunho} />
         <CaminhosDaSecao
           gerando={props.gerando}
           onGerarComIa={props.onGerarComIa}
@@ -762,6 +766,7 @@ export function PainelDoPrecoDeReferencia(props: PropsDoPainel) {
           rows={6}
           placeholder="Preencha o conteúdo desta seção..."
         />
+        <TabelasDaSecao texto={props.rascunho} onChange={props.setRascunho} />
         <AvisoDaMemoria
           rascunho={props.rascunho}
           setRascunho={props.setRascunho}

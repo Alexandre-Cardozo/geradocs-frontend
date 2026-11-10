@@ -11,6 +11,7 @@ import { FORMA_DA_PREVISAO, type AchadoDoPca } from "@/lib/api/pca-client"
 import { usePrevisaoNoPca } from "@/lib/api/hooks"
 import { formatBRL } from "@/lib/format"
 import type { SecaoDocumento } from "@/lib/types"
+import { TabelasDaSecao } from "@/components/documentos/tabelas-da-secao"
 
 /**
  * Demonstração da Previsão no PCA — Art. 18, § 1º, II, Lei 14.133/21.
@@ -177,6 +178,7 @@ export function PainelPca({
             placeholder="Demonstre a previsão no PCA, ou justifique a contratação não prevista..."
           />
         </FormField>
+        <TabelasDaSecao texto={rascunho} onChange={setRascunho} />
 
         <CaminhosDaSecao
           gerando={gerando}
@@ -267,7 +269,7 @@ function FormularioDaPrevisao({
           autoFocus
         />
       </FormField>
-      <FormField label="Onde você conferiu (opcional)" htmlFor={notaId}>
+      <FormField label="Onde você conferiu" htmlFor={notaId}>
         <Textarea
           id={notaId}
           value={nota}

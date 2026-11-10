@@ -281,7 +281,7 @@ function FormularioDaDotacao({
           </FormField>
         </div>
         <div className="min-w-0">
-          <FormField label="Ficha" hint="Opcional.">
+          <FormField label="Ficha">
             <Input
               value={dados.ficha ?? ""}
               onChange={(e) => trocar("ficha", e.target.value)}

@@ -100,3 +100,115 @@ export function tabelaEmTexto(linhas: string[][]): string {
     })
     .join("\n")
 }
+
+/** Uma tabela do texto e as linhas do texto que ela ocupa (`fim` exclusivo). */
+export interface TabelaNoTexto {
+  inicio: number
+  fim: number
+  linhas: string[][]
+}
+
+/** As tabelas do texto, na ordem, com o trecho que cada uma ocupa: é o que o editor troca. */
+export function tabelasDoTexto(texto: string): TabelaNoTexto[] {
+  const linhas = texto.split("\n")
+  const achadas: TabelaNoTexto[] = []
+  let inicio = 0
+  linhas.forEach((linha, i) => {
+    if (!linha.includes("|")) return
+    if (i === 0 || !linhas[i - 1]?.includes("|")) inicio = i
+    if (linhas[i + 1]?.includes("|")) return
+    const achada = tabela(linhas.slice(inicio, i + 1))
+    if (achada) achadas.push({ inicio, fim: i + 1, linhas: achada })
+  })
+  return achadas
+}
+
+/**
+ * Troca a tabela de número `indice` por outra, ou a tira do texto (`null`).
+ * O resto do texto fica como a pessoa escreveu; ao tirar, some também a linha
+ * em branco que a separava, para não sobrar um buraco.
+ */
+export function substituirTabela(texto: string, indice: number, novas: string[][] | null): string {
+  const alvo = tabelasDoTexto(texto)[indice]
+  if (!alvo) return texto
+  const linhas = texto.split("\n")
+  let antes = linhas.slice(0, alvo.inicio)
+  let depois = linhas.slice(alvo.fim)
+  if (novas) return [...antes, ...tabelaEmTexto(novas).split("\n"), ...depois].join("\n")
+  if (antes.at(-1) === "" && (depois.length === 0 || depois[0] === "")) antes = antes.slice(0, -1)
+  else if (antes.length === 0 && depois[0] === "") depois = depois.slice(1)
+  return [...antes, ...depois].join("\n")
+}
+
+/**
+ * Põe a tabela no texto depois da linha em que está o cursor (`posicao`, em
+ * caracteres), ou no fim. Vai entre linhas em branco, senão grudaria no
+ * parágrafo vizinho; com o cursor dentro de outra tabela, entra depois dela,
+ * em vez de parti-la em duas.
+ */
+export function inserirTabela(texto: string, linhas: string[][], posicao?: number): string {
+  const tabelaNova = tabelaEmTexto(linhas).split("\n")
+  if (texto.trim() === "") return tabelaNova.join("\n")
+  const existentes = texto.split("\n")
+  let ultima = posicao == null ? existentes.length - 1 : texto.slice(0, posicao).split("\n").length - 1
+  const dentro = tabelasDoTexto(texto).find((t) => ultima >= t.inicio && ultima < t.fim)
+  if (dentro) ultima = dentro.fim - 1
+  const antes = existentes.slice(0, ultima + 1)
+  const depois = existentes.slice(ultima + 1)
+  return [
+    ...antes,
+    ...(antes.at(-1) === "" ? [] : [""]),
+    ...tabelaNova,
+    ...(depois.length === 0 || depois[0] === "" ? [] : [""]),
+    ...depois,
+  ].join("\n")
+}
+
+/** A tabela nova do editor: três colunas, o cabeçalho a renomear e uma linha. */
+export function tabelaEmBranco(): string[][] {
+  return [
+    ["Coluna 1", "Coluna 2", "Coluna 3"],
+    ["", "", ""],
+  ]
+}
+
+/**
+ * O que impede a tabela de ser lida como tabela, ou nada. Uma coluna só não é
+ * tabela, e o cabeçalho em branco deixaria quem lê sem saber o que é cada
+ * coluna.
+ */
+export function problemaDaTabela(linhas: string[][]): string | null {
+  const [cabecalho = [], ...corpo] = linhas
+  if (cabecalho.length < 2) return "A tabela precisa de pelo menos duas colunas."
+  if (corpo.length === 0) return "A tabela precisa de pelo menos uma linha além do cabeçalho."
+  if (cabecalho.every((celula) => celula.trim() === "")) return "Dê nome às colunas no cabeçalho."
+  return null
+}
+
+/**
+ * Quantas tabelas de `antes` não voltaram iguais em `depois` (§101).
+ *
+ * <p>É a conferência do que a IA devolve. As instruções pedem que ela mantenha
+ * cada tabela com as mesmas colunas e números (ADR-062 do back-end), mas pedido
+ * não é garantia: a memória de cálculo que some ou muda um número no caminho é
+ * o erro que não pode passar em silêncio para dentro do processo.
+ */
+export function tabelasNaoMantidas(antes: string, depois: string): number {
+  const assinatura = (linhas: string[][]) => JSON.stringify(linhas)
+  const restantes = tabelasDoTexto(depois).map((t) => assinatura(t.linhas))
+  return tabelasDoTexto(antes).filter((t) => {
+    const i = restantes.indexOf(assinatura(t.linhas))
+    if (i < 0) return true
+    restantes.splice(i, 1)
+    return false
+  }).length
+}
+
+/** O aviso, ou nada quando todas as tabelas voltaram iguais. */
+export function avisoDasTabelas(antes: string, depois: string): string | null {
+  const n = tabelasNaoMantidas(antes, depois)
+  if (n === 0) return null
+  return n === 1
+    ? "A IA alterou ou tirou 1 tabela do texto. Confira os números antes de seguir."
+    : `A IA alterou ou tirou ${n} tabelas do texto. Confira os números antes de seguir.`
+}

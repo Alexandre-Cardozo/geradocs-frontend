@@ -381,7 +381,7 @@ export async function reabrirProcessoReal(id: string, motivo: string): Promise<P
 }
 
 /** O que pode divergir entre DFDs consolidados no mesmo processo. */
-export type TipoDeIncongruencia = "UNIT" | "SPECIFICATION" | "UNIT_PRICE" | "DELIVERY_DEADLINE";
+export type TipoDeIncongruencia = "UNIT" | "SPECIFICATION" | "UNIT_PRICE" | "DELIVERY_DEADLINE" | "CATALOG_CODE";
 
 /** O rótulo e o porquê de cada divergência — a consequência é diferente em cada. */
 export const INCONGRUENCIA: Record<TipoDeIncongruencia, { rotulo: string; consequencia: string }> = {
@@ -401,6 +401,10 @@ export const INCONGRUENCIA: Record<TipoDeIncongruencia, { rotulo: string; conseq
     rotulo: "Prazos de entrega divergentes",
     consequencia: "O contrato não pode cumprir os dois prazos ao mesmo tempo.",
   },
+  CATALOG_CODE: {
+    rotulo: "Códigos CATMAT/CATSER divergentes",
+    consequencia: "A pesquisa de preços e a tabela do objeto não sabem qual item é.",
+  },
 };
 
 interface ConsolidacaoApi {
@@ -410,6 +414,7 @@ interface ConsolidacaoApi {
     total: number;
     summable: boolean;
     byDepartment: { departmentName: string; quantity: number; unit: string }[];
+    catalogCode?: string | null;
   }[];
   incongruences: {
     kind: TipoDeIncongruencia;
@@ -425,6 +430,8 @@ export interface ItemConsolidado {
   /** `false` quando as unidades divergem: o total não pode ser usado como está. */
   somavel: boolean;
   porSecretaria: { secretaria: string; quantidade: number; unidade: string }[];
+  /** O CATMAT ou CATSER do item, quando alguma secretaria o informou (ADR-063 do back-end). */
+  codigoCatalogo?: string;
 }
 
 export interface Incongruencia {
@@ -459,6 +466,7 @@ export async function consolidacaoDaDemanda(processoId: string): Promise<Demanda
         quantidade: d.quantity,
         unidade: d.unit,
       })),
+      ...(item.catalogCode ? { codigoCatalogo: item.catalogCode } : {}),
     })),
     incongruencias: consolidacao.incongruences.map((i) => ({
       tipo: i.kind,
@@ -578,6 +586,11 @@ export interface ItemDoDfd {
    * (Art. 18, § 1º, VI) sai calculada em vez de digitada.
    */
   valorUnitario?: string;
+  /**
+   * O código do item no catálogo do governo federal: CATMAT para material,
+   * CATSER para serviço. Opcional; só dígitos (ADR-063 do back-end).
+   */
+  codigoCatalogo?: string;
 }
 
 /**
@@ -668,6 +681,7 @@ interface DfdDaApi {
     quantity: number;
     specification?: string | null;
     unitPrice?: number | null;
+    catalogCode?: string | null;
   }>;
   file?: { mediaType: string; byteSize: number; sha256: string } | null;
   expectedCompletionDate?: string | null;
@@ -707,6 +721,7 @@ export async function listarDfds(processoId: string): Promise<DfdAnexado[]> {
       // `formatNumeroBR`, e não `formatBRL`: o campo de dinheiro do formulário
       // recebe "3.233,33" — com o símbolo ele leria outro número.
       valorUnitario: item.unitPrice == null ? undefined : formatNumeroBR(item.unitPrice),
+      codigoCatalogo: item.catalogCode ?? undefined,
     })),
     arquivo: dfd.file
       ? { tipo: dfd.file.mediaType, bytes: dfd.file.byteSize, resumo: dfd.file.sha256 }
@@ -752,6 +767,7 @@ export async function atualizarItensDoDfd(
           // Sem preço informado o campo não vai como zero: zero é um preço, e
           // "não estimado" é outra coisa.
           unitPrice: item.valorUnitario ? parseValorBR(item.valorUnitario) : null,
+          catalogCode: item.codigoCatalogo?.trim() || null,
         })),
         expectedCompletionDate: dataPrevista || null,
       }),

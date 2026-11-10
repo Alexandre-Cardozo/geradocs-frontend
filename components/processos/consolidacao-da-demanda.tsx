@@ -78,7 +78,14 @@ export function ConsolidacaoDaDemanda({ processoId }: { processoId: string }) {
                 key={item.descricao}
                 className={i < consolidacao.data.itens.length - 1 ? "border-b border-ice" : ""}
               >
-                <td className="px-4 py-3 text-base font-semibold text-text-1">{item.descricao}</td>
+                <td className="px-4 py-3 text-base font-semibold text-text-1">
+                  {item.descricao}
+                  {item.codigoCatalogo && (
+                    <span className="block font-mono text-2xs font-normal text-text-muted">
+                      CATMAT/CATSER {item.codigoCatalogo}
+                    </span>
+                  )}
+                </td>
                 {secretarias.map((secretaria) => {
                   const pedido = item.porSecretaria.find((d) => d.secretaria === secretaria)
                   return (

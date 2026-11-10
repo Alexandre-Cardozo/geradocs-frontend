@@ -10,6 +10,7 @@ import type { DotacaoOrcamentaria } from "@/lib/api/procurement-client"
 import { tabelaEmTexto } from "@/lib/dominio/tabela"
 import { formatBRL, parseValorBR } from "@/lib/format"
 import type { SecaoDocumento } from "@/lib/types"
+import { TabelasDaSecao } from "@/components/documentos/tabelas-da-secao"
 
 /**
  * A dotação orçamentária, na seção que a pede.
@@ -124,6 +125,7 @@ export function PainelDotacao({
           rows={6}
           placeholder="Preencha o conteúdo desta seção..."
         />
+        <TabelasDaSecao texto={rascunho} onChange={setRascunho} />
 
         <CaminhosDaSecao
           gerando={gerando}

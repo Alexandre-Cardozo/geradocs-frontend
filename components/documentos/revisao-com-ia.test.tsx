@@ -70,6 +70,27 @@ describe("revisão com IA", () => {
     expect(botao).toBeDisabled()
   })
 
+  it("a sugestão que mexe numa tabela vem com o aviso de conferir os números (§101)", async () => {
+    comRevisao({
+      "1": "Memória revista.\n\nItem | Total\nPapel | R$ 11,00",
+      "2": "Texto revisto.\n\nA | B\n1 | 2",
+    })
+    renderizar(
+      <RevisaoComIa
+        processoId={PROCESSO}
+        tipo="ETP"
+        secoes={[secao("1", "Memória.\n\nItem | Total\nPapel | R$ 10,00"), secao("2", "Texto.\n\nA | B\n1 | 2")]}
+      />,
+    )
+
+    await waitFor(() => expect(screen.getByRole("button", { name: "Revisar com IA" })).toBeEnabled())
+    await userEvent.click(screen.getByRole("button", { name: "Revisar com IA" }))
+
+    expect(await screen.findByRole("status")).toHaveTextContent("2 com sugestão")
+    // Só a seção 1 teve o número da tabela mudado; a 2 manteve a tabela igual.
+    expect(screen.getAllByText(/alterou ou tirou 1 tabela/)).toHaveLength(1)
+  })
+
   it("revisa só as escritas, marca a sugestão e grava só ao aceitar", async () => {
     const { pedidos, salvos } = comRevisao({ "1": "Texto um revisado.", "2": "Texto  dois." })
     renderizar(

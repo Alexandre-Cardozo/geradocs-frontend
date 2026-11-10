@@ -8,6 +8,7 @@ import { useToast } from "@/components/shared/providers"
 import { useAtualizarSecao, useIaDisponivel, useRevisarSecao } from "@/lib/api/hooks"
 import { compararRevisao, revisaoMudouOTexto } from "@/lib/documentos/revisao"
 import type { SecaoDocumento, TipoDocumento } from "@/lib/types"
+import { avisoDasTabelas } from "@/lib/dominio/tabela"
 
 type Sugestao = { secaoId: string; titulo: string; atual: string; sugerido: string }
 
@@ -154,6 +155,10 @@ export function RevisaoComIa({
       {resultado?.sugestoes.map((sugestao) => (
         <article key={sugestao.secaoId} className="flex flex-col gap-2.5 border-t border-border-soft pt-3">
           <h4 className="m-0 text-sm font-semibold text-text-1">{sugestao.titulo}</h4>
+          {/* A tabela que a IA mexeu é o erro que não pode passar despercebido (§101). */}
+          {avisoDasTabelas(sugestao.atual, sugestao.sugerido) && (
+            <InfoBanner tone="warning">{avisoDasTabelas(sugestao.atual, sugestao.sugerido)}</InfoBanner>
+          )}
           <p className="m-0 whitespace-pre-line text-sm leading-relaxed text-text-2">
             {compararRevisao(sugestao.atual, sugestao.sugerido).map((trecho, i) =>
               trecho.tipo === "igual" ? (
