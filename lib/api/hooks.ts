@@ -25,6 +25,7 @@ import {
   removerFotoDePerfil,
 } from "@/lib/api/avatar-client"
 import { iaDisponivel } from "@/lib/api/ai-client"
+import { gerarRascunhoDaNecessidadeEtp, gerarRascunhoDaSecaoComFontes } from "@/lib/api/authoring-client"
 import { confirmarContextos, contextosDoProcesso } from "@/lib/api/contextos-client"
 import {
   desativarModelo,
@@ -47,11 +48,16 @@ import {
   listarDfds,
   listarDotacoes,
   registrarColeta,
+  listarAlternativasDeMercado,
+  registrarAlternativaDeMercado,
+  atualizarAlternativaDeMercado,
+  removerAlternativaDeMercado,
   registrarDfd,
   removerColeta,
   removerDfd,
   removerDotacao,
   type DadosDaColeta,
+  type DadosDaAlternativaDeMercado,
   type DadosDaDotacao,
   type ItemDoDfd,
 } from "@/lib/api/procurement-client"
@@ -84,6 +90,7 @@ export const chaves = {
   versoesDfd: (processoId: string, dfdId: string) => ["versoes-dfd", processoId, dfdId] as const,
   dotacoes: (id: string) => ["dotacoes", id] as const,
   coletas: (id: string) => ["coletas", id] as const,
+  alternativasMercado: (id: string) => ["alternativas-mercado", id] as const,
   dispensa: (id: string) => ["conferencia-dispensa", id] as const,
   iaDisponivel: ["ia-disponivel"] as const,
   secoes: (id: string, tipo: TipoDocumento) => ["secoes", id, tipo] as const,
@@ -335,11 +342,11 @@ export function useDocumentoEmElaboracao(processoId: string, tipo: TipoDocumento
   })
 }
 
-export function useSecoes(processoId: string, tipo: TipoDocumento) {
+export function useSecoes(processoId: string, tipo: TipoDocumento, disponivel = true) {
   return useQuery({
     queryKey: chaves.secoes(processoId, tipo),
     queryFn: () => api.getDocumento(processoId, tipo),
-    enabled: processoId !== "",
+    enabled: processoId !== "" && disponivel,
     select: (documento) => documento.secoes,
   })
 }
@@ -386,13 +393,23 @@ export function useTrocarModelo(processoId: string, tipo: TipoDocumento) {
 }
 
 export function useGerarSecao(processoId: string, tipo: TipoDocumento) {
-  const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (input: { secaoId: string; rascunho?: string; orientacao?: string }) =>
       api.gerarSecao(processoId, tipo, input.secaoId, input.rascunho, input.orientacao),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: chaves.secoes(processoId, tipo) })
-    },
+  })
+}
+
+/** Não invalida o documento: a geração só altera o rascunho local do editor. */
+export function useGerarRascunhoEtp(processoId: string) {
+  return useMutation({
+    mutationFn: (rascunho: string) => gerarRascunhoDaNecessidadeEtp(processoId, rascunho),
+  })
+}
+
+export function useGerarRascunhoDaSecao(processoId: string, tipo: TipoDocumento) {
+  return useMutation({
+    mutationFn: (input: { secaoId: string; rascunho: string }) =>
+      gerarRascunhoDaSecaoComFontes(processoId, tipo, input.secaoId, input.rascunho),
   })
 }
 
@@ -966,7 +983,8 @@ export function useRegistrarDfd(processoId: string) {
       identificacao: string
       arquivo?: File | null
       dataPrevista?: string
-    }) => registrarDfd(processoId, input.secretariaId, input.identificacao, input.arquivo, input.dataPrevista),
+      problema?: string
+    }) => registrarDfd(processoId, input.secretariaId, input.identificacao, input.arquivo, input.dataPrevista, input.problema),
     onSuccess: () => recarregarDemanda(queryClient, processoId),
   })
 }
@@ -994,8 +1012,8 @@ function recarregarDemanda(queryClient: QueryClient, processoId: string) {
 export function useAtualizarItensDoDfd(processoId: string) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (input: { dfdId: string; itens: ItemDoDfd[]; dataPrevista: string | null }) =>
-      atualizarItensDoDfd(processoId, input.dfdId, input.itens, input.dataPrevista),
+    mutationFn: (input: { dfdId: string; itens: ItemDoDfd[]; dataPrevista: string | null; problema?: string }) =>
+      atualizarItensDoDfd(processoId, input.dfdId, input.itens, input.dataPrevista, input.problema),
     onSuccess: () => recarregarDemanda(queryClient, processoId),
   })
 }
@@ -1153,6 +1171,43 @@ export function useRemoverColeta(processoId: string) {
   return useMutation({
     mutationFn: (coletaId: string) => removerColeta(processoId, coletaId),
     onSuccess: () => recarregarColetas(queryClient, processoId),
+  })
+}
+
+export function useAlternativasDeMercado(processoId: string) {
+  return useQuery({
+    queryKey: chaves.alternativasMercado(processoId),
+    queryFn: () => listarAlternativasDeMercado(processoId),
+    enabled: processoId !== "",
+  })
+}
+
+function recarregarAlternativas(queryClient: QueryClient, processoId: string) {
+  void queryClient.invalidateQueries({ queryKey: chaves.alternativasMercado(processoId) })
+}
+
+export function useRegistrarAlternativaDeMercado(processoId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (dados: DadosDaAlternativaDeMercado) => registrarAlternativaDeMercado(processoId, dados),
+    onSuccess: () => recarregarAlternativas(queryClient, processoId),
+  })
+}
+
+export function useAtualizarAlternativaDeMercado(processoId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { id: string; dados: DadosDaAlternativaDeMercado }) =>
+      atualizarAlternativaDeMercado(processoId, input.id, input.dados),
+    onSuccess: () => recarregarAlternativas(queryClient, processoId),
+  })
+}
+
+export function useRemoverAlternativaDeMercado(processoId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => removerAlternativaDeMercado(processoId, id),
+    onSuccess: () => recarregarAlternativas(queryClient, processoId),
   })
 }
 

@@ -154,7 +154,8 @@ describe("consultas que só disparam quando têm o que perguntar", () => {
   const desligadas: Array<[string, () => unknown, FuncaoDaApi]> = [
     ["useProcesso sem id", () => hooks.useProcesso(""), api.getProcesso],
     ["useParecerDFD sem id", () => hooks.useParecerDFD(""), api.getParecerDFD],
-    ["useSecoes sem id", () => hooks.useSecoes("", "ETP"), api.getSecoes],
+    ["useSecoes sem id", () => hooks.useSecoes("", "ETP"), api.getDocumento],
+    ["useSecoes para documento ausente", () => hooks.useSecoes(PROCESSO, "Aviso", false), api.getDocumento],
     ["useCorpoDocumento sem id", () => hooks.useCorpoDocumento("", "ETP"), api.getCorpoDocumento],
     ["useVersoesComTexto sem id", () => hooks.useVersoesComTexto("", "ETP"), api.getVersoesComTexto],
     ["useHistoricoVersoes sem id", () => hooks.useHistoricoVersoes("", "ETP"), api.getHistoricoVersoes],
@@ -338,25 +339,27 @@ describe("processo: o que fica velho quando ele muda", () => {
 })
 
 describe("documento: seções, estrutura e geração", () => {
-  it("salvar e gerar seção recarregam as seções do documento", async () => {
-    for (const [usar, entrada, funcao] of [
-      [
-        () => hooks.useAtualizarSecao(PROCESSO, "ETP"),
-        { secaoId: "1", conteudo: "texto" },
-        api.atualizarSecao,
-      ],
-      [() => hooks.useGerarSecao(PROCESSO, "ETP"), "1", api.gerarSecao],
-    ] as const) {
-      const { wrapper, invalidou } = ambiente()
-      mockDaApi(funcao).mockResolvedValue({ id: "1" })
+  it("salvar seção recarrega as seções do documento", async () => {
+    const { wrapper, invalidou } = ambiente()
+    vi.mocked(api.atualizarSecao).mockResolvedValue({ id: "1" } as never)
 
-      const { result } = renderHook(comoMutacao(usar), { wrapper })
-      result.current.mutate(entrada as never)
+    const { result } = renderHook(() => hooks.useAtualizarSecao(PROCESSO, "ETP"), { wrapper })
+    result.current.mutate({ secaoId: "1", conteudo: "texto" })
 
-      await waitFor(() =>
-        expect(invalidadas(invalidou)).toContain(chave(chaves.secoes(PROCESSO, "ETP"))),
-      )
-    }
+    await waitFor(() =>
+      expect(invalidadas(invalidou)).toContain(chave(chaves.secoes(PROCESSO, "ETP"))),
+    )
+  })
+
+  it("gerar texto sem salvar não recarrega o documento", async () => {
+    const { wrapper, invalidou } = ambiente()
+    vi.mocked(api.gerarSecao).mockResolvedValue({ id: "1", conteudo: "rascunho" } as never)
+
+    const { result } = renderHook(() => hooks.useGerarSecao(PROCESSO, "TR"), { wrapper })
+    result.current.mutate({ secaoId: "1", rascunho: "texto anterior" })
+
+    await waitFor(() => expect(api.gerarSecao).toHaveBeenCalledWith(PROCESSO, "TR", "1", "texto anterior", undefined))
+    expect(invalidadas(invalidou)).not.toContain(chave(chaves.secoes(PROCESSO, "TR")))
   })
 
   it("salvar seção repassa processo e tipo, que a tela não precisa repetir", async () => {

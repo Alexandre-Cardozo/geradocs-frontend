@@ -41,6 +41,18 @@
         "required" : [ "anchorSectionCode", "nested", "title" ],
         "type" : "object"
       },
+      "AiDraftEvidence" : {
+        "properties" : {
+          "fact" : {
+            "type" : "string"
+          },
+          "source" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "fact", "source" ],
+        "type" : "object"
+      },
       "AiDraftResponse" : {
         "properties" : {
           "content" : {
@@ -48,6 +60,12 @@
           },
           "documentType" : {
             "type" : "string"
+          },
+          "evidence" : {
+            "items" : {
+              "$ref" : "#/components/schemas/AiDraftEvidence"
+            },
+            "type" : "array"
           },
           "missingFacts" : {
             "items" : {
@@ -68,7 +86,7 @@
             "type" : "array"
           }
         },
-        "required" : [ "content", "documentType", "missingFacts", "sectionCode", "sectionTitle", "warnings" ],
+        "required" : [ "content", "documentType", "evidence", "missingFacts", "sectionCode", "sectionTitle", "warnings" ],
         "type" : "object"
       },
       "AiStatusResponse" : {
@@ -193,6 +211,11 @@
               "$ref" : "#/components/schemas/DemandItemRequest"
             },
             "type" : "array"
+          },
+          "problemDescription" : {
+            "maxLength" : 2000,
+            "minLength" : 0,
+            "type" : "string"
           }
         },
         "required" : [ "departmentId", "fileName", "items" ],
@@ -201,7 +224,7 @@
       "AuditEntryResponse" : {
         "properties" : {
           "action" : {
-            "enum" : [ "AI_GUIDANCE_BLOCKED", "AI_GUIDANCE_USED", "BUDGET_APPROPRIATION_DECLARED", "BUDGET_APPROPRIATION_REMOVED", "BUDGET_APPROPRIATION_UPDATED", "BUNDLE_EXPORTED", "CONTRACTING_CONTEXTS_CONFIRMED", "DEPARTMENT_CREATED", "DEPARTMENT_DEACTIVATED", "DEPARTMENT_UPDATED", "DFD_ATTACHED", "DFD_REMOVED", "DFD_UPDATED", "DOCUMENT_DOWNLOADED", "DOCUMENT_FINALIZED", "DOCUMENT_GENERATED", "DOCUMENT_MODEL_JUSTIFIED", "DOCUMENT_STRUCTURE_CHANGED", "LOGIN_FAILED", "LOGIN_SUCCEEDED", "ORGANIZATION_CREATED", "ORGANIZATION_DEACTIVATED", "ORGANIZATION_LETTERHEAD_UPDATED", "ORGANIZATION_UPDATED", "PASSWORD_RESET_COMPLETED", "PASSWORD_RESET_REQUESTED", "PCA_IMPORTED", "PRICE_QUOTE_RECORDED", "PRICE_QUOTE_REMOVED", "PRICE_QUOTE_UPDATED", "PROCUREMENT_PROCESS_CLOSED", "PROCUREMENT_PROCESS_CREATED", "PROCUREMENT_PROCESS_REOPENED", "PROCUREMENT_PROCESS_UPDATED", "REGULATION_ADDED", "REGULATION_FILE_REPLACED", "REGULATION_REINSTATED", "REGULATION_REMOVED", "REGULATION_REVOKED", "REGULATION_UPDATED", "SECTION_DISPENSED", "SECTION_WRITTEN", "STRUCTURE_MODEL_DEACTIVATED", "STRUCTURE_MODEL_PUBLISHED", "TEMPLATE_PUBLISHED", "USER_CPF_REVEALED", "USER_CREATED", "USER_DEACTIVATED", "USER_ORGANIZATION_TRANSFERRED", "USER_PASSWORD_RESET", "USER_UPDATED" ],
+            "enum" : [ "AI_GUIDANCE_BLOCKED", "AI_GUIDANCE_USED", "BUDGET_APPROPRIATION_DECLARED", "BUDGET_APPROPRIATION_REMOVED", "BUDGET_APPROPRIATION_UPDATED", "BUNDLE_EXPORTED", "CONTRACTING_CONTEXTS_CONFIRMED", "DEPARTMENT_CREATED", "DEPARTMENT_DEACTIVATED", "DEPARTMENT_UPDATED", "DFD_ATTACHED", "DFD_REMOVED", "DFD_UPDATED", "DOCUMENT_DOWNLOADED", "DOCUMENT_FINALIZED", "DOCUMENT_GENERATED", "DOCUMENT_MODEL_JUSTIFIED", "DOCUMENT_STRUCTURE_CHANGED", "LOGIN_FAILED", "LOGIN_SUCCEEDED", "MARKET_ALTERNATIVE_RECORDED", "MARKET_ALTERNATIVE_REMOVED", "MARKET_ALTERNATIVE_UPDATED", "ORGANIZATION_CREATED", "ORGANIZATION_DEACTIVATED", "ORGANIZATION_LETTERHEAD_UPDATED", "ORGANIZATION_UPDATED", "PASSWORD_RESET_COMPLETED", "PASSWORD_RESET_REQUESTED", "PCA_IMPORTED", "PRICE_QUOTE_RECORDED", "PRICE_QUOTE_REMOVED", "PRICE_QUOTE_UPDATED", "PROCUREMENT_PROCESS_CLOSED", "PROCUREMENT_PROCESS_CREATED", "PROCUREMENT_PROCESS_REOPENED", "PROCUREMENT_PROCESS_UPDATED", "REGULATION_ADDED", "REGULATION_FILE_REPLACED", "REGULATION_REINSTATED", "REGULATION_REMOVED", "REGULATION_REVOKED", "REGULATION_UPDATED", "SECTION_DISPENSED", "SECTION_WRITTEN", "STRUCTURE_MODEL_DEACTIVATED", "STRUCTURE_MODEL_PUBLISHED", "TEMPLATE_PUBLISHED", "USER_CPF_REVEALED", "USER_CREATED", "USER_DEACTIVATED", "USER_ORGANIZATION_TRANSFERRED", "USER_PASSWORD_RESET", "USER_UPDATED" ],
             "type" : "string"
           },
           "actorId" : {
@@ -492,6 +515,10 @@
           "description" : {
             "type" : "string"
           },
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
           "summable" : {
             "type" : "boolean"
           },
@@ -502,7 +529,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "byDepartment", "description", "summable", "total", "unit" ],
+        "required" : [ "byDepartment", "description", "id", "summable", "total", "unit" ],
         "type" : "object"
       },
       "ContextTopicView" : {
@@ -1714,6 +1741,76 @@
         "required" : [ "bottomMm", "leftMm", "rightMm", "topMm" ],
         "type" : "object"
       },
+      "MarketAlternativeRequest" : {
+        "properties" : {
+          "advantages" : {
+            "maxLength" : 2000,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "description" : {
+            "maxLength" : 2000,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "disadvantages" : {
+            "maxLength" : 2000,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "name" : {
+            "maxLength" : 160,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "selected" : {
+            "type" : "boolean"
+          },
+          "sourceReference" : {
+            "maxLength" : 500,
+            "minLength" : 0,
+            "type" : "string"
+          }
+        },
+        "required" : [ "description", "name", "selected" ],
+        "type" : "object"
+      },
+      "MarketAlternativeResponse" : {
+        "properties" : {
+          "advantages" : {
+            "type" : "string"
+          },
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "disadvantages" : {
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "selected" : {
+            "type" : "boolean"
+          },
+          "sourceReference" : {
+            "type" : "string"
+          },
+          "updatedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          }
+        },
+        "required" : [ "createdAt", "description", "id", "name", "selected", "updatedAt" ],
+        "type" : "object"
+      },
       "MembershipResponse" : {
         "properties" : {
           "active" : {
@@ -2123,6 +2220,10 @@
             "minLength" : 0,
             "type" : "string"
           },
+          "itemId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
           "note" : {
             "maxLength" : 2000,
             "minLength" : 0,
@@ -2147,12 +2248,17 @@
             "minLength" : 0,
             "type" : "string"
           },
+          "unit" : {
+            "maxLength" : 20,
+            "minLength" : 0,
+            "type" : "string"
+          },
           "unitPrice" : {
             "minimum" : 0.01,
             "type" : "number"
           }
         },
-        "required" : [ "collectedAt", "item", "source", "unitPrice" ],
+        "required" : [ "collectedAt", "source", "unitPrice" ],
         "type" : "object"
       },
       "PriceQuoteResponse" : {
@@ -2169,6 +2275,10 @@
             "type" : "string"
           },
           "item" : {
+            "type" : "string"
+          },
+          "itemId" : {
+            "format" : "uuid",
             "type" : "string"
           },
           "note" : {
@@ -2191,11 +2301,14 @@
           "supplierDocument" : {
             "type" : "string"
           },
+          "unit" : {
+            "type" : "string"
+          },
           "unitPrice" : {
             "type" : "number"
           }
         },
-        "required" : [ "collectedAt", "id", "item", "registeredAt", "source", "unitPrice" ],
+        "required" : [ "collectedAt", "id", "item", "itemId", "registeredAt", "source", "unitPrice" ],
         "type" : "object"
       },
       "ProcessDfdResponse" : {
@@ -2229,6 +2342,9 @@
               "$ref" : "#/components/schemas/DemandItemView"
             },
             "type" : "array"
+          },
+          "problemDescription" : {
+            "type" : "string"
           },
           "submittedAt" : {
             "format" : "date-time",
@@ -3145,6 +3261,11 @@
               "$ref" : "#/components/schemas/DemandItemRequest"
             },
             "type" : "array"
+          },
+          "problemDescription" : {
+            "maxLength" : 2000,
+            "minLength" : 0,
+            "type" : "string"
           }
         },
         "required" : [ "items" ],
@@ -3481,7 +3602,7 @@
           "name" : "action",
           "required" : false,
           "schema" : {
-            "enum" : [ "AI_GUIDANCE_BLOCKED", "AI_GUIDANCE_USED", "BUDGET_APPROPRIATION_DECLARED", "BUDGET_APPROPRIATION_REMOVED", "BUDGET_APPROPRIATION_UPDATED", "BUNDLE_EXPORTED", "CONTRACTING_CONTEXTS_CONFIRMED", "DEPARTMENT_CREATED", "DEPARTMENT_DEACTIVATED", "DEPARTMENT_UPDATED", "DFD_ATTACHED", "DFD_REMOVED", "DFD_UPDATED", "DOCUMENT_DOWNLOADED", "DOCUMENT_FINALIZED", "DOCUMENT_GENERATED", "DOCUMENT_MODEL_JUSTIFIED", "DOCUMENT_STRUCTURE_CHANGED", "LOGIN_FAILED", "LOGIN_SUCCEEDED", "ORGANIZATION_CREATED", "ORGANIZATION_DEACTIVATED", "ORGANIZATION_LETTERHEAD_UPDATED", "ORGANIZATION_UPDATED", "PASSWORD_RESET_COMPLETED", "PASSWORD_RESET_REQUESTED", "PCA_IMPORTED", "PRICE_QUOTE_RECORDED", "PRICE_QUOTE_REMOVED", "PRICE_QUOTE_UPDATED", "PROCUREMENT_PROCESS_CLOSED", "PROCUREMENT_PROCESS_CREATED", "PROCUREMENT_PROCESS_REOPENED", "PROCUREMENT_PROCESS_UPDATED", "REGULATION_ADDED", "REGULATION_FILE_REPLACED", "REGULATION_REINSTATED", "REGULATION_REMOVED", "REGULATION_REVOKED", "REGULATION_UPDATED", "SECTION_DISPENSED", "SECTION_WRITTEN", "STRUCTURE_MODEL_DEACTIVATED", "STRUCTURE_MODEL_PUBLISHED", "TEMPLATE_PUBLISHED", "USER_CPF_REVEALED", "USER_CREATED", "USER_DEACTIVATED", "USER_ORGANIZATION_TRANSFERRED", "USER_PASSWORD_RESET", "USER_UPDATED" ],
+            "enum" : [ "AI_GUIDANCE_BLOCKED", "AI_GUIDANCE_USED", "BUDGET_APPROPRIATION_DECLARED", "BUDGET_APPROPRIATION_REMOVED", "BUDGET_APPROPRIATION_UPDATED", "BUNDLE_EXPORTED", "CONTRACTING_CONTEXTS_CONFIRMED", "DEPARTMENT_CREATED", "DEPARTMENT_DEACTIVATED", "DEPARTMENT_UPDATED", "DFD_ATTACHED", "DFD_REMOVED", "DFD_UPDATED", "DOCUMENT_DOWNLOADED", "DOCUMENT_FINALIZED", "DOCUMENT_GENERATED", "DOCUMENT_MODEL_JUSTIFIED", "DOCUMENT_STRUCTURE_CHANGED", "LOGIN_FAILED", "LOGIN_SUCCEEDED", "MARKET_ALTERNATIVE_RECORDED", "MARKET_ALTERNATIVE_REMOVED", "MARKET_ALTERNATIVE_UPDATED", "ORGANIZATION_CREATED", "ORGANIZATION_DEACTIVATED", "ORGANIZATION_LETTERHEAD_UPDATED", "ORGANIZATION_UPDATED", "PASSWORD_RESET_COMPLETED", "PASSWORD_RESET_REQUESTED", "PCA_IMPORTED", "PRICE_QUOTE_RECORDED", "PRICE_QUOTE_REMOVED", "PRICE_QUOTE_UPDATED", "PROCUREMENT_PROCESS_CLOSED", "PROCUREMENT_PROCESS_CREATED", "PROCUREMENT_PROCESS_REOPENED", "PROCUREMENT_PROCESS_UPDATED", "REGULATION_ADDED", "REGULATION_FILE_REPLACED", "REGULATION_REINSTATED", "REGULATION_REMOVED", "REGULATION_REVOKED", "REGULATION_UPDATED", "SECTION_DISPENSED", "SECTION_WRITTEN", "STRUCTURE_MODEL_DEACTIVATED", "STRUCTURE_MODEL_PUBLISHED", "TEMPLATE_PUBLISHED", "USER_CPF_REVEALED", "USER_CREATED", "USER_DEACTIVATED", "USER_ORGANIZATION_TRANSFERRED", "USER_PASSWORD_RESET", "USER_UPDATED" ],
             "type" : "string"
           }
         }, {
@@ -6205,6 +6326,57 @@
         "tags" : [ "document-authoring-controller" ]
       }
     },
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/sections/{sectionCode}/ai-draft-with-sources" : {
+      "post" : {
+        "operationId" : "generateSectionDraft",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "documentType",
+          "required" : true,
+          "schema" : {
+            "enum" : [ "AVISO", "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "sectionCode",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/GenerateSectionRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AiDraftResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "document-authoring-controller" ]
+      }
+    },
     "/api/v1/procurement-processes/{processId}/documents/{documentType}/sections/{sectionCode}/generate" : {
       "post" : {
         "operationId" : "generateSection",
@@ -6534,6 +6706,142 @@
           }
         },
         "tags" : [ "document-authoring-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{processId}/market-alternatives" : {
+      "get" : {
+        "operationId" : "listMarketAlternatives",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/MarketAlternativeResponse"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "market-alternative-controller" ]
+      },
+      "post" : {
+        "operationId" : "createMarketAlternative",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/MarketAlternativeRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MarketAlternativeResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "market-alternative-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{processId}/market-alternatives/{alternativeId}" : {
+      "delete" : {
+        "operationId" : "removeMarketAlternative",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "alternativeId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "market-alternative-controller" ]
+      },
+      "put" : {
+        "operationId" : "updateMarketAlternative",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "alternativeId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/MarketAlternativeRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MarketAlternativeResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "market-alternative-controller" ]
       }
     },
     "/api/v1/procurement-processes/{processId}/pca" : {

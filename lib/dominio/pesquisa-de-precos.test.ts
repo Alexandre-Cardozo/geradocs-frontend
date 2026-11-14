@@ -38,7 +38,9 @@ const coleta = (
   extras: Partial<ColetaDePreco> = {},
 ): ColetaDePreco => ({
   id: `${item}-${fonte}-${valorUnitario}`,
+  itemId: chaveDoItem(item),
   item,
+  unidade: "UN",
   fonte,
   valorUnitario,
   coletadoEm: "2026-08-20T14:30:00Z",
@@ -58,6 +60,16 @@ describe("a série agrupada por item", () => {
     // "Papel A4" e "papel  a4" são o mesmo item — a mesma chave da consolidação.
     expect(itens.map((i) => i.item)).toEqual(["Caneta", "Papel A4"])
     expect(itens[1]?.precos).toHaveLength(2)
+  })
+
+  it("mantém separados itens canônicos distintos com a mesma descrição", () => {
+    const itens = porItem([
+      coleta("Papel A4", "Painel", "24,00", { itemId: "item-orgao-a" }),
+      coleta("Papel A4", "Nota fiscal", "26,00", { itemId: "item-orgao-b" }),
+    ])
+
+    expect(itens.map((item) => item.itemId)).toEqual(["item-orgao-a", "item-orgao-b"])
+    expect(itens.map((item) => item.precos)).toEqual([[24], [26]])
   })
 
   it("apura média, mediana e menor — os três métodos do Art. 6º", () => {

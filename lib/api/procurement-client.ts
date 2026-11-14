@@ -409,6 +409,7 @@ export const INCONGRUENCIA: Record<TipoDeIncongruencia, { rotulo: string; conseq
 
 interface ConsolidacaoApi {
   items: {
+    id: string;
     description: string;
     unit: string;
     total: number;
@@ -424,6 +425,7 @@ interface ConsolidacaoApi {
 }
 
 export interface ItemConsolidado {
+  id: string;
   descricao: string;
   unidade: string;
   total: number;
@@ -457,6 +459,7 @@ export async function consolidacaoDaDemanda(processoId: string): Promise<Demanda
   );
   return {
     itens: consolidacao.items.map((item) => ({
+      id: item.id,
       descricao: item.description,
       unidade: item.unit,
       total: item.total,
@@ -610,6 +613,7 @@ export async function registrarDfd(
   arquivo?: File | null,
   /** AAAA-MM-DD; a data pretendida para a conclusão da contratação (ADR-044). */
   dataPrevista?: string,
+  problema?: string,
 ): Promise<void> {
   const corpo = new FormData();
   // `Blob` com tipo, e não string: sem o `Content-Type` da parte, o servidor
@@ -623,6 +627,7 @@ export async function registrarDfd(
           fileName: identificacao,
           items: [],
           expectedCompletionDate: dataPrevista || null,
+          problemDescription: problema?.trim() || null,
         }),
       ],
       { type: "application/json" },
@@ -654,6 +659,8 @@ export interface DfdAnexado {
   arquivo: { tipo: string; bytes: number; resumo: string } | null;
   /** AAAA-MM-DD: a data pretendida para a conclusão da contratação (ADR-044). */
   dataPrevista: string | null;
+  /** Situação-problema declarada pela unidade, quando informada. */
+  problema?: string | null;
   /** A ficha da secretaria de origem, com o CPF do secretário mascarado. */
   fichaDaSecretaria: FichaDaSecretaria;
 }
@@ -685,6 +692,7 @@ interface DfdDaApi {
   }>;
   file?: { mediaType: string; byteSize: number; sha256: string } | null;
   expectedCompletionDate?: string | null;
+  problemDescription?: string | null;
   department?: {
     institutionalEmail?: string | null;
     address?: string | null;
@@ -727,6 +735,7 @@ export async function listarDfds(processoId: string): Promise<DfdAnexado[]> {
       ? { tipo: dfd.file.mediaType, bytes: dfd.file.byteSize, resumo: dfd.file.sha256 }
       : null,
     dataPrevista: dfd.expectedCompletionDate ?? null,
+    problema: dfd.problemDescription ?? null,
     fichaDaSecretaria: {
       email: dfd.department?.institutionalEmail ?? null,
       endereco: dfd.department?.address ?? null,
@@ -753,6 +762,7 @@ export async function atualizarItensDoDfd(
    * data juntos, e omiti-la apagaria a data a cada item corrigido.
    */
   dataPrevista: string | null,
+  problema?: string,
 ): Promise<void> {
   await requisicaoProtegida<unknown>(
     `/procurement-processes/${encodeURIComponent(processoId)}/dfds/${encodeURIComponent(dfdId)}/items`,
@@ -770,6 +780,7 @@ export async function atualizarItensDoDfd(
           catalogCode: item.codigoCatalogo?.trim() || null,
         })),
         expectedCompletionDate: dataPrevista || null,
+        ...(problema === undefined ? {} : { problemDescription: problema.trim() }),
       }),
     },
   );
@@ -950,8 +961,10 @@ export async function removerDotacao(processoId: string, dotacaoId: string): Pro
  */
 export interface ColetaDePreco {
   id: string;
+  itemId: string;
   /** O item pesquisado — liga a coleta à consolidação da demanda. */
   item: string;
+  unidade: string;
   /** A fonte consultada, entre os parâmetros do Art. 23, § 1º. */
   fonte: string;
   valorUnitario: string;
@@ -979,7 +992,9 @@ export type DadosDaColeta = Omit<ColetaDePreco, "id" | "registradaEm" | "documen
 
 interface ColetaDaApi {
   id: string;
+  itemId: string;
   item: string;
+  unit: string;
   source: string;
   unitPrice: number;
   collectedAt: string;
@@ -994,7 +1009,9 @@ interface ColetaDaApi {
 function coletaDaApi(coleta: ColetaDaApi): ColetaDePreco {
   return {
     id: coleta.id,
+    itemId: coleta.itemId,
     item: coleta.item,
+    unidade: coleta.unit,
     fonte: coleta.source,
     valorUnitario: formatNumeroBR(coleta.unitPrice),
     coletadoEm: coleta.collectedAt,
@@ -1016,7 +1033,9 @@ function coletaDaApi(coleta: ColetaDaApi): ColetaDePreco {
 
 function corpoDaColeta(dados: DadosDaColeta) {
   return JSON.stringify({
+    itemId: dados.itemId,
     item: dados.item.trim(),
+    unit: dados.unidade.trim(),
     source: dados.fonte.trim(),
     unitPrice: parseValorBR(dados.valorUnitario),
     collectedAt: dados.coletadoEm,
@@ -1091,6 +1110,86 @@ export async function anexarDocumentoDaColeta(
 export function baixarDocumentoDaColeta(processoId: string, coletaId: string) {
   return baixarProtegido(
     `/procurement-processes/${encodeURIComponent(processoId)}/price-quotes/${encodeURIComponent(coletaId)}/file`,
+  );
+}
+
+export interface AlternativaDeMercado {
+  id: string;
+  nome: string;
+  descricao: string;
+  vantagens?: string;
+  limitacoes?: string;
+  fonte?: string;
+  selecionada: boolean;
+}
+
+export type DadosDaAlternativaDeMercado = Omit<AlternativaDeMercado, "id">;
+
+interface AlternativaDeMercadoApi {
+  id: string;
+  name: string;
+  description: string;
+  advantages?: string | null;
+  disadvantages?: string | null;
+  sourceReference?: string | null;
+  selected: boolean;
+}
+
+function alternativaDaApi(value: AlternativaDeMercadoApi): AlternativaDeMercado {
+  return {
+    id: value.id,
+    nome: value.name,
+    descricao: value.description,
+    vantagens: value.advantages ?? undefined,
+    limitacoes: value.disadvantages ?? undefined,
+    fonte: value.sourceReference ?? undefined,
+    selecionada: value.selected,
+  };
+}
+
+function corpoDaAlternativa(value: DadosDaAlternativaDeMercado) {
+  return JSON.stringify({
+    name: value.nome.trim(),
+    description: value.descricao.trim(),
+    advantages: value.vantagens?.trim() || null,
+    disadvantages: value.limitacoes?.trim() || null,
+    sourceReference: value.fonte?.trim() || null,
+    selected: value.selecionada,
+  });
+}
+
+export async function listarAlternativasDeMercado(processoId: string) {
+  const values = await requisicaoProtegida<AlternativaDeMercadoApi[]>(
+    `/procurement-processes/${encodeURIComponent(processoId)}/market-alternatives`,
+  );
+  return values.map(alternativaDaApi);
+}
+
+export async function registrarAlternativaDeMercado(
+  processoId: string,
+  value: DadosDaAlternativaDeMercado,
+) {
+  return alternativaDaApi(await requisicaoProtegida<AlternativaDeMercadoApi>(
+    `/procurement-processes/${encodeURIComponent(processoId)}/market-alternatives`,
+    { method: "POST", body: corpoDaAlternativa(value) },
+  ));
+}
+
+export async function atualizarAlternativaDeMercado(
+  processoId: string,
+  alternativeId: string,
+  value: DadosDaAlternativaDeMercado,
+) {
+  return alternativaDaApi(await requisicaoProtegida<AlternativaDeMercadoApi>(
+    `/procurement-processes/${encodeURIComponent(processoId)}/market-alternatives/${encodeURIComponent(alternativeId)}`,
+    { method: "PUT", body: corpoDaAlternativa(value) },
+  ));
+}
+
+export async function removerAlternativaDeMercado(processoId: string, alternativeId: string) {
+  await requisicaoProtegida<unknown>(
+    `/procurement-processes/${encodeURIComponent(processoId)}/market-alternatives/${encodeURIComponent(alternativeId)}`,
+    { method: "DELETE" },
   );
 }
 

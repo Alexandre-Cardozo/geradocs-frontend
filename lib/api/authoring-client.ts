@@ -510,6 +510,69 @@ export async function pedirTextoDaSecao(
   return { texto: gerada.text, avisos: gerada.guidanceWarnings ?? [] };
 }
 
+/** Rascunho transitório da necessidade do ETP; não grava a seção. */
+export interface RascunhoEtpComFontes {
+  content: string;
+  missingFacts: string[];
+  warnings: string[];
+  evidence: { source: string; fact: string }[];
+}
+
+/** Qualquer seção: mantém documento e seção definidos pela rota, não pelo modelo. */
+export async function gerarRascunhoDaSecaoComFontes(
+  processoId: string,
+  tipo: TipoDocumento,
+  secaoId: string,
+  rascunho: string,
+): Promise<RascunhoEtpComFontes> {
+  const resposta = await requisicaoProtegida<{
+    documentType: string;
+    sectionCode: string;
+    content: string;
+    missingFacts?: string[];
+    warnings?: string[];
+    evidence?: { source: string; fact: string }[];
+  }>(`${rota(processoId, tipo)}/sections/${encodeURIComponent(secaoId)}/ai-draft-with-sources`, {
+    method: "POST",
+    body: JSON.stringify({ draft: rascunho.trim() ? rascunho : null }),
+  });
+  if (resposta.documentType !== tipos[tipo] || resposta.sectionCode !== secaoId || !resposta.content?.trim()) {
+    throw new Error("A IA não retornou um rascunho válido para esta seção.");
+  }
+  return {
+    content: resposta.content,
+    missingFacts: resposta.missingFacts ?? [],
+    warnings: resposta.warnings ?? [],
+    evidence: resposta.evidence ?? [],
+  };
+}
+
+export async function gerarRascunhoDaNecessidadeEtp(
+  processoId: string,
+  rascunho: string,
+): Promise<RascunhoEtpComFontes> {
+  const resposta = await requisicaoProtegida<{
+    documentType: string;
+    sectionCode: string;
+    content: string;
+    missingFacts?: string[];
+    warnings?: string[];
+    evidence?: { source: string; fact: string }[];
+  }>(`${rota(processoId, "ETP")}/sections/1/ai-draft`, {
+    method: "POST",
+    body: JSON.stringify({ draft: rascunho.trim() ? rascunho : null }),
+  });
+  if (resposta.documentType !== "ETP" || resposta.sectionCode !== "1" || !resposta.content?.trim()) {
+    throw new Error("A IA não retornou um rascunho válido para esta seção.");
+  }
+  return {
+    content: resposta.content,
+    missingFacts: resposta.missingFacts ?? [],
+    warnings: resposta.warnings ?? [],
+    evidence: resposta.evidence ?? [],
+  };
+}
+
 /** Natureza da retificação, no vocabulário do contrato. */
 const naturezas: Record<MotivoRetificacao, string> = {
   erro_material: "MATERIAL_ERROR",

@@ -252,6 +252,98 @@ describe("gerar texto da seção", () => {
   })
 })
 
+describe("rascunho com fontes de qualquer seção", () => {
+  it("preserva seção e documento da rota e devolve lacunas sem salvar", async () => {
+    let gravou = false
+    servidor.use(
+      http.post(`${urlDaApi}/procurement-processes/:id/documents/:tipo/sections/:secao/ai-draft-with-sources`, () =>
+        HttpResponse.json({
+          documentType: "TR", sectionCode: "1", content: "Texto para revisão.",
+          missingFacts: ["Preço não informado."],
+          evidence: [{ source: "Processo", fact: "Objeto cadastrado." }],
+        }),
+      ),
+      http.put(`${urlDaApi}/procurement-processes/:id/documents/:tipo/sections/:secao`, () => {
+        gravou = true
+        return HttpResponse.json(documentoApi)
+      }),
+    )
+    const { gerarRascunhoDaSecaoComFontes } = await carregarClienteLimpo()
+    const resultado = await gerarRascunhoDaSecaoComFontes(PROCESSO, "TR", "1", "texto anterior")
+    expect(resultado).toEqual({
+      content: "Texto para revisão.", missingFacts: ["Preço não informado."],
+      evidence: [{ source: "Processo", fact: "Objeto cadastrado." }], warnings: [],
+    })
+    expect(gravou).toBe(false)
+  })
+
+  it("recusa resposta de outra seção antes de mostrá-la no editor", async () => {
+    servidor.use(
+      http.post(`${urlDaApi}/procurement-processes/:id/documents/:tipo/sections/:secao/ai-draft-with-sources`, () =>
+        HttpResponse.json({ documentType: "TR", sectionCode: "2", content: "Texto de outra seção." }),
+      ),
+    )
+    const { gerarRascunhoDaSecaoComFontes } = await carregarClienteLimpo()
+    await expect(gerarRascunhoDaSecaoComFontes(PROCESSO, "TR", "1", ""))
+      .rejects.toThrow(/rascunho válido para esta seção/)
+  })
+
+  it("preserva aviso de fonte não integrada sem apresentá-lo como fato ausente", async () => {
+    servidor.use(
+      http.post(`${urlDaApi}/procurement-processes/:id/documents/:tipo/sections/:secao/ai-draft-with-sources`, () =>
+        HttpResponse.json({
+          documentType: "ETP", sectionCode: "6", content: "Valor pendente de pesquisa.",
+          missingFacts: [], warnings: ["Preços referenciais não integram o contexto enviado à IA."],
+          evidence: [],
+        }),
+      ),
+    )
+    const { gerarRascunhoDaSecaoComFontes } = await carregarClienteLimpo()
+    const resultado = await gerarRascunhoDaSecaoComFontes(PROCESSO, "ETP", "6", "")
+    expect(resultado.warnings).toEqual(["Preços referenciais não integram o contexto enviado à IA."])
+    expect(resultado.missingFacts).toEqual([])
+  })
+})
+
+describe("rascunho transitório da necessidade do ETP", () => {
+  it("usa o endpoint real, transporta o texto atual e não grava a seção", async () => {
+    let corpo: Record<string, unknown> | undefined
+    let gravou = false
+    servidor.use(
+      http.post(`${urlDaApi}/procurement-processes/:id/documents/ETP/sections/1/ai-draft`, async ({ request }) => {
+        corpo = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json({ documentType: "ETP", sectionCode: "1", content: "Rascunho da necessidade.",
+          missingFacts: ["Problema não informado."], evidence: [{ source: "DFD 1", fact: "10 notebooks" }] })
+      }),
+      http.put(`${urlDaApi}/procurement-processes/:id/documents/ETP/sections/1`, () => {
+        gravou = true
+        return HttpResponse.json(documentoApi)
+      }),
+    )
+    const { gerarRascunhoDaNecessidadeEtp } = await carregarClienteLimpo()
+
+    expect(await gerarRascunhoDaNecessidadeEtp(PROCESSO, "Texto atual.")).toEqual({
+      content: "Rascunho da necessidade.", missingFacts: ["Problema não informado."],
+      warnings: [], evidence: [{ source: "DFD 1", fact: "10 notebooks" }],
+    })
+    expect(corpo).toEqual({ draft: "Texto atual." })
+    expect(gravou).toBe(false)
+  })
+
+  it("rejeita resposta vazia ou de outra seção", async () => {
+    servidor.use(http.post(`${urlDaApi}/procurement-processes/:id/documents/ETP/sections/1/ai-draft`, () =>
+      HttpResponse.json({ documentType: "TR", sectionCode: "2", content: "Texto errado." }),
+    ))
+    const { gerarRascunhoDaNecessidadeEtp } = await carregarClienteLimpo()
+    await expect(gerarRascunhoDaNecessidadeEtp(PROCESSO, "")).rejects.toThrow("rascunho válido")
+
+    servidor.use(http.post(`${urlDaApi}/procurement-processes/:id/documents/ETP/sections/1/ai-draft`, () =>
+      HttpResponse.json({ documentType: "ETP", sectionCode: "1", content: "   " }),
+    ))
+    await expect(gerarRascunhoDaNecessidadeEtp(PROCESSO, " ")).rejects.toThrow("rascunho válido")
+  })
+})
+
 describe("concluir documento", () => {
   it("devolve a versão e o corpo que o servidor congelou", async () => {
     servidor.use(
