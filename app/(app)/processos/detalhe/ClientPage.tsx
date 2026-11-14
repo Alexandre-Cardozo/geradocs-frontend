@@ -90,15 +90,17 @@ export default function HubProcesso() {
   const encerrar = useEncerrarProcesso()
 
   // Seções de cada tipo, para o progresso dos cards. As chamadas são explícitas
-  // e em ordem fixa porque hooks não podem ser chamados em laço.
+  // e em ordem fixa porque hooks não podem ser chamados em laço. Só consultamos
+  // documentos que pertencem ao processo; pedir AVISO num pregão recebia 400.
+  const temDocumento = (tipo: TipoDocumento) => processo.data?.documentos.includes(tipo) ?? false
   const secoesPorTipo: Record<TipoDocumento, ReturnType<typeof useSecoes>> = {
-    "Cotação": useSecoes(processoId, "Cotação"),
-    ETP: useSecoes(processoId, "ETP"),
-    Mapa: useSecoes(processoId, "Mapa"),
-    TR: useSecoes(processoId, "TR"),
-    Edital: useSecoes(processoId, "Edital"),
-    Aviso: useSecoes(processoId, "Aviso"),
-    Contrato: useSecoes(processoId, "Contrato"),
+    "Cotação": useSecoes(processoId, "Cotação", temDocumento("Cotação")),
+    ETP: useSecoes(processoId, "ETP", temDocumento("ETP")),
+    Mapa: useSecoes(processoId, "Mapa", temDocumento("Mapa")),
+    TR: useSecoes(processoId, "TR", temDocumento("TR")),
+    Edital: useSecoes(processoId, "Edital", temDocumento("Edital")),
+    Aviso: useSecoes(processoId, "Aviso", temDocumento("Aviso")),
+    Contrato: useSecoes(processoId, "Contrato", temDocumento("Contrato")),
   }
 
   const [editando, setEditando] = useState(false)

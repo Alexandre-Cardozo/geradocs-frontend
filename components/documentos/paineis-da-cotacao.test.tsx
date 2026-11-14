@@ -28,7 +28,9 @@ const PAINEL = "Painel de Preços do Governo Federal (Compras.gov.br)"
 
 const coleta = (item: string, fonte: string, preco: number, extras = {}) => ({
   id: `${item}-${fonte}-${preco}`,
+  itemId: `item-${item.toLowerCase().replaceAll(" ", "-")}`,
   item,
+  unit: "RESMA",
   source: fonte,
   unitPrice: preco,
   collectedAt: "2026-08-20T14:30:00Z",
@@ -152,7 +154,7 @@ describe("preços coletados", () => {
   it("registra um preço com fonte, data e hora", async () => {
     comColetas([])
     comConsolidacao([
-      { description: "Papel A4", unit: "RESMA", total: 100, summable: true, byDepartment: [] },
+      { id: "item-papel-a4", description: "Papel A4", unit: "RESMA", total: 100, summable: true, byDepartment: [] },
     ])
     let enviado: Record<string, unknown> | null = null
     servidor.use(
@@ -169,7 +171,7 @@ describe("preços coletados", () => {
     expect(registrar).toBeDisabled()
 
     await userEvent.click(await screen.findByRole("button", { name: "Item Pesquisado" }))
-    await userEvent.click(await screen.findByRole("option", { name: "Papel A4" }))
+    await userEvent.click(await screen.findByRole("option", { name: "Papel A4 · RESMA" }))
     await userEvent.click(screen.getByRole("button", { name: "Fonte Consultada" }))
     await userEvent.click(await screen.findByRole("option", { name: /Painel de Preços/ }))
     await userEvent.type(screen.getByLabelText(/Preço Obtido/), "2490")
@@ -177,6 +179,7 @@ describe("preços coletados", () => {
 
     await waitFor(() => expect(enviado).not.toBeNull())
     expect(enviado!.item).toBe("Papel A4")
+    expect(enviado!.itemId).toBe("item-papel-a4")
     expect(enviado!.unitPrice).toBe(2490)
     // A hora vai junto: o Art. 5º, III a exige para mídia e sítio eletrônico.
     expect(String(enviado!.collectedAt)).toMatch(/T\d{2}:\d{2}/)

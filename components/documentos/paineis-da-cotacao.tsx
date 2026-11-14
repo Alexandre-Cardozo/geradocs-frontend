@@ -394,7 +394,9 @@ function FormularioDaColeta({
     coleta
       ? { ...coleta }
       : {
+          itemId: "",
           item: "",
+          unidade: "",
           fonte: "",
           valorUnitario: "",
           coletadoEm: paraCampoDataHora(dataHoraBrasiliaISO()),
@@ -406,7 +408,7 @@ function FormularioDaColeta({
   const itensDaDemanda = consolidacao.data?.itens ?? []
   const pendente = registrar.isPending || atualizar.isPending
   const impedimento =
-    dados.item.trim() === ""
+    dados.itemId.trim() === ""
       ? "Informe a que item este preço se refere."
       : dados.fonte.trim() === ""
         ? "Escolha a fonte consultada. O Art. 3º da IN exige a caracterização das fontes."
@@ -450,18 +452,26 @@ function FormularioDaColeta({
           <FormField label="Item Pesquisado" required>
             {itensDaDemanda.length > 0 && !coleta ? (
               <Dropdown
-                value={dados.item}
-                onChange={(valor) => trocar("item", valor)}
+                value={dados.itemId}
+                onChange={(valor) => {
+                  const item = itensDaDemanda.find((candidate) => candidate.id === valor)
+                  setDados((atual) => ({
+                    ...atual,
+                    itemId: valor,
+                    item: item?.descricao ?? "",
+                    unidade: item?.unidade ?? "",
+                  }))
+                }}
                 ariaLabel="Item Pesquisado"
                 options={[
                   { value: "", label: "Selecione o item..." },
-                  ...itensDaDemanda.map((i) => ({ value: i.descricao, label: i.descricao })),
+                  ...itensDaDemanda.map((i) => ({ value: i.id, label: `${i.descricao} · ${i.unidade}` })),
                 ]}
               />
             ) : (
               <Input
                 value={dados.item}
-                onChange={(e) => trocar("item", e.target.value)}
+                disabled
                 ariaLabel="Item Pesquisado"
                 placeholder="Ex: Papel A4 75 g/m²"
               />

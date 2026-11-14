@@ -4,16 +4,19 @@ import Link from "next/link"
 import { notFound, useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
 
-import { Button, InfoBanner, ProgressBar, SectionBlock, Textarea } from "@/components/ui"
+import { Button, InfoBanner, ProgressBar, SectionBlock, Textarea, ValidationMsg } from "@/components/ui"
 import { IconArrowRight, IconCheckCircle, IconCheck, IconHelp, IconSave } from "@/components/ui/icons"
 import { PainelATA, PainelDaSecao } from "@/components/documentos/paineis"
 import { ErrorState, InlineSpinner, LoadingState } from "@/components/shared/estados"
 import { useToast } from "@/components/shared/providers"
+import type { RascunhoEtpComFontes } from "@/lib/api/authoring-client"
 import {
   useAtualizarSecao,
   useDocumentos,
   useGerarDocumento,
   useGerarSecao,
+  useGerarRascunhoDaSecao,
+  useGerarRascunhoEtp,
   useProcesso,
   useDocumentoEmElaboracao,
   useSecoes,
@@ -41,6 +44,7 @@ import {
 } from "@/components/documentos/paineis-da-cotacao"
 import { PainelDotacao } from "@/components/documentos/painel-dotacao"
 import { PainelPca } from "@/components/documentos/painel-pca"
+import { PainelAlternativasMercado } from "@/components/documentos/painel-alternativas-mercado"
 import {
   foiDispensada,
   foiRetificado,
@@ -105,7 +109,10 @@ export default function EditorDocumento() {
   const secoes = useSecoes(processoId, tipo)
   const documentos = useDocumentos()
   const salvar = useAtualizarSecao(processoId, tipo)
-  const gerar = useGerarSecao(processoId, tipo)
+  const gerar = useGerarRascunhoDaSecao(processoId, tipo)
+  const gerarEtp = useGerarRascunhoEtp(processoId)
+  const gerarComOrientacao = useGerarSecao(processoId, tipo)
+  const gerandoRascunho = gerar.isPending || gerarEtp.isPending || gerarComOrientacao.isPending
   const gerarDocumento = useGerarDocumento()
 
   const documentoGerado = (documentos.data ?? []).find(
@@ -129,11 +136,19 @@ export default function EditorDocumento() {
   })
   const orientacaoDaSecao =
     orientacao.secao === activeSection ? orientacao : { secao: activeSection, texto: "", avisos: [] }
+  const [fontesDoRascunho, setFontesDoRascunho] = useState<RascunhoEtpComFontes | null>(null)
+  const [rascunhoDaIaPendente, setRascunhoDaIaPendente] = useState(false)
+  const rascunhoAtualRef = useRef(rascunho)
+  useEffect(() => { rascunhoAtualRef.current = rascunho }, [rascunho])
   const [saved, setSaved] = useState(false)
   const secaoAtivaRef = useRef(activeSection)
   /** Para o caminho manual levar o cursor ao campo, em vez de só apontá-lo. */
   const campoDoTexto = useRef<HTMLTextAreaElement>(null)
   const irPara = (id: string) => {
+    if (id !== secaoAtivaRef.current) {
+      setFontesDoRascunho(null)
+      setRascunhoDaIaPendente(false)
+    }
     secaoAtivaRef.current = id
     setActiveSection(id)
   }
@@ -230,6 +245,11 @@ export default function EditorDocumento() {
    * que é o que só "Salvar e Avançar" declara.
    */
   const trocarSecao = (id: string) => {
+    if (active && naoGravado && rascunhoDaIaPendente) {
+      if (!window.confirm("O rascunho da IA ainda não foi salvo. Sair desta seção descartará esse texto. Deseja continuar?")) return
+      irPara(id)
+      return
+    }
     if (active && naoGravado) salvar.mutate(gravacaoDa(active))
     irPara(id)
   }
@@ -244,6 +264,8 @@ export default function EditorDocumento() {
       {
         onSuccess: () => {
           setSaved(true)
+          setFontesDoRascunho(null)
+          setRascunhoDaIaPendente(false)
           setTimeout(() => setSaved(false), 2500)
           // `irPara`, e não `trocarSecao`: o que havia na tela acabou de ser
           // gravado, e regravá-lo aqui devolveria a seção ao estado de rascunho.
@@ -255,28 +277,67 @@ export default function EditorDocumento() {
 
   const handleGerarIA = () => {
     if (!active) return
+    if (gerandoRascunho) return
     const secaoId = active.id
-    // O que está na tela vai junto: rascunho montado pela plataforma ou texto
-    // escrito à mão. É dele que o modelo parte.
-    const texto = orientacaoDaSecao.texto
+    const confirmarSubstituicao = () =>
+      !rascunho.trim() || window.confirm("Substituir o texto atual por um novo rascunho da IA? O texto ainda não será salvo.")
+    const textoAntesDaGeracao = rascunho
+    const aplicarRascunho = (conteudo: string, fontes: RascunhoEtpComFontes | null) => {
+      if (secaoAtivaRef.current !== secaoId) return
+      if (rascunhoAtualRef.current !== textoAntesDaGeracao) {
+        showToast("O texto foi alterado durante a geração. Seu rascunho foi preservado.")
+        return
+      }
+      setRascunho(semLinhasEmBranco(conteudo))
+      setFontesDoRascunho(fontes)
+      setRascunhoDaIaPendente(true)
+      const aviso = avisoDasTabelas(textoAntesDaGeracao, conteudo)
+      if (aviso) showToast(aviso)
+      showToast("Rascunho gerado. Revise os fatos e as lacunas antes de salvar.")
+    }
+
+    if (!confirmarSubstituicao()) return
+
+    // Orientação curada pelo servidor usa o endpoint de geração já existente,
+    // que aceita guidance. A resposta estruturada com evidências é usada no
+    // fluxo padrão, sem orientação livre.
+    if (orientacaoDaSecao.texto.trim()) {
+      if (gerarComOrientacao.isPending) return
+      const texto = orientacaoDaSecao.texto
+      gerarComOrientacao.mutate(
+        { secaoId, rascunho, orientacao: texto },
+        {
+          onSuccess: (resultado) => {
+            aplicarRascunho(resultado.conteudo, null)
+            setOrientacao({ secao: secaoId, texto, avisos: resultado.avisosDaOrientacao })
+          },
+          onError: (erro) => {
+            const mensagem = erro instanceof Error ? erro.message : "Não foi possível gerar com IA."
+            setOrientacao({ secao: secaoId, texto, avisos: [], erro: mensagem })
+          },
+        },
+      )
+      return
+    }
+
+    const aplicarResultado = (resultado: RascunhoEtpComFontes) =>
+      aplicarRascunho(resultado.content, resultado)
+
+    if (tipo === "ETP" && secaoId === "1") {
+      if (gerarEtp.isPending) return
+      gerarEtp.mutate(rascunho, {
+        onSuccess: aplicarResultado,
+        onError: (erro) => showToast(erro.message || "Não foi possível gerar o rascunho. Tente novamente."),
+      })
+      return
+    }
+
+    if (gerar.isPending) return
     gerar.mutate(
-      { secaoId, rascunho, orientacao: texto },
+      { secaoId, rascunho },
       {
-        onSuccess: (secaoGerada) => {
-          if (secaoAtivaRef.current === secaoId) setRascunho(semLinhasEmBranco(secaoGerada.conteudo))
-          // As instruções pedem que a IA mantenha as tabelas (ADR-062 do
-          // back-end); a tela confere, e avisa quando não manteve (§101).
-          const aviso = avisoDasTabelas(rascunho, secaoGerada.conteudo)
-          if (aviso) showToast(aviso)
-          setOrientacao({ secao: secaoId, texto, avisos: secaoGerada.avisosDaOrientacao })
-        },
-        // Com orientação, a recusa da curadoria aparece no próprio campo, com o
-        // motivo; sem ela, a falha é da geração, e vai como aviso.
-        onError: (erro) => {
-          const mensagem = erro instanceof Error ? erro.message : "Não foi possível gerar com IA."
-          if (texto.trim() !== "") setOrientacao({ secao: secaoId, texto, avisos: [], erro: mensagem })
-          else showToast(mensagem)
-        },
+        onSuccess: aplicarResultado,
+        onError: (erro) => showToast(erro.message || "Não foi possível gerar o rascunho. Tente novamente."),
       },
     )
   }
@@ -669,14 +730,16 @@ export default function EditorDocumento() {
               O painel recebe a geração: ele é quem sabe montar o rascunho a
               partir do processo, e os dois botões ficam lado a lado lá dentro.
             */
-            <PainelDaSecao
-              secao={active}
-              processoId={processoId}
-              rascunho={rascunho}
-              setRascunho={setRascunho}
-              gerando={gerar.isPending}
-              onGerarComIa={handleGerarIA}
-            />
+            <>
+              <PainelDaSecao
+                secao={active}
+                processoId={processoId}
+                rascunho={rascunho}
+                setRascunho={setRascunho}
+                gerando={gerandoRascunho}
+                onGerarComIa={handleGerarIA}
+              />
+            </>
           ) : !naEtapaFinal && active ? (
             <SectionBlock title={active.titulo} hint={active.hint ?? ""}>
               {(active.textoDaMinuta || active.notasDaMinuta) && (
@@ -693,7 +756,7 @@ export default function EditorDocumento() {
                   <JustificativaDoDesvio processoId={processoId} tipo={tipo} secao={active} />
                 </div>
               )}
-              {active.status === "Completo" && igualAoGravado && active.conteudo !== "" ? (
+              {active.status === "Completo" && !rascunhoDaIaPendente && igualAoGravado && active.conteudo !== "" ? (
                 // Concluída já aparece no ✓ da lista de seções; um cartão aqui
                 // repetia o aviso em cima do texto (§96).
                 <div className="flex flex-col gap-3">
@@ -717,15 +780,52 @@ export default function EditorDocumento() {
                     tirava justamente o caminho de "redija a partir do que eu
                     rascunhei".
                   */}
-                  <CaminhosDaSecao gerando={gerar.isPending} onGerarComIa={handleGerarIA} />
-                  {gerar.isPending && <InlineSpinner label="Gerando conteúdo da seção... aguarde." />}
+                  <CaminhosDaSecao
+                    gerando={gerandoRascunho}
+                    onGerarComIa={handleGerarIA}
+                  />
+                  {rascunho.trim() !== "" && (
+                    <ValidationMsg
+                      type="warn"
+                      msg={rascunhoDaIaPendente
+                        ? "Rascunho ainda não salvo. Revise os fatos e as lacunas antes de salvar."
+                        : "Revise os fatos e as lacunas antes de finalizar a seção."}
+                    />
+                  )}
+                  {gerandoRascunho && (
+                    <InlineSpinner label="Gerando conteúdo da seção... aguarde." />
+                  )}
                 </div>
               )}
             </SectionBlock>
           ) : null}
 
-          {/* Painel de Adesão de ATA — acompanha o Levantamento de Mercado. */}
+          {!naEtapaFinal && active && fontesDoRascunho && (
+            <div className="mt-4 rounded-card border border-border bg-surface p-4 text-sm text-text-2">
+              <h3 className="m-0 font-display text-base font-bold text-text-1">Revise o Rascunho da IA</h3>
+              <p className="mb-3 mt-1 text-text-muted">O texto ainda não foi salvo. Estas são as fontes disponíveis no contexto, não uma comprovação automática de cada afirmação do rascunho.</p>
+              {fontesDoRascunho.warnings.length > 0 && (
+                <div className="mb-3">
+                  <h4 className="mb-1 font-semibold text-text-1">Atenção às Fontes Não Integradas</h4>
+                  <ul className="m-0 list-disc pl-5">{fontesDoRascunho.warnings.map((aviso) => <li key={aviso}>{aviso}</li>)}</ul>
+                </div>
+              )}
+              {fontesDoRascunho.missingFacts.length > 0 && (
+                <div className="mb-3">
+                  <h4 className="mb-1 font-semibold text-text-1">Lacunas Identificadas no DFD</h4>
+                  <ul className="m-0 list-disc pl-5">{fontesDoRascunho.missingFacts.map((fato) => <li key={fato}>{fato}</li>)}</ul>
+                </div>
+              )}
+              <h4 className="mb-1 font-semibold text-text-1">Dados de Origem Disponíveis</h4>
+              <ul className="m-0 list-disc pl-5">
+                {fontesDoRascunho.evidence.map((item, indice) => <li key={`${item.source}-${indice}`}><span className="font-semibold">{item.source}:</span> {item.fact}</li>)}
+              </ul>
+            </div>
+          )}
+
+          {/* A adesão à ATA e as alternativas de mercado são ferramentas distintas da seção V. */}
           {active?.painel === "ata" && <PainelATA />}
+          {active?.painel === "ata" && <PainelAlternativasMercado processoId={processoId} />}
 
           {/*
             As seções da Cotação. A pesquisa de preços é uma só — a série
@@ -738,7 +838,7 @@ export default function EditorDocumento() {
               processoId={processoId}
               rascunho={rascunho}
               setRascunho={setRascunho}
-              gerando={gerar.isPending}
+              gerando={gerandoRascunho}
               onGerarComIa={handleGerarIA}
             />
           )}
@@ -748,7 +848,7 @@ export default function EditorDocumento() {
               processoId={processoId}
               rascunho={rascunho}
               setRascunho={setRascunho}
-              gerando={gerar.isPending}
+              gerando={gerandoRascunho}
               onGerarComIa={handleGerarIA}
             />
           )}
@@ -758,7 +858,7 @@ export default function EditorDocumento() {
               processoId={processoId}
               rascunho={rascunho}
               setRascunho={setRascunho}
-              gerando={gerar.isPending}
+              gerando={gerandoRascunho}
               onGerarComIa={handleGerarIA}
             />
           )}
@@ -768,7 +868,7 @@ export default function EditorDocumento() {
               processoId={processoId}
               rascunho={rascunho}
               setRascunho={setRascunho}
-              gerando={gerar.isPending}
+              gerando={gerandoRascunho}
               onGerarComIa={handleGerarIA}
             />
           )}
@@ -784,7 +884,7 @@ export default function EditorDocumento() {
               processoId={processoId}
               rascunho={rascunho}
               setRascunho={setRascunho}
-              gerando={gerar.isPending}
+              gerando={gerandoRascunho}
               onGerarComIa={handleGerarIA}
               // A alínea 'j' do TR pede a dotação **e** a previsão no PCA; o
               // Art. 150 e o Art. 92, VIII pedem só o crédito.
@@ -800,7 +900,7 @@ export default function EditorDocumento() {
               processoId={processoId}
               rascunho={rascunho}
               setRascunho={setRascunho}
-              gerando={gerar.isPending}
+              gerando={gerandoRascunho}
               onGerarComIa={handleGerarIA}
             />
           )}

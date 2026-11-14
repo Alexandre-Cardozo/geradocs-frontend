@@ -19,7 +19,9 @@ const PROCESSO = "3f2b1a00-1111-4222-8333-444455556666"
 
 const coleta = (documento: ColetaDePreco["documento"]): ColetaDePreco => ({
   id: "c-1",
+  itemId: "item-1",
   item: "Papel A4",
+  unidade: "RESMA",
   fonte: "Painel de Preços",
   valorUnitario: "24,90",
   coletadoEm: "2026-08-20T14:30:00Z",

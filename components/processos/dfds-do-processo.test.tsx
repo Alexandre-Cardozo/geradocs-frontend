@@ -115,6 +115,28 @@ describe("DFDs do processo", () => {
     expect(corpo.items).toEqual([])
   })
 
+  it("envia a situação-problema declarada sem inventar impactos", async () => {
+    let problema: unknown
+    comSecretarias()
+    comDfds([])
+    servidor.use(http.post(`${urlDaApi}/procurement-processes/:id/dfds`, async ({ request }) => {
+      const formulario = await request.formData()
+      const dados = JSON.parse(await (formulario.get("dados") as Blob).text()) as Record<string, unknown>
+      problema = dados.problemDescription
+      return HttpResponse.json({}, { status: 201 })
+    }))
+    renderizar(<DfdsDoProcesso processoId={PROCESSO} />)
+
+    await userEvent.click(await screen.findByRole("button", { name: /Registrar DFD/ }))
+    await userEvent.click(screen.getByRole("button", { name: /Secretaria que formalizou/ }))
+    await userEvent.click(screen.getByRole("option", { name: "Secretaria de Educação" }))
+    await userEvent.type(screen.getByLabelText("Identificação do DFD"), "DFD 005/2026")
+    await userEvent.type(screen.getByLabelText("Situação-Problema"), "Fila registrada na unidade.")
+    await userEvent.click(screen.getByRole("button", { name: "Registrar DFD" }))
+
+    await waitFor(() => expect(problema).toBe("Fila registrada na unidade."))
+  })
+
   it("sem secretaria e sem identificação, diz o que falta em vez de só desabilitar", async () => {
     comSecretarias()
     comDfds([])

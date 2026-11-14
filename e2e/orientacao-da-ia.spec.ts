@@ -32,6 +32,21 @@ test("a orientação vai só no pedido da seção, com os avisos e a recusa no c
       },
     })
   })
+  await page.route(`${API}/procurement-processes/*/documents/*/sections/*/ai-draft-with-sources`, async (r) => {
+    const corpo = r.request().postDataJSON() as Record<string, unknown>
+    const secao = new URL(r.request().url()).pathname.split("/").at(-2) ?? ""
+    pedidos.push({ secao, corpo })
+    await r.fulfill({
+      json: {
+        documentType: "ETP",
+        sectionCode: secao,
+        content: "Previsão no PCA registrada.",
+        evidence: [],
+        missingFacts: [],
+        warnings: [],
+      },
+    })
+  })
 
   await page.goto(rota(`/processos/documento?id=${encodeURIComponent(processo.id)}&tipo=etp`))
   await page.getByText("Orientar a IA (opcional)").click()
@@ -47,10 +62,12 @@ test("a orientação vai só no pedido da seção, com os avisos e a recusa no c
 
   // A recusa da curadoria aparece no campo, com o motivo.
   await page.getByRole("textbox", { name: "Orientação para esta seção" }).fill("O fiscal é o CPF 529.982.247-25.")
+  page.once("dialog", (dialog) => dialog.accept())
   await page.getByRole("button", { name: "Gerar com IA" }).click()
   await expect(page.getByText(/A orientação tem dado pessoal/)).toBeVisible()
 
   // Outra seção não leva a orientação desta.
+  page.once("dialog", (dialog) => dialog.accept())
   await page.getByRole("button", { name: /Seção 2 do ETP/ }).first().click()
   await page.getByRole("button", { name: "Gerar com IA" }).click()
   await expect.poll(() => pedidos.length).toBe(3)
