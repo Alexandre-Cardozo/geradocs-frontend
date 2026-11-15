@@ -24,6 +24,7 @@ import {
   obterFotoDePerfil,
   removerFotoDePerfil,
 } from "@/lib/api/avatar-client"
+import { definirTetoDeIa, lerTetoDeIa } from "@/lib/api/ai-budget-client"
 import { iaDisponivel } from "@/lib/api/ai-client"
 import { gerarRascunhoDaNecessidadeEtp, gerarRascunhoDaSecaoComFontes } from "@/lib/api/authoring-client"
 import { confirmarContextos, contextosDoProcesso } from "@/lib/api/contextos-client"
@@ -93,6 +94,7 @@ export const chaves = {
   alternativasMercado: (id: string) => ["alternativas-mercado", id] as const,
   dispensa: (id: string) => ["conferencia-dispensa", id] as const,
   iaDisponivel: ["ia-disponivel"] as const,
+  tetoDeIa: (entidadeId: string) => ["teto-de-ia", entidadeId] as const,
   secoes: (id: string, tipo: TipoDocumento) => ["secoes", id, tipo] as const,
   documentos: ["documentos"] as const,
   resumoDocumentos: ["documentos", "resumo"] as const,
@@ -779,6 +781,27 @@ export function useAtualizarLimiteDeUsuarios() {
     onSuccess: (tenant) => {
       void queryClient.invalidateQueries({ queryKey: chaves.entidades })
       void queryClient.invalidateQueries({ queryKey: chaves.tenant(tenant.id) })
+    },
+  })
+}
+
+/** O teto mensal de IA da entidade (ADR-064 do back-end). */
+export function useTetoDeIa(entidadeId: string) {
+  return useQuery({
+    queryKey: chaves.tetoDeIa(entidadeId),
+    queryFn: () => lerTetoDeIa(entidadeId),
+    enabled: entidadeId !== "",
+  })
+}
+
+/** Só o administrador da plataforma define; o servidor recusa os demais. */
+export function useDefinirTetoDeIa() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ entidadeId, teto }: { entidadeId: string; teto: number }) =>
+      definirTetoDeIa(entidadeId, teto),
+    onSuccess: (_resposta, { entidadeId }) => {
+      void queryClient.invalidateQueries({ queryKey: chaves.tetoDeIa(entidadeId) })
     },
   })
 }

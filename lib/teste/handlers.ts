@@ -17,6 +17,18 @@ export const handlers = [
   // que queira o contrário troca este handler — mas o caminho feliz é a
   // plataforma inteira funcionando sem assistência nenhuma (ADR-029).
   http.get(`${API}/ai/status`, () => HttpResponse.json({ available: false })),
+  // O teto de IA da entidade (ADR-064): no caminho feliz, definido e com saldo.
+  // Um teste do aviso o troca por `sem teto` ou `esgotado`.
+  http.get(`${API}/organizations/:id/ai-budget`, () =>
+    HttpResponse.json({
+      period: "2026-11",
+      limitAmount: 100,
+      spentAmount: 0,
+      remainingAmount: 100,
+      defined: true,
+      available: true,
+    }),
+  ),
 
   // Processos e elaboração de documento — o caminho feliz. Cada teste
   // sobrescreve o que precisa com `servidor.use`.

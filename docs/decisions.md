@@ -1394,3 +1394,11 @@ Pedido de quem usa: os tópicos seguem um depois do outro, sem buraco, na tela e
 
 - **Lista de anos, e não campo livre.** "Exercício" é um `Dropdown` com o ano atual (Brasília) já marcado, o anterior e os quatro seguintes, que são os do plano plurianual. O ano de uma dotação já gravada fora dessa faixa continua na lista, para a correção não trocar o ano sem pedido (`exerciciosDaDotacao`, em `lib/processos`).
 - **De onde vinha o "2100".** O back-end aceita exercício de 2000 a 2100, uma peneira contra erro de digitação. Com o campo livre, "30906" chegava ao servidor, e o toast mostrava a mensagem padrão da validação, que não dizia o campo. Agora a lista não deixa digitar, e o servidor diz "O exercício precisa estar entre 2000 e 2100." para quem chamar a API direto.
+
+## 104. O teto de IA da entidade aparece antes do clique, e o administrador o define na tela das entidades
+
+- **A tela diz o motivo antes do clique (ADR-064 do back-end).** Com modelo de IA configurado e a entidade sem teto, o servidor respondia `402` só depois do clique, e o aviso era um toast que sumia. Agora o `CaminhosDaSecao` consulta o teto da entidade da sessão: sem teto, escreve "A IA não está liberada para esta entidade"; com o teto do mês consumido, "O teto de IA do mês acabou". Nos dois casos manda falar com o administrador da plataforma, desabilita o botão e liga o motivo por `aria-describedby`. Como o componente é um só e serve os dez painéis, nenhum painel precisou mudar.
+- **Sem modelo, nada muda.** Se a instalação não tem IA, o motivo continua sendo a falta de modelo, e o teto nem é consultado.
+- **Só o administrador define.** A coluna "Teto Mensal de IA" na tela de entidades (`/admin/entidades`) mostra o valor por mês e o gasto, e edita com o `MoneyInput`. Zero desliga a IA da entidade. O servidor recusa quem não é administrador, e a mensagem dele vai para o aviso.
+- **Entidade sem teto não é traço.** O estado "Sem teto" diz que a IA fica indisponível até definir, porque a tela do administrador é o único lugar em que isso se resolve.
+- **Os testes não leem mais o `.env`.** Em paralelo, o back fixou o provedor `none` no perfil de teste: quem tinha `AI_PROVIDER=gemini` no `.env` rodava a suíte com o provedor real ligado.

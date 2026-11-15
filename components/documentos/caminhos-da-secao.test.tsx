@@ -91,4 +91,48 @@ describe("caminhos da seção", () => {
 
     expect(gerar).not.toHaveBeenCalled()
   })
+
+  describe("teto de IA da entidade (ADR-064)", () => {
+    function comTeto(corpo: Record<string, unknown>) {
+      servidor.use(http.get(`${urlDaApi}/organizations/:id/ai-budget`, () => HttpResponse.json(corpo)))
+    }
+
+    it("com modelo e sem teto definido, o motivo vem escrito antes do clique", async () => {
+      comIa(true)
+      comTeto({ spentAmount: 0, defined: false, available: false })
+      const { gerar } = renderizarCaminhos()
+
+      const botao = await screen.findByRole("button", { name: /Gerar com IA/ })
+      // Não é um toast que some: fica na seção, e diz a quem recorrer.
+      expect(await screen.findByText(/não está liberada para esta entidade/)).toBeInTheDocument()
+      expect(botao).toBeDisabled()
+      expect(screen.getByText(/Fale com o administrador da plataforma/)).toBeInTheDocument()
+      expect(screen.getByText("Indisponível")).toBeInTheDocument()
+      expect(document.getElementById(botao.getAttribute("aria-describedby") as string)).toHaveTextContent(
+        /administrador da plataforma/,
+      )
+
+      await userEvent.click(botao)
+      expect(gerar).not.toHaveBeenCalled()
+    })
+
+    it("com o teto do mês consumido, diz que o teto acabou, e não que falta liberar", async () => {
+      comIa(true)
+      comTeto({ period: "2026-11", limitAmount: 10, spentAmount: 10, remainingAmount: 0, defined: true, available: false })
+      renderizarCaminhos()
+
+      expect(await screen.findByText(/O teto de IA do mês acabou/)).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /Gerar com IA/ })).toBeDisabled()
+      expect(screen.queryByText(/não está liberada/)).not.toBeInTheDocument()
+    })
+
+    it("sem IA instalada, o motivo continua sendo a falta de modelo, e o teto nem é consultado", async () => {
+      comIa(false)
+      comTeto({ spentAmount: 0, defined: false, available: false })
+      renderizarCaminhos()
+
+      await waitFor(() => expect(screen.getByText(/Nenhum modelo de IA configurado/)).toBeInTheDocument())
+      expect(screen.queryByText(/administrador da plataforma/)).not.toBeInTheDocument()
+    })
+  })
 })
