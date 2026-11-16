@@ -390,6 +390,8 @@ export interface AtualizarSecaoInput {
    * — é assim que a tela desfaz sem precisar de uma operação própria.
    */
   justificativaDispensa?: string
+  /** A proposta de IA de onde o texto veio (ADR-066); salvar é aceitá-la. */
+  propostaId?: string
 }
 
 export async function atualizarSecao(input: AtualizarSecaoInput): Promise<SecaoDocumento> {
@@ -399,6 +401,7 @@ export async function atualizarSecao(input: AtualizarSecaoInput): Promise<SecaoD
     input.secaoId,
     input.conteudo,
     input.justificativaDispensa,
+    input.propostaId,
   )
   const secao = documento.secoes.find((s) => s.id === input.secaoId)
   if (!secao) throw new Error(`Seção ${input.secaoId} não encontrada`)
@@ -418,12 +421,19 @@ export async function gerarSecao(
   secaoId: string,
   rascunho?: string,
   orientacao?: string,
-): Promise<SecaoDocumento & { avisosDaOrientacao: string[] }> {
+): Promise<SecaoDocumento & { avisosDaOrientacao: string[]; propostaId?: string }> {
   const documento = await abrirDocumento(processoId, tipo)
   const secao = documento.secoes.find((s) => s.id === secaoId)
   if (!secao) throw new Error(`Seção ${secaoId} não encontrada`)
-  const { texto, avisos } = await pedirTextoDaSecao(processoId, tipo, secaoId, rascunho, "redacao", orientacao)
-  return { ...secao, conteudo: texto, status: statusAposEditar(texto), avisosDaOrientacao: avisos }
+  const { texto, avisos, propostaId } = await pedirTextoDaSecao(
+    processoId,
+    tipo,
+    secaoId,
+    rascunho,
+    "redacao",
+    orientacao,
+  )
+  return { ...secao, conteudo: texto, status: statusAposEditar(texto), avisosDaOrientacao: avisos, propostaId }
 }
 
 /**

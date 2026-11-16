@@ -26,7 +26,12 @@ import {
 } from "@/lib/api/avatar-client"
 import { definirTetoDeIa, lerTetoDeIa } from "@/lib/api/ai-budget-client"
 import { iaDisponivel } from "@/lib/api/ai-client"
-import { gerarRascunhoDaNecessidadeEtp, gerarRascunhoDaSecaoComFontes } from "@/lib/api/authoring-client"
+import {
+  gerarRascunhoDaNecessidadeEtp,
+  gerarRascunhoDaSecaoComFontes,
+  lerPropostaPendenteDaSecao,
+  rejeitarPropostaDeIa,
+} from "@/lib/api/authoring-client"
 import { confirmarContextos, contextosDoProcesso } from "@/lib/api/contextos-client"
 import {
   desativarModelo,
@@ -361,6 +366,8 @@ export function useAtualizarSecao(processoId: string, tipo: TipoDocumento) {
       conteudo: string
       status?: import("@/lib/types").StatusDocumento
       justificativaDispensa?: string
+      /** A proposta de IA de onde o texto veio (ADR-066): salvar é aceitá-la. */
+      propostaId?: string
     }) => api.atualizarSecao({ processoId, tipo, ...input }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: chaves.secoes(processoId, tipo) })
@@ -405,6 +412,44 @@ export function useGerarSecao(processoId: string, tipo: TipoDocumento) {
 export function useGerarRascunhoEtp(processoId: string) {
   return useMutation({
     mutationFn: (rascunho: string) => gerarRascunhoDaNecessidadeEtp(processoId, rascunho),
+  })
+}
+
+/**
+ * A proposta de IA que ainda espera o servidor na seção (ADR-066).
+ *
+ * Sem cache: a pergunta é "o que há pendente agora", e uma resposta guardada
+ * restauraria um rascunho que já foi salvo ou descartado.
+ */
+const chaveDaPropostaPendente = (processoId: string, tipo: TipoDocumento, secaoId: string | null) =>
+  ["proposta-pendente", processoId, tipo, secaoId] as const
+
+export function usePropostaPendente(processoId: string, tipo: TipoDocumento, secaoId: string | null) {
+  return useQuery({
+    queryKey: chaveDaPropostaPendente(processoId, tipo, secaoId),
+    queryFn: () => lerPropostaPendenteDaSecao(processoId, tipo, String(secaoId)),
+    enabled: processoId !== "" && secaoId != null,
+    staleTime: 0,
+    gcTime: 0,
+    retry: false,
+  })
+}
+
+/**
+ * Diz à tela que a seção já não tem proposta pendente (foi salva, descartada ou
+ * trocada por outra): sem isso, a resposta guardada a restauraria de novo.
+ */
+export function useLimparPropostaPendente(processoId: string, tipo: TipoDocumento) {
+  const queryClient = useQueryClient()
+  return (secaoId: string) =>
+    queryClient.setQueryData(chaveDaPropostaPendente(processoId, tipo, secaoId), null)
+}
+
+/** O servidor descartou a proposta de IA; o motivo é opcional. */
+export function useRejeitarPropostaDeIa(processoId: string, tipo: TipoDocumento) {
+  return useMutation({
+    mutationFn: (input: { secaoId: string; propostaId: string; motivo?: string }) =>
+      rejeitarPropostaDeIa(processoId, tipo, input.secaoId, input.propostaId, input.motivo),
   })
 }
 

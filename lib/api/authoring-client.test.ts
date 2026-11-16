@@ -994,3 +994,86 @@ describe("modelo de estrutura", () => {
     expect(trocado.estrutura.codigoDoModelo).toBe("AGU-EDITAL-PC")
   })
 })
+
+describe("propostas de IA (ADR-066)", () => {
+  it("o rascunho traz o id da proposta, para salvar ou rejeitar depois", async () => {
+    servidor.use(
+      http.post(`${urlDaApi}/procurement-processes/:id/documents/:tipo/sections/:secao/ai-draft-with-sources`, () =>
+        HttpResponse.json({ documentType: "ETP", sectionCode: "4", content: "Texto.", proposalId: "p-1" }),
+      ),
+    )
+    const { gerarRascunhoDaSecaoComFontes } = await carregarClienteLimpo()
+
+    expect((await gerarRascunhoDaSecaoComFontes(PROCESSO, "ETP", "4", "")).proposalId).toBe("p-1")
+  })
+
+  it("a redação com orientação também devolve o id da proposta", async () => {
+    servidor.use(
+      http.post(`${urlDaApi}/procurement-processes/:id/documents/:tipo/sections/:secao/generate`, () =>
+        HttpResponse.json({ text: "Texto.", guidanceWarnings: [], proposalId: "p-2" }),
+      ),
+    )
+    const { pedirTextoDaSecao } = await carregarClienteLimpo()
+
+    expect(await pedirTextoDaSecao(PROCESSO, "ETP", "1", "", "redacao", "Ênfase nas escolas rurais.")).toEqual({
+      texto: "Texto.", avisos: [], propostaId: "p-2",
+    })
+  })
+
+  it("salvar a seção leva a proposta de onde o texto veio, e só quando veio de uma", async () => {
+    const corpos: Record<string, unknown>[] = []
+    servidor.use(
+      http.put(`${urlDaApi}/procurement-processes/:id/documents/:tipo/sections/:secao`, async ({ request }) => {
+        corpos.push((await request.json()) as Record<string, unknown>)
+        return HttpResponse.json(documentoApi)
+      }),
+    )
+    const { salvarSecao } = await carregarClienteLimpo()
+
+    await salvarSecao(PROCESSO, "ETP", "1", "Texto.", undefined, "p-1")
+    await salvarSecao(PROCESSO, "ETP", "1", "Texto.")
+
+    expect(corpos[0]).toMatchObject({ content: "Texto.", aiProposalId: "p-1" })
+    expect(corpos[1]).not.toHaveProperty("aiProposalId")
+  })
+
+  it("lê a proposta pendente da seção e devolve nada quando não há (204)", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id/documents/:tipo/sections/:secao/ai-proposal`, ({ params }) =>
+        params.secao === "4"
+          ? HttpResponse.json({
+              documentType: "ETP", sectionCode: "4", content: "Rascunho pendente.", proposalId: "p-9",
+              missingFacts: ["Sem histórico de consumo."], warnings: [],
+              evidence: [{ source: "DFD", fact: "1.200 pacotes" }],
+            })
+          : new HttpResponse(null, { status: 204 }),
+      ),
+    )
+    const { lerPropostaPendenteDaSecao } = await carregarClienteLimpo()
+
+    expect(await lerPropostaPendenteDaSecao(PROCESSO, "ETP", "4")).toEqual({
+      proposalId: "p-9", content: "Rascunho pendente.", missingFacts: ["Sem histórico de consumo."], warnings: [],
+      evidence: [{ source: "DFD", fact: "1.200 pacotes" }],
+    })
+    expect(await lerPropostaPendenteDaSecao(PROCESSO, "ETP", "1")).toBeNull()
+  })
+
+  it("rejeitar manda o motivo só quando há motivo", async () => {
+    const corpos: Record<string, unknown>[] = []
+    servidor.use(
+      http.post(
+        `${urlDaApi}/procurement-processes/:id/documents/:tipo/sections/:secao/ai-proposals/:proposta/reject`,
+        async ({ request }) => {
+          corpos.push((await request.json()) as Record<string, unknown>)
+          return new HttpResponse(null, { status: 204 })
+        },
+      ),
+    )
+    const { rejeitarPropostaDeIa } = await carregarClienteLimpo()
+
+    await rejeitarPropostaDeIa(PROCESSO, "ETP", "4", "p-1", "  Não reflete a necessidade.  ")
+    await rejeitarPropostaDeIa(PROCESSO, "ETP", "4", "p-2")
+
+    expect(corpos).toEqual([{ reason: "Não reflete a necessidade." }, {}])
+  })
+})

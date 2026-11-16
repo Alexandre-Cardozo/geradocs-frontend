@@ -19,6 +19,9 @@ import {
   useGerarRascunhoEtp,
   useProcesso,
   useDocumentoEmElaboracao,
+  useLimparPropostaPendente,
+  usePropostaPendente,
+  useRejeitarPropostaDeIa,
   useSecoes,
 } from "@/lib/api/hooks"
 import { CATALOGO, porSlug } from "@/lib/documentos"
@@ -113,6 +116,8 @@ export default function EditorDocumento() {
   const gerarEtp = useGerarRascunhoEtp(processoId)
   const gerarComOrientacao = useGerarSecao(processoId, tipo)
   const gerandoRascunho = gerar.isPending || gerarEtp.isPending || gerarComOrientacao.isPending
+  const rejeitarProposta = useRejeitarPropostaDeIa(processoId, tipo)
+  const limparPropostaPendente = useLimparPropostaPendente(processoId, tipo)
   const gerarDocumento = useGerarDocumento()
 
   const documentoGerado = (documentos.data ?? []).find(
@@ -138,6 +143,8 @@ export default function EditorDocumento() {
     orientacao.secao === activeSection ? orientacao : { secao: activeSection, texto: "", avisos: [] }
   const [fontesDoRascunho, setFontesDoRascunho] = useState<RascunhoEtpComFontes | null>(null)
   const [rascunhoDaIaPendente, setRascunhoDaIaPendente] = useState(false)
+  /** A proposta de IA registrada no servidor (ADR-066): salvar a aceita, descartar a rejeita. */
+  const [propostaId, setPropostaId] = useState<string | null>(null)
   const rascunhoAtualRef = useRef(rascunho)
   useEffect(() => { rascunhoAtualRef.current = rascunho }, [rascunho])
   const [saved, setSaved] = useState(false)
@@ -148,6 +155,8 @@ export default function EditorDocumento() {
     if (id !== secaoAtivaRef.current) {
       setFontesDoRascunho(null)
       setRascunhoDaIaPendente(false)
+      // O servidor guarda a proposta como pendente: ao voltar, ela é restaurada.
+      setPropostaId(null)
     }
     secaoAtivaRef.current = id
     setActiveSection(id)
@@ -244,9 +253,28 @@ export default function EditorDocumento() {
    * pessoa tinha acabado de escrever. Guarda como rascunho — nunca "Completo",
    * que é o que só "Salvar e Avançar" declara.
    */
+  /*
+    Reabrir a seção encontra o rascunho que já foi pedido e não foi decidido
+    (ADR-066): ele já custou uma chamada, e perdê-lo ao recarregar a página
+    obrigava a pagar outra. Só se o campo continua como foi gravado — quem já
+    digitou não tem o texto trocado por baixo.
+  */
+  const propostaPendente = usePropostaPendente(processoId, tipo, naEtapaFinal ? null : activeSection)
+  const propostaRestauravel = propostaPendente.data
+  useEffect(() => {
+    if (!propostaRestauravel?.proposalId || secaoSincronizada !== activeSection) return
+    if (rascunhoDaIaPendente || propostaRestauravel.proposalId === propostaId) return
+    if (semLinhasEmBranco(rascunhoAtualRef.current) !== semLinhasEmBranco(active?.conteudo ?? "")) return
+    setRascunho(semLinhasEmBranco(propostaRestauravel.content))
+    setFontesDoRascunho(propostaRestauravel)
+    setRascunhoDaIaPendente(true)
+    setPropostaId(propostaRestauravel.proposalId)
+    showToast("Recuperamos o rascunho da IA que ficou sem salvar. O texto salvo só muda quando você salvar.")
+  }, [propostaRestauravel, secaoSincronizada, activeSection, rascunhoDaIaPendente, propostaId, active?.conteudo, showToast])
+
   const trocarSecao = (id: string) => {
     if (active && naoGravado && rascunhoDaIaPendente) {
-      if (!window.confirm("O rascunho da IA ainda não foi salvo. Sair desta seção descartará esse texto. Deseja continuar?")) return
+      if (!window.confirm("O rascunho da IA ainda não foi salvo. Ao sair, ele fica guardado e volta quando você reabrir a seção, mas as alterações que você fez nele se perdem. Deseja sair?")) return
       irPara(id)
       return
     }
@@ -260,12 +288,16 @@ export default function EditorDocumento() {
       {
         ...gravacaoDa(active),
         ...(avancar ? { status: "Completo" as const } : {}),
+        // Salvar é aceitar a proposta de IA de onde o texto veio (ADR-066).
+        ...(rascunhoDaIaPendente && propostaId ? { propostaId } : {}),
       },
       {
         onSuccess: () => {
           setSaved(true)
           setFontesDoRascunho(null)
           setRascunhoDaIaPendente(false)
+          setPropostaId(null)
+          limparPropostaPendente(active.id)
           setTimeout(() => setSaved(false), 2500)
           // `irPara`, e não `trocarSecao`: o que havia na tela acabou de ser
           // gravado, e regravá-lo aqui devolveria a seção ao estado de rascunho.
@@ -275,6 +307,19 @@ export default function EditorDocumento() {
     )
   }
 
+  /** O servidor descartou o rascunho: volta o texto salvo e a proposta vai como rejeitada (ADR-066). */
+  const descartarRascunhoDaIa = () => {
+    if (!active) return
+    if (naoGravado && !window.confirm("Descartar o rascunho da IA e voltar ao texto salvo?")) return
+    if (propostaId) rejeitarProposta.mutate({ secaoId: active.id, propostaId })
+    limparPropostaPendente(active.id)
+    setPropostaId(null)
+    setFontesDoRascunho(null)
+    setRascunhoDaIaPendente(false)
+    setRascunho(semLinhasEmBranco(active.conteudo ?? ""))
+    showToast("Rascunho da IA descartado.")
+  }
+
   const handleGerarIA = () => {
     if (!active) return
     if (gerandoRascunho) return
@@ -282,7 +327,7 @@ export default function EditorDocumento() {
     const confirmarSubstituicao = () =>
       !rascunho.trim() || window.confirm("Substituir o texto atual por um novo rascunho da IA? O texto ainda não será salvo.")
     const textoAntesDaGeracao = rascunho
-    const aplicarRascunho = (conteudo: string, fontes: RascunhoEtpComFontes | null) => {
+    const aplicarRascunho = (conteudo: string, fontes: RascunhoEtpComFontes | null, proposta?: string) => {
       if (secaoAtivaRef.current !== secaoId) return
       if (rascunhoAtualRef.current !== textoAntesDaGeracao) {
         showToast("O texto foi alterado durante a geração. Seu rascunho foi preservado.")
@@ -291,6 +336,8 @@ export default function EditorDocumento() {
       setRascunho(semLinhasEmBranco(conteudo))
       setFontesDoRascunho(fontes)
       setRascunhoDaIaPendente(true)
+      setPropostaId(proposta ?? null)
+      limparPropostaPendente(secaoId)
       const aviso = avisoDasTabelas(textoAntesDaGeracao, conteudo)
       if (aviso) showToast(aviso)
       showToast("Rascunho gerado. Revise os fatos e as lacunas antes de salvar.")
@@ -308,7 +355,7 @@ export default function EditorDocumento() {
         { secaoId, rascunho, orientacao: texto },
         {
           onSuccess: (resultado) => {
-            aplicarRascunho(resultado.conteudo, null)
+            aplicarRascunho(resultado.conteudo, null, resultado.propostaId)
             setOrientacao({ secao: secaoId, texto, avisos: resultado.avisosDaOrientacao })
           },
           onError: (erro) => {
@@ -321,7 +368,7 @@ export default function EditorDocumento() {
     }
 
     const aplicarResultado = (resultado: RascunhoEtpComFontes) =>
-      aplicarRascunho(resultado.content, resultado)
+      aplicarRascunho(resultado.content, resultado, resultado.proposalId)
 
     if (tipo === "ETP" && secaoId === "1") {
       if (gerarEtp.isPending) return
@@ -802,7 +849,12 @@ export default function EditorDocumento() {
 
           {!naEtapaFinal && active && fontesDoRascunho && (
             <div className="mt-4 rounded-card border border-border bg-surface p-4 text-sm text-text-2">
-              <h3 className="m-0 font-display text-base font-bold text-text-1">Revise o Rascunho da IA</h3>
+              <div className="flex items-start justify-between gap-3">
+                <h3 className="m-0 font-display text-base font-bold text-text-1">Revise o Rascunho da IA</h3>
+                <Button size="sm" variant="ghost" onClick={descartarRascunhoDaIa}>
+                  Descartar rascunho
+                </Button>
+              </div>
               <p className="mb-3 mt-1 text-text-muted">O texto ainda não foi salvo. Estas são as fontes disponíveis no contexto, não uma comprovação automática de cada afirmação do rascunho.</p>
               {fontesDoRascunho.warnings.length > 0 && (
                 <div className="mb-3">

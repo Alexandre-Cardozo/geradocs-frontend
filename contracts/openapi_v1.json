@@ -97,6 +97,10 @@
             },
             "type" : "array"
           },
+          "proposalId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
           "sectionCode" : {
             "type" : "string"
           },
@@ -110,7 +114,7 @@
             "type" : "array"
           }
         },
-        "required" : [ "content", "documentType", "evidence", "missingFacts", "sectionCode", "sectionTitle", "warnings" ],
+        "required" : [ "content", "documentType", "evidence", "missingFacts", "proposalId", "sectionCode", "sectionTitle", "warnings" ],
         "type" : "object"
       },
       "AiStatusResponse" : {
@@ -248,7 +252,7 @@
       "AuditEntryResponse" : {
         "properties" : {
           "action" : {
-            "enum" : [ "AI_BUDGET_DEFINED", "AI_GUIDANCE_BLOCKED", "AI_GUIDANCE_USED", "BUDGET_APPROPRIATION_DECLARED", "BUDGET_APPROPRIATION_REMOVED", "BUDGET_APPROPRIATION_UPDATED", "BUNDLE_EXPORTED", "CONTRACTING_CONTEXTS_CONFIRMED", "DEPARTMENT_CREATED", "DEPARTMENT_DEACTIVATED", "DEPARTMENT_UPDATED", "DFD_ATTACHED", "DFD_REMOVED", "DFD_UPDATED", "DOCUMENT_DOWNLOADED", "DOCUMENT_FINALIZED", "DOCUMENT_GENERATED", "DOCUMENT_MODEL_JUSTIFIED", "DOCUMENT_STRUCTURE_CHANGED", "LOGIN_FAILED", "LOGIN_SUCCEEDED", "MARKET_ALTERNATIVE_RECORDED", "MARKET_ALTERNATIVE_REMOVED", "MARKET_ALTERNATIVE_UPDATED", "ORGANIZATION_CREATED", "ORGANIZATION_DEACTIVATED", "ORGANIZATION_LETTERHEAD_UPDATED", "ORGANIZATION_UPDATED", "PASSWORD_RESET_COMPLETED", "PASSWORD_RESET_REQUESTED", "PCA_IMPORTED", "PRICE_QUOTE_RECORDED", "PRICE_QUOTE_REMOVED", "PRICE_QUOTE_UPDATED", "PROCUREMENT_PROCESS_CLOSED", "PROCUREMENT_PROCESS_CREATED", "PROCUREMENT_PROCESS_REOPENED", "PROCUREMENT_PROCESS_UPDATED", "REGULATION_ADDED", "REGULATION_FILE_REPLACED", "REGULATION_REINSTATED", "REGULATION_REMOVED", "REGULATION_REVOKED", "REGULATION_UPDATED", "SECTION_DISPENSED", "SECTION_WRITTEN", "STRUCTURE_MODEL_DEACTIVATED", "STRUCTURE_MODEL_PUBLISHED", "TEMPLATE_PUBLISHED", "USER_CPF_REVEALED", "USER_CREATED", "USER_DEACTIVATED", "USER_ORGANIZATION_TRANSFERRED", "USER_PASSWORD_RESET", "USER_UPDATED" ],
+            "enum" : [ "AI_BUDGET_DEFINED", "AI_GUIDANCE_BLOCKED", "AI_GUIDANCE_USED", "AI_PROPOSAL_ACCEPTED", "AI_PROPOSAL_REJECTED", "BUDGET_APPROPRIATION_DECLARED", "BUDGET_APPROPRIATION_REMOVED", "BUDGET_APPROPRIATION_UPDATED", "BUNDLE_EXPORTED", "CONTRACTING_CONTEXTS_CONFIRMED", "DEPARTMENT_CREATED", "DEPARTMENT_DEACTIVATED", "DEPARTMENT_UPDATED", "DFD_ATTACHED", "DFD_REMOVED", "DFD_UPDATED", "DOCUMENT_DOWNLOADED", "DOCUMENT_FINALIZED", "DOCUMENT_GENERATED", "DOCUMENT_MODEL_JUSTIFIED", "DOCUMENT_STRUCTURE_CHANGED", "LOGIN_FAILED", "LOGIN_SUCCEEDED", "MARKET_ALTERNATIVE_RECORDED", "MARKET_ALTERNATIVE_REMOVED", "MARKET_ALTERNATIVE_UPDATED", "ORGANIZATION_CREATED", "ORGANIZATION_DEACTIVATED", "ORGANIZATION_LETTERHEAD_UPDATED", "ORGANIZATION_UPDATED", "PASSWORD_RESET_COMPLETED", "PASSWORD_RESET_REQUESTED", "PCA_IMPORTED", "PRICE_QUOTE_RECORDED", "PRICE_QUOTE_REMOVED", "PRICE_QUOTE_UPDATED", "PROCUREMENT_PROCESS_CLOSED", "PROCUREMENT_PROCESS_CREATED", "PROCUREMENT_PROCESS_REOPENED", "PROCUREMENT_PROCESS_UPDATED", "REGULATION_ADDED", "REGULATION_FILE_REPLACED", "REGULATION_REINSTATED", "REGULATION_REMOVED", "REGULATION_REVOKED", "REGULATION_UPDATED", "SECTION_DISPENSED", "SECTION_WRITTEN", "STRUCTURE_MODEL_DEACTIVATED", "STRUCTURE_MODEL_PUBLISHED", "TEMPLATE_PUBLISHED", "USER_CPF_REVEALED", "USER_CREATED", "USER_DEACTIVATED", "USER_ORGANIZATION_TRANSFERRED", "USER_PASSWORD_RESET", "USER_UPDATED" ],
             "type" : "string"
           },
           "actorId" : {
@@ -1631,11 +1635,15 @@
             },
             "type" : "array"
           },
+          "proposalId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
           "text" : {
             "type" : "string"
           }
         },
-        "required" : [ "guidanceWarnings", "text" ],
+        "required" : [ "guidanceWarnings", "proposalId", "text" ],
         "type" : "object"
       },
       "GenerationJobResponse" : {
@@ -2748,6 +2756,16 @@
         "required" : [ "createdAt", "currentFile", "id", "kind", "kindLabel", "status", "title", "updatedAt", "version" ],
         "type" : "object"
       },
+      "RejectAiProposalRequest" : {
+        "properties" : {
+          "reason" : {
+            "maxLength" : 500,
+            "minLength" : 0,
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
       "RenameSectionRequest" : {
         "properties" : {
           "title" : {
@@ -2785,6 +2803,10 @@
       },
       "SaveSectionRequest" : {
         "properties" : {
+          "aiProposalId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
           "content" : {
             "maxLength" : 100000,
             "minLength" : 0,
@@ -3636,7 +3658,7 @@
           "name" : "action",
           "required" : false,
           "schema" : {
-            "enum" : [ "AI_BUDGET_DEFINED", "AI_GUIDANCE_BLOCKED", "AI_GUIDANCE_USED", "BUDGET_APPROPRIATION_DECLARED", "BUDGET_APPROPRIATION_REMOVED", "BUDGET_APPROPRIATION_UPDATED", "BUNDLE_EXPORTED", "CONTRACTING_CONTEXTS_CONFIRMED", "DEPARTMENT_CREATED", "DEPARTMENT_DEACTIVATED", "DEPARTMENT_UPDATED", "DFD_ATTACHED", "DFD_REMOVED", "DFD_UPDATED", "DOCUMENT_DOWNLOADED", "DOCUMENT_FINALIZED", "DOCUMENT_GENERATED", "DOCUMENT_MODEL_JUSTIFIED", "DOCUMENT_STRUCTURE_CHANGED", "LOGIN_FAILED", "LOGIN_SUCCEEDED", "MARKET_ALTERNATIVE_RECORDED", "MARKET_ALTERNATIVE_REMOVED", "MARKET_ALTERNATIVE_UPDATED", "ORGANIZATION_CREATED", "ORGANIZATION_DEACTIVATED", "ORGANIZATION_LETTERHEAD_UPDATED", "ORGANIZATION_UPDATED", "PASSWORD_RESET_COMPLETED", "PASSWORD_RESET_REQUESTED", "PCA_IMPORTED", "PRICE_QUOTE_RECORDED", "PRICE_QUOTE_REMOVED", "PRICE_QUOTE_UPDATED", "PROCUREMENT_PROCESS_CLOSED", "PROCUREMENT_PROCESS_CREATED", "PROCUREMENT_PROCESS_REOPENED", "PROCUREMENT_PROCESS_UPDATED", "REGULATION_ADDED", "REGULATION_FILE_REPLACED", "REGULATION_REINSTATED", "REGULATION_REMOVED", "REGULATION_REVOKED", "REGULATION_UPDATED", "SECTION_DISPENSED", "SECTION_WRITTEN", "STRUCTURE_MODEL_DEACTIVATED", "STRUCTURE_MODEL_PUBLISHED", "TEMPLATE_PUBLISHED", "USER_CPF_REVEALED", "USER_CREATED", "USER_DEACTIVATED", "USER_ORGANIZATION_TRANSFERRED", "USER_PASSWORD_RESET", "USER_UPDATED" ],
+            "enum" : [ "AI_BUDGET_DEFINED", "AI_GUIDANCE_BLOCKED", "AI_GUIDANCE_USED", "AI_PROPOSAL_ACCEPTED", "AI_PROPOSAL_REJECTED", "BUDGET_APPROPRIATION_DECLARED", "BUDGET_APPROPRIATION_REMOVED", "BUDGET_APPROPRIATION_UPDATED", "BUNDLE_EXPORTED", "CONTRACTING_CONTEXTS_CONFIRMED", "DEPARTMENT_CREATED", "DEPARTMENT_DEACTIVATED", "DEPARTMENT_UPDATED", "DFD_ATTACHED", "DFD_REMOVED", "DFD_UPDATED", "DOCUMENT_DOWNLOADED", "DOCUMENT_FINALIZED", "DOCUMENT_GENERATED", "DOCUMENT_MODEL_JUSTIFIED", "DOCUMENT_STRUCTURE_CHANGED", "LOGIN_FAILED", "LOGIN_SUCCEEDED", "MARKET_ALTERNATIVE_RECORDED", "MARKET_ALTERNATIVE_REMOVED", "MARKET_ALTERNATIVE_UPDATED", "ORGANIZATION_CREATED", "ORGANIZATION_DEACTIVATED", "ORGANIZATION_LETTERHEAD_UPDATED", "ORGANIZATION_UPDATED", "PASSWORD_RESET_COMPLETED", "PASSWORD_RESET_REQUESTED", "PCA_IMPORTED", "PRICE_QUOTE_RECORDED", "PRICE_QUOTE_REMOVED", "PRICE_QUOTE_UPDATED", "PROCUREMENT_PROCESS_CLOSED", "PROCUREMENT_PROCESS_CREATED", "PROCUREMENT_PROCESS_REOPENED", "PROCUREMENT_PROCESS_UPDATED", "REGULATION_ADDED", "REGULATION_FILE_REPLACED", "REGULATION_REINSTATED", "REGULATION_REMOVED", "REGULATION_REVOKED", "REGULATION_UPDATED", "SECTION_DISPENSED", "SECTION_WRITTEN", "STRUCTURE_MODEL_DEACTIVATED", "STRUCTURE_MODEL_PUBLISHED", "TEMPLATE_PUBLISHED", "USER_CPF_REVEALED", "USER_CREATED", "USER_DEACTIVATED", "USER_ORGANIZATION_TRANSFERRED", "USER_PASSWORD_RESET", "USER_UPDATED" ],
             "type" : "string"
           }
         }, {
@@ -6471,6 +6493,100 @@
           }
         },
         "tags" : [ "document-authoring-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/sections/{sectionCode}/ai-proposal" : {
+      "get" : {
+        "operationId" : "pending",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "documentType",
+          "required" : true,
+          "schema" : {
+            "enum" : [ "AVISO", "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "sectionCode",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AiDraftResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "ai-proposal-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/sections/{sectionCode}/ai-proposals/{proposalId}/reject" : {
+      "post" : {
+        "operationId" : "reject",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "documentType",
+          "required" : true,
+          "schema" : {
+            "enum" : [ "AVISO", "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "proposalId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "sectionCode",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RejectAiProposalRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "ai-proposal-controller" ]
       }
     },
     "/api/v1/procurement-processes/{processId}/documents/{documentType}/sections/{sectionCode}/generate" : {

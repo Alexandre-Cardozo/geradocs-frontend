@@ -398,7 +398,22 @@ describe("seções do documento", () => {
     })
 
     expect(secao.id).toBe("1")
-    expect(elaboracao.salvarSecao).toHaveBeenCalledWith(PROCESSO, "ETP", "1", "texto", undefined)
+    expect(elaboracao.salvarSecao).toHaveBeenCalledWith(PROCESSO, "ETP", "1", "texto", undefined, undefined)
+  })
+
+  it("salvar leva a proposta de IA de onde o texto veio (ADR-066 do back-end)", async () => {
+    const api = await fachadaLimpa()
+    vi.mocked(elaboracao.salvarSecao).mockResolvedValue(documento as never)
+
+    await api.atualizarSecao({
+      processoId: PROCESSO,
+      tipo: "ETP",
+      secaoId: "1",
+      conteudo: "texto",
+      propostaId: "p-1",
+    })
+
+    expect(elaboracao.salvarSecao).toHaveBeenCalledWith(PROCESSO, "ETP", "1", "texto", undefined, "p-1")
   })
 
   it("seção que o documento não tem é erro, e não `undefined` na tela", async () => {

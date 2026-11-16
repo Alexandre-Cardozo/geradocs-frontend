@@ -996,6 +996,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/sections/{sectionCode}/ai-proposal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["pending"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/sections/{sectionCode}/ai-proposals/{proposalId}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["reject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/procurement-processes/{processId}/documents/{documentType}/sections/{sectionCode}/generate": {
         parameters: {
             query?: never;
@@ -1476,6 +1508,8 @@ export interface components {
             documentType: string;
             evidence: components["schemas"]["AiDraftEvidence"][];
             missingFacts: string[];
+            /** Format: uuid */
+            proposalId: string;
             sectionCode: string;
             sectionTitle: string;
             warnings: string[];
@@ -1532,7 +1566,7 @@ export interface components {
         };
         AuditEntryResponse: {
             /** @enum {string} */
-            action: "AI_BUDGET_DEFINED" | "AI_GUIDANCE_BLOCKED" | "AI_GUIDANCE_USED" | "BUDGET_APPROPRIATION_DECLARED" | "BUDGET_APPROPRIATION_REMOVED" | "BUDGET_APPROPRIATION_UPDATED" | "BUNDLE_EXPORTED" | "CONTRACTING_CONTEXTS_CONFIRMED" | "DEPARTMENT_CREATED" | "DEPARTMENT_DEACTIVATED" | "DEPARTMENT_UPDATED" | "DFD_ATTACHED" | "DFD_REMOVED" | "DFD_UPDATED" | "DOCUMENT_DOWNLOADED" | "DOCUMENT_FINALIZED" | "DOCUMENT_GENERATED" | "DOCUMENT_MODEL_JUSTIFIED" | "DOCUMENT_STRUCTURE_CHANGED" | "LOGIN_FAILED" | "LOGIN_SUCCEEDED" | "MARKET_ALTERNATIVE_RECORDED" | "MARKET_ALTERNATIVE_REMOVED" | "MARKET_ALTERNATIVE_UPDATED" | "ORGANIZATION_CREATED" | "ORGANIZATION_DEACTIVATED" | "ORGANIZATION_LETTERHEAD_UPDATED" | "ORGANIZATION_UPDATED" | "PASSWORD_RESET_COMPLETED" | "PASSWORD_RESET_REQUESTED" | "PCA_IMPORTED" | "PRICE_QUOTE_RECORDED" | "PRICE_QUOTE_REMOVED" | "PRICE_QUOTE_UPDATED" | "PROCUREMENT_PROCESS_CLOSED" | "PROCUREMENT_PROCESS_CREATED" | "PROCUREMENT_PROCESS_REOPENED" | "PROCUREMENT_PROCESS_UPDATED" | "REGULATION_ADDED" | "REGULATION_FILE_REPLACED" | "REGULATION_REINSTATED" | "REGULATION_REMOVED" | "REGULATION_REVOKED" | "REGULATION_UPDATED" | "SECTION_DISPENSED" | "SECTION_WRITTEN" | "STRUCTURE_MODEL_DEACTIVATED" | "STRUCTURE_MODEL_PUBLISHED" | "TEMPLATE_PUBLISHED" | "USER_CPF_REVEALED" | "USER_CREATED" | "USER_DEACTIVATED" | "USER_ORGANIZATION_TRANSFERRED" | "USER_PASSWORD_RESET" | "USER_UPDATED";
+            action: "AI_BUDGET_DEFINED" | "AI_GUIDANCE_BLOCKED" | "AI_GUIDANCE_USED" | "AI_PROPOSAL_ACCEPTED" | "AI_PROPOSAL_REJECTED" | "BUDGET_APPROPRIATION_DECLARED" | "BUDGET_APPROPRIATION_REMOVED" | "BUDGET_APPROPRIATION_UPDATED" | "BUNDLE_EXPORTED" | "CONTRACTING_CONTEXTS_CONFIRMED" | "DEPARTMENT_CREATED" | "DEPARTMENT_DEACTIVATED" | "DEPARTMENT_UPDATED" | "DFD_ATTACHED" | "DFD_REMOVED" | "DFD_UPDATED" | "DOCUMENT_DOWNLOADED" | "DOCUMENT_FINALIZED" | "DOCUMENT_GENERATED" | "DOCUMENT_MODEL_JUSTIFIED" | "DOCUMENT_STRUCTURE_CHANGED" | "LOGIN_FAILED" | "LOGIN_SUCCEEDED" | "MARKET_ALTERNATIVE_RECORDED" | "MARKET_ALTERNATIVE_REMOVED" | "MARKET_ALTERNATIVE_UPDATED" | "ORGANIZATION_CREATED" | "ORGANIZATION_DEACTIVATED" | "ORGANIZATION_LETTERHEAD_UPDATED" | "ORGANIZATION_UPDATED" | "PASSWORD_RESET_COMPLETED" | "PASSWORD_RESET_REQUESTED" | "PCA_IMPORTED" | "PRICE_QUOTE_RECORDED" | "PRICE_QUOTE_REMOVED" | "PRICE_QUOTE_UPDATED" | "PROCUREMENT_PROCESS_CLOSED" | "PROCUREMENT_PROCESS_CREATED" | "PROCUREMENT_PROCESS_REOPENED" | "PROCUREMENT_PROCESS_UPDATED" | "REGULATION_ADDED" | "REGULATION_FILE_REPLACED" | "REGULATION_REINSTATED" | "REGULATION_REMOVED" | "REGULATION_REVOKED" | "REGULATION_UPDATED" | "SECTION_DISPENSED" | "SECTION_WRITTEN" | "STRUCTURE_MODEL_DEACTIVATED" | "STRUCTURE_MODEL_PUBLISHED" | "TEMPLATE_PUBLISHED" | "USER_CPF_REVEALED" | "USER_CREATED" | "USER_DEACTIVATED" | "USER_ORGANIZATION_TRANSFERRED" | "USER_PASSWORD_RESET" | "USER_UPDATED";
             /** Format: uuid */
             actorId: string;
             actorName: string;
@@ -1978,6 +2012,8 @@ export interface components {
         };
         GeneratedSectionResponse: {
             guidanceWarnings: string[];
+            /** Format: uuid */
+            proposalId: string;
             text: string;
         };
         GenerationJobResponse: {
@@ -2394,6 +2430,9 @@ export interface components {
             /** Format: int64 */
             version: number;
         };
+        RejectAiProposalRequest: {
+            reason?: string;
+        };
         RenameSectionRequest: {
             title: string;
         };
@@ -2404,6 +2443,8 @@ export interface components {
             sectionCodesInOrder: string[];
         };
         SaveSectionRequest: {
+            /** Format: uuid */
+            aiProposalId?: string;
             content?: string;
             dispensationJustification?: string;
         };
@@ -2700,7 +2741,7 @@ export interface operations {
     search: {
         parameters: {
             query?: {
-                action?: "AI_BUDGET_DEFINED" | "AI_GUIDANCE_BLOCKED" | "AI_GUIDANCE_USED" | "BUDGET_APPROPRIATION_DECLARED" | "BUDGET_APPROPRIATION_REMOVED" | "BUDGET_APPROPRIATION_UPDATED" | "BUNDLE_EXPORTED" | "CONTRACTING_CONTEXTS_CONFIRMED" | "DEPARTMENT_CREATED" | "DEPARTMENT_DEACTIVATED" | "DEPARTMENT_UPDATED" | "DFD_ATTACHED" | "DFD_REMOVED" | "DFD_UPDATED" | "DOCUMENT_DOWNLOADED" | "DOCUMENT_FINALIZED" | "DOCUMENT_GENERATED" | "DOCUMENT_MODEL_JUSTIFIED" | "DOCUMENT_STRUCTURE_CHANGED" | "LOGIN_FAILED" | "LOGIN_SUCCEEDED" | "MARKET_ALTERNATIVE_RECORDED" | "MARKET_ALTERNATIVE_REMOVED" | "MARKET_ALTERNATIVE_UPDATED" | "ORGANIZATION_CREATED" | "ORGANIZATION_DEACTIVATED" | "ORGANIZATION_LETTERHEAD_UPDATED" | "ORGANIZATION_UPDATED" | "PASSWORD_RESET_COMPLETED" | "PASSWORD_RESET_REQUESTED" | "PCA_IMPORTED" | "PRICE_QUOTE_RECORDED" | "PRICE_QUOTE_REMOVED" | "PRICE_QUOTE_UPDATED" | "PROCUREMENT_PROCESS_CLOSED" | "PROCUREMENT_PROCESS_CREATED" | "PROCUREMENT_PROCESS_REOPENED" | "PROCUREMENT_PROCESS_UPDATED" | "REGULATION_ADDED" | "REGULATION_FILE_REPLACED" | "REGULATION_REINSTATED" | "REGULATION_REMOVED" | "REGULATION_REVOKED" | "REGULATION_UPDATED" | "SECTION_DISPENSED" | "SECTION_WRITTEN" | "STRUCTURE_MODEL_DEACTIVATED" | "STRUCTURE_MODEL_PUBLISHED" | "TEMPLATE_PUBLISHED" | "USER_CPF_REVEALED" | "USER_CREATED" | "USER_DEACTIVATED" | "USER_ORGANIZATION_TRANSFERRED" | "USER_PASSWORD_RESET" | "USER_UPDATED";
+                action?: "AI_BUDGET_DEFINED" | "AI_GUIDANCE_BLOCKED" | "AI_GUIDANCE_USED" | "AI_PROPOSAL_ACCEPTED" | "AI_PROPOSAL_REJECTED" | "BUDGET_APPROPRIATION_DECLARED" | "BUDGET_APPROPRIATION_REMOVED" | "BUDGET_APPROPRIATION_UPDATED" | "BUNDLE_EXPORTED" | "CONTRACTING_CONTEXTS_CONFIRMED" | "DEPARTMENT_CREATED" | "DEPARTMENT_DEACTIVATED" | "DEPARTMENT_UPDATED" | "DFD_ATTACHED" | "DFD_REMOVED" | "DFD_UPDATED" | "DOCUMENT_DOWNLOADED" | "DOCUMENT_FINALIZED" | "DOCUMENT_GENERATED" | "DOCUMENT_MODEL_JUSTIFIED" | "DOCUMENT_STRUCTURE_CHANGED" | "LOGIN_FAILED" | "LOGIN_SUCCEEDED" | "MARKET_ALTERNATIVE_RECORDED" | "MARKET_ALTERNATIVE_REMOVED" | "MARKET_ALTERNATIVE_UPDATED" | "ORGANIZATION_CREATED" | "ORGANIZATION_DEACTIVATED" | "ORGANIZATION_LETTERHEAD_UPDATED" | "ORGANIZATION_UPDATED" | "PASSWORD_RESET_COMPLETED" | "PASSWORD_RESET_REQUESTED" | "PCA_IMPORTED" | "PRICE_QUOTE_RECORDED" | "PRICE_QUOTE_REMOVED" | "PRICE_QUOTE_UPDATED" | "PROCUREMENT_PROCESS_CLOSED" | "PROCUREMENT_PROCESS_CREATED" | "PROCUREMENT_PROCESS_REOPENED" | "PROCUREMENT_PROCESS_UPDATED" | "REGULATION_ADDED" | "REGULATION_FILE_REPLACED" | "REGULATION_REINSTATED" | "REGULATION_REMOVED" | "REGULATION_REVOKED" | "REGULATION_UPDATED" | "SECTION_DISPENSED" | "SECTION_WRITTEN" | "STRUCTURE_MODEL_DEACTIVATED" | "STRUCTURE_MODEL_PUBLISHED" | "TEMPLATE_PUBLISHED" | "USER_CPF_REVEALED" | "USER_CREATED" | "USER_DEACTIVATED" | "USER_ORGANIZATION_TRANSFERRED" | "USER_PASSWORD_RESET" | "USER_UPDATED";
                 actorId?: string;
                 from?: string;
                 page?: number;
@@ -4684,6 +4725,57 @@ export interface operations {
                 content: {
                     "*/*": components["schemas"]["AiDraftResponse"];
                 };
+            };
+        };
+    };
+    pending: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                documentType: "AVISO" | "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
+                processId: string;
+                sectionCode: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AiDraftResponse"];
+                };
+            };
+        };
+    };
+    reject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                documentType: "AVISO" | "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
+                processId: string;
+                proposalId: string;
+                sectionCode: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["RejectAiProposalRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

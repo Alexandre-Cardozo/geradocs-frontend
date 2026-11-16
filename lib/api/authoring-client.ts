@@ -445,13 +445,19 @@ export async function salvarSecao(
   secaoId: string,
   conteudo: string,
   justificativaDispensa?: string,
+  /** A proposta de IA de onde o texto veio (ADR-066): salvar é aceitá-la. */
+  propostaId?: string,
 ): Promise<DocumentoEmElaboracao> {
   return mapear(
     await requisicaoProtegida<DocumentoApi>(
       `${rota(processoId, tipo)}/sections/${encodeURIComponent(secaoId)}`,
       {
         method: "PUT",
-        body: JSON.stringify({ content: conteudo, dispensationJustification: justificativaDispensa }),
+        body: JSON.stringify({
+          content: conteudo,
+          dispensationJustification: justificativaDispensa,
+          ...(propostaId ? { aiProposalId: propostaId } : {}),
+        }),
       },
     ),
     tipo,
@@ -489,8 +495,8 @@ export async function pedirTextoDaSecao(
   rascunho?: string,
   modo: "redacao" | "revisao" = "redacao",
   orientacao?: string,
-): Promise<{ texto: string; avisos: string[] }> {
-  const gerada = await requisicaoProtegida<{ text: string; guidanceWarnings?: string[] }>(
+): Promise<{ texto: string; avisos: string[]; propostaId?: string }> {
+  const gerada = await requisicaoProtegida<{ text: string; guidanceWarnings?: string[]; proposalId?: string }>(
     `${rota(processoId, tipo)}/sections/${encodeURIComponent(secaoId)}/generate`,
     {
       method: "POST",
@@ -507,11 +513,13 @@ export async function pedirTextoDaSecao(
       ),
     },
   );
-  return { texto: gerada.text, avisos: gerada.guidanceWarnings ?? [] };
+  return { texto: gerada.text, avisos: gerada.guidanceWarnings ?? [], propostaId: gerada.proposalId };
 }
 
 /** Rascunho transitório da necessidade do ETP; não grava a seção. */
 export interface RascunhoEtpComFontes {
+  /** A proposta registrada no servidor (ADR-066): vai de volta ao salvar ou ao rejeitar. */
+  proposalId?: string;
   content: string;
   missingFacts: string[];
   warnings: string[];
@@ -532,6 +540,7 @@ export async function gerarRascunhoDaSecaoComFontes(
     missingFacts?: string[];
     warnings?: string[];
     evidence?: { source: string; fact: string }[];
+    proposalId?: string;
   }>(`${rota(processoId, tipo)}/sections/${encodeURIComponent(secaoId)}/ai-draft-with-sources`, {
     method: "POST",
     body: JSON.stringify({ draft: rascunho.trim() ? rascunho : null }),
@@ -540,6 +549,7 @@ export async function gerarRascunhoDaSecaoComFontes(
     throw new Error("A IA não retornou um rascunho válido para esta seção.");
   }
   return {
+    proposalId: resposta.proposalId,
     content: resposta.content,
     missingFacts: resposta.missingFacts ?? [],
     warnings: resposta.warnings ?? [],
@@ -558,6 +568,7 @@ export async function gerarRascunhoDaNecessidadeEtp(
     missingFacts?: string[];
     warnings?: string[];
     evidence?: { source: string; fact: string }[];
+    proposalId?: string;
   }>(`${rota(processoId, "ETP")}/sections/1/ai-draft`, {
     method: "POST",
     body: JSON.stringify({ draft: rascunho.trim() ? rascunho : null }),
@@ -566,6 +577,7 @@ export async function gerarRascunhoDaNecessidadeEtp(
     throw new Error("A IA não retornou um rascunho válido para esta seção.");
   }
   return {
+    proposalId: resposta.proposalId,
     content: resposta.content,
     missingFacts: resposta.missingFacts ?? [],
     warnings: resposta.warnings ?? [],
@@ -863,5 +875,50 @@ export async function reordenarSecoes(
       body: JSON.stringify({ sectionCodesInOrder: secoesNaOrdem }),
     }),
     tipo,
+  );
+}
+
+/**
+ * A proposta de IA que ainda espera o servidor nesta seção (ADR-066), ou nada.
+ *
+ * É o que permite reabrir a seção e encontrar o rascunho que já foi pedido,
+ * em vez de perdê-lo — e de pagar outra chamada para refazê-lo.
+ */
+export async function lerPropostaPendenteDaSecao(
+  processoId: string,
+  tipo: TipoDocumento,
+  secaoId: string,
+): Promise<RascunhoEtpComFontes | null> {
+  const resposta = await requisicaoProtegida<
+    | {
+        content: string;
+        missingFacts?: string[];
+        warnings?: string[];
+        evidence?: { source: string; fact: string }[];
+        proposalId?: string;
+      }
+    | undefined
+  >(`${rota(processoId, tipo)}/sections/${encodeURIComponent(secaoId)}/ai-proposal`);
+  if (!resposta?.content?.trim()) return null;
+  return {
+    proposalId: resposta.proposalId,
+    content: resposta.content,
+    missingFacts: resposta.missingFacts ?? [],
+    warnings: resposta.warnings ?? [],
+    evidence: resposta.evidence ?? [],
+  };
+}
+
+/** O servidor descartou a proposta; o motivo é opcional. Proposta já decidida não é erro. */
+export async function rejeitarPropostaDeIa(
+  processoId: string,
+  tipo: TipoDocumento,
+  secaoId: string,
+  propostaId: string,
+  motivo?: string,
+): Promise<void> {
+  await requisicaoProtegida<void>(
+    `${rota(processoId, tipo)}/sections/${encodeURIComponent(secaoId)}/ai-proposals/${encodeURIComponent(propostaId)}/reject`,
+    { method: "POST", body: JSON.stringify(motivo?.trim() ? { reason: motivo.trim() } : {}) },
   );
 }
