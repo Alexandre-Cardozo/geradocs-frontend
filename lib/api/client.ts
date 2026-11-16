@@ -8,7 +8,6 @@ import {
   houveTroca,
   impactoTrocaModalidade,
   motivoDaTrocaDeModalidade,
-  statusAposEditar,
   tituloComRotuloDeVersao,
   tituloDoDocumento,
 } from "@/lib/dominio"
@@ -51,7 +50,6 @@ import {
   concluirDocumento,
   corpoDaVersaoVigente,
   gerarTextoDaSecao,
-  pedirTextoDaSecao,
   excluirSecao,
   historicoDeVersoes,
   previaDaTrocaDeModelo,
@@ -406,34 +404,6 @@ export async function atualizarSecao(input: AtualizarSecaoInput): Promise<SecaoD
   const secao = documento.secoes.find((s) => s.id === input.secaoId)
   if (!secao) throw new Error(`Seção ${input.secaoId} não encontrada`)
   return secao
-}
-
-/**
- * Pede ao servidor a redação da seção.
- *
- * O texto volta para o rascunho e **não** é gravado: quem decide se aquilo entra
- * no documento é quem assina. A seção devolvida traz o texto proposto com o
- * status que ela teria se fosse aceito — e é a tela que decide aceitar.
- */
-export async function gerarSecao(
-  processoId: string,
-  tipo: TipoDocumento,
-  secaoId: string,
-  rascunho?: string,
-  orientacao?: string,
-): Promise<SecaoDocumento & { avisosDaOrientacao: string[]; propostaId?: string }> {
-  const documento = await abrirDocumento(processoId, tipo)
-  const secao = documento.secoes.find((s) => s.id === secaoId)
-  if (!secao) throw new Error(`Seção ${secaoId} não encontrada`)
-  const { texto, avisos, propostaId } = await pedirTextoDaSecao(
-    processoId,
-    tipo,
-    secaoId,
-    rascunho,
-    "redacao",
-    orientacao,
-  )
-  return { ...secao, conteudo: texto, status: statusAposEditar(texto), avisosDaOrientacao: avisos, propostaId }
 }
 
 /**

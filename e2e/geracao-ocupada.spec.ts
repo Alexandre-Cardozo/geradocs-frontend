@@ -30,7 +30,7 @@ test("o clique duplo manda um pedido só, e a recusa por geração em andamento 
   const demora = new Promise<void>((resolve) => {
     liberar = resolve
   })
-  await page.route(`${API}/procurement-processes/*/documents/*/sections/1/ai-draft`, async (r) => {
+  await page.route(`${API}/procurement-processes/*/documents/*/sections/1/ai-draft-with-sources`, async (r) => {
     pedidos += 1
     if (pedidos === 1) {
       await demora

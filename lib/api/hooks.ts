@@ -27,7 +27,6 @@ import {
 import { definirTetoDeIa, lerTetoDeIa } from "@/lib/api/ai-budget-client"
 import { iaDisponivel } from "@/lib/api/ai-client"
 import {
-  gerarRascunhoDaNecessidadeEtp,
   gerarRascunhoDaSecaoComFontes,
   lerPropostaPendenteDaSecao,
   rejeitarPropostaDeIa,
@@ -401,20 +400,6 @@ export function useTrocarModelo(processoId: string, tipo: TipoDocumento) {
   })
 }
 
-export function useGerarSecao(processoId: string, tipo: TipoDocumento) {
-  return useMutation({
-    mutationFn: (input: { secaoId: string; rascunho?: string; orientacao?: string }) =>
-      api.gerarSecao(processoId, tipo, input.secaoId, input.rascunho, input.orientacao),
-  })
-}
-
-/** Não invalida o documento: a geração só altera o rascunho local do editor. */
-export function useGerarRascunhoEtp(processoId: string) {
-  return useMutation({
-    mutationFn: (rascunho: string) => gerarRascunhoDaNecessidadeEtp(processoId, rascunho),
-  })
-}
-
 /**
  * A proposta de IA que ainda espera o servidor na seção (ADR-066).
  *
@@ -453,10 +438,14 @@ export function useRejeitarPropostaDeIa(processoId: string, tipo: TipoDocumento)
   })
 }
 
+/**
+ * A redação da seção, sempre pelo mesmo caminho (ADR-068): com a orientação do
+ * servidor, quando há, e com as fontes, as lacunas e os avisos.
+ */
 export function useGerarRascunhoDaSecao(processoId: string, tipo: TipoDocumento) {
   return useMutation({
-    mutationFn: (input: { secaoId: string; rascunho: string }) =>
-      gerarRascunhoDaSecaoComFontes(processoId, tipo, input.secaoId, input.rascunho),
+    mutationFn: (input: { secaoId: string; rascunho: string; orientacao?: string }) =>
+      gerarRascunhoDaSecaoComFontes(processoId, tipo, input.secaoId, input.rascunho, input.orientacao),
   })
 }
 

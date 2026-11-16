@@ -465,10 +465,12 @@ export async function salvarSecao(
 }
 
 /**
- * Pede à IA a redação da seção.
+ * Pede à IA o texto da seção: a redação ou, em `revisao`, a revisão do que a
+ * seção já tem (ADR-054 do back-end).
  *
  * O texto volta para o rascunho e não é gravado: quem decide se aquilo entra no
- * documento é quem assina.
+ * documento é quem assina. A redação com fontes e orientação é
+ * `gerarRascunhoDaSecaoComFontes` — a tela redige sempre por ela (ADR-068).
  */
 export async function gerarTextoDaSecao(
   processoId: string,
@@ -477,43 +479,19 @@ export async function gerarTextoDaSecao(
   rascunho?: string,
   modo: "redacao" | "revisao" = "redacao",
 ): Promise<string> {
-  return (await pedirTextoDaSecao(processoId, tipo, secaoId, rascunho, modo)).texto;
-}
-
-/**
- * O pedido de redação com a orientação do servidor para esta seção (ADR-057 do
- * back-end).
- *
- * A orientação vai só neste pedido — não é gravada nem vai a outra seção. O
- * servidor faz a curadoria: recusa com o motivo o que é problemático e devolve
- * em `avisos` o que é sensível e seguiu.
- */
-export async function pedirTextoDaSecao(
-  processoId: string,
-  tipo: TipoDocumento,
-  secaoId: string,
-  rascunho?: string,
-  modo: "redacao" | "revisao" = "redacao",
-  orientacao?: string,
-): Promise<{ texto: string; avisos: string[]; propostaId?: string }> {
-  const gerada = await requisicaoProtegida<{ text: string; guidanceWarnings?: string[]; proposalId?: string }>(
+  const gerada = await requisicaoProtegida<{ text: string }>(
     `${rota(processoId, tipo)}/sections/${encodeURIComponent(secaoId)}/generate`,
     {
       method: "POST",
       // O que já está escrito vai junto — rascunho da plataforma ou texto do
       // servidor. Pedir ajuda não pode custar o que já foi feito. Na revisão,
-      // é o texto a revisar (ADR-054 do back-end).
+      // é o texto a revisar.
       body: JSON.stringify(
-        modo === "revisao"
-          ? { draft: rascunho, mode: "REVIEW" }
-          : {
-              draft: rascunho?.trim() ? rascunho : null,
-              ...(orientacao?.trim() ? { guidance: orientacao } : {}),
-            },
+        modo === "revisao" ? { draft: rascunho, mode: "REVIEW" } : { draft: rascunho?.trim() ? rascunho : null },
       ),
     },
   );
-  return { texto: gerada.text, avisos: gerada.guidanceWarnings ?? [], propostaId: gerada.proposalId };
+  return gerada.text;
 }
 
 /** Rascunho transitório da necessidade do ETP; não grava a seção. */
@@ -524,14 +502,24 @@ export interface RascunhoEtpComFontes {
   missingFacts: string[];
   warnings: string[];
   evidence: { source: string; fact: string }[];
+  /** O que a curadoria da orientação do servidor avisou (ADR-057), à parte dos avisos da seção. */
+  guidanceWarnings: string[];
 }
 
-/** Qualquer seção: mantém documento e seção definidos pela rota, não pelo modelo. */
+/**
+ * A redação de qualquer seção, com lacunas, evidências e avisos. Mantém
+ * documento e seção definidos pela rota, não pelo modelo.
+ *
+ * A orientação do servidor vai só neste pedido — não é gravada nem vai a outra
+ * seção. O servidor faz a curadoria: recusa com o motivo o que é problemático e
+ * devolve em `guidanceWarnings` o que é sensível e seguiu.
+ */
 export async function gerarRascunhoDaSecaoComFontes(
   processoId: string,
   tipo: TipoDocumento,
   secaoId: string,
   rascunho: string,
+  orientacao?: string,
 ): Promise<RascunhoEtpComFontes> {
   const resposta = await requisicaoProtegida<{
     documentType: string;
@@ -541,9 +529,13 @@ export async function gerarRascunhoDaSecaoComFontes(
     warnings?: string[];
     evidence?: { source: string; fact: string }[];
     proposalId?: string;
+    guidanceWarnings?: string[];
   }>(`${rota(processoId, tipo)}/sections/${encodeURIComponent(secaoId)}/ai-draft-with-sources`, {
     method: "POST",
-    body: JSON.stringify({ draft: rascunho.trim() ? rascunho : null }),
+    body: JSON.stringify({
+      draft: rascunho.trim() ? rascunho : null,
+      ...(orientacao?.trim() ? { guidance: orientacao } : {}),
+    }),
   });
   if (resposta.documentType !== tipos[tipo] || resposta.sectionCode !== secaoId || !resposta.content?.trim()) {
     throw new Error("A IA não retornou um rascunho válido para esta seção.");
@@ -554,34 +546,7 @@ export async function gerarRascunhoDaSecaoComFontes(
     missingFacts: resposta.missingFacts ?? [],
     warnings: resposta.warnings ?? [],
     evidence: resposta.evidence ?? [],
-  };
-}
-
-export async function gerarRascunhoDaNecessidadeEtp(
-  processoId: string,
-  rascunho: string,
-): Promise<RascunhoEtpComFontes> {
-  const resposta = await requisicaoProtegida<{
-    documentType: string;
-    sectionCode: string;
-    content: string;
-    missingFacts?: string[];
-    warnings?: string[];
-    evidence?: { source: string; fact: string }[];
-    proposalId?: string;
-  }>(`${rota(processoId, "ETP")}/sections/1/ai-draft`, {
-    method: "POST",
-    body: JSON.stringify({ draft: rascunho.trim() ? rascunho : null }),
-  });
-  if (resposta.documentType !== "ETP" || resposta.sectionCode !== "1" || !resposta.content?.trim()) {
-    throw new Error("A IA não retornou um rascunho válido para esta seção.");
-  }
-  return {
-    proposalId: resposta.proposalId,
-    content: resposta.content,
-    missingFacts: resposta.missingFacts ?? [],
-    warnings: resposta.warnings ?? [],
-    evidence: resposta.evidence ?? [],
+    guidanceWarnings: resposta.guidanceWarnings ?? [],
   };
 }
 
@@ -896,6 +861,7 @@ export async function lerPropostaPendenteDaSecao(
         warnings?: string[];
         evidence?: { source: string; fact: string }[];
         proposalId?: string;
+        guidanceWarnings?: string[];
       }
     | undefined
   >(`${rota(processoId, tipo)}/sections/${encodeURIComponent(secaoId)}/ai-proposal`);
@@ -906,6 +872,7 @@ export async function lerPropostaPendenteDaSecao(
     missingFacts: resposta.missingFacts ?? [],
     warnings: resposta.warnings ?? [],
     evidence: resposta.evidence ?? [],
+    guidanceWarnings: resposta.guidanceWarnings ?? [],
   };
 }
 

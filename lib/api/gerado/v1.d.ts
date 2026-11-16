@@ -1507,6 +1507,7 @@ export interface components {
             content: string;
             documentType: string;
             evidence: components["schemas"]["AiDraftEvidence"][];
+            guidanceWarnings: string[];
             missingFacts: string[];
             /** Format: uuid */
             proposalId: string;

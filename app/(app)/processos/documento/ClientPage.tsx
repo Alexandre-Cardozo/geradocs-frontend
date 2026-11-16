@@ -14,9 +14,7 @@ import {
   useAtualizarSecao,
   useDocumentos,
   useGerarDocumento,
-  useGerarSecao,
   useGerarRascunhoDaSecao,
-  useGerarRascunhoEtp,
   useProcesso,
   useDocumentoEmElaboracao,
   useLimparPropostaPendente,
@@ -113,9 +111,7 @@ export default function EditorDocumento() {
   const documentos = useDocumentos()
   const salvar = useAtualizarSecao(processoId, tipo)
   const gerar = useGerarRascunhoDaSecao(processoId, tipo)
-  const gerarEtp = useGerarRascunhoEtp(processoId)
-  const gerarComOrientacao = useGerarSecao(processoId, tipo)
-  const gerandoRascunho = gerar.isPending || gerarEtp.isPending || gerarComOrientacao.isPending
+  const gerandoRascunho = gerar.isPending
   const rejeitarProposta = useRejeitarPropostaDeIa(processoId, tipo)
   const limparPropostaPendente = useLimparPropostaPendente(processoId, tipo)
   const gerarDocumento = useGerarDocumento()
@@ -345,46 +341,22 @@ export default function EditorDocumento() {
 
     if (!confirmarSubstituicao()) return
 
-    // Orientação curada pelo servidor usa o endpoint de geração já existente,
-    // que aceita guidance. A resposta estruturada com evidências é usada no
-    // fluxo padrão, sem orientação livre.
-    if (orientacaoDaSecao.texto.trim()) {
-      if (gerarComOrientacao.isPending) return
-      const texto = orientacaoDaSecao.texto
-      gerarComOrientacao.mutate(
-        { secaoId, rascunho, orientacao: texto },
-        {
-          onSuccess: (resultado) => {
-            aplicarRascunho(resultado.conteudo, null, resultado.propostaId)
-            setOrientacao({ secao: secaoId, texto, avisos: resultado.avisosDaOrientacao })
-          },
-          onError: (erro) => {
-            const mensagem = erro instanceof Error ? erro.message : "Não foi possível gerar com IA."
-            setOrientacao({ secao: secaoId, texto, avisos: [], erro: mensagem })
-          },
-        },
-      )
-      return
-    }
-
-    const aplicarResultado = (resultado: RascunhoEtpComFontes) =>
-      aplicarRascunho(resultado.content, resultado, resultado.proposalId)
-
-    if (tipo === "ETP" && secaoId === "1") {
-      if (gerarEtp.isPending) return
-      gerarEtp.mutate(rascunho, {
-        onSuccess: aplicarResultado,
-        onError: (erro) => showToast(erro.message || "Não foi possível gerar o rascunho. Tente novamente."),
-      })
-      return
-    }
-
     if (gerar.isPending) return
+    // Um só caminho de redação (ADR-068): com ou sem orientação, o servidor monta
+    // o mesmo contexto — preços, PCA, mercado, lacunas e evidências.
+    const texto = orientacaoDaSecao.texto.trim() ? orientacaoDaSecao.texto : undefined
     gerar.mutate(
-      { secaoId, rascunho },
+      { secaoId, rascunho, orientacao: texto },
       {
-        onSuccess: aplicarResultado,
-        onError: (erro) => showToast(erro.message || "Não foi possível gerar o rascunho. Tente novamente."),
+        onSuccess: (resultado) => {
+          aplicarRascunho(resultado.content, resultado, resultado.proposalId)
+          if (texto) setOrientacao({ secao: secaoId, texto, avisos: resultado.guidanceWarnings })
+        },
+        onError: (erro) => {
+          const mensagem = erro.message || "Não foi possível gerar o rascunho. Tente novamente."
+          if (texto) setOrientacao({ secao: secaoId, texto, avisos: [], erro: mensagem })
+          else showToast(mensagem)
+        },
       },
     )
   }

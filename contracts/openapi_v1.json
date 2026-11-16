@@ -91,6 +91,12 @@
             },
             "type" : "array"
           },
+          "guidanceWarnings" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
           "missingFacts" : {
             "items" : {
               "type" : "string"
@@ -114,7 +120,7 @@
             "type" : "array"
           }
         },
-        "required" : [ "content", "documentType", "evidence", "missingFacts", "proposalId", "sectionCode", "sectionTitle", "warnings" ],
+        "required" : [ "content", "documentType", "evidence", "guidanceWarnings", "missingFacts", "proposalId", "sectionCode", "sectionTitle", "warnings" ],
         "type" : "object"
       },
       "AiStatusResponse" : {

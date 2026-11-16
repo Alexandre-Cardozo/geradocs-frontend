@@ -3,6 +3,7 @@ import { act, renderHook, waitFor } from "@testing-library/react"
 import type { ReactNode } from "react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
+import * as authoring from "@/lib/api/authoring-client"
 import * as api from "@/lib/api/client"
 import * as hooks from "@/lib/api/hooks"
 import { chaves } from "@/lib/api/hooks"
@@ -25,6 +26,11 @@ vi.mock("@/lib/api/client", async (importOriginal) => {
     Object.keys(real).map((nome) => [nome, vi.fn()]),
   ) as unknown as typeof import("@/lib/api/client")
 })
+
+vi.mock("@/lib/api/authoring-client", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/api/authoring-client")>()),
+  gerarRascunhoDaSecaoComFontes: vi.fn(),
+}))
 
 const PROCESSO = "3f2b1a00-1111-4222-8333-444455556666"
 const ENTIDADE = "1b7c8e10-2d3f-4a5b-8c9d-0e1f2a3b4c5d"
@@ -351,14 +357,18 @@ describe("documento: seções, estrutura e geração", () => {
     )
   })
 
-  it("gerar texto sem salvar não recarrega o documento", async () => {
+  it("gerar o rascunho repassa a orientação e não recarrega o documento", async () => {
     const { wrapper, invalidou } = ambiente()
-    vi.mocked(api.gerarSecao).mockResolvedValue({ id: "1", conteudo: "rascunho" } as never)
+    vi.mocked(authoring.gerarRascunhoDaSecaoComFontes).mockResolvedValue({ content: "rascunho" } as never)
 
-    const { result } = renderHook(() => hooks.useGerarSecao(PROCESSO, "TR"), { wrapper })
-    result.current.mutate({ secaoId: "1", rascunho: "texto anterior" })
+    const { result } = renderHook(() => hooks.useGerarRascunhoDaSecao(PROCESSO, "TR"), { wrapper })
+    result.current.mutate({ secaoId: "1", rascunho: "texto anterior", orientacao: "Enfatizar lotes." })
 
-    await waitFor(() => expect(api.gerarSecao).toHaveBeenCalledWith(PROCESSO, "TR", "1", "texto anterior", undefined))
+    await waitFor(() =>
+      expect(authoring.gerarRascunhoDaSecaoComFontes).toHaveBeenCalledWith(
+        PROCESSO, "TR", "1", "texto anterior", "Enfatizar lotes.",
+      ),
+    )
     expect(invalidadas(invalidou)).not.toContain(chave(chaves.secoes(PROCESSO, "TR")))
   })
 
