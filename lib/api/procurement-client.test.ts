@@ -928,6 +928,18 @@ describe("atualizarItensDoDfd", () => {
     expect((corpo as { expectedCompletionDate?: string }).expectedCompletionDate).toBe("2026-12-15")
   })
 
+  it("manda a situação-problema, sem espaços nas pontas, só quando ela foi informada", async () => {
+    const corpo = capturar()
+    const { atualizarItensDoDfd } = await carregarClienteLimpo()
+
+    await atualizarItensDoDfd(
+      PROCESSO, "d-1", [{ descricao: "Papel A4", unidade: "RESMA", quantidade: "1.200" }], null,
+      "  Os notebooks têm cinco anos.  ",
+    )
+
+    expect((corpo as { problemDescription?: string }).problemDescription).toBe("Os notebooks têm cinco anos.")
+  })
+
   it("sem preço informado, manda nulo — e não zero", async () => {
     const corpo = capturar()
     const { atualizarItensDoDfd } = await carregarClienteLimpo()

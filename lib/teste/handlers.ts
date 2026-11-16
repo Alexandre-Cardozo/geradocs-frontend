@@ -30,6 +30,19 @@ export const handlers = [
     }),
   ),
 
+  // O aproveitamento da IA da entidade (ADR-071): no caminho feliz, ainda sem proposta decidida.
+  http.get(`${API}/organizations/:id/ai-proposals/summary`, () =>
+    HttpResponse.json({
+      month: "2026-11",
+      pending: 0,
+      acceptedAsIs: 0,
+      acceptedEdited: 0,
+      rejected: 0,
+      superseded: 0,
+      decided: 0,
+    }),
+  ),
+
   // Processos e elaboração de documento — o caminho feliz. Cada teste
   // sobrescreve o que precisa com `servidor.use`.
   http.get(`${API}/procurement-processes/:id`, () => HttpResponse.json(processoApi)),

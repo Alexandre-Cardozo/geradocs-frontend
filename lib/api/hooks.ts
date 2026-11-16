@@ -25,6 +25,7 @@ import {
   removerFotoDePerfil,
 } from "@/lib/api/avatar-client"
 import { definirTetoDeIa, lerTetoDeIa } from "@/lib/api/ai-budget-client"
+import { lerAproveitamentoDaIa } from "@/lib/api/ai-proposal-summary-client"
 import { iaDisponivel } from "@/lib/api/ai-client"
 import {
   gerarRascunhoDaSecaoComFontes,
@@ -99,6 +100,7 @@ export const chaves = {
   dispensa: (id: string) => ["conferencia-dispensa", id] as const,
   iaDisponivel: ["ia-disponivel"] as const,
   tetoDeIa: (entidadeId: string) => ["teto-de-ia", entidadeId] as const,
+  aproveitamentoDaIa: (entidadeId: string) => ["aproveitamento-da-ia", entidadeId] as const,
   secoes: (id: string, tipo: TipoDocumento) => ["secoes", id, tipo] as const,
   documentos: ["documentos"] as const,
   resumoDocumentos: ["documentos", "resumo"] as const,
@@ -824,6 +826,15 @@ export function useTetoDeIa(entidadeId: string) {
   return useQuery({
     queryKey: chaves.tetoDeIa(entidadeId),
     queryFn: () => lerTetoDeIa(entidadeId),
+    enabled: entidadeId !== "",
+  })
+}
+
+/** Quanto da IA a entidade aproveita no mês (ADR-071 do back-end). */
+export function useAproveitamentoDaIa(entidadeId: string) {
+  return useQuery({
+    queryKey: chaves.aproveitamentoDaIa(entidadeId),
+    queryFn: () => lerAproveitamentoDaIa(entidadeId),
     enabled: entidadeId !== "",
   })
 }

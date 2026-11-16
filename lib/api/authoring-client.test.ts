@@ -1063,6 +1063,19 @@ describe("propostas de IA (ADR-066)", () => {
     expect(await lerPropostaPendenteDaSecao(PROCESSO, "ETP", "1")).toBeNull()
   })
 
+  it("uma proposta restaurada sem lacunas, avisos nem evidências volta com listas vazias", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id/documents/:tipo/sections/:secao/ai-proposal`, () =>
+        HttpResponse.json({ content: "Só o texto.", proposalId: "p-3" }),
+      ),
+    )
+    const { lerPropostaPendenteDaSecao } = await carregarClienteLimpo()
+
+    expect(await lerPropostaPendenteDaSecao(PROCESSO, "ETP", "4")).toEqual({
+      proposalId: "p-3", content: "Só o texto.", missingFacts: [], warnings: [], evidence: [], guidanceWarnings: [],
+    })
+  })
+
   it("rejeitar manda o motivo só quando há motivo", async () => {
     const corpos: Record<string, unknown>[] = []
     servidor.use(

@@ -7,6 +7,7 @@ import * as authoring from "@/lib/api/authoring-client"
 import * as api from "@/lib/api/client"
 import * as hooks from "@/lib/api/hooks"
 import { chaves } from "@/lib/api/hooks"
+import * as procurement from "@/lib/api/procurement-client"
 
 /**
  * Os hooks não são invólucro burro do TanStack Query.
@@ -30,6 +31,14 @@ vi.mock("@/lib/api/client", async (importOriginal) => {
 vi.mock("@/lib/api/authoring-client", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/api/authoring-client")>()),
   gerarRascunhoDaSecaoComFontes: vi.fn(),
+  lerPropostaPendenteDaSecao: vi.fn(),
+  rejeitarPropostaDeIa: vi.fn(),
+}))
+
+vi.mock("@/lib/api/procurement-client", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/api/procurement-client")>()),
+  atualizarAlternativaDeMercado: vi.fn(),
+  removerAlternativaDeMercado: vi.fn(),
 }))
 
 const PROCESSO = "3f2b1a00-1111-4222-8333-444455556666"
@@ -613,6 +622,80 @@ describe("cadastros", () => {
       await vi.advanceTimersByTimeAsync(400)
     })
     expect(api.getUsuarios).toHaveBeenCalledWith(ENTIDADE, "MAT-4471")
+  })
+})
+
+describe("propostas de IA (ADR-066) e alternativas de mercado", () => {
+  it("a proposta pendente é lida da seção, sem guardar nada na memória", async () => {
+    const { wrapper } = ambiente()
+    vi.mocked(authoring.lerPropostaPendenteDaSecao).mockResolvedValue({ content: "Rascunho." } as never)
+
+    const { result } = renderHook(() => hooks.usePropostaPendente(PROCESSO, "ETP", "4"), { wrapper })
+
+    await waitFor(() => expect(result.current.data).toEqual({ content: "Rascunho." }))
+    expect(authoring.lerPropostaPendenteDaSecao).toHaveBeenCalledWith(PROCESSO, "ETP", "4")
+  })
+
+  it("sem seção aberta, a pergunta nem é feita", async () => {
+    const { wrapper } = ambiente()
+
+    const { result } = renderHook(() => hooks.usePropostaPendente(PROCESSO, "ETP", null), { wrapper })
+
+    expect(result.current.fetchStatus).toBe("idle")
+    expect(authoring.lerPropostaPendenteDaSecao).not.toHaveBeenCalled()
+  })
+
+  it("limpar a proposta da seção grava 'nada pendente' na chave dela, para a resposta velha não voltar", () => {
+    const { wrapper, gravou } = ambiente()
+
+    const { result } = renderHook(() => hooks.useLimparPropostaPendente(PROCESSO, "ETP"), { wrapper })
+    act(() => {
+      result.current("4")
+    })
+
+    expect(gravou).toHaveBeenCalledWith(["proposta-pendente", PROCESSO, "ETP", "4"], null)
+  })
+
+  it("rejeitar manda a proposta e o motivo ao servidor", async () => {
+    const { wrapper } = ambiente()
+    vi.mocked(authoring.rejeitarPropostaDeIa).mockResolvedValue(undefined)
+
+    const { result } = renderHook(() => hooks.useRejeitarPropostaDeIa(PROCESSO, "ETP"), { wrapper })
+    result.current.mutate({ secaoId: "4", propostaId: "p-1", motivo: "Não reflete a necessidade." })
+
+    await waitFor(() =>
+      expect(authoring.rejeitarPropostaDeIa).toHaveBeenCalledWith(
+        PROCESSO, "ETP", "4", "p-1", "Não reflete a necessidade.",
+      ),
+    )
+  })
+
+  it("atualizar uma alternativa de mercado recarrega a lista delas", async () => {
+    const { wrapper, invalidou } = ambiente()
+    vi.mocked(procurement.atualizarAlternativaDeMercado).mockResolvedValue({ id: "a-1" } as never)
+
+    const { result } = renderHook(() => hooks.useAtualizarAlternativaDeMercado(PROCESSO), { wrapper })
+    result.current.mutate({ id: "a-1", dados: { descricao: "Locação" } as never })
+
+    await waitFor(() =>
+      expect(invalidadas(invalidou)).toContain(chave(chaves.alternativasMercado(PROCESSO))),
+    )
+    expect(procurement.atualizarAlternativaDeMercado).toHaveBeenCalledWith(PROCESSO, "a-1", { descricao: "Locação" })
+  })
+})
+
+describe("remover alternativa de mercado", () => {
+  it("remover uma alternativa de mercado recarrega a lista delas", async () => {
+    const { wrapper, invalidou } = ambiente()
+    vi.mocked(procurement.removerAlternativaDeMercado).mockResolvedValue(undefined as never)
+
+    const { result } = renderHook(() => hooks.useRemoverAlternativaDeMercado(PROCESSO), { wrapper })
+    result.current.mutate("a-1")
+
+    await waitFor(() =>
+      expect(invalidadas(invalidou)).toContain(chave(chaves.alternativasMercado(PROCESSO))),
+    )
+    expect(procurement.removerAlternativaDeMercado).toHaveBeenCalledWith(PROCESSO, "a-1")
   })
 })
 

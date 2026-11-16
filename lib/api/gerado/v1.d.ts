@@ -235,7 +235,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["summary"];
+        get: operations["summary_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -317,6 +317,22 @@ export interface paths {
         };
         get: operations["read_1"];
         put: operations["define"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/organizations/{organizationId}/ai-proposals/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["summary"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -1514,6 +1530,22 @@ export interface components {
             sectionCode: string;
             sectionTitle: string;
             warnings: string[];
+        };
+        AiProposalSummaryResponse: {
+            acceptanceRate?: number;
+            /** Format: int64 */
+            acceptedAsIs: number;
+            /** Format: int64 */
+            acceptedEdited: number;
+            /** Format: int64 */
+            decided: number;
+            month: string;
+            /** Format: int64 */
+            pending: number;
+            /** Format: int64 */
+            rejected: number;
+            /** Format: int64 */
+            superseded: number;
         };
         AiStatusResponse: {
             available: boolean;
@@ -3032,7 +3064,7 @@ export interface operations {
             };
         };
     };
-    summary: {
+    summary_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -3255,6 +3287,30 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["AiBudgetResponse"];
+                };
+            };
+        };
+    };
+    summary: {
+        parameters: {
+            query?: {
+                month?: null | string;
+            };
+            header?: never;
+            path: {
+                organizationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AiProposalSummaryResponse"];
                 };
             };
         };
