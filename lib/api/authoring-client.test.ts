@@ -1077,3 +1077,64 @@ describe("propostas de IA (ADR-066)", () => {
     expect(corpos).toEqual([{ reason: "Não reflete a necessidade." }, {}])
   })
 })
+
+describe("quando o servidor recusa a geração por IA", () => {
+  const rotaDaGeracao = `${urlDaApi}/procurement-processes/:id/documents/:tipo/sections/:secao/generate`
+
+  function recusa(status: number, code: string, detail: string, cabecalhos?: Record<string, string>) {
+    servidor.use(
+      http.post(
+        rotaDaGeracao,
+        () =>
+          HttpResponse.json(
+            { title: "Recusada", status, detail, code },
+            { status, headers: { "Content-Type": "application/problem+json", ...cabecalhos } },
+          ),
+      ),
+    )
+  }
+
+  it("geração em andamento (429): a mensagem do servidor chega inteira, com o código para a tela decidir", async () => {
+    recusa(429, "AI_BUSY", "Já existe uma geração em andamento para esta seção. Aguarde alguns segundos.", {
+      "Retry-After": "3",
+    })
+    const { pedirTextoDaSecao } = await carregarClienteLimpo()
+
+    await expect(pedirTextoDaSecao(PROCESSO, "ETP", "1", "Texto.")).rejects.toMatchObject({
+      status: 429,
+      code: "AI_BUSY",
+      message: "Já existe uma geração em andamento para esta seção. Aguarde alguns segundos.",
+    })
+  })
+
+  it("teto do mês esgotado (402) e IA não configurada (503) também chegam com o código e o motivo", async () => {
+    const { pedirTextoDaSecao } = await carregarClienteLimpo()
+
+    recusa(402, "AI_BUDGET_EXHAUSTED", "O teto de IA do mês acabou. A escrita manual segue disponível.")
+    await expect(pedirTextoDaSecao(PROCESSO, "ETP", "1")).rejects.toMatchObject({
+      status: 402,
+      code: "AI_BUDGET_EXHAUSTED",
+      message: expect.stringContaining("escrita manual"),
+    })
+
+    recusa(503, "AI_PROVIDER_NOT_CONFIGURED", "A IA não está configurada neste ambiente.")
+    await expect(pedirTextoDaSecao(PROCESSO, "ETP", "1")).rejects.toMatchObject({
+      status: 503,
+      code: "AI_PROVIDER_NOT_CONFIGURED",
+    })
+  })
+
+  it("o 429 da geração não é tratado como bloqueio de login nem derruba a sessão", async () => {
+    recusa(429, "AI_BUSY", "Já existe uma geração em andamento.")
+    const { pedirTextoDaSecao } = await carregarClienteLimpo()
+
+    const erro = await pedirTextoDaSecao(PROCESSO, "ETP", "1").catch((falha: unknown) => falha)
+
+    expect(erro).toMatchObject({ status: 429 })
+    // Quem pediu continua autenticado: o servidor só pede para esperar.
+    servidor.use(
+      http.post(rotaDaGeracao, () => HttpResponse.json({ text: "Texto.", guidanceWarnings: [] })),
+    )
+    expect(await pedirTextoDaSecao(PROCESSO, "ETP", "1")).toMatchObject({ texto: "Texto." })
+  })
+})
