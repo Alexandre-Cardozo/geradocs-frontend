@@ -836,6 +836,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/procurement-processes/{processId}/dfds/improve-problem-description": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["improveProblemDescription"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/procurement-processes/{processId}/documents/{documentType}": {
         parameters: {
             query?: never;
@@ -2064,6 +2080,12 @@ export interface components {
             /** Format: date-time */
             requestedAt: string;
             succeeded: boolean;
+        };
+        ImproveTextRequest: {
+            text: string;
+        };
+        ImprovedTextResponse: {
+            text: string;
         };
         IncongruenceView: {
             itemDescription: string;
@@ -4445,6 +4467,32 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ContractingContextsResponse"];
+                };
+            };
+        };
+    };
+    improveProblemDescription: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                processId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImproveTextRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ImprovedTextResponse"];
                 };
             };
         };

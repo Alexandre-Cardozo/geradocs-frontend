@@ -23,7 +23,6 @@ import {
   useContextosDaContratacao,
   useDocumentos,
   useEncerrarProcesso,
-  useParecerDFD,
   useProcesso,
   useSecoes,
   useServidoresDoOrgao,
@@ -84,7 +83,6 @@ export default function HubProcesso() {
 
   const processo = useProcesso(processoId)
   const documentos = useDocumentos()
-  const parecer = useParecerDFD(processoId)
   const { data: tenant } = useConfigTenant()
   const atualizar = useAtualizarProcesso()
   const encerrar = useEncerrarProcesso()
@@ -297,7 +295,6 @@ export default function HubProcesso() {
     { tipo: grupo.tipo, numero: `${i + 1}.`, anexo: false },
     ...grupo.anexos.map((anexo, j) => ({ tipo: anexo, numero: `${i + 1}.${j + 1}`, anexo: true })),
   ])
-  const dfdVerificado = parecer.data != null
 
   /**
    * Cartão de um documento do processo.
@@ -745,29 +742,6 @@ export default function HubProcesso() {
         <ResumoDaEstimativa processo={proc} />
         <ConciliacaoDeValores processoId={processoId} valorDeclarado={proc.valorEstimado} />
       </div>
-
-      {/* Fase de verificação do DFD (quando configurada) */}
-      {proc.fases.verificacaoDFD && (
-        <button
-          type="button"
-          onClick={() => router.push(`/processos/dfd?id=${encodeURIComponent(processoId)}`)}
-          className="mb-4 flex w-full items-center gap-4 rounded-card border border-border bg-surface px-5 py-4 text-left transition-colors hover:bg-ice"
-        >
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-tint-royal-bg text-royal">
-            <IconFileText size={18} />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block font-display text-md font-bold text-text-1">Verificação do DFD pela IA</span>
-            <span className="block text-sm text-text-3">
-              {dfdVerificado ? "Parecer emitido. Clique para revisar os achados." : "Etapa inicial: analise o DFD antes de elaborar os documentos."}
-            </span>
-          </span>
-          {dfdVerificado ? <Tag tone="success">Concluída</Tag> : <Tag tone="info">Disponível</Tag>}
-          <span className="flex text-text-muted">
-            <IconArrowRight size={16} strokeWidth={2.5} />
-          </span>
-        </button>
-      )}
 
       {/*
         Consolidação da demanda — só aparece quando há DFD com itens. É o que

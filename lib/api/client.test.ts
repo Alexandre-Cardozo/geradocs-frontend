@@ -369,18 +369,6 @@ describe("processo", () => {
   })
 })
 
-describe("DFD", () => {
-  it("o parecer não existe antes da análise, e passa a existir depois", async () => {
-    const api = await fachadaLimpa()
-
-    expect(await api.getParecerDFD(PROCESSO)).toBeNull()
-
-    const parecer = await api.analisarDFD(PROCESSO, "dfd-2026-014.pdf")
-    expect(parecer.arquivo).toBe("dfd-2026-014.pdf")
-    expect((await api.getParecerDFD(PROCESSO))?.processoId).toBe(PROCESSO)
-  })
-})
-
 describe("seções do documento", () => {
   const documento = {
     secoes: [{ id: "1", titulo: "Necessidade", conteudo: "texto", status: "Completo" }],

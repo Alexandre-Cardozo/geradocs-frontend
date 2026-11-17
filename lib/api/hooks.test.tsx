@@ -91,7 +91,6 @@ describe("consultas: cada uma pede ao servidor o que a sua chave promete", () =>
     ["useEstatisticas", () => hooks.useEstatisticas(), chaves.estatisticas, api.getEstatisticas],
     ["useProcessos", () => hooks.useProcessos(), chaves.processos({}), api.getProcessos],
     ["useProcesso", () => hooks.useProcesso(PROCESSO), chaves.processo(PROCESSO), api.getProcesso],
-    ["useParecerDFD", () => hooks.useParecerDFD(PROCESSO), chaves.parecerDFD(PROCESSO), api.getParecerDFD],
     // Uma consulta, duas leituras: `useSecoes` recorta as seções do mesmo
     // documento que `useDocumentoEmElaboracao` devolve inteiro (§80).
     [
@@ -168,7 +167,6 @@ describe("consultas: cada uma pede ao servidor o que a sua chave promete", () =>
 describe("consultas que só disparam quando têm o que perguntar", () => {
   const desligadas: Array<[string, () => unknown, FuncaoDaApi]> = [
     ["useProcesso sem id", () => hooks.useProcesso(""), api.getProcesso],
-    ["useParecerDFD sem id", () => hooks.useParecerDFD(""), api.getParecerDFD],
     ["useSecoes sem id", () => hooks.useSecoes("", "ETP"), api.getDocumento],
     ["useSecoes para documento ausente", () => hooks.useSecoes(PROCESSO, "Aviso", false), api.getDocumento],
     ["useCorpoDocumento sem id", () => hooks.useCorpoDocumento("", "ETP"), api.getCorpoDocumento],
@@ -337,19 +335,6 @@ describe("processo: o que fica velho quando ele muda", () => {
     result.current.mutate({ processoId: PROCESSO })
 
     await waitFor(() => expect(api.encerrarProcesso).toHaveBeenCalledWith(PROCESSO, ""))
-  })
-
-  it("analisar o DFD grava o parecer no lugar de recarregá-lo", async () => {
-    const { wrapper, gravou } = ambiente()
-    const parecer = { processoId: PROCESSO }
-    vi.mocked(api.analisarDFD).mockResolvedValue(parecer as never)
-
-    const { result } = renderHook(() => hooks.useAnalisarDFD(PROCESSO), { wrapper })
-    result.current.mutate("dfd.pdf")
-
-    await waitFor(() =>
-      expect(gravou).toHaveBeenCalledWith(chaves.parecerDFD(PROCESSO), parecer),
-    )
   })
 })
 

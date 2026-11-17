@@ -26,7 +26,7 @@ function processo(documentos: TipoDocumento[]): Processo {
     etpStatus: "Não iniciado",
     trStatus: "Não iniciado",
     documentos,
-    fases: { verificacaoDFD: false, retificacao: false },
+    fases: { retificacao: false },
   }
 }
 

@@ -1732,6 +1732,26 @@
         "required" : [ "annexes", "attempts", "documentVersion", "files", "id", "requestedAt", "succeeded" ],
         "type" : "object"
       },
+      "ImproveTextRequest" : {
+        "properties" : {
+          "text" : {
+            "maxLength" : 2000,
+            "minLength" : 0,
+            "type" : "string"
+          }
+        },
+        "required" : [ "text" ],
+        "type" : "object"
+      },
+      "ImprovedTextResponse" : {
+        "properties" : {
+          "text" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "text" ],
+        "type" : "object"
+      },
       "IncongruenceView" : {
         "properties" : {
           "itemDescription" : {
@@ -6001,6 +6021,43 @@
           }
         },
         "tags" : [ "contracting-context-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{processId}/dfds/improve-problem-description" : {
+      "post" : {
+        "operationId" : "improveProblemDescription",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ImproveTextRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ImprovedTextResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "dfd-text-improvement-controller" ]
       }
     },
     "/api/v1/procurement-processes/{processId}/documents/{documentType}" : {

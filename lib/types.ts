@@ -215,7 +215,6 @@ export interface Processo {
   /** Flags do modo de ATA (anexar / delegar busca à IA / combinado). */
   ata?: ConfigATA | null
   fases: {
-    verificacaoDFD: boolean
     retificacao: boolean
   }
   urgente?: boolean
@@ -248,7 +247,6 @@ export interface NovoProcessoInput {
   ata?: ConfigATA | null
   documentos: Array<TipoDocumento>
   fases: {
-    verificacaoDFD: boolean
     retificacao: boolean
   }
 }
@@ -354,25 +352,6 @@ export interface ModeloDeEstrutura {
   atual: boolean
   /** Modelo próprio do órgão, e não minuta da AGU (ADR-056 do back-end). */
   doOrgao?: boolean
-}
-
-/** Achado do parecer da IA sobre o DFD. */
-export interface AchadoDFD {
-  tipo: "conformidade" | "alerta"
-  severidade: "info" | "recomendacao" | "atencao"
-  descricao: string
-  /** Fundamentação citada literalmente (ex.: "PCA 2025 — item 47", "Art. 11 do Decreto 7.746/2012"). */
-  fundamentacao?: string
-}
-
-export interface ParecerDFD {
-  processoId: string
-  arquivo: string
-  analisadoEm: string
-  /** Nota 0–100. */
-  nota: number
-  classificacao: string
-  achados: AchadoDFD[]
 }
 
 /**

@@ -15,7 +15,6 @@ function tituloDaRota(pathname: string): string {
   if (pathname === "/") return "Dashboard"
   if (pathname === "/processos") return "Processos de Contratação"
   if (pathname === "/processos/novo") return "Novo Processo"
-  if (pathname === "/processos/dfd") return "Verificação do DFD pela IA"
   if (pathname === "/processos/etp") return "Estudo Técnico Preliminar"
   if (pathname === "/processos/documento") return "Editor de Documento"
   if (pathname === "/processos/detalhe") return "Progresso do Processo"

@@ -26,6 +26,7 @@ import {
 } from "@/lib/api/avatar-client"
 import { definirTetoDeIa, lerTetoDeIa } from "@/lib/api/ai-budget-client"
 import { lerAproveitamentoDaIa } from "@/lib/api/ai-proposal-summary-client"
+import { melhorarSituacaoProblema } from "@/lib/api/text-improvement-client"
 import { iaDisponivel } from "@/lib/api/ai-client"
 import {
   gerarRascunhoDaSecaoComFontes,
@@ -91,7 +92,6 @@ export const chaves = {
   estatisticas: ["estatisticas"] as const,
   processos: (params: ListaProcessosParams) => ["processos", params] as const,
   processo: (id: string) => ["processo", id] as const,
-  parecerDFD: (id: string) => ["parecer-dfd", id] as const,
   dfds: (id: string) => ["dfds", id] as const,
   versoesDfd: (processoId: string, dfdId: string) => ["versoes-dfd", processoId, dfdId] as const,
   dotacoes: (id: string) => ["dotacoes", id] as const,
@@ -312,24 +312,6 @@ export function useAtualizarProcesso() {
       // O valor e o inciso são o que a conferência compara: mantê-la velha
       // mostraria um alerta que a edição acabou de resolver.
       void queryClient.invalidateQueries({ queryKey: chaves.dispensa(processo.id) })
-    },
-  })
-}
-
-export function useParecerDFD(processoId: string) {
-  return useQuery({
-    queryKey: chaves.parecerDFD(processoId),
-    queryFn: () => api.getParecerDFD(processoId),
-    enabled: processoId !== "",
-  })
-}
-
-export function useAnalisarDFD(processoId: string) {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (arquivo: string) => api.analisarDFD(processoId, arquivo),
-    onSuccess: (parecer) => {
-      queryClient.setQueryData(chaves.parecerDFD(processoId), parecer)
     },
   })
 }
@@ -1291,6 +1273,38 @@ export function useIaDisponivel() {
     queryKey: chaves.iaDisponivel,
     queryFn: iaDisponivel,
     staleTime: Infinity,
+  })
+}
+
+/**
+ * O que a tela pode prometer da IA agora (ADR-029 e ADR-064 do back-end).
+ *
+ * Cada estado tem um motivo diferente e uma saída diferente: sem modelo, é da
+ * instalação; sem teto, é pedir ao administrador que defina; teto esgotado, é
+ * esperar o mês. Enquanto a resposta não chega, é `verificando` — habilitar por
+ * otimismo devolveria o clique que dá erro.
+ */
+export type EstadoDaIa = "verificando" | "sem-modelo" | "sem-teto" | "teto-esgotado" | "disponivel"
+
+export function useEstadoDaIa(): EstadoDaIa {
+  const ia = useIaDisponivel()
+  const sessao = useSessao()
+  const teto = useTetoDeIa(ia.data === true ? (sessao.data?.usuario.entidadeId ?? "") : "")
+  if (ia.isPending) return "verificando"
+  if (ia.data !== true) return "sem-modelo"
+  if (teto.data !== undefined && !teto.data.disponivel) return teto.data.definido ? "teto-esgotado" : "sem-teto"
+  return "disponivel"
+}
+
+/**
+ * A sugestão de redação da situação-problema do DFD (ADR-072 do back-end).
+ *
+ * Não invalida nada: a sugestão não grava no DFD, e o texto só muda quando a
+ * pessoa o salva pelo caminho de sempre.
+ */
+export function useMelhorarSituacaoProblema(processoId: string) {
+  return useMutation({
+    mutationFn: (texto: string) => melhorarSituacaoProblema(processoId, texto),
   })
 }
 

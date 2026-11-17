@@ -15,6 +15,7 @@ import {
   IconX,
 } from "@/components/ui/icons";
 import { BaixarDfd } from "@/components/processos/baixar-dfd";
+import { MelhorarRedacao } from "@/components/processos/melhorar-redacao";
 import { ErrorState, LoadingState } from "@/components/shared/estados";
 import { useToast } from "@/components/shared/providers";
 import {
@@ -218,6 +219,7 @@ function RegistrarDfd({
         <FormField label="Situação-Problema" hint="Descreva o problema concreto observado pela unidade. Não antecipe justificativas ou impactos que ainda não foram apurados.">
           <Textarea value={problema} onChange={(e) => setProblema(e.target.value)} rows={3} />
         </FormField>
+        <MelhorarRedacao processoId={processoId} texto={problema} onUsar={setProblema} />
       </div>
 
       {/*
@@ -396,6 +398,7 @@ function ProblemaDoDfd({ processoId, dfd }: { processoId: string; dfd: DfdAnexad
       <FormField label={`Situação-Problema de ${dfd.nomeDoArquivo}`} hint="Registre apenas fatos constatados pela unidade demandante.">
         <Textarea value={texto} onChange={(e) => setTexto(e.target.value)} rows={3} />
       </FormField>
+      <MelhorarRedacao processoId={processoId} texto={texto} onUsar={setTexto} />
       <div className="flex gap-2">
         <Button size="sm" disabled={atualizar.isPending || texto.length > 2000} onClick={() =>
           atualizar.mutate(
