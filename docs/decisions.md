@@ -1394,3 +1394,27 @@ Pedido de quem usa: os tópicos seguem um depois do outro, sem buraco, na tela e
 
 - **Lista de anos, e não campo livre.** "Exercício" é um `Dropdown` com o ano atual (Brasília) já marcado, o anterior e os quatro seguintes, que são os do plano plurianual. O ano de uma dotação já gravada fora dessa faixa continua na lista, para a correção não trocar o ano sem pedido (`exerciciosDaDotacao`, em `lib/processos`).
 - **De onde vinha o "2100".** O back-end aceita exercício de 2000 a 2100, uma peneira contra erro de digitação. Com o campo livre, "30906" chegava ao servidor, e o toast mostrava a mensagem padrão da validação, que não dizia o campo. Agora a lista não deixa digitar, e o servidor diz "O exercício precisa estar entre 2000 e 2100." para quem chamar a API direto.
+
+## 104. O teto de IA da entidade aparece antes do clique, e o administrador o define na tela das entidades
+
+- **A tela diz o motivo antes do clique (ADR-064 do back-end).** Com modelo de IA configurado e a entidade sem teto, o servidor respondia `402` só depois do clique, e o aviso era um toast que sumia. Agora o `CaminhosDaSecao` consulta o teto da entidade da sessão: sem teto, escreve "A IA não está liberada para esta entidade"; com o teto do mês consumido, "O teto de IA do mês acabou". Nos dois casos manda falar com o administrador da plataforma, desabilita o botão e liga o motivo por `aria-describedby`. Como o componente é um só e serve os dez painéis, nenhum painel precisou mudar.
+- **Sem modelo, nada muda.** Se a instalação não tem IA, o motivo continua sendo a falta de modelo, e o teto nem é consultado.
+- **Só o administrador define.** A coluna "Teto Mensal de IA" na tela de entidades (`/admin/entidades`) mostra o valor por mês e o gasto, e edita com o `MoneyInput`. Zero desliga a IA da entidade. O servidor recusa quem não é administrador, e a mensagem dele vai para o aviso.
+- **Entidade sem teto não é traço.** O estado "Sem teto" diz que a IA fica indisponível até definir, porque a tela do administrador é o único lugar em que isso se resolve.
+- **Os testes não leem mais o `.env`.** Em paralelo, o back fixou o provedor `none` no perfil de teste: quem tinha `AI_PROVIDER=gemini` no `.env` rodava a suíte com o provedor real ligado.
+
+## 105. O rascunho da IA que ficou sem salvar volta ao reabrir a seção, e salvar ou descartar é o que o servidor registra
+
+- **O rascunho já foi pago.** Recarregar a página perdia o texto que a IA acabara de escrever, e refazê-lo custava outra chamada. Agora o back (ADR-066) guarda cada rascunho como proposta pendente, e o editor, ao abrir uma seção, pergunta se há uma. Se há e o campo continua como foi gravado, o rascunho volta com o painel de fontes e um aviso: "O texto salvo só muda quando você salvar." Quem já digitou não tem o texto trocado por baixo.
+- **Salvar é aceitar.** O `PUT` da seção leva o `aiProposalId` do rascunho de onde o texto veio, e o servidor registra se foi aceito como veio ou com edição. Não há botão de "Aceitar": o que a pessoa já faz, salvar, é a decisão. Se a proposta já não está pendente, o texto é salvo igual — a tela nunca trava por causa do registro.
+- **Descartar é um botão.** O painel "Revise o Rascunho da IA" ganhou "Descartar rascunho": volta o texto salvo e registra a rejeição. Pede confirmação só quando há texto a perder.
+- **Sair da seção não rejeita.** O aviso agora diz a verdade: o rascunho fica guardado e volta ao reabrir, mas as alterações feitas nele se perdem. Gerar de novo substitui a pendente sem perguntar ao servidor.
+- **Após salvar, descartar ou gerar, o cache da pendência é limpo** (`useLimparPropostaPendente`), senão a resposta guardada restauraria por cima do texto que acabou de ser salvo.
+- **A revisão de um texto que já está na seção** (§87) não muda: tem painel próprio e não vira proposta.
+
+## 106. A IA do DFD melhora a redação da situação-problema, e a "verificação do DFD pela IA" saiu
+
+- **O que saiu.** A etapa "Verificação do DFD pela IA" (a página `/processos/dfd`, o cartão no detalhe do processo e o interruptor no assistente de novo processo) mostrava, para qualquer arquivo, o mesmo parecer de protótipo: nota 74 e achados fixos. O resultado tinha a marca de dado sintético, mas a etapa inteira prometia uma análise que nenhum modelo fazia. Saíram com ela `analisarDFD`, `getParecerDFD`, `parecerDfd`, o `fases.verificacaoDFD` do processo e o mecanismo de dado sintético (`MarcaSintetica`, `DADOS_SINTETICOS` e o guarda-corpo nº 8): `parecerDfd` era o único campo que ele marcava, e um mecanismo sem campo é código sem uso.
+- **O que entrou.** O botão **"Melhorar a redação"** abaixo da situação-problema, no cadastro do DFD e na edição dele (back, ADR-072). A IA reescreve o que a pessoa escreveu, sem acrescentar nem retirar fato; a tela mostra a sugestão e a pessoa escolhe "Usar sugestão" ou "Descartar". O campo só muda no clique dela, e o DFD só muda quando ela o salva. Se o servidor recusar a sugestão por não conseguir manter os fatos (`502`), a tela diz que o texto foi mantido.
+- **O botão diz por que está desligado.** Sem modelo, sem teto, teto esgotado, campo vazio ou acima de 2000 caracteres: o motivo vem escrito e anunciado (`aria-describedby`), como no "Gerar com IA" da seção. O estado da IA que os dois usam virou `useEstadoDaIa`.
+- **Só a situação-problema.** Descrição e especificação dos itens não têm o botão: são técnicas, e mexer nelas pode mudar o sentido.

@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui"
 import { IconFileText, IconSparkles } from "@/components/ui/icons"
-import { useIaDisponivel } from "@/lib/api/hooks"
+import { useEstadoDaIa } from "@/lib/api/hooks"
 
 import { CampoDeOrientacao } from "@/components/documentos/orientacao-da-ia"
 
@@ -35,15 +35,25 @@ export function CaminhosDaSecao({
   /** O rascunho que a seção sabe montar a partir do processo, quando há um. */
   rascunhoAutomatico?: { rotulo: string; onEscrever: () => void }
 }) {
-  const ia = useIaDisponivel()
+  // O teto da entidade (ADR-064): com modelo configurado e sem teto, a IA
+  // também não responde — e o motivo vem escrito antes do clique, não num
+  // toast que some depois dele.
+  const estado = useEstadoDaIa()
+  const semModelo = estado === "sem-modelo"
+  const semTeto = estado === "sem-teto" || estado === "teto-esgotado"
 
   // Enquanto a resposta não chega, o botão fica desabilitado com o motivo. O
   // contrário — habilitar por otimismo — devolveria o clique que dá erro.
-  const motivo = ia.isPending
-    ? "Verificando a IA..."
-    : ia.data === true
-      ? "Rascunho com base no DFD, no PCA e no processo. Revise antes de salvar."
-      : "Nenhum modelo de IA configurado nesta instalação."
+  const motivo =
+    estado === "verificando"
+      ? "Verificando a IA..."
+      : semModelo
+        ? "Nenhum modelo de IA configurado nesta instalação."
+        : estado === "teto-esgotado"
+          ? "O teto de IA do mês acabou. Fale com o administrador da plataforma."
+          : estado === "sem-teto"
+            ? "A IA não está liberada para esta entidade. Fale com o administrador da plataforma."
+            : "Rascunho com base no DFD, no PCA e no processo. Revise antes de salvar."
 
   return (
     <div className="flex flex-col gap-2 rounded-xl border border-border bg-ice px-4 py-3.5">
@@ -52,7 +62,7 @@ export function CaminhosDaSecao({
           <IconSparkles size={14} />
         </span>
         <span className="font-display text-sm font-bold text-text-1">Gerar com IA</span>
-        {ia.data === false && (
+        {(semModelo || semTeto) && (
           <span className="rounded-sm bg-border-soft px-1.5 py-0.5 text-2xs font-semibold text-slate-strong">
             Indisponível
           </span>
@@ -62,7 +72,7 @@ export function CaminhosDaSecao({
         {motivo}
       </p>
       {/* Sem IA disponível, não há a quem orientar. */}
-      {ia.data === true && <CampoDeOrientacao />}
+      {estado === "disponivel" && <CampoDeOrientacao />}
       {/*
         Os dois lado a lado: o rascunho serve a quem não usa o modelo, e a IA a
         quem usa. Nenhum some depois de a seção ter texto — pedir a redação a
@@ -73,7 +83,7 @@ export function CaminhosDaSecao({
           size="sm"
           variant="dark"
           icon={<IconSparkles size={13} />}
-          disabled={ia.data !== true || gerando}
+          disabled={estado !== "disponivel" || gerando}
           // O guarda-corpo nº 7: botão desabilitado sem motivo anunciado é
           // motivo que só existe para quem enxerga a tela.
           ariaDescribedBy="motivo-da-ia"

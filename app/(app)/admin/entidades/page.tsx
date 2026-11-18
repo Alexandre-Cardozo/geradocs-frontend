@@ -6,6 +6,8 @@ import { Button, Dropdown, FormField, Input, Tag, Toggle } from "@/components/ui
 import { IconBan, IconBuilding, IconPencil, IconPlus } from "@/components/ui/icons";
 import { EmptyState, ErrorState, SkeletonRows } from "@/components/shared/estados";
 import { Th } from "@/components/shared/tabela";
+import { AproveitamentoDaIa } from "@/components/admin/aproveitamento-da-ia";
+import { TetoDeIa } from "@/components/admin/teto-de-ia";
 import { useToast } from "@/components/shared/providers";
 import {
   useAtualizarLimiteDeUsuarios,
@@ -223,10 +225,10 @@ export default function AdminEntidades() {
         {entidades.isSuccess && entidades.data.length === 0 && <EmptyState message="Nenhuma entidade cadastrada" />}
         {entidades.isSuccess && entidades.data.length > 0 && (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[760px] border-collapse">
+            <table className="w-full min-w-[980px] border-collapse">
               <thead>
                 <tr className="border-b border-border bg-ice">
-                  {["Entidade", "Tipo", "Usuários do Plano", ""].map((h, i) => (
+                  {["Entidade", "Tipo", "Usuários do Plano", "Teto Mensal de IA", "Aproveitamento da IA", ""].map((h, i) => (
                     <Th key={h === "" ? `x-${i}` : h}>{h}</Th>
                   ))}
                 </tr>
@@ -324,6 +326,12 @@ export default function AdminEntidades() {
                             </button>
                           </div>
                         )}
+                      </td>
+                      <td className="px-4 py-3.25">
+                        <TetoDeIa entidadeId={entidade.id} nome={entidade.nome} />
+                      </td>
+                      <td className="px-4 py-3.25">
+                        <AproveitamentoDaIa entidadeId={entidade.id} />
                       </td>
                       <td className="px-4 py-3.25">
                         <button

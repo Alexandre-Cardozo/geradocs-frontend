@@ -3,12 +3,10 @@
 // o build falha em vez de vazar estado entre requests/usuários.
 import "client-only"
 
-import { parecerDFDBase } from "@/lib/mocks/fixtures"
 import {
   houveTroca,
   impactoTrocaModalidade,
   motivoDaTrocaDeModalidade,
-  statusAposEditar,
   tituloComRotuloDeVersao,
   tituloDoDocumento,
 } from "@/lib/dominio"
@@ -51,7 +49,6 @@ import {
   concluirDocumento,
   corpoDaVersaoVigente,
   gerarTextoDaSecao,
-  pedirTextoDaSecao,
   excluirSecao,
   historicoDeVersoes,
   previaDaTrocaDeModelo,
@@ -100,7 +97,6 @@ import type {
   Modalidade,
   NaturezaDoObjeto,
   NovoProcessoInput,
-  ParecerDFD,
   PerfilAcesso,
   Processo,
   ResumoDocumentos,
@@ -122,30 +118,6 @@ import type {
  */
 
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T
-
-
-function delay(ms = 350 + Math.random() * 350): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms))
-}
-
-/* ── Estado em memória ─────────────────────────────────────────────────────── */
-
-/**
- * O que sobrou do "banco" do protótipo: o parecer do DFD, e mais nada.
- *
- * Até 26/08/2026 este objeto ainda guardava processos, documentos, versões,
- * corpos, estatísticas, resumo do acervo e a sessão. **Nada disso era lido**: as
- * telas passaram a perguntar ao servidor entre os Blocos 9 e 12, e as escritas
- * continuaram aqui, alimentando um estado que ninguém consultava. Estado morto
- * não é inofensivo — o próximo a ler este arquivo acredita nele.
- *
- * O parecer fica porque é o único ainda declarado como sintético
- * (`DADOS_SINTETICOS.parecerDfd`), e sai quando o modelo entrar (12.2). A tela
- * diz isso a quem lê.
- */
-const db = {
-  pareceresDFD: new Map<string, ParecerDFD>(),
-}
 
 export async function login(identificador: string, senha: string): Promise<Sessao> {
   const sessao = await autenticar(identificador, senha)
@@ -301,24 +273,6 @@ export async function getTrilha(processoId: string): Promise<EventoDoProcesso[]>
 }
 
 
-/* ── Verificação do DFD ────────────────────────────────────────────────────── */
-
-/** Dispara a análise mockada do DFD (a UI mostra o progresso ~1s). */
-export async function analisarDFD(processoId: string, arquivo: string): Promise<ParecerDFD> {
-  await delay(900)
-  // Registra a data/hora real da análise (fuso de Brasília).
-  const parecer: ParecerDFD = { ...clone(parecerDFDBase), processoId, arquivo, analisadoEm: dataHoraBrasiliaISO() }
-  db.pareceresDFD.set(processoId, parecer)
-  return clone(parecer)
-}
-
-/** Parecer persistido no mock (null se o DFD ainda não foi analisado). */
-export async function getParecerDFD(processoId: string): Promise<ParecerDFD | null> {
-  await delay()
-  const parecer = db.pareceresDFD.get(processoId)
-  return parecer ? clone(parecer) : null
-}
-
 /* ── Seções de documento (todos os tipos do catálogo) ──────────────────────── */
 
 export async function getSecoes(processoId: string, tipo: TipoDocumento): Promise<SecaoDocumento[]> {
@@ -390,6 +344,8 @@ export interface AtualizarSecaoInput {
    * — é assim que a tela desfaz sem precisar de uma operação própria.
    */
   justificativaDispensa?: string
+  /** A proposta de IA de onde o texto veio (ADR-066); salvar é aceitá-la. */
+  propostaId?: string
 }
 
 export async function atualizarSecao(input: AtualizarSecaoInput): Promise<SecaoDocumento> {
@@ -399,31 +355,11 @@ export async function atualizarSecao(input: AtualizarSecaoInput): Promise<SecaoD
     input.secaoId,
     input.conteudo,
     input.justificativaDispensa,
+    input.propostaId,
   )
   const secao = documento.secoes.find((s) => s.id === input.secaoId)
   if (!secao) throw new Error(`Seção ${input.secaoId} não encontrada`)
   return secao
-}
-
-/**
- * Pede ao servidor a redação da seção.
- *
- * O texto volta para o rascunho e **não** é gravado: quem decide se aquilo entra
- * no documento é quem assina. A seção devolvida traz o texto proposto com o
- * status que ela teria se fosse aceito — e é a tela que decide aceitar.
- */
-export async function gerarSecao(
-  processoId: string,
-  tipo: TipoDocumento,
-  secaoId: string,
-  rascunho?: string,
-  orientacao?: string,
-): Promise<SecaoDocumento & { avisosDaOrientacao: string[] }> {
-  const documento = await abrirDocumento(processoId, tipo)
-  const secao = documento.secoes.find((s) => s.id === secaoId)
-  if (!secao) throw new Error(`Seção ${secaoId} não encontrada`)
-  const { texto, avisos } = await pedirTextoDaSecao(processoId, tipo, secaoId, rascunho, "redacao", orientacao)
-  return { ...secao, conteudo: texto, status: statusAposEditar(texto), avisosDaOrientacao: avisos }
 }
 
 /**

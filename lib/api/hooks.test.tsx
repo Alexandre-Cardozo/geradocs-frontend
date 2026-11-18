@@ -3,9 +3,11 @@ import { act, renderHook, waitFor } from "@testing-library/react"
 import type { ReactNode } from "react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
+import * as authoring from "@/lib/api/authoring-client"
 import * as api from "@/lib/api/client"
 import * as hooks from "@/lib/api/hooks"
 import { chaves } from "@/lib/api/hooks"
+import * as procurement from "@/lib/api/procurement-client"
 
 /**
  * Os hooks não são invólucro burro do TanStack Query.
@@ -25,6 +27,19 @@ vi.mock("@/lib/api/client", async (importOriginal) => {
     Object.keys(real).map((nome) => [nome, vi.fn()]),
   ) as unknown as typeof import("@/lib/api/client")
 })
+
+vi.mock("@/lib/api/authoring-client", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/api/authoring-client")>()),
+  gerarRascunhoDaSecaoComFontes: vi.fn(),
+  lerPropostaPendenteDaSecao: vi.fn(),
+  rejeitarPropostaDeIa: vi.fn(),
+}))
+
+vi.mock("@/lib/api/procurement-client", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/api/procurement-client")>()),
+  atualizarAlternativaDeMercado: vi.fn(),
+  removerAlternativaDeMercado: vi.fn(),
+}))
 
 const PROCESSO = "3f2b1a00-1111-4222-8333-444455556666"
 const ENTIDADE = "1b7c8e10-2d3f-4a5b-8c9d-0e1f2a3b4c5d"
@@ -76,7 +91,6 @@ describe("consultas: cada uma pede ao servidor o que a sua chave promete", () =>
     ["useEstatisticas", () => hooks.useEstatisticas(), chaves.estatisticas, api.getEstatisticas],
     ["useProcessos", () => hooks.useProcessos(), chaves.processos({}), api.getProcessos],
     ["useProcesso", () => hooks.useProcesso(PROCESSO), chaves.processo(PROCESSO), api.getProcesso],
-    ["useParecerDFD", () => hooks.useParecerDFD(PROCESSO), chaves.parecerDFD(PROCESSO), api.getParecerDFD],
     // Uma consulta, duas leituras: `useSecoes` recorta as seções do mesmo
     // documento que `useDocumentoEmElaboracao` devolve inteiro (§80).
     [
@@ -153,8 +167,8 @@ describe("consultas: cada uma pede ao servidor o que a sua chave promete", () =>
 describe("consultas que só disparam quando têm o que perguntar", () => {
   const desligadas: Array<[string, () => unknown, FuncaoDaApi]> = [
     ["useProcesso sem id", () => hooks.useProcesso(""), api.getProcesso],
-    ["useParecerDFD sem id", () => hooks.useParecerDFD(""), api.getParecerDFD],
-    ["useSecoes sem id", () => hooks.useSecoes("", "ETP"), api.getSecoes],
+    ["useSecoes sem id", () => hooks.useSecoes("", "ETP"), api.getDocumento],
+    ["useSecoes para documento ausente", () => hooks.useSecoes(PROCESSO, "Aviso", false), api.getDocumento],
     ["useCorpoDocumento sem id", () => hooks.useCorpoDocumento("", "ETP"), api.getCorpoDocumento],
     ["useVersoesComTexto sem id", () => hooks.useVersoesComTexto("", "ETP"), api.getVersoesComTexto],
     ["useHistoricoVersoes sem id", () => hooks.useHistoricoVersoes("", "ETP"), api.getHistoricoVersoes],
@@ -322,41 +336,34 @@ describe("processo: o que fica velho quando ele muda", () => {
 
     await waitFor(() => expect(api.encerrarProcesso).toHaveBeenCalledWith(PROCESSO, ""))
   })
-
-  it("analisar o DFD grava o parecer no lugar de recarregá-lo", async () => {
-    const { wrapper, gravou } = ambiente()
-    const parecer = { processoId: PROCESSO }
-    vi.mocked(api.analisarDFD).mockResolvedValue(parecer as never)
-
-    const { result } = renderHook(() => hooks.useAnalisarDFD(PROCESSO), { wrapper })
-    result.current.mutate("dfd.pdf")
-
-    await waitFor(() =>
-      expect(gravou).toHaveBeenCalledWith(chaves.parecerDFD(PROCESSO), parecer),
-    )
-  })
 })
 
 describe("documento: seções, estrutura e geração", () => {
-  it("salvar e gerar seção recarregam as seções do documento", async () => {
-    for (const [usar, entrada, funcao] of [
-      [
-        () => hooks.useAtualizarSecao(PROCESSO, "ETP"),
-        { secaoId: "1", conteudo: "texto" },
-        api.atualizarSecao,
-      ],
-      [() => hooks.useGerarSecao(PROCESSO, "ETP"), "1", api.gerarSecao],
-    ] as const) {
-      const { wrapper, invalidou } = ambiente()
-      mockDaApi(funcao).mockResolvedValue({ id: "1" })
+  it("salvar seção recarrega as seções do documento", async () => {
+    const { wrapper, invalidou } = ambiente()
+    vi.mocked(api.atualizarSecao).mockResolvedValue({ id: "1" } as never)
 
-      const { result } = renderHook(comoMutacao(usar), { wrapper })
-      result.current.mutate(entrada as never)
+    const { result } = renderHook(() => hooks.useAtualizarSecao(PROCESSO, "ETP"), { wrapper })
+    result.current.mutate({ secaoId: "1", conteudo: "texto" })
 
-      await waitFor(() =>
-        expect(invalidadas(invalidou)).toContain(chave(chaves.secoes(PROCESSO, "ETP"))),
-      )
-    }
+    await waitFor(() =>
+      expect(invalidadas(invalidou)).toContain(chave(chaves.secoes(PROCESSO, "ETP"))),
+    )
+  })
+
+  it("gerar o rascunho repassa a orientação e não recarrega o documento", async () => {
+    const { wrapper, invalidou } = ambiente()
+    vi.mocked(authoring.gerarRascunhoDaSecaoComFontes).mockResolvedValue({ content: "rascunho" } as never)
+
+    const { result } = renderHook(() => hooks.useGerarRascunhoDaSecao(PROCESSO, "TR"), { wrapper })
+    result.current.mutate({ secaoId: "1", rascunho: "texto anterior", orientacao: "Enfatizar lotes." })
+
+    await waitFor(() =>
+      expect(authoring.gerarRascunhoDaSecaoComFontes).toHaveBeenCalledWith(
+        PROCESSO, "TR", "1", "texto anterior", "Enfatizar lotes.",
+      ),
+    )
+    expect(invalidadas(invalidou)).not.toContain(chave(chaves.secoes(PROCESSO, "TR")))
   })
 
   it("salvar seção repassa processo e tipo, que a tela não precisa repetir", async () => {
@@ -600,6 +607,80 @@ describe("cadastros", () => {
       await vi.advanceTimersByTimeAsync(400)
     })
     expect(api.getUsuarios).toHaveBeenCalledWith(ENTIDADE, "MAT-4471")
+  })
+})
+
+describe("propostas de IA (ADR-066) e alternativas de mercado", () => {
+  it("a proposta pendente é lida da seção, sem guardar nada na memória", async () => {
+    const { wrapper } = ambiente()
+    vi.mocked(authoring.lerPropostaPendenteDaSecao).mockResolvedValue({ content: "Rascunho." } as never)
+
+    const { result } = renderHook(() => hooks.usePropostaPendente(PROCESSO, "ETP", "4"), { wrapper })
+
+    await waitFor(() => expect(result.current.data).toEqual({ content: "Rascunho." }))
+    expect(authoring.lerPropostaPendenteDaSecao).toHaveBeenCalledWith(PROCESSO, "ETP", "4")
+  })
+
+  it("sem seção aberta, a pergunta nem é feita", async () => {
+    const { wrapper } = ambiente()
+
+    const { result } = renderHook(() => hooks.usePropostaPendente(PROCESSO, "ETP", null), { wrapper })
+
+    expect(result.current.fetchStatus).toBe("idle")
+    expect(authoring.lerPropostaPendenteDaSecao).not.toHaveBeenCalled()
+  })
+
+  it("limpar a proposta da seção grava 'nada pendente' na chave dela, para a resposta velha não voltar", () => {
+    const { wrapper, gravou } = ambiente()
+
+    const { result } = renderHook(() => hooks.useLimparPropostaPendente(PROCESSO, "ETP"), { wrapper })
+    act(() => {
+      result.current("4")
+    })
+
+    expect(gravou).toHaveBeenCalledWith(["proposta-pendente", PROCESSO, "ETP", "4"], null)
+  })
+
+  it("rejeitar manda a proposta e o motivo ao servidor", async () => {
+    const { wrapper } = ambiente()
+    vi.mocked(authoring.rejeitarPropostaDeIa).mockResolvedValue(undefined)
+
+    const { result } = renderHook(() => hooks.useRejeitarPropostaDeIa(PROCESSO, "ETP"), { wrapper })
+    result.current.mutate({ secaoId: "4", propostaId: "p-1", motivo: "Não reflete a necessidade." })
+
+    await waitFor(() =>
+      expect(authoring.rejeitarPropostaDeIa).toHaveBeenCalledWith(
+        PROCESSO, "ETP", "4", "p-1", "Não reflete a necessidade.",
+      ),
+    )
+  })
+
+  it("atualizar uma alternativa de mercado recarrega a lista delas", async () => {
+    const { wrapper, invalidou } = ambiente()
+    vi.mocked(procurement.atualizarAlternativaDeMercado).mockResolvedValue({ id: "a-1" } as never)
+
+    const { result } = renderHook(() => hooks.useAtualizarAlternativaDeMercado(PROCESSO), { wrapper })
+    result.current.mutate({ id: "a-1", dados: { descricao: "Locação" } as never })
+
+    await waitFor(() =>
+      expect(invalidadas(invalidou)).toContain(chave(chaves.alternativasMercado(PROCESSO))),
+    )
+    expect(procurement.atualizarAlternativaDeMercado).toHaveBeenCalledWith(PROCESSO, "a-1", { descricao: "Locação" })
+  })
+})
+
+describe("remover alternativa de mercado", () => {
+  it("remover uma alternativa de mercado recarrega a lista delas", async () => {
+    const { wrapper, invalidou } = ambiente()
+    vi.mocked(procurement.removerAlternativaDeMercado).mockResolvedValue(undefined as never)
+
+    const { result } = renderHook(() => hooks.useRemoverAlternativaDeMercado(PROCESSO), { wrapper })
+    result.current.mutate("a-1")
+
+    await waitFor(() =>
+      expect(invalidadas(invalidou)).toContain(chave(chaves.alternativasMercado(PROCESSO))),
+    )
+    expect(procurement.removerAlternativaDeMercado).toHaveBeenCalledWith(PROCESSO, "a-1")
   })
 })
 

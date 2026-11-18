@@ -1,1 +1,8 @@
-[]
+[
+  {
+    "id": "GHSA-fc5q-39xc-vjpf",
+    "pacote": "picomatch",
+    "motivo": "Sem versão corrigida (a mais recente publicada, 4.0.7, ainda está na faixa afetada <= 4.0.7). ReDoS por extglobs repetidos, e só chega por ferramentas de desenvolvimento (vitest, vite, tinyglobby, eslint-config-next → fast-glob), que casam padrões escritos no próprio repositório; não vai para o navegador (npm audit --omit=dev: 0 avisos). A saída sugerida pelo npm é voltar ao eslint-config-next 14.",
+    "revisarAte": "2026-12-31"
+  }
+]

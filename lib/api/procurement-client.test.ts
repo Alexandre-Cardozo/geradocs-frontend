@@ -215,6 +215,51 @@ describe("listarProcessos", () => {
   })
 })
 
+describe("alternativas de mercado", () => {
+  it("lista e traduz as alternativas cadastradas", async () => {
+    servidor.use(http.get(`${urlDaApi}/procurement-processes/:id/market-alternatives`, () =>
+      HttpResponse.json([{ id: "alt-1", name: "Compra", description: "Aquisição",
+        advantages: "Patrimônio", disadvantages: null, sourceReference: "Contrato similar", selected: true }]),
+    ))
+    const { listarAlternativasDeMercado } = await carregarClienteLimpo()
+    await expect(listarAlternativasDeMercado("processo")).resolves.toEqual([{
+      id: "alt-1", nome: "Compra", descricao: "Aquisição", vantagens: "Patrimônio",
+      limitacoes: undefined, fonte: "Contrato similar", selecionada: true,
+    }])
+  })
+
+  it("envia campos normalizados ao registrar e permite remover", async () => {
+    let body: unknown
+    let bodyAtualizado: unknown
+    servidor.use(
+      http.post(`${urlDaApi}/procurement-processes/:id/market-alternatives`, async ({ request }) => {
+        body = await request.json()
+        return HttpResponse.json({ id: "alt-1", name: "Compra", description: "Aquisição",
+          advantages: null, disadvantages: null, sourceReference: null, selected: false }, { status: 201 })
+      }),
+      http.delete(`${urlDaApi}/procurement-processes/:id/market-alternatives/:alternativeId`, () =>
+        new HttpResponse(null, { status: 204 })),
+      http.put(`${urlDaApi}/procurement-processes/:id/market-alternatives/:alternativeId`, async ({ request }) => {
+        bodyAtualizado = await request.json()
+        return HttpResponse.json({ id: "alt-1", name: "Compra", description: "Aquisição revisada",
+          advantages: null, disadvantages: null, sourceReference: null, selected: true })
+      }),
+    )
+    const { registrarAlternativaDeMercado, atualizarAlternativaDeMercado, removerAlternativaDeMercado } = await carregarClienteLimpo()
+    await registrarAlternativaDeMercado("processo", {
+      nome: " Compra ", descricao: " Aquisição ", vantagens: "", limitacoes: "", fonte: "", selecionada: false,
+    })
+    expect(body).toEqual({ name: "Compra", description: "Aquisição", advantages: null,
+      disadvantages: null, sourceReference: null, selected: false })
+    await expect(atualizarAlternativaDeMercado("processo", "alt-1", {
+      nome: "Compra", descricao: "Aquisição revisada", selecionada: true,
+    })).resolves.toMatchObject({ descricao: "Aquisição revisada", selecionada: true })
+    expect(bodyAtualizado).toEqual({ name: "Compra", description: "Aquisição revisada", advantages: null,
+      disadvantages: null, sourceReference: null, selected: true })
+    await expect(removerAlternativaDeMercado("processo", "alt-1")).resolves.toBeUndefined()
+  })
+})
+
 /**
  * A criação viaja como multipart (ADR-035): o JSON vai na parte `dados`, e o
  * arquivo do DFD, quando existe, na parte `file`.
@@ -242,7 +287,7 @@ describe("criarProcessoReal", () => {
       secretaria: DEPARTAMENTO_ID,
       valorEstimado: 12000,
       documentos: ["TR"],
-      fases: { verificacaoDFD: false, retificacao: false },
+      fases: { retificacao: false },
     }
     await criarProcessoReal(entrada)
 
@@ -267,7 +312,7 @@ describe("criarProcessoReal", () => {
       secretaria: DEPARTAMENTO_ID,
       fundamentoLegal: "Art. 28, I, Lei 14.133/21",
       documentos: ["ETP"],
-      fases: { verificacaoDFD: false, retificacao: false },
+      fases: { retificacao: false },
     })
 
     expect(processo.objetoDemanda).toBe("Papel A4, canetas e pastas")
@@ -291,7 +336,7 @@ describe("criarProcessoReal", () => {
       modalidade: "Inexigibilidade",
       secretaria: DEPARTAMENTO_ID,
       documentos: ["TR"],
-      fases: { verificacaoDFD: false, retificacao: false },
+      fases: { retificacao: false },
     })
 
     expect(corpo.estimatedValue).toBe(0)
@@ -315,7 +360,7 @@ describe("criarProcessoReal", () => {
       modalidade: "Pregão Eletrônico",
       secretaria: DEPARTAMENTO_ID,
       documentos: ["ETP"],
-      fases: { verificacaoDFD: false, retificacao: false },
+      fases: { retificacao: false },
       dfdConteudo: new File(["%PDF-1.7"], "DFD-2026-014.pdf", { type: "application/pdf" }),
     })
 
@@ -883,6 +928,18 @@ describe("atualizarItensDoDfd", () => {
     expect((corpo as { expectedCompletionDate?: string }).expectedCompletionDate).toBe("2026-12-15")
   })
 
+  it("manda a situação-problema, sem espaços nas pontas, só quando ela foi informada", async () => {
+    const corpo = capturar()
+    const { atualizarItensDoDfd } = await carregarClienteLimpo()
+
+    await atualizarItensDoDfd(
+      PROCESSO, "d-1", [{ descricao: "Papel A4", unidade: "RESMA", quantidade: "1.200" }], null,
+      "  Os notebooks têm cinco anos.  ",
+    )
+
+    expect((corpo as { problemDescription?: string }).problemDescription).toBe("Os notebooks têm cinco anos.")
+  })
+
   it("sem preço informado, manda nulo — e não zero", async () => {
     const corpo = capturar()
     const { atualizarItensDoDfd } = await carregarClienteLimpo()
@@ -1031,7 +1088,9 @@ describe("coletas de preço", () => {
 
   const daApi = {
     id: "c1c2d3e4-0000-4111-8222-333344445555",
+    itemId: "a1a2a3a4-0000-4111-8222-333344445555",
     item: "Papel A4",
+    unit: "RESMA",
     source: "Painel de Preços do Governo Federal (Compras.gov.br)",
     unitPrice: 24.9,
     collectedAt: "2026-08-20T14:30:00Z",
@@ -1101,7 +1160,9 @@ describe("coletas de preço", () => {
   })
 
   const dados = {
+    itemId: daApi.itemId,
     item: "  Papel A4  ",
+    unidade: "RESMA",
     fonte: " Painel de Preços ",
     valorUnitario: "24,90",
     coletadoEm: "2026-08-20T14:30:00Z",
@@ -1133,6 +1194,8 @@ describe("coletas de preço", () => {
 
     expect(corpo.unitPrice).toBe(24.9)
     expect(corpo.item).toBe("Papel A4")
+    expect(corpo.itemId).toBe(daApi.itemId)
+    expect(corpo.unit).toBe("RESMA")
     expect(corpo.supplier).toBeNull()
     expect(corpo.supplierDocument).toBeNull()
     expect(corpo.proposalValidUntil).toBeNull()

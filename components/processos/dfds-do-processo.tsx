@@ -2,7 +2,7 @@
 
 import { useRef, useState, type ReactNode } from "react";
 
-import { Button, Dropdown, FormField, Input, Tag, ValidationMsg } from "@/components/ui";
+import { Button, Dropdown, FormField, Input, Tag, Textarea, ValidationMsg } from "@/components/ui";
 import {
   IconBuilding,
   IconCalendar,
@@ -15,6 +15,7 @@ import {
   IconX,
 } from "@/components/ui/icons";
 import { BaixarDfd } from "@/components/processos/baixar-dfd";
+import { MelhorarRedacao } from "@/components/processos/melhorar-redacao";
 import { ErrorState, LoadingState } from "@/components/shared/estados";
 import { useToast } from "@/components/shared/providers";
 import {
@@ -127,6 +128,7 @@ function RegistrarDfd({
   const [identificacao, setIdentificacao] = useState("");
   const [arquivo, setArquivo] = useState<File | null>(null);
   const [dataPrevista, setDataPrevista] = useState("");
+  const [problema, setProblema] = useState("");
   const campoDeArquivo = useRef<HTMLInputElement>(null);
 
   const secretarias = tenant.data?.secretarias ?? [];
@@ -213,6 +215,13 @@ function RegistrarDfd({
         </div>
       </div>
 
+      <div className="mt-3">
+        <FormField label="Situação-Problema" hint="Descreva o problema concreto observado pela unidade. Não antecipe justificativas ou impactos que ainda não foram apurados.">
+          <Textarea value={problema} onChange={(e) => setProblema(e.target.value)} rows={3} />
+        </FormField>
+        <MelhorarRedacao processoId={processoId} texto={problema} onUsar={setProblema} />
+      </div>
+
       {/*
         Os botões vêm primeiro e o motivo ao lado deles: com o texto na frente,
         ele aparecia e sumia empurrando os botões pela linha — e o que estava
@@ -227,7 +236,7 @@ function RegistrarDfd({
             registrar.mutate(
               // O DFD nasce sem item: informar o que ele pede é a outra
               // operação, e é lá que o vínculo entre item e DFD é declarado.
-              { secretariaId: secretaria, identificacao: identificacao.trim(), arquivo, dataPrevista },
+              { secretariaId: secretaria, identificacao: identificacao.trim(), arquivo, dataPrevista, problema },
               {
                 onSuccess: () => {
                   showToast(`${identificacao.trim()} registrado no processo.`);
@@ -359,8 +368,50 @@ function LinhaDoDfd({ processoId, dfd }: { processoId: string; dfd: DfdAnexado }
         <DataPrevista processoId={processoId} dfd={dfd} />
         <FichaNoDfd dfd={dfd} />
       </div>
+      <div className="basis-full border-t border-border pt-2.5">
+        <ProblemaDoDfd processoId={processoId} dfd={dfd} />
+      </div>
       {historicoAberto && <HistoricoDoArquivo processoId={processoId} dfdId={dfd.id} />}
     </li>
+  );
+}
+
+function ProblemaDoDfd({ processoId, dfd }: { processoId: string; dfd: DfdAnexado }) {
+  const [editando, setEditando] = useState(false);
+  const [texto, setTexto] = useState(dfd.problema ?? "");
+  const atualizar = useAtualizarItensDoDfd(processoId);
+  const showToast = useToast();
+
+  if (!editando) {
+    return (
+      <div>
+        <span className="block text-2xs font-semibold tracking-caps text-text-muted uppercase">Situação-Problema Informada</span>
+        <p className="my-1 text-sm text-text-2">{dfd.problema || "Não informada. A IA indicará esta lacuna no ETP."}</p>
+        <Button size="sm" variant="secondary" onClick={() => { setTexto(dfd.problema ?? ""); setEditando(true); }}>
+          {dfd.problema ? "Editar" : "Informar"}
+        </Button>
+      </div>
+    );
+  }
+  return (
+    <div className="flex flex-col gap-2">
+      <FormField label={`Situação-Problema de ${dfd.nomeDoArquivo}`} hint="Registre apenas fatos constatados pela unidade demandante.">
+        <Textarea value={texto} onChange={(e) => setTexto(e.target.value)} rows={3} />
+      </FormField>
+      <MelhorarRedacao processoId={processoId} texto={texto} onUsar={setTexto} />
+      <div className="flex gap-2">
+        <Button size="sm" disabled={atualizar.isPending || texto.length > 2000} onClick={() =>
+          atualizar.mutate(
+            { dfdId: dfd.id, itens: dfd.itens, dataPrevista: dfd.dataPrevista, problema: texto },
+            { onSuccess: () => { setEditando(false); showToast("Situação-problema atualizada."); },
+              onError: (erro) => showToast(erro instanceof Error ? erro.message : "Não foi possível atualizar o DFD.") },
+          )}>
+          {atualizar.isPending ? "Salvando..." : "Salvar"}
+        </Button>
+        <Button size="sm" variant="secondary" onClick={() => setEditando(false)}>Cancelar</Button>
+      </div>
+      {texto.length > 2000 && <ValidationMsg type="error" msg="Use até 2.000 caracteres." />}
+    </div>
   );
 }
 

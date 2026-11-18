@@ -235,13 +235,6 @@ export default function NovoProcesso() {
   const [opcionaisSelecionados, setOpcionaisSelecionados] = useState<
     TipoDocumento[]
   >([]);
-  const [includeDFDVerification, setIncludeDFDVerification] = useState(false);
-
-  // A verificação analisa o DFD anexado — é a etapa inicial de qualquer
-  // processo que tenha um DFD, independente de gerar ETP. Sem DFD anexado
-  // (só Objeto da Demanda), não há o que verificar.
-  const temDFD = dfdFile !== null;
-  const verificarDFD = includeDFDVerification && temDFD;
 
   // Os documentos cabíveis dependem da modalidade: a contratação direta não gera
   // edital de licitação e o ETP nela entra só "se for o caso" (Art. 72, I).
@@ -410,7 +403,6 @@ export default function NovoProcesso() {
             : null,
         documentos: documentosEscolhidos,
         fases: {
-          verificacaoDFD: verificarDFD,
           // Fase de retificação: implementação real fica para a Fase 2 (com
           // versionamento). O campo permanece no domínio como slot; o wizard
           // não oferece o controle enquanto a fase não existe de fato.
@@ -777,53 +769,6 @@ export default function NovoProcesso() {
                   </InfoBanner>
                 )}
               </div>
-
-              {/* Fase inicial opcional — verificação do DFD pela IA */}
-              <div className="mb-5">
-                <span className={`mb-3 block ${labelClasses}`}>
-                  Etapa Inicial do Processo
-                </span>
-                {temDFD ? (
-                  <div
-                    className={`rounded-card border bg-surface px-4.5 py-4 transition-colors ${
-                      includeDFDVerification ? "border-royal" : "border-border"
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="pt-0.5">
-                        <Toggle
-                          checked={includeDFDVerification}
-                          onChange={setIncludeDFDVerification}
-                          label="Verificação do DFD pela IA"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-display text-md font-bold text-text-1">
-                            Verificação do DFD pela IA
-                          </span>
-                          <Tag tone="info">Etapa Inicial</Tag>
-                        </div>
-                        <p className="m-0 mt-1 text-base text-text-3">
-                          A IA emite parecer sobre o DFD antes da elaboração.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="rounded-card border border-dashed border-border bg-surface px-4.5 py-4 opacity-80">
-                    <div className="flex items-center gap-2">
-                      <span className="font-display text-md font-bold text-text-2">
-                        Verificação do DFD pela IA
-                      </span>
-                      <Tag tone="neutral">Requer DFD</Tag>
-                    </div>
-                    <p className="m-0 mt-1 text-base text-text-3">
-                      Anexe o DFD na Identificação para habilitar.
-                    </p>
-                  </div>
-                )}
-              </div>
             </div>
           )}
 
@@ -912,16 +857,6 @@ export default function NovoProcesso() {
                   </dd>
                 </div>
               ))}
-              {verificarDFD && (
-                <div>
-                  <dt className="text-2xs font-semibold tracking-caps text-text-muted uppercase">
-                    Etapa inicial
-                  </dt>
-                  <dd className="m-0 mt-1 flex flex-wrap gap-1.5">
-                    <Tag tone="info">Verificação do DFD</Tag>
-                  </dd>
-                </div>
-              )}
             </dl>
           </div>
         </aside>

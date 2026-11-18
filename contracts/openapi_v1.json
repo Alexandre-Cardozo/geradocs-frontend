@@ -41,6 +41,42 @@
         "required" : [ "anchorSectionCode", "nested", "title" ],
         "type" : "object"
       },
+      "AiBudgetResponse" : {
+        "properties" : {
+          "available" : {
+            "type" : "boolean"
+          },
+          "defined" : {
+            "type" : "boolean"
+          },
+          "limitAmount" : {
+            "type" : "number"
+          },
+          "period" : {
+            "type" : "string"
+          },
+          "remainingAmount" : {
+            "type" : "number"
+          },
+          "spentAmount" : {
+            "type" : "number"
+          }
+        },
+        "required" : [ "available", "defined", "spentAmount" ],
+        "type" : "object"
+      },
+      "AiDraftEvidence" : {
+        "properties" : {
+          "fact" : {
+            "type" : "string"
+          },
+          "source" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "fact", "source" ],
+        "type" : "object"
+      },
       "AiDraftResponse" : {
         "properties" : {
           "content" : {
@@ -49,11 +85,27 @@
           "documentType" : {
             "type" : "string"
           },
+          "evidence" : {
+            "items" : {
+              "$ref" : "#/components/schemas/AiDraftEvidence"
+            },
+            "type" : "array"
+          },
+          "guidanceWarnings" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
           "missingFacts" : {
             "items" : {
               "type" : "string"
             },
             "type" : "array"
+          },
+          "proposalId" : {
+            "format" : "uuid",
+            "type" : "string"
           },
           "sectionCode" : {
             "type" : "string"
@@ -68,7 +120,43 @@
             "type" : "array"
           }
         },
-        "required" : [ "content", "documentType", "missingFacts", "sectionCode", "sectionTitle", "warnings" ],
+        "required" : [ "content", "documentType", "evidence", "guidanceWarnings", "missingFacts", "proposalId", "sectionCode", "sectionTitle", "warnings" ],
+        "type" : "object"
+      },
+      "AiProposalSummaryResponse" : {
+        "properties" : {
+          "acceptanceRate" : {
+            "type" : "number"
+          },
+          "acceptedAsIs" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "acceptedEdited" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "decided" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "month" : {
+            "type" : "string"
+          },
+          "pending" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "rejected" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "superseded" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "acceptedAsIs", "acceptedEdited", "decided", "month", "pending", "rejected", "superseded" ],
         "type" : "object"
       },
       "AiStatusResponse" : {
@@ -193,6 +281,11 @@
               "$ref" : "#/components/schemas/DemandItemRequest"
             },
             "type" : "array"
+          },
+          "problemDescription" : {
+            "maxLength" : 2000,
+            "minLength" : 0,
+            "type" : "string"
           }
         },
         "required" : [ "departmentId", "fileName", "items" ],
@@ -201,7 +294,7 @@
       "AuditEntryResponse" : {
         "properties" : {
           "action" : {
-            "enum" : [ "AI_GUIDANCE_BLOCKED", "AI_GUIDANCE_USED", "BUDGET_APPROPRIATION_DECLARED", "BUDGET_APPROPRIATION_REMOVED", "BUDGET_APPROPRIATION_UPDATED", "BUNDLE_EXPORTED", "CONTRACTING_CONTEXTS_CONFIRMED", "DEPARTMENT_CREATED", "DEPARTMENT_DEACTIVATED", "DEPARTMENT_UPDATED", "DFD_ATTACHED", "DFD_REMOVED", "DFD_UPDATED", "DOCUMENT_DOWNLOADED", "DOCUMENT_FINALIZED", "DOCUMENT_GENERATED", "DOCUMENT_MODEL_JUSTIFIED", "DOCUMENT_STRUCTURE_CHANGED", "LOGIN_FAILED", "LOGIN_SUCCEEDED", "ORGANIZATION_CREATED", "ORGANIZATION_DEACTIVATED", "ORGANIZATION_LETTERHEAD_UPDATED", "ORGANIZATION_UPDATED", "PASSWORD_RESET_COMPLETED", "PASSWORD_RESET_REQUESTED", "PCA_IMPORTED", "PRICE_QUOTE_RECORDED", "PRICE_QUOTE_REMOVED", "PRICE_QUOTE_UPDATED", "PROCUREMENT_PROCESS_CLOSED", "PROCUREMENT_PROCESS_CREATED", "PROCUREMENT_PROCESS_REOPENED", "PROCUREMENT_PROCESS_UPDATED", "REGULATION_ADDED", "REGULATION_FILE_REPLACED", "REGULATION_REINSTATED", "REGULATION_REMOVED", "REGULATION_REVOKED", "REGULATION_UPDATED", "SECTION_DISPENSED", "SECTION_WRITTEN", "STRUCTURE_MODEL_DEACTIVATED", "STRUCTURE_MODEL_PUBLISHED", "TEMPLATE_PUBLISHED", "USER_CPF_REVEALED", "USER_CREATED", "USER_DEACTIVATED", "USER_ORGANIZATION_TRANSFERRED", "USER_PASSWORD_RESET", "USER_UPDATED" ],
+            "enum" : [ "AI_BUDGET_DEFINED", "AI_GUIDANCE_BLOCKED", "AI_GUIDANCE_USED", "AI_PROPOSAL_ACCEPTED", "AI_PROPOSAL_REJECTED", "BUDGET_APPROPRIATION_DECLARED", "BUDGET_APPROPRIATION_REMOVED", "BUDGET_APPROPRIATION_UPDATED", "BUNDLE_EXPORTED", "CONTRACTING_CONTEXTS_CONFIRMED", "DEPARTMENT_CREATED", "DEPARTMENT_DEACTIVATED", "DEPARTMENT_UPDATED", "DFD_ATTACHED", "DFD_REMOVED", "DFD_UPDATED", "DOCUMENT_DOWNLOADED", "DOCUMENT_FINALIZED", "DOCUMENT_GENERATED", "DOCUMENT_MODEL_JUSTIFIED", "DOCUMENT_STRUCTURE_CHANGED", "LOGIN_FAILED", "LOGIN_SUCCEEDED", "MARKET_ALTERNATIVE_RECORDED", "MARKET_ALTERNATIVE_REMOVED", "MARKET_ALTERNATIVE_UPDATED", "ORGANIZATION_CREATED", "ORGANIZATION_DEACTIVATED", "ORGANIZATION_LETTERHEAD_UPDATED", "ORGANIZATION_UPDATED", "PASSWORD_RESET_COMPLETED", "PASSWORD_RESET_REQUESTED", "PCA_IMPORTED", "PRICE_QUOTE_RECORDED", "PRICE_QUOTE_REMOVED", "PRICE_QUOTE_UPDATED", "PROCUREMENT_PROCESS_CLOSED", "PROCUREMENT_PROCESS_CREATED", "PROCUREMENT_PROCESS_REOPENED", "PROCUREMENT_PROCESS_UPDATED", "REGULATION_ADDED", "REGULATION_FILE_REPLACED", "REGULATION_REINSTATED", "REGULATION_REMOVED", "REGULATION_REVOKED", "REGULATION_UPDATED", "SECTION_DISPENSED", "SECTION_WRITTEN", "STRUCTURE_MODEL_DEACTIVATED", "STRUCTURE_MODEL_PUBLISHED", "TEMPLATE_PUBLISHED", "USER_CPF_REVEALED", "USER_CREATED", "USER_DEACTIVATED", "USER_ORGANIZATION_TRANSFERRED", "USER_PASSWORD_RESET", "USER_UPDATED" ],
             "type" : "string"
           },
           "actorId" : {
@@ -492,6 +585,10 @@
           "description" : {
             "type" : "string"
           },
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
           "summable" : {
             "type" : "boolean"
           },
@@ -502,7 +599,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "byDepartment", "description", "summable", "total", "unit" ],
+        "required" : [ "byDepartment", "description", "id", "summable", "total", "unit" ],
         "type" : "object"
       },
       "ContextTopicView" : {
@@ -820,6 +917,16 @@
           }
         },
         "required" : [ "demand", "itemCode" ],
+        "type" : "object"
+      },
+      "DefineAiBudgetRequest" : {
+        "properties" : {
+          "limitAmount" : {
+            "minimum" : 0,
+            "type" : "number"
+          }
+        },
+        "required" : [ "limitAmount" ],
         "type" : "object"
       },
       "DemandConsolidationResponse" : {
@@ -1570,11 +1677,15 @@
             },
             "type" : "array"
           },
+          "proposalId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
           "text" : {
             "type" : "string"
           }
         },
-        "required" : [ "guidanceWarnings", "text" ],
+        "required" : [ "guidanceWarnings", "proposalId", "text" ],
         "type" : "object"
       },
       "GenerationJobResponse" : {
@@ -1619,6 +1730,26 @@
           }
         },
         "required" : [ "annexes", "attempts", "documentVersion", "files", "id", "requestedAt", "succeeded" ],
+        "type" : "object"
+      },
+      "ImproveTextRequest" : {
+        "properties" : {
+          "text" : {
+            "maxLength" : 2000,
+            "minLength" : 0,
+            "type" : "string"
+          }
+        },
+        "required" : [ "text" ],
+        "type" : "object"
+      },
+      "ImprovedTextResponse" : {
+        "properties" : {
+          "text" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "text" ],
         "type" : "object"
       },
       "IncongruenceView" : {
@@ -1712,6 +1843,76 @@
           }
         },
         "required" : [ "bottomMm", "leftMm", "rightMm", "topMm" ],
+        "type" : "object"
+      },
+      "MarketAlternativeRequest" : {
+        "properties" : {
+          "advantages" : {
+            "maxLength" : 2000,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "description" : {
+            "maxLength" : 2000,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "disadvantages" : {
+            "maxLength" : 2000,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "name" : {
+            "maxLength" : 160,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "selected" : {
+            "type" : "boolean"
+          },
+          "sourceReference" : {
+            "maxLength" : 500,
+            "minLength" : 0,
+            "type" : "string"
+          }
+        },
+        "required" : [ "description", "name", "selected" ],
+        "type" : "object"
+      },
+      "MarketAlternativeResponse" : {
+        "properties" : {
+          "advantages" : {
+            "type" : "string"
+          },
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "disadvantages" : {
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "selected" : {
+            "type" : "boolean"
+          },
+          "sourceReference" : {
+            "type" : "string"
+          },
+          "updatedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          }
+        },
+        "required" : [ "createdAt", "description", "id", "name", "selected", "updatedAt" ],
         "type" : "object"
       },
       "MembershipResponse" : {
@@ -2123,6 +2324,10 @@
             "minLength" : 0,
             "type" : "string"
           },
+          "itemId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
           "note" : {
             "maxLength" : 2000,
             "minLength" : 0,
@@ -2147,12 +2352,17 @@
             "minLength" : 0,
             "type" : "string"
           },
+          "unit" : {
+            "maxLength" : 20,
+            "minLength" : 0,
+            "type" : "string"
+          },
           "unitPrice" : {
             "minimum" : 0.01,
             "type" : "number"
           }
         },
-        "required" : [ "collectedAt", "item", "source", "unitPrice" ],
+        "required" : [ "collectedAt", "source", "unitPrice" ],
         "type" : "object"
       },
       "PriceQuoteResponse" : {
@@ -2169,6 +2379,10 @@
             "type" : "string"
           },
           "item" : {
+            "type" : "string"
+          },
+          "itemId" : {
+            "format" : "uuid",
             "type" : "string"
           },
           "note" : {
@@ -2191,11 +2405,14 @@
           "supplierDocument" : {
             "type" : "string"
           },
+          "unit" : {
+            "type" : "string"
+          },
           "unitPrice" : {
             "type" : "number"
           }
         },
-        "required" : [ "collectedAt", "id", "item", "registeredAt", "source", "unitPrice" ],
+        "required" : [ "collectedAt", "id", "item", "itemId", "registeredAt", "source", "unitPrice" ],
         "type" : "object"
       },
       "ProcessDfdResponse" : {
@@ -2229,6 +2446,9 @@
               "$ref" : "#/components/schemas/DemandItemView"
             },
             "type" : "array"
+          },
+          "problemDescription" : {
+            "type" : "string"
           },
           "submittedAt" : {
             "format" : "date-time",
@@ -2598,6 +2818,16 @@
         "required" : [ "createdAt", "currentFile", "id", "kind", "kindLabel", "status", "title", "updatedAt", "version" ],
         "type" : "object"
       },
+      "RejectAiProposalRequest" : {
+        "properties" : {
+          "reason" : {
+            "maxLength" : 500,
+            "minLength" : 0,
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
       "RenameSectionRequest" : {
         "properties" : {
           "title" : {
@@ -2635,6 +2865,10 @@
       },
       "SaveSectionRequest" : {
         "properties" : {
+          "aiProposalId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
           "content" : {
             "maxLength" : 100000,
             "minLength" : 0,
@@ -3145,6 +3379,11 @@
               "$ref" : "#/components/schemas/DemandItemRequest"
             },
             "type" : "array"
+          },
+          "problemDescription" : {
+            "maxLength" : 2000,
+            "minLength" : 0,
+            "type" : "string"
           }
         },
         "required" : [ "items" ],
@@ -3481,7 +3720,7 @@
           "name" : "action",
           "required" : false,
           "schema" : {
-            "enum" : [ "AI_GUIDANCE_BLOCKED", "AI_GUIDANCE_USED", "BUDGET_APPROPRIATION_DECLARED", "BUDGET_APPROPRIATION_REMOVED", "BUDGET_APPROPRIATION_UPDATED", "BUNDLE_EXPORTED", "CONTRACTING_CONTEXTS_CONFIRMED", "DEPARTMENT_CREATED", "DEPARTMENT_DEACTIVATED", "DEPARTMENT_UPDATED", "DFD_ATTACHED", "DFD_REMOVED", "DFD_UPDATED", "DOCUMENT_DOWNLOADED", "DOCUMENT_FINALIZED", "DOCUMENT_GENERATED", "DOCUMENT_MODEL_JUSTIFIED", "DOCUMENT_STRUCTURE_CHANGED", "LOGIN_FAILED", "LOGIN_SUCCEEDED", "ORGANIZATION_CREATED", "ORGANIZATION_DEACTIVATED", "ORGANIZATION_LETTERHEAD_UPDATED", "ORGANIZATION_UPDATED", "PASSWORD_RESET_COMPLETED", "PASSWORD_RESET_REQUESTED", "PCA_IMPORTED", "PRICE_QUOTE_RECORDED", "PRICE_QUOTE_REMOVED", "PRICE_QUOTE_UPDATED", "PROCUREMENT_PROCESS_CLOSED", "PROCUREMENT_PROCESS_CREATED", "PROCUREMENT_PROCESS_REOPENED", "PROCUREMENT_PROCESS_UPDATED", "REGULATION_ADDED", "REGULATION_FILE_REPLACED", "REGULATION_REINSTATED", "REGULATION_REMOVED", "REGULATION_REVOKED", "REGULATION_UPDATED", "SECTION_DISPENSED", "SECTION_WRITTEN", "STRUCTURE_MODEL_DEACTIVATED", "STRUCTURE_MODEL_PUBLISHED", "TEMPLATE_PUBLISHED", "USER_CPF_REVEALED", "USER_CREATED", "USER_DEACTIVATED", "USER_ORGANIZATION_TRANSFERRED", "USER_PASSWORD_RESET", "USER_UPDATED" ],
+            "enum" : [ "AI_BUDGET_DEFINED", "AI_GUIDANCE_BLOCKED", "AI_GUIDANCE_USED", "AI_PROPOSAL_ACCEPTED", "AI_PROPOSAL_REJECTED", "BUDGET_APPROPRIATION_DECLARED", "BUDGET_APPROPRIATION_REMOVED", "BUDGET_APPROPRIATION_UPDATED", "BUNDLE_EXPORTED", "CONTRACTING_CONTEXTS_CONFIRMED", "DEPARTMENT_CREATED", "DEPARTMENT_DEACTIVATED", "DEPARTMENT_UPDATED", "DFD_ATTACHED", "DFD_REMOVED", "DFD_UPDATED", "DOCUMENT_DOWNLOADED", "DOCUMENT_FINALIZED", "DOCUMENT_GENERATED", "DOCUMENT_MODEL_JUSTIFIED", "DOCUMENT_STRUCTURE_CHANGED", "LOGIN_FAILED", "LOGIN_SUCCEEDED", "MARKET_ALTERNATIVE_RECORDED", "MARKET_ALTERNATIVE_REMOVED", "MARKET_ALTERNATIVE_UPDATED", "ORGANIZATION_CREATED", "ORGANIZATION_DEACTIVATED", "ORGANIZATION_LETTERHEAD_UPDATED", "ORGANIZATION_UPDATED", "PASSWORD_RESET_COMPLETED", "PASSWORD_RESET_REQUESTED", "PCA_IMPORTED", "PRICE_QUOTE_RECORDED", "PRICE_QUOTE_REMOVED", "PRICE_QUOTE_UPDATED", "PROCUREMENT_PROCESS_CLOSED", "PROCUREMENT_PROCESS_CREATED", "PROCUREMENT_PROCESS_REOPENED", "PROCUREMENT_PROCESS_UPDATED", "REGULATION_ADDED", "REGULATION_FILE_REPLACED", "REGULATION_REINSTATED", "REGULATION_REMOVED", "REGULATION_REVOKED", "REGULATION_UPDATED", "SECTION_DISPENSED", "SECTION_WRITTEN", "STRUCTURE_MODEL_DEACTIVATED", "STRUCTURE_MODEL_PUBLISHED", "TEMPLATE_PUBLISHED", "USER_CPF_REVEALED", "USER_CREATED", "USER_DEACTIVATED", "USER_ORGANIZATION_TRANSFERRED", "USER_PASSWORD_RESET", "USER_UPDATED" ],
             "type" : "string"
           }
         }, {
@@ -3854,7 +4093,7 @@
     },
     "/api/v1/generated-documents/summary" : {
       "get" : {
-        "operationId" : "summary",
+        "operationId" : "summary_1",
         "responses" : {
           "200" : {
             "content" : {
@@ -4045,6 +4284,102 @@
           }
         },
         "tags" : [ "organization-controller" ]
+      }
+    },
+    "/api/v1/organizations/{organizationId}/ai-budget" : {
+      "get" : {
+        "operationId" : "read_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "organizationId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AiBudgetResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "ai-budget-controller" ]
+      },
+      "put" : {
+        "operationId" : "define",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "organizationId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DefineAiBudgetRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AiBudgetResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "ai-budget-controller" ]
+      }
+    },
+    "/api/v1/organizations/{organizationId}/ai-proposals/summary" : {
+      "get" : {
+        "operationId" : "summary",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "organizationId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "month",
+          "required" : false,
+          "schema" : {
+            "type" : [ "null", "string" ]
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AiProposalSummaryResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "ai-proposal-summary-controller" ]
       }
     },
     "/api/v1/organizations/{organizationId}/deactivate" : {
@@ -5688,6 +6023,43 @@
         "tags" : [ "contracting-context-controller" ]
       }
     },
+    "/api/v1/procurement-processes/{processId}/dfds/improve-problem-description" : {
+      "post" : {
+        "operationId" : "improveProblemDescription",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ImproveTextRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ImprovedTextResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "dfd-text-improvement-controller" ]
+      }
+    },
     "/api/v1/procurement-processes/{processId}/documents/{documentType}" : {
       "get" : {
         "operationId" : "open",
@@ -6205,6 +6577,151 @@
         "tags" : [ "document-authoring-controller" ]
       }
     },
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/sections/{sectionCode}/ai-draft-with-sources" : {
+      "post" : {
+        "operationId" : "generateSectionDraft",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "documentType",
+          "required" : true,
+          "schema" : {
+            "enum" : [ "AVISO", "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "sectionCode",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/GenerateSectionRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AiDraftResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "document-authoring-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/sections/{sectionCode}/ai-proposal" : {
+      "get" : {
+        "operationId" : "pending",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "documentType",
+          "required" : true,
+          "schema" : {
+            "enum" : [ "AVISO", "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "sectionCode",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AiDraftResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "ai-proposal-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/sections/{sectionCode}/ai-proposals/{proposalId}/reject" : {
+      "post" : {
+        "operationId" : "reject",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "documentType",
+          "required" : true,
+          "schema" : {
+            "enum" : [ "AVISO", "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "proposalId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "sectionCode",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RejectAiProposalRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "ai-proposal-controller" ]
+      }
+    },
     "/api/v1/procurement-processes/{processId}/documents/{documentType}/sections/{sectionCode}/generate" : {
       "post" : {
         "operationId" : "generateSection",
@@ -6534,6 +7051,142 @@
           }
         },
         "tags" : [ "document-authoring-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{processId}/market-alternatives" : {
+      "get" : {
+        "operationId" : "listMarketAlternatives",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/MarketAlternativeResponse"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "market-alternative-controller" ]
+      },
+      "post" : {
+        "operationId" : "createMarketAlternative",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/MarketAlternativeRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MarketAlternativeResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "market-alternative-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{processId}/market-alternatives/{alternativeId}" : {
+      "delete" : {
+        "operationId" : "removeMarketAlternative",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "alternativeId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "market-alternative-controller" ]
+      },
+      "put" : {
+        "operationId" : "updateMarketAlternative",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "alternativeId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/MarketAlternativeRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MarketAlternativeResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "market-alternative-controller" ]
       }
     },
     "/api/v1/procurement-processes/{processId}/pca" : {

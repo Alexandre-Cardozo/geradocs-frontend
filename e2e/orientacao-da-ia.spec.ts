@@ -13,8 +13,16 @@ test("a orientação vai só no pedido da seção, com os avisos e a recusa no c
   await comSessao(page)
   await comProcessoEDocumento(page)
   await page.route(`${API}/ai/status`, (r) => r.fulfill({ json: { available: true } }))
+  // A tela só libera a geração com teto de IA definido e disponível no mês.
+  await page.route(`${API}/organizations/*/ai-budget`, (r) =>
+    r.fulfill({
+      json: { defined: true, available: true, limitAmount: 100, spentAmount: 1, remainingAmount: 99 },
+    }),
+  )
   const pedidos: { secao: string; corpo: Record<string, unknown> }[] = []
-  await page.route(`${API}/procurement-processes/*/documents/*/sections/*/generate`, async (r) => {
+  // Um só caminho de redação (ADR-068): com ou sem orientação, a tela pede o
+  // rascunho com fontes, e a curadoria devolve os avisos à parte.
+  await page.route(`${API}/procurement-processes/*/documents/*/sections/*/ai-draft-with-sources`, async (r) => {
     const corpo = r.request().postDataJSON() as Record<string, unknown>
     const secao = new URL(r.request().url()).pathname.split("/").at(-2) ?? ""
     pedidos.push({ secao, corpo })
@@ -27,7 +35,12 @@ test("a orientação vai só no pedido da seção, com os avisos e a recusa no c
     }
     await r.fulfill({
       json: {
-        text: "Necessidade com entrega em lotes mensais.",
+        documentType: "ETP",
+        sectionCode: secao,
+        content: corpo.guidance ? "Necessidade com entrega em lotes mensais." : "Previsão no PCA registrada.",
+        evidence: [],
+        missingFacts: [],
+        warnings: [],
         guidanceWarnings: corpo.guidance ? ["Indicação de marca só com justificativa técnica no processo (Art. 41, I, Lei 14.133/21)."] : [],
       },
     })
@@ -47,10 +60,12 @@ test("a orientação vai só no pedido da seção, com os avisos e a recusa no c
 
   // A recusa da curadoria aparece no campo, com o motivo.
   await page.getByRole("textbox", { name: "Orientação para esta seção" }).fill("O fiscal é o CPF 529.982.247-25.")
+  page.once("dialog", (dialog) => dialog.accept())
   await page.getByRole("button", { name: "Gerar com IA" }).click()
   await expect(page.getByText(/A orientação tem dado pessoal/)).toBeVisible()
 
   // Outra seção não leva a orientação desta.
+  page.once("dialog", (dialog) => dialog.accept())
   await page.getByRole("button", { name: /Seção 2 do ETP/ }).first().click()
   await page.getByRole("button", { name: "Gerar com IA" }).click()
   await expect.poll(() => pedidos.length).toBe(3)

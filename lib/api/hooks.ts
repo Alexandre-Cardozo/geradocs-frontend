@@ -24,7 +24,15 @@ import {
   obterFotoDePerfil,
   removerFotoDePerfil,
 } from "@/lib/api/avatar-client"
+import { definirTetoDeIa, lerTetoDeIa } from "@/lib/api/ai-budget-client"
+import { lerAproveitamentoDaIa } from "@/lib/api/ai-proposal-summary-client"
+import { melhorarSituacaoProblema } from "@/lib/api/text-improvement-client"
 import { iaDisponivel } from "@/lib/api/ai-client"
+import {
+  gerarRascunhoDaSecaoComFontes,
+  lerPropostaPendenteDaSecao,
+  rejeitarPropostaDeIa,
+} from "@/lib/api/authoring-client"
 import { confirmarContextos, contextosDoProcesso } from "@/lib/api/contextos-client"
 import {
   desativarModelo,
@@ -47,11 +55,16 @@ import {
   listarDfds,
   listarDotacoes,
   registrarColeta,
+  listarAlternativasDeMercado,
+  registrarAlternativaDeMercado,
+  atualizarAlternativaDeMercado,
+  removerAlternativaDeMercado,
   registrarDfd,
   removerColeta,
   removerDfd,
   removerDotacao,
   type DadosDaColeta,
+  type DadosDaAlternativaDeMercado,
   type DadosDaDotacao,
   type ItemDoDfd,
 } from "@/lib/api/procurement-client"
@@ -79,13 +92,15 @@ export const chaves = {
   estatisticas: ["estatisticas"] as const,
   processos: (params: ListaProcessosParams) => ["processos", params] as const,
   processo: (id: string) => ["processo", id] as const,
-  parecerDFD: (id: string) => ["parecer-dfd", id] as const,
   dfds: (id: string) => ["dfds", id] as const,
   versoesDfd: (processoId: string, dfdId: string) => ["versoes-dfd", processoId, dfdId] as const,
   dotacoes: (id: string) => ["dotacoes", id] as const,
   coletas: (id: string) => ["coletas", id] as const,
+  alternativasMercado: (id: string) => ["alternativas-mercado", id] as const,
   dispensa: (id: string) => ["conferencia-dispensa", id] as const,
   iaDisponivel: ["ia-disponivel"] as const,
+  tetoDeIa: (entidadeId: string) => ["teto-de-ia", entidadeId] as const,
+  aproveitamentoDaIa: (entidadeId: string) => ["aproveitamento-da-ia", entidadeId] as const,
   secoes: (id: string, tipo: TipoDocumento) => ["secoes", id, tipo] as const,
   documentos: ["documentos"] as const,
   resumoDocumentos: ["documentos", "resumo"] as const,
@@ -301,24 +316,6 @@ export function useAtualizarProcesso() {
   })
 }
 
-export function useParecerDFD(processoId: string) {
-  return useQuery({
-    queryKey: chaves.parecerDFD(processoId),
-    queryFn: () => api.getParecerDFD(processoId),
-    enabled: processoId !== "",
-  })
-}
-
-export function useAnalisarDFD(processoId: string) {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (arquivo: string) => api.analisarDFD(processoId, arquivo),
-    onSuccess: (parecer) => {
-      queryClient.setQueryData(chaves.parecerDFD(processoId), parecer)
-    },
-  })
-}
-
 /**
  * O documento em elaboração inteiro.
  *
@@ -335,11 +332,11 @@ export function useDocumentoEmElaboracao(processoId: string, tipo: TipoDocumento
   })
 }
 
-export function useSecoes(processoId: string, tipo: TipoDocumento) {
+export function useSecoes(processoId: string, tipo: TipoDocumento, disponivel = true) {
   return useQuery({
     queryKey: chaves.secoes(processoId, tipo),
     queryFn: () => api.getDocumento(processoId, tipo),
-    enabled: processoId !== "",
+    enabled: processoId !== "" && disponivel,
     select: (documento) => documento.secoes,
   })
 }
@@ -352,6 +349,8 @@ export function useAtualizarSecao(processoId: string, tipo: TipoDocumento) {
       conteudo: string
       status?: import("@/lib/types").StatusDocumento
       justificativaDispensa?: string
+      /** A proposta de IA de onde o texto veio (ADR-066): salvar é aceitá-la. */
+      propostaId?: string
     }) => api.atualizarSecao({ processoId, tipo, ...input }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: chaves.secoes(processoId, tipo) })
@@ -385,14 +384,52 @@ export function useTrocarModelo(processoId: string, tipo: TipoDocumento) {
   })
 }
 
-export function useGerarSecao(processoId: string, tipo: TipoDocumento) {
+/**
+ * A proposta de IA que ainda espera o servidor na seção (ADR-066).
+ *
+ * Sem cache: a pergunta é "o que há pendente agora", e uma resposta guardada
+ * restauraria um rascunho que já foi salvo ou descartado.
+ */
+const chaveDaPropostaPendente = (processoId: string, tipo: TipoDocumento, secaoId: string | null) =>
+  ["proposta-pendente", processoId, tipo, secaoId] as const
+
+export function usePropostaPendente(processoId: string, tipo: TipoDocumento, secaoId: string | null) {
+  return useQuery({
+    queryKey: chaveDaPropostaPendente(processoId, tipo, secaoId),
+    queryFn: () => lerPropostaPendenteDaSecao(processoId, tipo, String(secaoId)),
+    enabled: processoId !== "" && secaoId != null,
+    staleTime: 0,
+    gcTime: 0,
+    retry: false,
+  })
+}
+
+/**
+ * Diz à tela que a seção já não tem proposta pendente (foi salva, descartada ou
+ * trocada por outra): sem isso, a resposta guardada a restauraria de novo.
+ */
+export function useLimparPropostaPendente(processoId: string, tipo: TipoDocumento) {
   const queryClient = useQueryClient()
+  return (secaoId: string) =>
+    queryClient.setQueryData(chaveDaPropostaPendente(processoId, tipo, secaoId), null)
+}
+
+/** O servidor descartou a proposta de IA; o motivo é opcional. */
+export function useRejeitarPropostaDeIa(processoId: string, tipo: TipoDocumento) {
   return useMutation({
-    mutationFn: (input: { secaoId: string; rascunho?: string; orientacao?: string }) =>
-      api.gerarSecao(processoId, tipo, input.secaoId, input.rascunho, input.orientacao),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: chaves.secoes(processoId, tipo) })
-    },
+    mutationFn: (input: { secaoId: string; propostaId: string; motivo?: string }) =>
+      rejeitarPropostaDeIa(processoId, tipo, input.secaoId, input.propostaId, input.motivo),
+  })
+}
+
+/**
+ * A redação da seção, sempre pelo mesmo caminho (ADR-068): com a orientação do
+ * servidor, quando há, e com as fontes, as lacunas e os avisos.
+ */
+export function useGerarRascunhoDaSecao(processoId: string, tipo: TipoDocumento) {
+  return useMutation({
+    mutationFn: (input: { secaoId: string; rascunho: string; orientacao?: string }) =>
+      gerarRascunhoDaSecaoComFontes(processoId, tipo, input.secaoId, input.rascunho, input.orientacao),
   })
 }
 
@@ -766,6 +803,36 @@ export function useAtualizarLimiteDeUsuarios() {
   })
 }
 
+/** O teto mensal de IA da entidade (ADR-064 do back-end). */
+export function useTetoDeIa(entidadeId: string) {
+  return useQuery({
+    queryKey: chaves.tetoDeIa(entidadeId),
+    queryFn: () => lerTetoDeIa(entidadeId),
+    enabled: entidadeId !== "",
+  })
+}
+
+/** Quanto da IA a entidade aproveita no mês (ADR-071 do back-end). */
+export function useAproveitamentoDaIa(entidadeId: string) {
+  return useQuery({
+    queryKey: chaves.aproveitamentoDaIa(entidadeId),
+    queryFn: () => lerAproveitamentoDaIa(entidadeId),
+    enabled: entidadeId !== "",
+  })
+}
+
+/** Só o administrador da plataforma define; o servidor recusa os demais. */
+export function useDefinirTetoDeIa() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ entidadeId, teto }: { entidadeId: string; teto: number }) =>
+      definirTetoDeIa(entidadeId, teto),
+    onSuccess: (_resposta, { entidadeId }) => {
+      void queryClient.invalidateQueries({ queryKey: chaves.tetoDeIa(entidadeId) })
+    },
+  })
+}
+
 export function useRemoverEntidade() {
   const queryClient = useQueryClient()
   return useMutation({
@@ -966,7 +1033,8 @@ export function useRegistrarDfd(processoId: string) {
       identificacao: string
       arquivo?: File | null
       dataPrevista?: string
-    }) => registrarDfd(processoId, input.secretariaId, input.identificacao, input.arquivo, input.dataPrevista),
+      problema?: string
+    }) => registrarDfd(processoId, input.secretariaId, input.identificacao, input.arquivo, input.dataPrevista, input.problema),
     onSuccess: () => recarregarDemanda(queryClient, processoId),
   })
 }
@@ -994,8 +1062,8 @@ function recarregarDemanda(queryClient: QueryClient, processoId: string) {
 export function useAtualizarItensDoDfd(processoId: string) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (input: { dfdId: string; itens: ItemDoDfd[]; dataPrevista: string | null }) =>
-      atualizarItensDoDfd(processoId, input.dfdId, input.itens, input.dataPrevista),
+    mutationFn: (input: { dfdId: string; itens: ItemDoDfd[]; dataPrevista: string | null; problema?: string }) =>
+      atualizarItensDoDfd(processoId, input.dfdId, input.itens, input.dataPrevista, input.problema),
     onSuccess: () => recarregarDemanda(queryClient, processoId),
   })
 }
@@ -1156,6 +1224,43 @@ export function useRemoverColeta(processoId: string) {
   })
 }
 
+export function useAlternativasDeMercado(processoId: string) {
+  return useQuery({
+    queryKey: chaves.alternativasMercado(processoId),
+    queryFn: () => listarAlternativasDeMercado(processoId),
+    enabled: processoId !== "",
+  })
+}
+
+function recarregarAlternativas(queryClient: QueryClient, processoId: string) {
+  void queryClient.invalidateQueries({ queryKey: chaves.alternativasMercado(processoId) })
+}
+
+export function useRegistrarAlternativaDeMercado(processoId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (dados: DadosDaAlternativaDeMercado) => registrarAlternativaDeMercado(processoId, dados),
+    onSuccess: () => recarregarAlternativas(queryClient, processoId),
+  })
+}
+
+export function useAtualizarAlternativaDeMercado(processoId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { id: string; dados: DadosDaAlternativaDeMercado }) =>
+      atualizarAlternativaDeMercado(processoId, input.id, input.dados),
+    onSuccess: () => recarregarAlternativas(queryClient, processoId),
+  })
+}
+
+export function useRemoverAlternativaDeMercado(processoId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => removerAlternativaDeMercado(processoId, id),
+    onSuccess: () => recarregarAlternativas(queryClient, processoId),
+  })
+}
+
 /**
  * Se esta instalação tem assistência de IA (ADR-029).
  *
@@ -1168,6 +1273,38 @@ export function useIaDisponivel() {
     queryKey: chaves.iaDisponivel,
     queryFn: iaDisponivel,
     staleTime: Infinity,
+  })
+}
+
+/**
+ * O que a tela pode prometer da IA agora (ADR-029 e ADR-064 do back-end).
+ *
+ * Cada estado tem um motivo diferente e uma saída diferente: sem modelo, é da
+ * instalação; sem teto, é pedir ao administrador que defina; teto esgotado, é
+ * esperar o mês. Enquanto a resposta não chega, é `verificando` — habilitar por
+ * otimismo devolveria o clique que dá erro.
+ */
+export type EstadoDaIa = "verificando" | "sem-modelo" | "sem-teto" | "teto-esgotado" | "disponivel"
+
+export function useEstadoDaIa(): EstadoDaIa {
+  const ia = useIaDisponivel()
+  const sessao = useSessao()
+  const teto = useTetoDeIa(ia.data === true ? (sessao.data?.usuario.entidadeId ?? "") : "")
+  if (ia.isPending) return "verificando"
+  if (ia.data !== true) return "sem-modelo"
+  if (teto.data !== undefined && !teto.data.disponivel) return teto.data.definido ? "teto-esgotado" : "sem-teto"
+  return "disponivel"
+}
+
+/**
+ * A sugestão de redação da situação-problema do DFD (ADR-072 do back-end).
+ *
+ * Não invalida nada: a sugestão não grava no DFD, e o texto só muda quando a
+ * pessoa o salva pelo caminho de sempre.
+ */
+export function useMelhorarSituacaoProblema(processoId: string) {
+  return useMutation({
+    mutationFn: (texto: string) => melhorarSituacaoProblema(processoId, texto),
   })
 }
 

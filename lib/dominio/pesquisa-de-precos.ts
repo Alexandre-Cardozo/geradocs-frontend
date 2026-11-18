@@ -43,6 +43,7 @@ export const ROTULO_DO_METODO: Record<MetodoDeApuracao, string> = {
 }
 
 export interface ItemPesquisado {
+  itemId: string
   /** A descrição como ela foi pesquisada. */
   item: string
   coletas: ColetaDePreco[]
@@ -89,18 +90,19 @@ function mediana(precos: number[]): number {
 export function porItem(coletas: ColetaDePreco[]): ItemPesquisado[] {
   // O grupo guarda a descrição da primeira coleta: o agrupamento é pela chave
   // normalizada, mas o que vai ao documento é como a pessoa escreveu.
-  const grupos = new Map<string, { item: string; coletas: ColetaDePreco[] }>()
+  const grupos = new Map<string, { itemId: string; item: string; coletas: ColetaDePreco[] }>()
   for (const coleta of coletas) {
-    const chave = chaveDoItem(coleta.item)
+    const chave = coleta.itemId
     const grupo = grupos.get(chave)
     if (grupo) grupo.coletas.push(coleta)
-    else grupos.set(chave, { item: coleta.item, coletas: [coleta] })
+    else grupos.set(chave, { itemId: coleta.itemId, item: coleta.item, coletas: [coleta] })
   }
   return [...grupos.values()]
-    .map(({ item, coletas: doItem }) => {
+    .map(({ itemId, item, coletas: doItem }) => {
       const precos = doItem.map((c) => parseValorBR(c.valorUnitario))
       const central = mediana(precos)
       return {
+        itemId,
         item,
         coletas: doItem,
         precos,

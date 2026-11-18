@@ -4,18 +4,22 @@ import Link from "next/link"
 import { notFound, useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
 
-import { Button, InfoBanner, ProgressBar, SectionBlock, Textarea } from "@/components/ui"
+import { Button, InfoBanner, ProgressBar, SectionBlock, Textarea, ValidationMsg } from "@/components/ui"
 import { IconArrowRight, IconCheckCircle, IconCheck, IconHelp, IconSave } from "@/components/ui/icons"
 import { PainelATA, PainelDaSecao } from "@/components/documentos/paineis"
 import { ErrorState, InlineSpinner, LoadingState } from "@/components/shared/estados"
 import { useToast } from "@/components/shared/providers"
+import type { RascunhoEtpComFontes } from "@/lib/api/authoring-client"
 import {
   useAtualizarSecao,
   useDocumentos,
   useGerarDocumento,
-  useGerarSecao,
+  useGerarRascunhoDaSecao,
   useProcesso,
   useDocumentoEmElaboracao,
+  useLimparPropostaPendente,
+  usePropostaPendente,
+  useRejeitarPropostaDeIa,
   useSecoes,
 } from "@/lib/api/hooks"
 import { CATALOGO, porSlug } from "@/lib/documentos"
@@ -41,6 +45,7 @@ import {
 } from "@/components/documentos/paineis-da-cotacao"
 import { PainelDotacao } from "@/components/documentos/painel-dotacao"
 import { PainelPca } from "@/components/documentos/painel-pca"
+import { PainelAlternativasMercado } from "@/components/documentos/painel-alternativas-mercado"
 import {
   foiDispensada,
   foiRetificado,
@@ -105,7 +110,10 @@ export default function EditorDocumento() {
   const secoes = useSecoes(processoId, tipo)
   const documentos = useDocumentos()
   const salvar = useAtualizarSecao(processoId, tipo)
-  const gerar = useGerarSecao(processoId, tipo)
+  const gerar = useGerarRascunhoDaSecao(processoId, tipo)
+  const gerandoRascunho = gerar.isPending
+  const rejeitarProposta = useRejeitarPropostaDeIa(processoId, tipo)
+  const limparPropostaPendente = useLimparPropostaPendente(processoId, tipo)
   const gerarDocumento = useGerarDocumento()
 
   const documentoGerado = (documentos.data ?? []).find(
@@ -129,11 +137,23 @@ export default function EditorDocumento() {
   })
   const orientacaoDaSecao =
     orientacao.secao === activeSection ? orientacao : { secao: activeSection, texto: "", avisos: [] }
+  const [fontesDoRascunho, setFontesDoRascunho] = useState<RascunhoEtpComFontes | null>(null)
+  const [rascunhoDaIaPendente, setRascunhoDaIaPendente] = useState(false)
+  /** A proposta de IA registrada no servidor (ADR-066): salvar a aceita, descartar a rejeita. */
+  const [propostaId, setPropostaId] = useState<string | null>(null)
+  const rascunhoAtualRef = useRef(rascunho)
+  useEffect(() => { rascunhoAtualRef.current = rascunho }, [rascunho])
   const [saved, setSaved] = useState(false)
   const secaoAtivaRef = useRef(activeSection)
   /** Para o caminho manual levar o cursor ao campo, em vez de só apontá-lo. */
   const campoDoTexto = useRef<HTMLTextAreaElement>(null)
   const irPara = (id: string) => {
+    if (id !== secaoAtivaRef.current) {
+      setFontesDoRascunho(null)
+      setRascunhoDaIaPendente(false)
+      // O servidor guarda a proposta como pendente: ao voltar, ela é restaurada.
+      setPropostaId(null)
+    }
     secaoAtivaRef.current = id
     setActiveSection(id)
   }
@@ -229,7 +249,31 @@ export default function EditorDocumento() {
    * pessoa tinha acabado de escrever. Guarda como rascunho — nunca "Completo",
    * que é o que só "Salvar e Avançar" declara.
    */
+  /*
+    Reabrir a seção encontra o rascunho que já foi pedido e não foi decidido
+    (ADR-066): ele já custou uma chamada, e perdê-lo ao recarregar a página
+    obrigava a pagar outra. Só se o campo continua como foi gravado — quem já
+    digitou não tem o texto trocado por baixo.
+  */
+  const propostaPendente = usePropostaPendente(processoId, tipo, naEtapaFinal ? null : activeSection)
+  const propostaRestauravel = propostaPendente.data
+  useEffect(() => {
+    if (!propostaRestauravel?.proposalId || secaoSincronizada !== activeSection) return
+    if (rascunhoDaIaPendente || propostaRestauravel.proposalId === propostaId) return
+    if (semLinhasEmBranco(rascunhoAtualRef.current) !== semLinhasEmBranco(active?.conteudo ?? "")) return
+    setRascunho(semLinhasEmBranco(propostaRestauravel.content))
+    setFontesDoRascunho(propostaRestauravel)
+    setRascunhoDaIaPendente(true)
+    setPropostaId(propostaRestauravel.proposalId)
+    showToast("Recuperamos o rascunho da IA que ficou sem salvar. O texto salvo só muda quando você salvar.")
+  }, [propostaRestauravel, secaoSincronizada, activeSection, rascunhoDaIaPendente, propostaId, active?.conteudo, showToast])
+
   const trocarSecao = (id: string) => {
+    if (active && naoGravado && rascunhoDaIaPendente) {
+      if (!window.confirm("O rascunho da IA ainda não foi salvo. Ao sair, ele fica guardado e volta quando você reabrir a seção, mas as alterações que você fez nele se perdem. Deseja sair?")) return
+      irPara(id)
+      return
+    }
     if (active && naoGravado) salvar.mutate(gravacaoDa(active))
     irPara(id)
   }
@@ -240,10 +284,16 @@ export default function EditorDocumento() {
       {
         ...gravacaoDa(active),
         ...(avancar ? { status: "Completo" as const } : {}),
+        // Salvar é aceitar a proposta de IA de onde o texto veio (ADR-066).
+        ...(rascunhoDaIaPendente && propostaId ? { propostaId } : {}),
       },
       {
         onSuccess: () => {
           setSaved(true)
+          setFontesDoRascunho(null)
+          setRascunhoDaIaPendente(false)
+          setPropostaId(null)
+          limparPropostaPendente(active.id)
           setTimeout(() => setSaved(false), 2500)
           // `irPara`, e não `trocarSecao`: o que havia na tela acabou de ser
           // gravado, e regravá-lo aqui devolveria a seção ao estado de rascunho.
@@ -253,28 +303,58 @@ export default function EditorDocumento() {
     )
   }
 
+  /** O servidor descartou o rascunho: volta o texto salvo e a proposta vai como rejeitada (ADR-066). */
+  const descartarRascunhoDaIa = () => {
+    if (!active) return
+    if (naoGravado && !window.confirm("Descartar o rascunho da IA e voltar ao texto salvo?")) return
+    if (propostaId) rejeitarProposta.mutate({ secaoId: active.id, propostaId })
+    limparPropostaPendente(active.id)
+    setPropostaId(null)
+    setFontesDoRascunho(null)
+    setRascunhoDaIaPendente(false)
+    setRascunho(semLinhasEmBranco(active.conteudo ?? ""))
+    showToast("Rascunho da IA descartado.")
+  }
+
   const handleGerarIA = () => {
     if (!active) return
+    if (gerandoRascunho) return
     const secaoId = active.id
-    // O que está na tela vai junto: rascunho montado pela plataforma ou texto
-    // escrito à mão. É dele que o modelo parte.
-    const texto = orientacaoDaSecao.texto
+    const confirmarSubstituicao = () =>
+      !rascunho.trim() || window.confirm("Substituir o texto atual por um novo rascunho da IA? O texto ainda não será salvo.")
+    const textoAntesDaGeracao = rascunho
+    const aplicarRascunho = (conteudo: string, fontes: RascunhoEtpComFontes | null, proposta?: string) => {
+      if (secaoAtivaRef.current !== secaoId) return
+      if (rascunhoAtualRef.current !== textoAntesDaGeracao) {
+        showToast("O texto foi alterado durante a geração. Seu rascunho foi preservado.")
+        return
+      }
+      setRascunho(semLinhasEmBranco(conteudo))
+      setFontesDoRascunho(fontes)
+      setRascunhoDaIaPendente(true)
+      setPropostaId(proposta ?? null)
+      limparPropostaPendente(secaoId)
+      const aviso = avisoDasTabelas(textoAntesDaGeracao, conteudo)
+      if (aviso) showToast(aviso)
+      showToast("Rascunho gerado. Revise os fatos e as lacunas antes de salvar.")
+    }
+
+    if (!confirmarSubstituicao()) return
+
+    if (gerar.isPending) return
+    // Um só caminho de redação (ADR-068): com ou sem orientação, o servidor monta
+    // o mesmo contexto — preços, PCA, mercado, lacunas e evidências.
+    const texto = orientacaoDaSecao.texto.trim() ? orientacaoDaSecao.texto : undefined
     gerar.mutate(
       { secaoId, rascunho, orientacao: texto },
       {
-        onSuccess: (secaoGerada) => {
-          if (secaoAtivaRef.current === secaoId) setRascunho(semLinhasEmBranco(secaoGerada.conteudo))
-          // As instruções pedem que a IA mantenha as tabelas (ADR-062 do
-          // back-end); a tela confere, e avisa quando não manteve (§101).
-          const aviso = avisoDasTabelas(rascunho, secaoGerada.conteudo)
-          if (aviso) showToast(aviso)
-          setOrientacao({ secao: secaoId, texto, avisos: secaoGerada.avisosDaOrientacao })
+        onSuccess: (resultado) => {
+          aplicarRascunho(resultado.content, resultado, resultado.proposalId)
+          if (texto) setOrientacao({ secao: secaoId, texto, avisos: resultado.guidanceWarnings })
         },
-        // Com orientação, a recusa da curadoria aparece no próprio campo, com o
-        // motivo; sem ela, a falha é da geração, e vai como aviso.
         onError: (erro) => {
-          const mensagem = erro instanceof Error ? erro.message : "Não foi possível gerar com IA."
-          if (texto.trim() !== "") setOrientacao({ secao: secaoId, texto, avisos: [], erro: mensagem })
+          const mensagem = erro.message || "Não foi possível gerar o rascunho. Tente novamente."
+          if (texto) setOrientacao({ secao: secaoId, texto, avisos: [], erro: mensagem })
           else showToast(mensagem)
         },
       },
@@ -669,14 +749,16 @@ export default function EditorDocumento() {
               O painel recebe a geração: ele é quem sabe montar o rascunho a
               partir do processo, e os dois botões ficam lado a lado lá dentro.
             */
-            <PainelDaSecao
-              secao={active}
-              processoId={processoId}
-              rascunho={rascunho}
-              setRascunho={setRascunho}
-              gerando={gerar.isPending}
-              onGerarComIa={handleGerarIA}
-            />
+            <>
+              <PainelDaSecao
+                secao={active}
+                processoId={processoId}
+                rascunho={rascunho}
+                setRascunho={setRascunho}
+                gerando={gerandoRascunho}
+                onGerarComIa={handleGerarIA}
+              />
+            </>
           ) : !naEtapaFinal && active ? (
             <SectionBlock title={active.titulo} hint={active.hint ?? ""}>
               {(active.textoDaMinuta || active.notasDaMinuta) && (
@@ -693,7 +775,7 @@ export default function EditorDocumento() {
                   <JustificativaDoDesvio processoId={processoId} tipo={tipo} secao={active} />
                 </div>
               )}
-              {active.status === "Completo" && igualAoGravado && active.conteudo !== "" ? (
+              {active.status === "Completo" && !rascunhoDaIaPendente && igualAoGravado && active.conteudo !== "" ? (
                 // Concluída já aparece no ✓ da lista de seções; um cartão aqui
                 // repetia o aviso em cima do texto (§96).
                 <div className="flex flex-col gap-3">
@@ -717,15 +799,57 @@ export default function EditorDocumento() {
                     tirava justamente o caminho de "redija a partir do que eu
                     rascunhei".
                   */}
-                  <CaminhosDaSecao gerando={gerar.isPending} onGerarComIa={handleGerarIA} />
-                  {gerar.isPending && <InlineSpinner label="Gerando conteúdo da seção... aguarde." />}
+                  <CaminhosDaSecao
+                    gerando={gerandoRascunho}
+                    onGerarComIa={handleGerarIA}
+                  />
+                  {rascunho.trim() !== "" && (
+                    <ValidationMsg
+                      type="warn"
+                      msg={rascunhoDaIaPendente
+                        ? "Rascunho ainda não salvo. Revise os fatos e as lacunas antes de salvar."
+                        : "Revise os fatos e as lacunas antes de finalizar a seção."}
+                    />
+                  )}
+                  {gerandoRascunho && (
+                    <InlineSpinner label="Gerando conteúdo da seção... aguarde." />
+                  )}
                 </div>
               )}
             </SectionBlock>
           ) : null}
 
-          {/* Painel de Adesão de ATA — acompanha o Levantamento de Mercado. */}
+          {!naEtapaFinal && active && fontesDoRascunho && (
+            <div className="mt-4 rounded-card border border-border bg-surface p-4 text-sm text-text-2">
+              <div className="flex items-start justify-between gap-3">
+                <h3 className="m-0 font-display text-base font-bold text-text-1">Revise o Rascunho da IA</h3>
+                <Button size="sm" variant="ghost" onClick={descartarRascunhoDaIa}>
+                  Descartar rascunho
+                </Button>
+              </div>
+              <p className="mb-3 mt-1 text-text-muted">O texto ainda não foi salvo. Estas são as fontes disponíveis no contexto, não uma comprovação automática de cada afirmação do rascunho.</p>
+              {fontesDoRascunho.warnings.length > 0 && (
+                <div className="mb-3">
+                  <h4 className="mb-1 font-semibold text-text-1">Atenção às Fontes Não Integradas</h4>
+                  <ul className="m-0 list-disc pl-5">{fontesDoRascunho.warnings.map((aviso) => <li key={aviso}>{aviso}</li>)}</ul>
+                </div>
+              )}
+              {fontesDoRascunho.missingFacts.length > 0 && (
+                <div className="mb-3">
+                  <h4 className="mb-1 font-semibold text-text-1">Lacunas Identificadas no DFD</h4>
+                  <ul className="m-0 list-disc pl-5">{fontesDoRascunho.missingFacts.map((fato) => <li key={fato}>{fato}</li>)}</ul>
+                </div>
+              )}
+              <h4 className="mb-1 font-semibold text-text-1">Dados de Origem Disponíveis</h4>
+              <ul className="m-0 list-disc pl-5">
+                {fontesDoRascunho.evidence.map((item, indice) => <li key={`${item.source}-${indice}`}><span className="font-semibold">{item.source}:</span> {item.fact}</li>)}
+              </ul>
+            </div>
+          )}
+
+          {/* A adesão à ATA e as alternativas de mercado são ferramentas distintas da seção V. */}
           {active?.painel === "ata" && <PainelATA />}
+          {active?.painel === "ata" && <PainelAlternativasMercado processoId={processoId} />}
 
           {/*
             As seções da Cotação. A pesquisa de preços é uma só — a série
@@ -738,7 +862,7 @@ export default function EditorDocumento() {
               processoId={processoId}
               rascunho={rascunho}
               setRascunho={setRascunho}
-              gerando={gerar.isPending}
+              gerando={gerandoRascunho}
               onGerarComIa={handleGerarIA}
             />
           )}
@@ -748,7 +872,7 @@ export default function EditorDocumento() {
               processoId={processoId}
               rascunho={rascunho}
               setRascunho={setRascunho}
-              gerando={gerar.isPending}
+              gerando={gerandoRascunho}
               onGerarComIa={handleGerarIA}
             />
           )}
@@ -758,7 +882,7 @@ export default function EditorDocumento() {
               processoId={processoId}
               rascunho={rascunho}
               setRascunho={setRascunho}
-              gerando={gerar.isPending}
+              gerando={gerandoRascunho}
               onGerarComIa={handleGerarIA}
             />
           )}
@@ -768,7 +892,7 @@ export default function EditorDocumento() {
               processoId={processoId}
               rascunho={rascunho}
               setRascunho={setRascunho}
-              gerando={gerar.isPending}
+              gerando={gerandoRascunho}
               onGerarComIa={handleGerarIA}
             />
           )}
@@ -784,7 +908,7 @@ export default function EditorDocumento() {
               processoId={processoId}
               rascunho={rascunho}
               setRascunho={setRascunho}
-              gerando={gerar.isPending}
+              gerando={gerandoRascunho}
               onGerarComIa={handleGerarIA}
               // A alínea 'j' do TR pede a dotação **e** a previsão no PCA; o
               // Art. 150 e o Art. 92, VIII pedem só o crédito.
@@ -800,7 +924,7 @@ export default function EditorDocumento() {
               processoId={processoId}
               rascunho={rascunho}
               setRascunho={setRascunho}
-              gerando={gerar.isPending}
+              gerando={gerandoRascunho}
               onGerarComIa={handleGerarIA}
             />
           )}
