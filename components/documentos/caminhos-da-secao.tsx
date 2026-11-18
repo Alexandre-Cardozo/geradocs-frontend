@@ -1,10 +1,13 @@
 "use client"
 
+import { useContext } from "react"
+
 import { Button } from "@/components/ui"
 import { IconFileText, IconSparkles } from "@/components/ui/icons"
 import { useEstadoDaIa } from "@/lib/api/hooks"
+import { FONTES_PADRAO } from "@/lib/documentos/fontes-da-ia"
 
-import { CampoDeOrientacao } from "@/components/documentos/orientacao-da-ia"
+import { CampoDeOrientacao, OrientacaoDaIaContexto } from "@/components/documentos/orientacao-da-ia"
 
 /**
  * Os atalhos para preencher a seção: o rascunho da plataforma e a IA.
@@ -39,6 +42,9 @@ export function CaminhosDaSecao({
   // também não responde — e o motivo vem escrito antes do clique, não num
   // toast que some depois dele.
   const estado = useEstadoDaIa()
+  // O que a IA lê *nesta* seção: o editor sabe qual está aberta. Fora dele, o
+  // mínimo que vale em toda seção.
+  const fontes = useContext(OrientacaoDaIaContexto)?.fontes ?? FONTES_PADRAO
   const semModelo = estado === "sem-modelo"
   const semTeto = estado === "sem-teto" || estado === "teto-esgotado"
 
@@ -53,7 +59,7 @@ export function CaminhosDaSecao({
           ? "O teto de IA do mês acabou. Fale com o administrador da plataforma."
           : estado === "sem-teto"
             ? "A IA não está liberada para esta entidade. Fale com o administrador da plataforma."
-            : "Rascunho com base no DFD, no PCA e no processo. Revise antes de salvar."
+            : `Rascunho com base ${fontes}. Revise antes de salvar.`
 
   return (
     <div className="flex flex-col gap-2 rounded-xl border border-border bg-ice px-4 py-3.5">
