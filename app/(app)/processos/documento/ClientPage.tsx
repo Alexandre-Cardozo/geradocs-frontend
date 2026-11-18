@@ -23,6 +23,7 @@ import {
   useSecoes,
 } from "@/lib/api/hooks"
 import { CATALOGO, porSlug } from "@/lib/documentos"
+import { fontesDaIa } from "@/lib/documentos/fontes-da-ia"
 import { rotaDoDocumentoGerado } from "@/lib/documentos/rotas"
 import { CaminhosDaSecao } from "@/components/documentos/caminhos-da-secao"
 import { OrientacaoDaIaContexto } from "@/components/documentos/orientacao-da-ia"
@@ -406,6 +407,7 @@ export default function EditorDocumento() {
     texto: orientacaoDaSecao.texto,
     onTexto: (texto: string) => setOrientacao({ secao: activeSection, texto, avisos: [] }),
     avisos: orientacaoDaSecao.avisos,
+    fontes: fontesDaIa(tipo, activeSection),
     ...(orientacaoDaSecao.erro ? { erro: orientacaoDaSecao.erro } : {}),
   }
 

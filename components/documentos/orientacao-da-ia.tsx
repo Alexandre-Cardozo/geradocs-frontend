@@ -19,6 +19,8 @@ export interface OrientacaoDaIa {
   avisos: string[]
   /** Por que a curadoria recusou a orientação. */
   erro?: string
+  /** O que a IA lê nesta seção, dito no cartão ("no DFD e no processo"). */
+  fontes?: string
 }
 
 export const OrientacaoDaIaContexto = createContext<OrientacaoDaIa | null>(null)

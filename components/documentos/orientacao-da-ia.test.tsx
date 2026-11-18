@@ -76,7 +76,30 @@ describe("orientação à IA", () => {
   it("fora do editor, sem quem forneça a orientação, não há campo", async () => {
     comIa(true)
     renderizar(<CaminhosDaSecao gerando={false} onGerarComIa={vi.fn()} />)
-    expect(await screen.findByText(/Rascunho com base no DFD/)).toBeInTheDocument()
+    expect(await screen.findByText("Rascunho com base no DFD e no processo. Revise antes de salvar.")).toBeInTheDocument()
     expect(screen.queryByText("Orientar a IA (opcional)")).not.toBeInTheDocument()
+  })
+
+  it("diz as fontes da seção aberta: o PCA só aparece onde o servidor o consulta", async () => {
+    comIa(true)
+    renderizar(
+      <OrientacaoDaIaContexto.Provider
+        value={{ texto: "", onTexto: vi.fn(), avisos: [], fontes: "no DFD, no PCA e no processo" }}
+      >
+        <CaminhosDaSecao gerando={false} onGerarComIa={vi.fn()} />
+      </OrientacaoDaIaContexto.Provider>,
+    )
+
+    expect(
+      await screen.findByText("Rascunho com base no DFD, no PCA e no processo. Revise antes de salvar."),
+    ).toBeInTheDocument()
+  })
+
+  it("o editor sem fontes informadas cai no mínimo que vale em toda seção, sem PCA", async () => {
+    comIa(true)
+    renderizar(<ComOrientacao />)
+
+    expect(await screen.findByText("Rascunho com base no DFD e no processo. Revise antes de salvar.")).toBeInTheDocument()
+    expect(screen.queryByText(/PCA/)).not.toBeInTheDocument()
   })
 })
