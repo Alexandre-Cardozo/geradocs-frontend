@@ -24,7 +24,7 @@ export const metadata: Metadata = {
 
 export default function PaginaLanding() {
   return (
-    <>
+    <div data-landing>
       <a
         href="#conteudo"
         className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-surface focus:px-4 focus:py-3 focus:font-semibold focus:text-text-1"
@@ -42,6 +42,6 @@ export default function PaginaLanding() {
         <Demonstracao />
       </main>
       <Rodape />
-    </>
+    </div>
   )
 }

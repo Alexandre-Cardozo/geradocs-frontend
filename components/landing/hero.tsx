@@ -24,7 +24,7 @@ export function Hero() {
       <div className="relative z-10 mx-auto grid max-w-landing items-center gap-10 px-4 pt-16 pb-20 sm:px-6 lg:grid-cols-2 lg:gap-14 lg:pt-24 lg:pb-28">
         <div className="flex flex-col items-start gap-6">
           <Entrada indice={0}>
-            <p className="m-0 font-marca text-2xs font-semibold tracking-slogan text-on-dark-65 uppercase">
+            <p className="m-0 font-marca text-sm font-semibold tracking-slogan text-on-dark-65 uppercase">
               {hero.eyebrow}
             </p>
             <FaixaDaMarca className="mt-3 w-64" />
@@ -37,7 +37,7 @@ export function Hero() {
           </Entrada>
           <Entrada indice={3}>
             <div className="flex flex-wrap gap-3">
-              <BotaoLink href={HREF_DEMONSTRACAO} tamanho="lg">
+              <BotaoLink href={HREF_DEMONSTRACAO} tamanho="lg" seta>
                 {hero.ctaPrimario}
               </BotaoLink>
               <BotaoLink href={HREF_ENTRAR} tamanho="lg" variante="secundario-escuro">
@@ -47,7 +47,7 @@ export function Hero() {
           </Entrada>
         </div>
 
-        <Entrada indice={4}>
+        <Entrada indice={2}>
           <MolduraDeTela src={editorEtp} alt={hero.altCaptura} prioridade />
         </Entrada>
       </div>

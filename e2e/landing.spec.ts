@@ -23,7 +23,7 @@ test("abre sem sessão, sem redirecionar para o login", async ({ page }) => {
 
 test("o pedido de demonstração é um mailto com assunto", async ({ page }) => {
   await page.goto(rota(ROTA));
-  const cta = page.getByRole("link", { name: "Solicitar Demonstração →" }).first();
+  const cta = page.getByRole("link", { name: "Solicitar Demonstração" }).first();
   const href = (await cta.getAttribute("href")) ?? "";
   expect(href.startsWith("mailto:contato@govpro.com.br?subject=")).toBe(true);
   await expect(page.getByRole("link", { name: "Acessar o GeraDocs" }).first()).toHaveAttribute("href", /\/login\/?$/);
@@ -62,7 +62,7 @@ test("não rola na horizontal em 320px", async ({ page }) => {
 test("o menu móvel abre e leva às âncoras", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 800 });
   await page.goto(rota(ROTA));
-  await page.getByRole("button", { name: "Abrir menu" }).click();
+  await page.getByRole("button", { name: "Menu" }).click();
   const menu = page.locator("#menu-landing");
   await expect(menu).toBeVisible();
   await menu.getByRole("link", { name: "IA", exact: true }).click();
@@ -75,7 +75,7 @@ test("o menu móvel não passa da janela: em janela baixa (400% de zoom) o últi
 }) => {
   await page.setViewportSize({ width: 320, height: 256 });
   await page.goto(rota(ROTA));
-  await page.getByRole("button", { name: "Abrir menu" }).click();
+  await page.getByRole("button", { name: "Menu" }).click();
   const menu = page.locator("#menu-landing");
   await expect(menu).toBeVisible();
   const caixa = await menu.boundingBox();

@@ -15,7 +15,7 @@ export function QuemSomos() {
           <h2 className="m-0 font-display text-landing-h2 font-extrabold text-balance text-text-1">{quemSomos.titulo}</h2>
           <div
             role="note"
-            className="mt-6 max-w-2xl rounded-card border-2 border-dashed border-tint-royal-border bg-tint-royal-bg p-6 font-mono text-md text-text-1"
+            className="mt-6 max-w-xl rounded-card border-2 border-dashed border-tint-royal-border bg-tint-royal-bg p-6 font-mono text-md text-text-1"
           >
             {quemSomos.lacuna}
           </div>

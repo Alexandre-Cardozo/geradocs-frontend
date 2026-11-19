@@ -33,4 +33,15 @@ describe("BotaoLink", () => {
     render(<BotaoLink href="/a">A</BotaoLink>)
     expect(screen.getByRole("link")).toHaveClass("bg-royal")
   })
+
+  it("a seta é decorativa: não entra no nome do link", () => {
+    render(
+      <BotaoLink href="/a" seta>
+        Pedir
+      </BotaoLink>,
+    )
+    const link = screen.getByRole("link", { name: "Pedir" })
+    expect(link).toHaveTextContent("Pedir→")
+    expect(link.querySelector("[aria-hidden]")).toHaveTextContent("→")
+  })
 })

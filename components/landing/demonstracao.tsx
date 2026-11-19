@@ -14,7 +14,7 @@ export function Demonstracao() {
           </h2>
           <p className="m-0 mt-4 max-w-xl text-landing-lead text-pretty text-on-dark-65">{demonstracao.texto}</p>
           <div className="mt-8">
-            <BotaoLink href={HREF_DEMONSTRACAO} tamanho="lg">
+            <BotaoLink href={HREF_DEMONSTRACAO} tamanho="lg" seta>
               {demonstracao.cta}
             </BotaoLink>
           </div>

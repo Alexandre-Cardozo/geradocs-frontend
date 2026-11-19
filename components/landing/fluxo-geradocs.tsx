@@ -42,7 +42,7 @@ export function FluxoGeradocs() {
                   {String(indice + 1).padStart(2, "0")}
                 </span>
                 <h3 className="m-0 font-display text-xl font-bold text-text-1">{documento.titulo}</h3>
-                <p className="m-0 font-mono text-sm text-text-3">{documento.fundamento}</p>
+                <p className="m-0 font-mono text-md text-text-3">{documento.fundamento}</p>
               </Revelar>
             </li>
           ))}

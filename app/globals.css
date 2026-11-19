@@ -453,6 +453,11 @@
     background: var(--color-text-muted);
   }
 
+  /* Landing: o cabeçalho fixo (64px) não cobre o foco de quem navega por Tab */
+  html:has([data-landing]) {
+    scroll-padding-top: 5rem;
+  }
+
   /* Acessibilidade: respeita a preferência por movimento reduzido */
   @media (prefers-reduced-motion: reduce) {
     *,

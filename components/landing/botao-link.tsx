@@ -22,12 +22,15 @@ export function BotaoLink({
   variante = "primario",
   tamanho = "md",
   className = "",
+  seta = false,
   children,
 }: {
   href: string
   variante?: keyof typeof VARIANTES
   tamanho?: keyof typeof TAMANHOS
   className?: string
+  /** Seta decorativa: fica fora do nome acessível do link. */
+  seta?: boolean
   children: ReactNode
 }) {
   return (
@@ -36,6 +39,7 @@ export function BotaoLink({
       className={`inline-flex items-center justify-center gap-2 rounded-md font-body text-landing-body font-semibold whitespace-nowrap no-underline transition-[background-color,transform] duration-150 ease-out active:scale-96 ${TAMANHOS[tamanho]} ${VARIANTES[variante]} ${className}`}
     >
       {children}
+      {seta && <span aria-hidden>→</span>}
     </Link>
   )
 }

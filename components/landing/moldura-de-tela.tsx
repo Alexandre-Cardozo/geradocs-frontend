@@ -21,7 +21,7 @@ export function MolduraDeTela({
         <span className="size-2 rounded-full bg-border" />
         <span className="size-2 rounded-full bg-border" />
       </div>
-      <Image src={src} alt={alt} priority={prioridade} className="block h-auto w-full" />
+      <Image src={src} alt={alt} priority={prioridade} sizes="(min-width: 1024px) 544px, 100vw" className="block h-auto w-full" />
     </figure>
   )
 }

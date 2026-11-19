@@ -21,7 +21,7 @@ describe("Hero", () => {
 
   it("tem um CTA primário de demonstração e um secundário para entrar", () => {
     render(<Hero />)
-    expect(screen.getByRole("link", { name: "Solicitar Demonstração →" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Solicitar Demonstração" })).toHaveAttribute(
       "href",
       expect.stringMatching(/^mailto:contato@govpro\.com\.br\?subject=/),
     )

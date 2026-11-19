@@ -19,13 +19,13 @@ export function Rodape() {
           {rodape.endosso}
           <Image src={govproLogo} alt="GovPro" width={86} height={20} className="h-5 w-auto" />
         </div>
-        <div className="text-sm text-on-dark-55">
+        <div className="text-sm text-on-dark-65">
           {rodape.contato}{" "}
           <a href={`mailto:${EMAIL_CONTATO}`} className="font-medium text-on-dark-65 no-underline hover:text-electric">
             {EMAIL_CONTATO}
           </a>
         </div>
-        <div className="text-sm text-on-dark-55">{rodape.copyright}</div>
+        <div className="text-sm text-on-dark-65">{rodape.copyright}</div>
       </div>
     </footer>
   )

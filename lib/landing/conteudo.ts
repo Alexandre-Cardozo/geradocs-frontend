@@ -38,7 +38,7 @@ export const CONTEUDO = {
     titulo: "Documentos da Contratação Pública, Conforme a Lei 14.133/21",
     apoio:
       "O GeraDocs, solução da GovPro, orienta o servidor em cada etapa da fase preparatória e gera os documentos com o timbre da entidade.",
-    ctaPrimario: "Solicitar Demonstração →",
+    ctaPrimario: "Solicitar Demonstração",
     ctaSecundario: "Acessar o GeraDocs",
     altCaptura: "Editor de seção do Estudo Técnico Preliminar no GeraDocs, com a trilha de seções ao lado.",
   },
@@ -152,7 +152,7 @@ export const CONTEUDO = {
     id: "demonstracao",
     titulo: "Veja o GeraDocs no Seu Órgão",
     texto: "Conte o que sua entidade contrata e veja o fluxo funcionando.",
-    cta: "Solicitar Demonstração →",
+    cta: "Solicitar Demonstração",
   },
 
   rodape: {

@@ -30,18 +30,18 @@ describe("Cabecalho", () => {
   it("o menu móvel abre e fecha pelo botão", async () => {
     const usuario = userEvent.setup()
     render(<Cabecalho />)
-    const botao = screen.getByRole("button", { name: "Abrir menu" })
+    const botao = screen.getByRole("button", { name: "Menu" })
     expect(botao).toHaveAttribute("aria-expanded", "false")
     expect(document.getElementById("menu-landing")).toBeNull()
 
     await usuario.click(botao)
-    expect(screen.getByRole("button", { name: "Fechar menu" })).toHaveAttribute("aria-expanded", "true")
+    expect(screen.getByRole("button", { name: "Menu" })).toHaveAttribute("aria-expanded", "true")
     const menu = document.getElementById("menu-landing") as HTMLElement
     expect(menu).not.toBeNull()
     expect(menu.querySelector('a[href="/login"]')).toHaveTextContent("Acessar o GeraDocs")
     expect(menu.querySelector('a[href^="mailto:contato@govpro.com.br"]')).toHaveTextContent("Solicitar Demonstração")
 
-    await usuario.click(screen.getByRole("button", { name: "Fechar menu" }))
+    await usuario.click(screen.getByRole("button", { name: "Menu" }))
     // Fechar toca a animação de saída; o menu só sai ao terminar.
     expect(document.getElementById("menu-landing")).not.toBeNull()
     terminarAnimacao(document.getElementById("menu-landing") as HTMLElement)
@@ -51,8 +51,9 @@ describe("Cabecalho", () => {
   it("Escape fecha o menu", async () => {
     const usuario = userEvent.setup()
     render(<Cabecalho />)
-    await usuario.click(screen.getByRole("button", { name: "Abrir menu" }))
+    await usuario.click(screen.getByRole("button", { name: "Menu" }))
     await usuario.keyboard("{Escape}")
+    expect(screen.getByRole("button", { name: "Menu" })).toHaveFocus()
     terminarAnimacao(document.getElementById("menu-landing") as HTMLElement)
     expect(document.getElementById("menu-landing")).toBeNull()
   })
@@ -60,7 +61,7 @@ describe("Cabecalho", () => {
   it("escolher uma âncora no menu fecha o menu", async () => {
     const usuario = userEvent.setup()
     render(<Cabecalho />)
-    await usuario.click(screen.getByRole("button", { name: "Abrir menu" }))
+    await usuario.click(screen.getByRole("button", { name: "Menu" }))
     const menu = document.getElementById("menu-landing") as HTMLElement
     await usuario.click(menu.querySelector('a[href="#ia"]') as HTMLElement)
     terminarAnimacao(document.getElementById("menu-landing") as HTMLElement)

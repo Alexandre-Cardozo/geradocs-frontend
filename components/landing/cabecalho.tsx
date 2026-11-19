@@ -1,7 +1,7 @@
 "use client"
 
 import Image from "next/image"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import geradocsLogo from "@/public/geradocs-logo-white.svg"
 import govproLogo from "@/public/govpro-logo-white.svg"
@@ -20,6 +20,7 @@ type Menu = "fechado" | "aberto" | "fechando"
 export function Cabecalho() {
   const [menu, setMenu] = useState<Menu>("fechado")
   const [rolou, setRolou] = useState(false)
+  const botaoDoMenu = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
     const aoRolar = () => setRolou(window.scrollY > 0)
@@ -30,7 +31,10 @@ export function Cabecalho() {
   useEffect(() => {
     if (menu !== "aberto") return
     const aoTeclar = (evento: KeyboardEvent) => {
-      if (evento.key === "Escape") setMenu("fechando")
+      if (evento.key !== "Escape") return
+      setMenu("fechando")
+      // O painel some e levaria o foco junto: devolve ao botão que o abriu.
+      botaoDoMenu.current?.focus()
     }
     window.addEventListener("keydown", aoTeclar)
     return () => window.removeEventListener("keydown", aoTeclar)
@@ -74,8 +78,9 @@ export function Cabecalho() {
         </div>
 
         <button
+          ref={botaoDoMenu}
           type="button"
-          aria-label={aberto ? "Fechar menu" : "Abrir menu"}
+          aria-label="Menu"
           aria-expanded={aberto}
           aria-controls={menu === "fechado" ? undefined : "menu-landing"}
           onClick={() => (aberto ? fechar() : setMenu("aberto"))}
