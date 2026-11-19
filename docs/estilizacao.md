@@ -69,3 +69,7 @@ const buttonVariants = {
 ```
 
 Componentes aceitam `className` opcional para ajustes pontuais do chamador (ex.: `flex-1` num botão dentro de uma linha de ações), concatenado ao final — o chamador estende, nunca reescreve o token.
+
+## A landing (§107–§109)
+
+A rota `/landing-page` tem escala tipográfica própria (`text-landing-h1`, `text-landing-h2`, `text-landing-lead`, `text-landing-body`), contêiner próprio (`max-w-landing`) e movimento próprio (`animate-landing-entrada`, `animate-landing-menu-*`, `ease-landing`) — todos no `@theme`, e nenhum usado fora dela. Regras: só `transform`, `opacity` e `filter`; nada em loop; texto sobre navy só em `text-on-dark`, `-65`, `-60` ou `-55`; o estado escondido da revelação nunca vem do servidor (sem JavaScript, o conteúdo aparece).
