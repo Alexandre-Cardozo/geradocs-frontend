@@ -18,9 +18,13 @@ export function FaixaDaMarca({ className = "" }: { className?: string }) {
 
 /**
  * As faixas diagonais dos cantos, as do papel timbrado, em versão para o fundo
- * escuro das telas de acesso. Decorativas: fixas, sem clique e fora da leitura.
+ * escuro. Decorativas: sem clique e fora da leitura.
+ *
+ * `fixed` (padrão) prende as faixas à janela, como nas telas de acesso. `absolute`
+ * as prende ao bloco `relative` mais próximo — é o que a landing usa no hero, para
+ * que elas não fiquem por cima das seções claras ao rolar.
  */
-export function FaixasDeCanto() {
+export function FaixasDeCanto({ posicao = "fixed" }: { posicao?: "fixed" | "absolute" }) {
   const canto = (
     <svg viewBox="0 0 100 100" className="size-full" focusable="false">
       <path className="fill-marca-faceta-clara/10" d="M28 0H52L100 48V72Z" />
@@ -30,12 +34,13 @@ export function FaixasDeCanto() {
       <path className="fill-marca-azul" d="M74 0H100V26Z" />
     </svg>
   )
+  const modo = posicao === "fixed" ? "fixed" : "absolute"
   return (
     <>
-      <div className="pointer-events-none fixed top-0 right-0 size-36 sm:size-52" aria-hidden>
+      <div className={`pointer-events-none ${modo} top-0 right-0 size-36 sm:size-52`} aria-hidden>
         {canto}
       </div>
-      <div className="pointer-events-none fixed bottom-0 left-0 size-36 rotate-180 sm:size-52" aria-hidden>
+      <div className={`pointer-events-none ${modo} bottom-0 left-0 size-36 rotate-180 sm:size-52`} aria-hidden>
         {canto}
       </div>
     </>
