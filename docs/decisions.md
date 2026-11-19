@@ -1496,3 +1496,9 @@ A tentativa de pôr os botões numa coluna ao lado do campo (botão alinhado ao 
 - **Memória de cálculo divergente e item fora do PCA:** a mesma linha, com a correção ("Incluir na Memória") à direita.
 - **Falso positivo corrigido no back-end (ADR-075).** A cláusula "(Se for o caso)" numerada ("3.2.1. (Se for o caso) ...") não era reconhecida como opcional, e 89 das 157 seções com texto de minuta podiam pedir justificativa por engano. Com a correção, a linha só aparece quando falta cláusula obrigatória.
 - **Ficaram como estavam:** os subtópicos removidos do contexto, que já eram uma linha com "Escolher" e "Restaurar", e o resumo "Minuta da AGU" da etapa final.
+
+## 116. O PCA pode ser importado para os exercícios de 2025 a 2050
+
+- **O que era.** A lista de exercícios da importação era o ano vigente e os três anteriores (em 2026: 2023 a 2026). O plano do ano seguinte, que o órgão prepara durante o exercício corrente, não tinha como entrar.
+- **Agora** a faixa é fixa, de 2025 a 2050, em ordem crescente (`anosDoPca`, em `lib/dominio/anos-do-pca.ts`). O exercício vigente continua escolhido ao abrir a tela.
+- **O servidor já aceitava** de 2021 a 2100 (`pca_plans_year_ck`, V019), então a mudança é só da tela. Os planos de anos anteriores a 2025 que já foram importados continuam na lista e podem ser baixados.
