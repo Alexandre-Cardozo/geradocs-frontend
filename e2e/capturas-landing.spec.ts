@@ -19,11 +19,21 @@ const ROTA_DO_ETP = `/processos/documento?id=${encodeURIComponent(processo.id)}&
 
 const sessaoDeExemplo = {
   ...sessaoServidor,
-  organization: { ...sessaoServidor.organization, name: "Prefeitura Municipal de Exemplo" },
+  organization: { ...sessaoServidor.organization, name: "Prefeitura de Exemplo" },
 }
 
 // O indicador de desenvolvimento do Next (a bolinha "N") não pode ir para a imagem pública.
 const SEM_INDICADOR_DO_NEXT = "nextjs-portal { display: none !important; }"
+
+/**
+ * Sem foto: o app mostra as iniciais. O dublê de `e2e/api.ts` registra a rota da foto
+ * antes de `users**`, e o Playwright dá precedência à rota registrada por último —
+ * então a foto responde `[]` em JSON com status 200, vira um blob inválido e aparece
+ * como imagem quebrada. Registrar de novo aqui, depois dele, devolve o 404 esperado.
+ */
+async function semFotoDePerfil(page: Page) {
+  await page.route(`${API}/users/*/avatar`, (r) => r.fulfill({ status: 404, body: "" }))
+}
 
 /** Espera o botão da IA sair da transição de habilitado/desabilitado antes de fotografar. */
 async function esperarOBotaoDaIa(page: Page) {
@@ -38,6 +48,7 @@ const NECESSIDADE =
 test("captura o editor do ETP", async ({ page }) => {
   await comSessao(page, sessaoDeExemplo)
   await comProcessoEDocumento(page)
+  await semFotoDePerfil(page)
   await page.route(`${API}/ai/status`, (r) => r.fulfill({ json: { available: true } }))
   await page.goto(rota(ROTA_DO_ETP))
   await page.addStyleTag({ content: SEM_INDICADOR_DO_NEXT })
@@ -50,8 +61,11 @@ test("captura o editor do ETP", async ({ page }) => {
 })
 
 test("captura a proposta da IA", async ({ page }) => {
+  // Mais alto que o editor: o painel "Revise o Rascunho da IA" abre abaixo do campo.
+  await page.setViewportSize({ width: 1440, height: 1180 })
   await comSessao(page, sessaoDeExemplo)
   await comProcessoEDocumento(page)
+  await semFotoDePerfil(page)
   await page.route(`${API}/ai/status`, (r) => r.fulfill({ json: { available: true } }))
   // Na seção 1 do ETP o botão "Gerar com IA" chama `/sections/1/ai-draft` (gerarRascunhoDaNecessidadeEtp).
   await page.route(`${API}/procurement-processes/*/documents/*/sections/1/ai-draft`, (r) =>
@@ -73,5 +87,7 @@ test("captura a proposta da IA", async ({ page }) => {
   await page.getByRole("button", { name: "Gerar com IA" }).click()
   await expect(page.getByLabel("Descrição da Necessidade")).toHaveValue(NECESSIDADE)
   await esperarOBotaoDaIa(page)
+  // O aviso flutuante cobre o painel: espera sumir.
+  await expect(page.getByText("Rascunho gerado.")).toBeHidden({ timeout: 15_000 })
   await page.screenshot({ path: "public/landing/proposta-ia.png" })
 })
