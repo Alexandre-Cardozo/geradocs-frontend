@@ -264,6 +264,69 @@
       stroke-dashoffset: -100;
     }
   }
+
+  /*
+   * ── Landing (§107, §108) ─────────────────────────────────────────────────
+   *
+   * Tokens da página de apresentação. O aplicativo não os usa.
+   */
+  --container-landing: 70rem;
+  --ease-landing: cubic-bezier(0.2, 0, 0, 1);
+
+  --text-landing-h1: clamp(2rem, 5vw, 3.5rem);
+  --text-landing-h1--line-height: 1.1;
+  --text-landing-h1--letter-spacing: -0.02em;
+  --text-landing-h2: clamp(1.5rem, 3vw, 2.25rem);
+  --text-landing-h2--line-height: 1.2;
+  --text-landing-h2--letter-spacing: -0.01em;
+  --text-landing-lead: 1.125rem;
+  --text-landing-lead--line-height: 1.6;
+  --text-landing-body: 1rem;
+  --text-landing-body--line-height: 1.5;
+
+  /*
+   * Entrada do hero e menu móvel. `both` segura o estado inicial durante o
+   * atraso e o final depois dele. Com movimento reduzido a regra global zera a
+   * duração e o elemento fica no estado final.
+   */
+  --animate-landing-entrada: landing-entrada 300ms cubic-bezier(0.2, 0, 0, 1) both;
+  --animate-landing-menu-abre: landing-menu-abre 250ms cubic-bezier(0.2, 0, 0, 1) both;
+  --animate-landing-menu-fecha: landing-menu-fecha 150ms cubic-bezier(0.2, 0, 0, 1) both;
+
+  @keyframes landing-entrada {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+      filter: blur(4px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+      filter: blur(0);
+    }
+  }
+
+  @keyframes landing-menu-abre {
+    from {
+      opacity: 0;
+      transform: scale(0.97);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes landing-menu-fecha {
+    from {
+      opacity: 1;
+      transform: none;
+    }
+    to {
+      opacity: 0;
+      transform: scale(0.97);
+    }
+  }
 }
 
 /*
