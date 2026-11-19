@@ -166,12 +166,13 @@ test("a seção que se afasta da minuta pede a justificativa, e a etapa final a 
   await expect(page.getByText("Versão set/2026 disponível")).toBeVisible()
 
   await page.getByRole("button", { name: /Do Objeto/ }).first().click()
-  await expect(page.getByText(/deixa de fora 1 de 1 cláusula da minuta/)).toBeVisible()
-  await page.getByText("Cláusulas Fora do Texto").click()
+  // Linha de atenção (§115): a lista e o campo abrem a pedido.
+  await expect(page.getByText(/1 cláusula obrigatória da minuta fora do texto/)).toBeVisible()
+  await page.getByRole("button", { name: "Justificar" }).click()
   await expect(page.getByText("1.1. O objeto da presente licitação é [objeto].")).toBeVisible()
   await page.getByRole("textbox", { name: "Justificativa da Alteração" }).fill("A lei municipal define o objeto.")
   await page.getByRole("button", { name: "Salvar Justificativa" }).click()
-  await expect(page.getByText(/Alteração justificada/)).toBeVisible()
+  await expect(page.getByText(/Alteração da minuta justificada/)).toBeVisible()
   expect(justificativa).toBe("A lei municipal define o objeto.")
 
   await page.getByRole("button", { name: /Revisão e Geração/ }).click()

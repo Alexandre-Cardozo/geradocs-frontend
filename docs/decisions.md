@@ -1486,3 +1486,13 @@ A tentativa de pôr os botões numa coluna ao lado do campo (botão alinhado ao 
 - **Notas da AGU recolhidas na linha das ferramentas do texto**, à direita de "Inserir tabela", como "ⓘ Notas da AGU (N)". Abrem numa lista compacta, com rolagem a partir de 192 px, e valem também nas seções com painel.
 - **A seção concluída mostra o bloco** como as demais: era o único lugar em que o texto da minuta ficava fora de alcance.
 - **O `Button` do DS ganhou `ariaExpanded` e `ariaControls`**, para o botão que abre e fecha um trecho da tela.
+
+## 115. O que a seção pede além do texto cabe numa linha de atenção
+
+- **O que eram.** Cada pedido da seção tinha um cartão do seu jeito: as cláusulas da minuta fora do texto (aviso, lista aberta, campo grande e botão, acima do campo), a seção dispensada (título, parágrafo e dois botões), a memória de cálculo que diverge da estimativa e o item fora do PCA. Juntos, empurravam o texto da seção para baixo.
+- **`LinhaDeAtencao`** (`components/shared`): o que falta, com o fundamento, numa linha só; as ações à direita; o detalhe abre e fecha na própria linha, com `aria-expanded`. Três tons nos tokens do DS: atenção (a ardósia dos avisos, §95), resolvido (verde) e neutro (registro).
+- **Cláusulas da minuta fora do texto (Art. 19, § 2º):** "1 cláusula obrigatória da minuta fora do texto (Art. 19, § 2º, Lei 14.133/21)." com "Justificar", que abre a lista (com "1 de N obrigatórias") e o campo. Justificada, a linha fica verde: "Alteração da minuta justificada: 1 cláusula fora do texto." com "Ver".
+- **Seção dispensada (Art. 18, § 2º):** "Seção dispensada: {justificativa}", numa linha (a justificativa inteira fica na dica), com "Editar" e "Desfazer dispensa". O convite "Dispensar esta seção" e o formulário continuam como estavam.
+- **Memória de cálculo divergente e item fora do PCA:** a mesma linha, com a correção ("Incluir na Memória") à direita.
+- **Falso positivo corrigido no back-end (ADR-075).** A cláusula "(Se for o caso)" numerada ("3.2.1. (Se for o caso) ...") não era reconhecida como opcional, e 89 das 157 seções com texto de minuta podiam pedir justificativa por engano. Com a correção, a linha só aparece quando falta cláusula obrigatória.
+- **Ficaram como estavam:** os subtópicos removidos do contexto, que já eram uma linha com "Escolher" e "Restaurar", e o resumo "Minuta da AGU" da etapa final.
