@@ -1394,3 +1394,26 @@ Pedido de quem usa: os tópicos seguem um depois do outro, sem buraco, na tela e
 
 - **Lista de anos, e não campo livre.** "Exercício" é um `Dropdown` com o ano atual (Brasília) já marcado, o anterior e os quatro seguintes, que são os do plano plurianual. O ano de uma dotação já gravada fora dessa faixa continua na lista, para a correção não trocar o ano sem pedido (`exerciciosDaDotacao`, em `lib/processos`).
 - **De onde vinha o "2100".** O back-end aceita exercício de 2000 a 2100, uma peneira contra erro de digitação. Com o campo livre, "30906" chegava ao servidor, e o toast mostrava a mensagem padrão da validação, que não dizia o campo. Agora a lista não deixa digitar, e o servidor diz "O exercício precisa estar entre 2000 e 2100." para quem chamar a API direto.
+
+## 107. A landing tem entrada animada, e só ela
+
+O design system diz "sem animações de entrada", e continua valendo para o aplicativo. A landing é uma página de apresentação, lida uma vez por quem ainda não usa o produto, e ali uma entrada discreta ajuda a ler. A exceção é estreita:
+
+- **Só na rota `/landing-page`.** As telas do aplicativo não ganham nenhum efeito novo.
+- **Só estes efeitos:** entrada escalonada no hero (opacidade, blur de 4px e deslocamento de 12px, 300ms, `cubic-bezier(0.2, 0, 0, 1)`, 100ms entre elementos) e a mesma revelação, uma vez, ao rolar. O menu móvel abre em 250ms e fecha em 150ms.
+- **Só `transform`, `opacity` e `filter`.** Nunca `transition: all`, nunca loop, nunca parallax.
+- **Sem JavaScript o conteúdo aparece.** O estado escondido só é aplicado depois que o componente monta no navegador, e só em elementos abaixo da dobra.
+- **Movimento reduzido:** nenhum elemento é escondido, e a regra global de `globals.css` já zera as durações.
+- Keyframes e curva vivem no `@theme` (`--animate-landing-*`, `--ease-landing`), como `--animate-marca-varredura`.
+
+## 108. A landing tem escala tipográfica e contêiner próprios
+
+A escala do aplicativo tem corpo de 13px e tamanhos fixos em px: serve a uma interface densa e é pequena demais para uma página de leitura. A landing ganha tokens próprios no `@theme`, em vez de valores soltos nas classes:
+
+- `--text-landing-h1` e `--text-landing-h2` fluidos com `clamp()`, `--text-landing-lead` (18px) e `--text-landing-body` (16px), cada um com `line-height` e, nos títulos, `letter-spacing` negativo.
+- `--container-landing` (70rem), porque o aplicativo não tem teto de largura e uma página de leitura precisa dele.
+- Os tokens do aplicativo não mudam, e o aplicativo não usa os da landing.
+
+## 109. A landing vive em `app/landing-page/`, sem sessão e sem fetch
+
+A rota `/landing-page` fica fora de `(app)` e de `(auth)`, portanto não herda a barra lateral nem a guarda de sessão. É um componente de servidor que exporta `metadata` próprio; é estática, sem chamada à API, sem hook de dados. Os componentes ficam em `components/landing/`, e a copy em `lib/landing/conteudo.ts`. A ordem dos documentos é lida de `lib/documentos/catalogo.ts`, a fonte única. A ação principal é um `mailto:` para `contato@govpro.com.br`; não há formulário nem backend novo. A rota `/` não muda.
