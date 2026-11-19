@@ -70,6 +70,24 @@ test("o menu móvel abre e leva às âncoras", async ({ page }) => {
   await expect(menu).toHaveCount(0);
 });
 
+test("o menu móvel não passa da janela: em janela baixa (400% de zoom) o último botão é alcançável", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 256 });
+  await page.goto(rota(ROTA));
+  await page.getByRole("button", { name: "Abrir menu" }).click();
+  const menu = page.locator("#menu-landing");
+  await expect(menu).toBeVisible();
+  const caixa = await menu.boundingBox();
+  expect(caixa).not.toBeNull();
+  expect((caixa?.y ?? 0) + (caixa?.height ?? 0)).toBeLessThanOrEqual(256);
+  // O cabeçalho é fixo: rolar a página não aproxima o painel. Só a rolagem do
+  // próprio painel leva o último botão à janela.
+  const ultimo = menu.getByRole("link", { name: "Acessar o GeraDocs" });
+  await ultimo.scrollIntoViewIfNeeded();
+  await expect(ultimo).toBeInViewport();
+});
+
 test("o link para pular a navegação aparece ao receber foco", async ({ page }) => {
   await page.goto(rota(ROTA));
   await page.keyboard.press("Tab");

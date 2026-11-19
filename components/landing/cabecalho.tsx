@@ -89,7 +89,7 @@ export function Cabecalho() {
         <div
           id="menu-landing"
           onAnimationEnd={() => menu === "fechando" && setMenu("fechado")}
-          className={`absolute inset-x-0 top-full origin-top border-b border-on-dark-border bg-navy px-4 pb-5 sm:px-6 lg:hidden ${
+          className={`absolute inset-x-0 top-full max-h-[calc(100dvh-4rem)] origin-top overflow-y-auto overscroll-contain border-b border-on-dark-border bg-navy px-4 pb-5 sm:px-6 lg:hidden ${
             aberto ? "animate-landing-menu-abre" : "animate-landing-menu-fecha"
           }`}
         >
