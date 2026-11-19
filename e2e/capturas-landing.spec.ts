@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test"
+import { expect, test, type Locator, type Page } from "@playwright/test"
 
 import { comProcessoEDocumento, comSessao, processo, rota, sessaoServidor } from "./api"
 
@@ -12,7 +12,7 @@ import { comProcessoEDocumento, comSessao, processo, rota, sessaoServidor } from
  * real, e uma página pública com o nome dele sugeriria um endosso que não existe.
  */
 test.skip(!process.env.CAPTURAS_LANDING, "Só roda quando se pedem as capturas da landing.")
-test.use({ viewport: { width: 1440, height: 900 }, reducedMotion: "reduce" })
+test.use({ viewport: { width: 860, height: 1100 }, deviceScaleFactor: 2, reducedMotion: "reduce" })
 
 const API = "**/api/v1"
 const ROTA_DO_ETP = `/processos/documento?id=${encodeURIComponent(processo.id)}&tipo=etp`
@@ -42,6 +42,25 @@ async function esperarOBotaoDaIa(page: Page) {
   await page.waitForTimeout(600)
 }
 
+/**
+ * Recorta a captura na região que importa: a união das caixas dadas, com folga.
+ * A tela inteira do app, encolhida na moldura da landing, fica ilegível.
+ */
+async function recortar(page: Page, alvos: Locator[], caminho: string, folga = 24) {
+  const caixas = []
+  for (const alvo of alvos) {
+    const caixa = await alvo.boundingBox()
+    if (!caixa) throw new Error("alvo da captura sem caixa na tela")
+    caixas.push(caixa)
+  }
+  const x = Math.max(0, Math.min(...caixas.map((c) => c.x)) - folga)
+  const y = Math.max(0, Math.min(...caixas.map((c) => c.y)) - folga)
+  const direita = Math.max(...caixas.map((c) => c.x + c.width)) + folga
+  const base = Math.max(...caixas.map((c) => c.y + c.height)) + folga
+  console.log(caminho, { x, y, width: direita - x, height: base - y })
+  await page.screenshot({ path: caminho, clip: { x, y, width: direita - x, height: base - y } })
+}
+
 const NECESSIDADE =
   "A Secretaria de Administração precisa repor o material de expediente das unidades, hoje com estoque abaixo do consumo mensal."
 
@@ -57,12 +76,17 @@ test("captura o editor do ETP", async ({ page }) => {
   await expect(campo).toBeVisible()
   await campo.fill(NECESSIDADE)
   await esperarOBotaoDaIa(page)
-  await page.screenshot({ path: "public/landing/editor-etp.png" })
+  await recortar(
+    page,
+    [page.getByText("Demonstre o que a seção pede."), page.getByText("Descrição da Necessidade"), campo, page.getByRole("button", { name: "Gerar com IA" })],
+    "public/landing/editor-etp.png",
+    40,
+  )
 })
 
 test("captura a proposta da IA", async ({ page }) => {
-  // Mais alto que o editor: o painel "Revise o Rascunho da IA" abre abaixo do campo.
-  await page.setViewportSize({ width: 1440, height: 1180 })
+  // Mais estreito que o editor: o texto quebra e a captura fica mais alta, legível ao lado da lista.
+  await page.setViewportSize({ width: 640, height: 1100 })
   await comSessao(page, sessaoDeExemplo)
   await comProcessoEDocumento(page)
   await semFotoDePerfil(page)
@@ -89,5 +113,13 @@ test("captura a proposta da IA", async ({ page }) => {
   await esperarOBotaoDaIa(page)
   // O aviso flutuante cobre o painel: espera sumir.
   await expect(page.getByText("Rascunho gerado.")).toBeHidden({ timeout: 15_000 })
-  await page.screenshot({ path: "public/landing/proposta-ia.png" })
+  await recortar(
+    page,
+    [
+      page.getByText("Rascunho com base no DFD, no PCA e no processo. Revise antes de salvar."),
+      page.getByText("Dados de Origem Disponíveis"),
+    ],
+    "public/landing/proposta-ia.png",
+    56,
+  )
 })
