@@ -1,14 +1,27 @@
 "use client"
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { MutationCache, QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from "react"
 
 import { IconInfo } from "@/components/ui/icons"
+import { AvisoDeLimiteDaIa } from "@/components/shared/aviso-de-limite-da-ia"
+import { ehLimiteDaIa } from "@/lib/api/limite-da-ia"
 
 /* ── TanStack Query ────────────────────────────────────────────────────────── */
 
-function makeQueryClient() {
+/**
+ * O cliente da aplicação. `aoAtingirOLimiteDaIa` é chamado quando qualquer
+ * pedido à IA volta com o limite do plano esgotado (§109): os três pontos de
+ * IA passam por mutações, e é aqui que o aviso deixa de depender de cada tela
+ * lembrar de tratá-lo.
+ */
+export function makeQueryClient(aoAtingirOLimiteDaIa: () => void = () => undefined) {
   return new QueryClient({
+    mutationCache: new MutationCache({
+      onError: (erro) => {
+        if (ehLimiteDaIa(erro)) aoAtingirOLimiteDaIa()
+      },
+    }),
     defaultOptions: {
       queries: {
         staleTime: 30_000,
@@ -28,7 +41,10 @@ export function useToast() {
 }
 
 export function Providers({ children }: { children: ReactNode }) {
-  const [queryClient] = useState(makeQueryClient)
+  const [limiteDaIa, setLimiteDaIa] = useState(false)
+  // O botão não desliga depois do aviso: o clique seguinte abre o aviso de
+  // novo, e quando o limite for renovado a IA volta a responder (§109).
+  const [queryClient] = useState(() => makeQueryClient(() => setLimiteDaIa(true)))
   const [toast, setToast] = useState<string | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -44,6 +60,7 @@ export function Providers({ children }: { children: ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <ToastContext.Provider value={value}>
         {children}
+        {limiteDaIa && <AvisoDeLimiteDaIa onFechar={() => setLimiteDaIa(false)} />}
         {toast && (
           <div
             role="status"
