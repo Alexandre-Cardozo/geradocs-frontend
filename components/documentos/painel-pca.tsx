@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useId, useState } from "react"
 
 import { Button, FormField, InfoBanner, Input, SectionBlock, Textarea } from "@/components/ui"
-import { CaminhosDaSecao } from "@/components/documentos/caminhos-da-secao"
+import { CaminhosDaSecao, dadosDoProcesso } from "@/components/documentos/caminhos-da-secao"
 import { InlineSpinner } from "@/components/shared/estados"
 import { useToast } from "@/components/shared/providers"
 import { FORMA_DA_PREVISAO, type AchadoDoPca } from "@/lib/api/pca-client"
@@ -154,13 +154,10 @@ export function PainelPca({
         )}
 
         {semPrevisao.length > 0 && (
+          // Uma linha só (§112): o que falta e o que fazer, com o fundamento.
           <InfoBanner tone="warning">
-            <div className="font-semibold">
-              {semPrevisao.length === 1
-                ? "Um item não consta do plano."
-                : `${semPrevisao.length} itens não constam do plano.`}
-            </div>
-            <p className="m-0 mt-1">Justifique no texto abaixo (Art. 18, § 1º, II).</p>
+            {semPrevisao.length === 1 ? "1 item fora do PCA" : `${semPrevisao.length} itens fora do PCA`}: justifique
+            no texto (Art. 18, § 1º, II).
           </InfoBanner>
         )}
 
@@ -183,19 +180,21 @@ export function PainelPca({
         <CaminhosDaSecao
           gerando={gerando}
           onGerarComIa={onGerarComIa}
-          rascunhoAutomatico={
+          texto={rascunho}
+          setTexto={setRascunho}
+          preenchimentos={
             dados.citacao
-              ? {
-                  rotulo: rascunho.trim() === "" ? "Citar na seção" : "Refazer a citação",
-                  onEscrever: () => {
-                    setRascunho(dados.citacao!)
+              ? [
+                  dadosDoProcesso("cita o PCA conferido pela plataforma.", () => {
                     showToast("Citação preenchida. Revise antes de salvar.")
-                  },
-                }
-              : undefined
+                    return dados.citacao!
+                  }),
+                ]
+              : []
           }
         />
-        {!dados.citavel && (
+        {/* Com item fora do PCA, o aviso acima já diz o mesmo (§112). */}
+        {!dados.citavel && semPrevisao.length === 0 && (
           <p className="m-0 text-xs text-text-muted">
             Sem item do plano a citar: justifique a contratação não prevista.
           </p>

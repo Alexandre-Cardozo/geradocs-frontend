@@ -101,19 +101,28 @@ test("na concorrência, a minuta é escolhida antes e estrutura o Edital", async
   await expect(page.getByRole("heading", { name: "Preâmbulo", level: 2 })).toBeVisible()
   await expect(page.getByText("Seção 1 de 2 · Art. 25, caput, Lei 14.133/21")).toBeVisible()
 
-  await page.getByRole("button", { name: "Usar o Texto da Minuta" }).click()
-  await expect(page.getByPlaceholder("Preencha o conteúdo desta seção...")).toHaveValue(
-    "Torna-se público que o órgão realizará licitação.",
-  )
-  await page.getByText("Notas da AGU (1)").click()
+  // O texto da minuta entra pelo mesmo lugar de todo preenchimento sem IA (§114),
+  // sem perguntar, e o rodapé do bloco oferece desfazer.
+  const campo = page.getByPlaceholder("Preencha o conteúdo desta seção...")
+  await page.getByRole("button", { name: "Preencher com o texto da minuta" }).click()
+  await expect(campo).toHaveValue("Torna-se público que o órgão realizará licitação.")
+  await page.getByRole("button", { name: "Desfazer" }).click()
+  await expect(campo).toHaveValue("")
+  await page.getByRole("button", { name: "Preencher com o texto da minuta" }).click()
+  await expect(campo).toHaveValue("Torna-se público que o órgão realizará licitação.")
+
+  // As notas ficam recolhidas na linha das ferramentas do texto.
+  await page.getByRole("button", { name: "Notas da AGU (1)" }).click()
   await expect(page.getByText("Nota explicativa: adapte ao órgão.")).toBeVisible()
 
-  // O texto de outra minuta aparece só na seção do mesmo assunto.
+  // O texto de outra minuta, na seção do mesmo assunto, entra pelo menu
+  // "Preencher com", junto da minuta, acrescentado ao fim.
   await expect(page.getByText(/Textos de Outro Modelo/)).toHaveCount(0)
   await page.getByRole("button", { name: /Do Objeto/ }).first().click()
-  await expect(page.getByText("Textos de Outro Modelo (1)")).toBeVisible()
-  await page.getByText("Textos de Outro Modelo (1)").click()
-  await expect(page.getByText("Objeto escrito na outra minuta.")).toBeVisible()
+  await page.getByRole("button", { name: "Preencher com", exact: true }).click()
+  await page.getByRole("menuitem", { name: /Modelo anterior: Do Objeto/ }).click()
+  await expect(campo).toHaveValue("Objeto escrito na outra minuta.")
+  await expect(page.getByText(/Textos de Outro Modelo/)).toHaveCount(0)
 
   // O que não tem seção correspondente fica na etapa final.
   await page.getByRole("button", { name: /Revisão e Geração/ }).click()
