@@ -84,7 +84,10 @@ describe("dispensa de seção", () => {
       />,
     )
 
-    await userEvent.click(screen.getByRole("button", { name: /editar justificativa/i }))
+    // Dispensada, é uma linha neutra com a justificativa e as ações (§115).
+    expect(screen.getByText("Seção dispensada:")).toBeInTheDocument()
+    expect(screen.getByTitle("Motivo antigo.")).toHaveTextContent("Seção dispensada: Motivo antigo.")
+    await userEvent.click(screen.getByRole("button", { name: "Editar" }))
     await userEvent.clear(screen.getByRole("textbox"))
     await userEvent.type(screen.getByRole("textbox"), "Motivo correto.")
     await userEvent.click(screen.getByRole("button", { name: /registrar dispensa/i }))

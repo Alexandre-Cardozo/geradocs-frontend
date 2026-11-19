@@ -4,6 +4,7 @@ import Link from "next/link"
 import { useId, useState } from "react"
 
 import { Button, FormField, InfoBanner, Input, SectionBlock, Textarea } from "@/components/ui"
+import { LinhaDeAtencao } from "@/components/shared/linha-de-atencao"
 import { CaminhosDaSecao, dadosDoProcesso } from "@/components/documentos/caminhos-da-secao"
 import { InlineSpinner } from "@/components/shared/estados"
 import { useToast } from "@/components/shared/providers"
@@ -154,11 +155,11 @@ export function PainelPca({
         )}
 
         {semPrevisao.length > 0 && (
-          // Uma linha só (§112): o que falta e o que fazer, com o fundamento.
-          <InfoBanner tone="warning">
+          // Uma linha só (§112, §115): o que falta e o que fazer, com o fundamento.
+          <LinhaDeAtencao>
             {semPrevisao.length === 1 ? "1 item fora do PCA" : `${semPrevisao.length} itens fora do PCA`}: justifique
             no texto (Art. 18, § 1º, II).
-          </InfoBanner>
+          </LinhaDeAtencao>
         )}
 
         {/*
