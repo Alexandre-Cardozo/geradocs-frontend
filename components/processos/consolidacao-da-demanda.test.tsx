@@ -60,8 +60,8 @@ describe("consolidação da demanda", () => {
     for (const secretaria of ["Educação", "Saúde", "Administração"]) {
       expect(screen.getAllByText(secretaria).length).toBeGreaterThan(0)
     }
-    expect(screen.getByText("100 resma")).toBeInTheDocument()
-    expect(screen.getByText("20 caixa")).toBeInTheDocument()
+    expect(screen.getByText("100,00 resma")).toBeInTheDocument()
+    expect(screen.getByText("20,00 caixa")).toBeInTheDocument()
   })
 
   it("o total divergente aparece, mas dito que não serve como está", async () => {
@@ -70,7 +70,7 @@ describe("consolidação da demanda", () => {
 
     // Sumir com o total deixaria a pessoa sem ver o que já foi pedido; mostrá-lo
     // como bom faria a Cotação sair com um número que ninguém pode usar.
-    const riscado = await screen.findByText("170")
+    const riscado = await screen.findByText("170,00")
     expect(riscado).toHaveClass("line-through")
     // A tabela diz o motivo na própria célula, além do alerta acima dela.
     expect(screen.getAllByText(/unidades divergentes/i).length).toBeGreaterThan(1)
@@ -104,8 +104,36 @@ describe("consolidação da demanda", () => {
     })
     renderizar(<ConsolidacaoDaDemanda processoId={PROCESSO} />)
 
-    expect(await screen.findByText("150 resma")).toBeInTheDocument()
+    expect(await screen.findByText("150,00 resma")).toBeInTheDocument()
     expect(screen.queryByText(/unidades divergentes/i)).not.toBeInTheDocument()
+  })
+
+  it("quantidades de milhar saem com separador, no mesmo formato do painel de Quantidades do ETP", async () => {
+    comConsolidacao({
+      items: [
+        {
+          description: "Papel sulfite A4",
+          unit: "pacote",
+          total: 1200,
+          summable: true,
+          byDepartment: [{ departmentName: "Educação", quantity: 1200, unit: "pacote" }],
+        },
+        {
+          description: "Caneta azul",
+          unit: "unidade",
+          total: 12345.5,
+          summable: true,
+          byDepartment: [{ departmentName: "Educação", quantity: 12345.5, unit: "unidade" }],
+        },
+      ],
+      incongruences: [],
+    })
+    renderizar(<ConsolidacaoDaDemanda processoId={PROCESSO} />)
+
+    // Antes saía "1200 pacote": número cru, sem milhar, ao contrário do resto da plataforma.
+    expect((await screen.findAllByText("1.200,00 pacote")).length).toBe(2)
+    expect(screen.getAllByText("12.345,50 unidade").length).toBe(2)
+    expect(screen.queryByText(/1200 pacote/)).not.toBeInTheDocument()
   })
 
   it("secretaria que não pediu o item aparece com traço, não em branco", async () => {

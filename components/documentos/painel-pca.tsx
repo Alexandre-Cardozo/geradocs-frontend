@@ -10,7 +10,7 @@ import { InlineSpinner } from "@/components/shared/estados"
 import { useToast } from "@/components/shared/providers"
 import { FORMA_DA_PREVISAO, type AchadoDoPca } from "@/lib/api/pca-client"
 import { usePrevisaoNoPca } from "@/lib/api/hooks"
-import { formatBRL } from "@/lib/format"
+import { formatBRL, formatNumeroBR } from "@/lib/format"
 import type { SecaoDocumento } from "@/lib/types"
 import { TabelasDaSecao } from "@/components/documentos/tabelas-da-secao"
 
@@ -222,7 +222,7 @@ function ItemDoPca({ achado }: { achado: AchadoDoPca }) {
         <strong>{forma.rotulo}</strong>, item {achado.codigo}
         {achado.descricao ? `: ${achado.descricao}` : ""}
         {achado.quantidade != null &&
-          ` · ${achado.quantidade}${achado.unidade ? ` ${achado.unidade}` : ""}`}
+          ` · ${formatNumeroBR(achado.quantidade)}${achado.unidade ? ` ${achado.unidade}` : ""}`}
         {achado.valorEstimado != null && ` · ${formatBRL(achado.valorEstimado)}`}
       </p>
       {forma.explicacao && <p className="m-0 mt-0.5 text-xs text-text-muted">{forma.explicacao}</p>}

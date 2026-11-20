@@ -86,7 +86,7 @@ describe("painel de previsão no PCA", () => {
     renderizar(painel())
 
     expect(await screen.findByText(/2026-0142/)).toBeInTheDocument()
-    expect(screen.getByText(/1200 RESMA/)).toBeInTheDocument()
+    expect(screen.getByText(/1\.200,00 RESMA/)).toBeInTheDocument()
     expect(screen.getByText(/PCA 2026/)).toBeInTheDocument()
   })
 
