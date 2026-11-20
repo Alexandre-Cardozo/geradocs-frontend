@@ -571,7 +571,7 @@ function rotaDasClausulas(processoId: string, tipo: TipoDocumento, secaoId: stri
 }
 
 /**
- * As cláusulas "(Se for o caso)" do texto que o editor mostra (ADR 107; ADR-078 do back-end).
+ * As cláusulas "(Se for o caso)" do texto que o editor mostra (ADR 117; ADR-078 do back-end).
  *
  * A análise é sobre o texto da tela, e não sobre o gravado: o servidor pode ter editado sem salvar. Não grava nada.
  */

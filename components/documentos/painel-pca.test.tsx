@@ -102,11 +102,11 @@ describe("painel de previsão no PCA", () => {
     )
     renderizar(painel())
 
-    expect(await screen.findByText(/Um item não consta do plano/)).toBeInTheDocument()
-    expect(screen.getByText(/Justifique no texto abaixo/)).toBeInTheDocument()
+    expect(await screen.findByText(/1 item fora do PCA/)).toBeInTheDocument()
+    expect(screen.getByText(/justifique no texto \(Art\. 18, § 1º, II\)/)).toBeInTheDocument()
     // Continua citável: o texto sai com a justificativa entre colchetes, e é
     // travar que transformaria orientação em obstáculo.
-    expect(screen.getByRole("button", { name: "Citar na seção" })).toBeEnabled()
+    expect(screen.getByRole("button", { name: "Preencher com dados do processo" })).toBeEnabled()
     // E o campo da seção está aberto: escrever à mão é sempre possível.
     expect(screen.getByLabelText(/O que vai para a seção/)).toBeInTheDocument()
   })
@@ -126,8 +126,10 @@ describe("painel de previsão no PCA", () => {
     // Sem parágrafo a oferecer não há botão de citar — e a tela diz o caminho:
     // informar o item, ou escrever a justificativa no campo, que está aberto.
     await screen.findByLabelText(/O que vai para a seção/)
-    expect(screen.queryByRole("button", { name: /Citar na seção/ })).not.toBeInTheDocument()
-    expect(screen.getByText(/Sem item do plano a citar/)).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Preencher com dados do processo" })).not.toBeInTheDocument()
+    // O aviso do item fora do PCA já diz o caminho; a linha de rodapé não o repete (§112).
+    expect(screen.getByText(/1 item fora do PCA/)).toBeInTheDocument()
+    expect(screen.queryByText(/Sem item do plano a citar/)).not.toBeInTheDocument()
     // O ano é dito: o plano que falta é o de 2026, e pode existir um de outro
     // exercício — que não demonstra a previsão desta contratação.
     expect(screen.getByText(/Nenhum PCA de 2026 anexado/)).toBeInTheDocument()
@@ -203,7 +205,7 @@ describe("painel de previsão no PCA", () => {
     responder(verificacao())
     renderizar(painel())
 
-    await userEvent.click(await screen.findByRole("button", { name: "Citar na seção" }))
+    await userEvent.click(await screen.findByRole("button", { name: "Preencher com dados do processo" }))
 
     // A citação é facilitador de rascunho: quem assina revisa, ajusta e grava.
     // Escrevê-la direto no documento era texto de processo administrativo
@@ -213,12 +215,18 @@ describe("painel de previsão no PCA", () => {
     )
   })
 
-  it("com a seção já escrita, o botão oferece refazer — e a IA continua ali", async () => {
+  it("com a seção já escrita, preencher troca o texto sem perguntar (há Desfazer), e a IA continua ali (§114)", async () => {
     responder(verificacao())
     renderizar(painel("Texto que o servidor escreveu."))
 
-    expect(await screen.findByRole("button", { name: "Refazer a citação" })).toBeInTheDocument()
+    const preencher = await screen.findByRole("button", { name: "Preencher com dados do processo" })
+    expect(preencher).toHaveAttribute("title", "Sem IA: cita o PCA conferido pela plataforma.")
     expect(screen.getByRole("button", { name: /Gerar com IA/ })).toBeInTheDocument()
+
+    const popup = vi.spyOn(window, "confirm")
+    await userEvent.click(preencher)
+    expect(popup).not.toHaveBeenCalled()
+    expect(setRascunho).toHaveBeenCalledWith(expect.stringContaining("A presente contratação está prevista no Plano"))
   })
 
   it("consulta indisponível não impede escrever a seção à mão", async () => {

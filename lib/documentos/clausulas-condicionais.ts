@@ -1,5 +1,5 @@
 /**
- * As cláusulas "(Se for o caso)" da minuta, vistas pela tela (ADR 107; ADR-078 do back-end).
+ * As cláusulas "(Se for o caso)" da minuta, vistas pela tela (ADR 117; ADR-078 do back-end).
  *
  * O servidor reconhece as cláusulas e a IA sugere quais provavelmente não se aplicam, mas quem decide é quem assina:
  * nada é tirado sem o clique. Aqui mora só o que não depende de React nem de rede.

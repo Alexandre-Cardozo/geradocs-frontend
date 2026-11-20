@@ -4,10 +4,12 @@ import Link from "next/link"
 import { notFound, useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
 
-import { Button, InfoBanner, ProgressBar, SectionBlock, Textarea, ValidationMsg } from "@/components/ui"
+import { Button, InfoBanner, ProgressBar, SectionBlock, Textarea } from "@/components/ui"
 import { IconArrowRight, IconCheckCircle, IconCheck, IconHelp, IconSave } from "@/components/ui/icons"
 import { PainelATA, PainelDaSecao } from "@/components/documentos/paineis"
-import { ErrorState, InlineSpinner, LoadingState } from "@/components/shared/estados"
+import { ErrorState, LoadingState } from "@/components/shared/estados"
+import { useRevelacaoDaIa } from "@/components/shared/ia-magica"
+import { ehLimiteDaIa } from "@/lib/api/limite-da-ia"
 import { useToast } from "@/components/shared/providers"
 import type { RascunhoEtpComFontes } from "@/lib/api/authoring-client"
 import {
@@ -25,7 +27,7 @@ import {
 import { CATALOGO, porSlug } from "@/lib/documentos"
 import { fontesDaIa } from "@/lib/documentos/fontes-da-ia"
 import { rotaDoDocumentoGerado } from "@/lib/documentos/rotas"
-import { CaminhosDaSecao } from "@/components/documentos/caminhos-da-secao"
+import { CaminhosDaSecao, type Preenchimento } from "@/components/documentos/caminhos-da-secao"
 import { OrientacaoDaIaContexto } from "@/components/documentos/orientacao-da-ia"
 import { DispensaDeSecao } from "@/components/documentos/dispensa-de-secao"
 import { EtapaFinal } from "@/components/documentos/etapa-final"
@@ -34,7 +36,6 @@ import { ClausulasCondicionais } from "@/components/documentos/clausulas-condici
 import { AlteracoesDaMinuta, JustificativaDoDesvio } from "@/components/documentos/justificativa-da-minuta"
 import { RevisaoComIa } from "@/components/documentos/revisao-com-ia"
 import {
-  ApoioDaMinuta,
   EscolhaDoModelo,
   TextosDeOutroModelo,
   TrocaDeModelo,
@@ -113,7 +114,13 @@ export default function EditorDocumento() {
   const documentos = useDocumentos()
   const salvar = useAtualizarSecao(processoId, tipo)
   const gerar = useGerarRascunhoDaSecao(processoId, tipo)
-  const gerandoRascunho = gerar.isPending
+  /*
+    O texto da IA entra escrito, e não colado (§107). Enquanto a escrita corre,
+    o "Gerar com IA" fica ocupado como durante o pedido: um segundo rascunho
+    não começa por cima do primeiro.
+  */
+  const revelacao = useRevelacaoDaIa()
+  const gerandoRascunho = gerar.isPending || revelacao.escrevendo
   const rejeitarProposta = useRejeitarPropostaDeIa(processoId, tipo)
   const limparPropostaPendente = useLimparPropostaPendente(processoId, tipo)
   const gerarDocumento = useGerarDocumento()
@@ -140,6 +147,19 @@ export default function EditorDocumento() {
   const orientacaoDaSecao =
     orientacao.secao === activeSection ? orientacao : { secao: activeSection, texto: "", avisos: [] }
   const [fontesDoRascunho, setFontesDoRascunho] = useState<RascunhoEtpComFontes | null>(null)
+  /*
+    A última escrita automática na seção, da IA ou sem IA (§114). Enquanto o
+    texto continua como ela deixou, o bloco oferece "Desfazer", que devolve o
+    texto de antes, salvo ou não. É o que substituiu as confirmações do
+    navegador antes de escrever.
+  */
+  const [escrita, setEscrita] = useState<{
+    secao: string
+    anterior: string
+    escrito: string
+    rotulo: string
+    ia: boolean
+  } | null>(null)
   const [rascunhoDaIaPendente, setRascunhoDaIaPendente] = useState(false)
   /** A proposta de IA registrada no servidor (ADR-066): salvar a aceita, descartar a rejeita. */
   const [propostaId, setPropostaId] = useState<string | null>(null)
@@ -151,6 +171,9 @@ export default function EditorDocumento() {
   const campoDoTexto = useRef<HTMLTextAreaElement>(null)
   const irPara = (id: string) => {
     if (id !== secaoAtivaRef.current) {
+      // O texto em escrita é da seção que ficou para trás.
+      revelacao.cancelar()
+      setEscrita(null)
       setFontesDoRascunho(null)
       setRascunhoDaIaPendente(false)
       // O servidor guarda a proposta como pendente: ao voltar, ela é restaurada.
@@ -263,6 +286,14 @@ export default function EditorDocumento() {
     if (!propostaRestauravel?.proposalId || secaoSincronizada !== activeSection) return
     if (rascunhoDaIaPendente || propostaRestauravel.proposalId === propostaId) return
     if (semLinhasEmBranco(rascunhoAtualRef.current) !== semLinhasEmBranco(active?.conteudo ?? "")) return
+    // Desfazer o rascunho restaurado é o mesmo que descartá-lo: volta o texto salvo (§114).
+    setEscrita({
+      secao: activeSection,
+      anterior: rascunhoAtualRef.current,
+      escrito: semLinhasEmBranco(propostaRestauravel.content),
+      rotulo: "IA",
+      ia: true,
+    })
     setRascunho(semLinhasEmBranco(propostaRestauravel.content))
     setFontesDoRascunho(propostaRestauravel)
     setRascunhoDaIaPendente(true)
@@ -270,13 +301,19 @@ export default function EditorDocumento() {
     showToast("Recuperamos o rascunho da IA que ficou sem salvar. O texto salvo só muda quando você salvar.")
   }, [propostaRestauravel, secaoSincronizada, activeSection, rascunhoDaIaPendente, propostaId, active?.conteudo, showToast])
 
+  /*
+    Trocar de seção salva o que ficou por salvar (§114), sem perguntar. Vale
+    também para o rascunho da IA: salvar é aceitá-lo (ADR-066), como no botão.
+    Antes, o rascunho da IA pedia confirmação do navegador para sair.
+  */
   const trocarSecao = (id: string) => {
-    if (active && naoGravado && rascunhoDaIaPendente) {
-      if (!window.confirm("O rascunho da IA ainda não foi salvo. Ao sair, ele fica guardado e volta quando você reabrir a seção, mas as alterações que você fez nele se perdem. Deseja sair?")) return
-      irPara(id)
-      return
+    if (active && naoGravado) {
+      const secaoId = active.id
+      salvar.mutate(
+        { ...gravacaoDa(active), ...(rascunhoDaIaPendente && propostaId ? { propostaId } : {}) },
+        { onSuccess: () => limparPropostaPendente(secaoId) },
+      )
     }
-    if (active && naoGravado) salvar.mutate(gravacaoDa(active))
     irPara(id)
   }
 
@@ -295,6 +332,7 @@ export default function EditorDocumento() {
           setFontesDoRascunho(null)
           setRascunhoDaIaPendente(false)
           setPropostaId(null)
+          setEscrita(null)
           limparPropostaPendente(active.id)
           setTimeout(() => setSaved(false), 2500)
           // `irPara`, e não `trocarSecao`: o que havia na tela acabou de ser
@@ -305,10 +343,14 @@ export default function EditorDocumento() {
     )
   }
 
-  /** O servidor descartou o rascunho: volta o texto salvo e a proposta vai como rejeitada (ADR-066). */
+  /**
+   * O servidor descartou o rascunho: volta o texto salvo e a proposta vai como
+   * rejeitada (ADR-066). A confirmação, quando há o que perder, é feita na
+   * própria linha do bloco (§114), e não pelo navegador.
+   */
   const descartarRascunhoDaIa = () => {
     if (!active) return
-    if (naoGravado && !window.confirm("Descartar o rascunho da IA e voltar ao texto salvo?")) return
+    setEscrita(null)
     if (propostaId) rejeitarProposta.mutate({ secaoId: active.id, propostaId })
     limparPropostaPendente(active.id)
     setPropostaId(null)
@@ -318,12 +360,28 @@ export default function EditorDocumento() {
     showToast("Rascunho da IA descartado.")
   }
 
+  const desfazerValido =
+    escrita !== null && escrita.secao === activeSection && rascunho === escrita.escrito && !revelacao.escrevendo
+
+  /** Volta o texto de antes da última escrita automática (§114). Da IA, é também rejeitar a proposta. */
+  const desfazerEscrita = () => {
+    if (!active || !escrita) return
+    if (escrita.ia) {
+      if (propostaId) rejeitarProposta.mutate({ secaoId: active.id, propostaId })
+      limparPropostaPendente(active.id)
+      setPropostaId(null)
+      setFontesDoRascunho(null)
+      setRascunhoDaIaPendente(false)
+    }
+    setRascunho(escrita.anterior)
+    setEscrita(null)
+    showToast("Texto anterior restaurado.")
+  }
+
   const handleGerarIA = () => {
     if (!active) return
     if (gerandoRascunho) return
     const secaoId = active.id
-    const confirmarSubstituicao = () =>
-      !rascunho.trim() || window.confirm("Substituir o texto atual por um novo rascunho da IA? O texto ainda não será salvo.")
     const textoAntesDaGeracao = rascunho
     const aplicarRascunho = (conteudo: string, fontes: RascunhoEtpComFontes | null, proposta?: string) => {
       if (secaoAtivaRef.current !== secaoId) return
@@ -331,7 +389,23 @@ export default function EditorDocumento() {
         showToast("O texto foi alterado durante a geração. Seu rascunho foi preservado.")
         return
       }
-      setRascunho(semLinhasEmBranco(conteudo))
+      revelacao.revelar(semLinhasEmBranco(conteudo), (pedaco) => {
+        // A seção mudou por fora (a estrutura trocou de modelo, por exemplo):
+        // a escrita para, e não invade a seção nova.
+        if (secaoAtivaRef.current !== secaoId) {
+          revelacao.cancelar()
+          return
+        }
+        setRascunho(pedaco)
+      })
+      // Sem confirmação antes de substituir (§114): o rodapé oferece "Desfazer".
+      setEscrita({
+        secao: secaoId,
+        anterior: textoAntesDaGeracao,
+        escrito: semLinhasEmBranco(conteudo),
+        rotulo: "IA",
+        ia: true,
+      })
       setFontesDoRascunho(fontes)
       setRascunhoDaIaPendente(true)
       setPropostaId(proposta ?? null)
@@ -340,8 +414,6 @@ export default function EditorDocumento() {
       if (aviso) showToast(aviso)
       showToast("Rascunho gerado. Revise os fatos e as lacunas antes de salvar.")
     }
-
-    if (!confirmarSubstituicao()) return
 
     if (gerar.isPending) return
     // Um só caminho de redação (ADR-068): com ou sem orientação, o servidor monta
@@ -355,6 +427,10 @@ export default function EditorDocumento() {
           if (texto) setOrientacao({ secao: secaoId, texto, avisos: resultado.guidanceWarnings })
         },
         onError: (erro) => {
+          // O limite do plano tem aviso próprio, que abre sozinho (§109): repetir
+          // aqui seria dizer a mesma coisa duas vezes, e na orientação, que não
+          // tem culpa.
+          if (ehLimiteDaIa(erro)) return
           const mensagem = erro.message || "Não foi possível gerar o rascunho. Tente novamente."
           if (texto) setOrientacao({ secao: secaoId, texto, avisos: [], erro: mensagem })
           else showToast(mensagem)
@@ -404,17 +480,66 @@ export default function EditorDocumento() {
 
   // A orientação da seção aberta, para o cartão "Gerar com IA" — esteja ele no
   // cartão genérico ou num painel especial.
+  const textosDoModeloAnterior = active
+    ? (documento.data?.textosDeOutroModelo ?? []).filter((texto) => texto.secaoAlvo === active.id)
+    : []
+  const preenchimentosDoEditor: Preenchimento[] = [
+    ...(active?.textoDaMinuta
+      ? [
+          {
+            chave: "minuta",
+            rotulo: "Texto da minuta",
+            botao: "Preencher com o texto da minuta",
+            dica: "usa o texto padrão da minuta do documento.",
+            modo: "substituir" as const,
+            texto: () => semLinhasEmBranco(active.textoDaMinuta ?? ""),
+          },
+        ]
+      : []),
+    ...textosDoModeloAnterior.map((anterior) => ({
+      chave: `anterior-${anterior.secao}`,
+      rotulo: `Modelo anterior: ${anterior.titulo}`,
+      botao: "Acrescentar o texto do modelo anterior",
+      dica: `acrescenta ao fim o texto de "${anterior.titulo}", do modelo usado antes da troca.`,
+      modo: "acrescentar" as const,
+      texto: () => anterior.texto,
+    })),
+  ]
+
   const contextoDaOrientacao = {
     texto: orientacaoDaSecao.texto,
     onTexto: (texto: string) => setOrientacao({ secao: activeSection, texto, avisos: [] }),
     avisos: orientacaoDaSecao.avisos,
     fontes: fontesDaIa(tipo, activeSection),
+    escrevendo: revelacao.escrevendo,
+    // A base do rascunho fica no rodapé do bloco da IA, recolhida (§112).
+    ...(fontesDoRascunho
+      ? { rascunhoDaIa: { fontes: fontesDoRascunho, onDescartar: descartarRascunhoDaIa, pedeConfirmacao: naoGravado } }
+      : {}),
+    // O que escreve na seção sem IA fica num lugar só (§114): o editor junta a
+    // minuta e o modelo anterior às origens de cada painel.
+    preenchimentos: preenchimentosDoEditor,
+    registrarEscrita: (nova: { anterior: string; escrito: string; rotulo: string }) =>
+      setEscrita({ secao: activeSection, ...nova, ia: false }),
+    ...(desfazerValido && escrita
+      ? { desfazer: { rotulo: escrita.rotulo, ia: escrita.ia, onDesfazer: desfazerEscrita } }
+      : {}),
+    ...(active?.notasDaMinuta?.length ? { notasDaMinuta: active.notasDaMinuta } : {}),
     ...(orientacaoDaSecao.erro ? { erro: orientacaoDaSecao.erro } : {}),
   }
 
   return (
     <OrientacaoDaIaContexto.Provider value={contextoDaOrientacao}>
-    <div className="flex flex-col lg:h-full lg:flex-row lg:overflow-hidden">
+    {/*
+      A área inteira, e não só o campo: o primeiro clique ou tecla durante a
+      escrita da IA completa o texto antes de qualquer ação (salvar, trocar de
+      seção, inserir tabela), para nenhuma delas pegar o texto pela metade.
+    */}
+    <div
+      className="flex flex-col lg:h-full lg:flex-row lg:overflow-hidden"
+      data-ia-escrevendo={revelacao.escrevendo || undefined}
+      {...revelacao.interceptar}
+    >
       {/* Rail de seções */}
       <div className="flex w-full shrink-0 flex-col overflow-hidden border-b border-border bg-surface lg:w-70 lg:min-w-70 lg:border-r lg:border-b-0">
         <div className="border-b border-border-soft px-4.5 pt-4.5 pb-3.5">
@@ -764,67 +889,38 @@ export default function EditorDocumento() {
             </>
           ) : !naEtapaFinal && active ? (
             <SectionBlock title={active.titulo} hint={active.hint ?? ""}>
-              {(active.textoDaMinuta || active.notasDaMinuta) && (
-                <div className="mb-3">
-                  <ApoioDaMinuta
-                    secao={active}
-                    rascunho={rascunho}
-                    setRascunho={(texto) => setRascunho(semLinhasEmBranco(texto))}
-                  />
-                </div>
-              )}
               {active.desvioDaMinuta && (
                 <div className="mb-3">
                   <JustificativaDoDesvio processoId={processoId} tipo={tipo} secao={active} />
                 </div>
               )}
-              {active.status === "Completo" && !rascunhoDaIaPendente && igualAoGravado && active.conteudo !== "" ? (
-                // Concluída já aparece no ✓ da lista de seções; um cartão aqui
-                // repetia o aviso em cima do texto (§96).
-                <div className="flex flex-col gap-3">
-                  <Textarea value={rascunho} onChange={(e) => setRascunho(e.target.value)} rows={6} />
-                  <TabelasDaSecao texto={rascunho} onChange={setRascunho} />
-                </div>
-              ) : (
-                <div className="flex flex-col gap-3">
-                  <Textarea
-                    ref={campoDoTexto}
-                    value={rascunho}
-                    onChange={(e) => setRascunho(e.target.value)}
-                    rows={6}
-                    placeholder="Preencha o conteúdo desta seção..."
-                  />
-                  <TabelasDaSecao texto={rascunho} onChange={setRascunho} />
-                  {/*
-                    A IA fica **sempre**: sem modelo configurado o botão vem
-                    desabilitado com o motivo (ADR-029), e com texto na tela ela
-                    parte do que está escrito — sumir depois da primeira linha
-                    tirava justamente o caminho de "redija a partir do que eu
-                    rascunhei".
-                  */}
-                  <CaminhosDaSecao
-                    gerando={gerandoRascunho}
-                    onGerarComIa={handleGerarIA}
-                  />
-                  {rascunho.trim() !== "" && (
-                    <ValidationMsg
-                      type="warn"
-                      msg={rascunhoDaIaPendente
-                        ? "Rascunho ainda não salvo. Revise os fatos e as lacunas antes de salvar."
-                        : "Revise os fatos e as lacunas antes de finalizar a seção."}
-                    />
-                  )}
-                  {gerandoRascunho && (
-                    <InlineSpinner label="Gerando conteúdo da seção... aguarde." />
-                  )}
-                </div>
-              )}
+              {/*
+                O campo, as ferramentas do texto e o bloco da IA, na mesma ordem
+                dos painéis (§112). A seção concluída também os mostra: era só
+                aqui que o texto da minuta ficava fora de alcance (§114).
+              */}
+              <div className="flex flex-col gap-3">
+                <Textarea
+                  ref={campoDoTexto}
+                  value={rascunho}
+                  onChange={(e) => setRascunho(e.target.value)}
+                  rows={6}
+                  placeholder="Preencha o conteúdo desta seção..."
+                />
+                <TabelasDaSecao texto={rascunho} onChange={setRascunho} />
+                <CaminhosDaSecao
+                  gerando={gerandoRascunho}
+                  onGerarComIa={handleGerarIA}
+                  texto={rascunho}
+                  setTexto={setRascunho}
+                />
+              </div>
             </SectionBlock>
           ) : null}
 
           {/*
             As cláusulas "(Se for o caso)" valem em qualquer seção, inclusive nas de painel próprio: o texto é o mesmo
-            `rascunho`, e quem decide quais tirar é quem assina (ADR 107).
+            `rascunho`, e quem decide quais tirar é quem assina (ADR 117).
           */}
           {!naEtapaFinal && active && (
             <ClausulasCondicionais
@@ -834,34 +930,6 @@ export default function EditorDocumento() {
               texto={rascunho}
               onTextoChange={(texto) => setRascunho(semLinhasEmBranco(texto))}
             />
-          )}
-
-          {!naEtapaFinal && active && fontesDoRascunho && (
-            <div className="mt-4 rounded-card border border-border bg-surface p-4 text-sm text-text-2">
-              <div className="flex items-start justify-between gap-3">
-                <h3 className="m-0 font-display text-base font-bold text-text-1">Revise o Rascunho da IA</h3>
-                <Button size="sm" variant="ghost" onClick={descartarRascunhoDaIa}>
-                  Descartar rascunho
-                </Button>
-              </div>
-              <p className="mb-3 mt-1 text-text-muted">O texto ainda não foi salvo. Estas são as fontes disponíveis no contexto, não uma comprovação automática de cada afirmação do rascunho.</p>
-              {fontesDoRascunho.warnings.length > 0 && (
-                <div className="mb-3">
-                  <h4 className="mb-1 font-semibold text-text-1">Atenção às Fontes Não Integradas</h4>
-                  <ul className="m-0 list-disc pl-5">{fontesDoRascunho.warnings.map((aviso) => <li key={aviso}>{aviso}</li>)}</ul>
-                </div>
-              )}
-              {fontesDoRascunho.missingFacts.length > 0 && (
-                <div className="mb-3">
-                  <h4 className="mb-1 font-semibold text-text-1">Lacunas Identificadas no DFD</h4>
-                  <ul className="m-0 list-disc pl-5">{fontesDoRascunho.missingFacts.map((fato) => <li key={fato}>{fato}</li>)}</ul>
-                </div>
-              )}
-              <h4 className="mb-1 font-semibold text-text-1">Dados de Origem Disponíveis</h4>
-              <ul className="m-0 list-disc pl-5">
-                {fontesDoRascunho.evidence.map((item, indice) => <li key={`${item.source}-${indice}`}><span className="font-semibold">{item.source}:</span> {item.fact}</li>)}
-              </ul>
-            </div>
           )}
 
           {/* A adesão à ATA e as alternativas de mercado são ferramentas distintas da seção V. */}
@@ -975,15 +1043,10 @@ export default function EditorDocumento() {
 
 
           {/*
-            O texto de outro modelo aparece só na seção do mesmo assunto; o que
-            não tem seção correspondente fica na etapa final, para não se perder.
+            O texto de outro modelo da seção aberta entra pelo "Preencher com"
+            do bloco (§114); o que não tem seção correspondente fica na etapa
+            final, para não se perder.
           */}
-          {!naEtapaFinal && active && (
-            <TextosDeOutroModelo
-              textos={(documento.data?.textosDeOutroModelo ?? []).filter((texto) => texto.secaoAlvo === active.id)}
-              onInserir={(texto) => setRascunho(semLinhasEmBranco(`${rascunho}\n${texto}`))}
-            />
-          )}
           {naEtapaFinal && (
             <TextosDeOutroModelo
               titulo="Textos Sem Seção Correspondente"

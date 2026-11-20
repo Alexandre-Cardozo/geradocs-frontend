@@ -112,7 +112,7 @@ describe("painel de dotação", () => {
     // Sem crédito não há rascunho a montar: o parágrafo afirma de onde sai o
     // dinheiro.
     expect(
-      screen.queryByRole("button", { name: /Escrever a partir dos créditos/ }),
+      screen.queryByRole("button", { name: "Preencher com dados do processo" }),
     ).not.toBeInTheDocument()
   })
 
@@ -163,7 +163,7 @@ describe("painel de dotação", () => {
     const setRascunho = renderizarPainel("Contrato", "Da Dotação Orçamentária")
 
     await userEvent.click(
-      await screen.findByRole("button", { name: /Escrever a partir dos créditos/ }),
+      await screen.findByRole("button", { name: "Preencher com dados do processo" }),
     )
 
     const texto = setRascunho.mock.calls[0]?.[0] as string

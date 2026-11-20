@@ -6,6 +6,7 @@ import { Button, InfoBanner, Tag, ValidationMsg } from "@/components/ui"
 import { IconSparkles } from "@/components/ui/icons"
 import { InlineSpinner } from "@/components/shared/estados"
 import { useToast } from "@/components/shared/providers"
+import { ehLimiteDaIa } from "@/lib/api/limite-da-ia"
 import { useClausulasCondicionais, useEstadoDaIa, useSugerirClausulas, useTirarClausulas } from "@/lib/api/hooks"
 import {
   idsSugeridosParaTirar,
@@ -37,7 +38,7 @@ const SEM_ESCOLHA: ReadonlySet<string> = new Set()
 const plural = (n: number, singular: string, plural: string) => `${n} ${n === 1 ? singular : plural}`
 
 /**
- * As cláusulas "(Se for o caso)" da minuta, para o servidor escolher quais tirar (ADR 107; ADR-078 do back-end).
+ * As cláusulas "(Se for o caso)" da minuta, para o servidor escolher quais tirar (ADR 117; ADR-078 do back-end).
  *
  * <p>A minuta traz dezenas delas, e tirar a que não é o caso é o uso esperado (Art. 19, § 2º, Lei 14.133/21 não
  * pede justificativa para isso). O painel as lista, a IA sugere quais provavelmente não se aplicam, e **quem decide
@@ -103,11 +104,9 @@ export function ClausulasCondicionais({
       ? "Verificando a IA..."
       : estadoDaIa === "sem-modelo"
         ? "Nenhum modelo de IA configurado nesta instalação."
-        : estadoDaIa === "teto-esgotado"
-          ? "O teto de IA do mês acabou. Fale com o administrador da plataforma."
-          : estadoDaIa === "sem-teto"
-            ? "A IA não está liberada para esta entidade. Fale com o administrador da plataforma."
-            : "A IA lê o objeto, a modalidade, o valor e os itens do DFD, e só sugere: nada sai sem o seu clique."
+        : estadoDaIa === "sem-teto"
+          ? "A IA não está liberada para esta entidade. Fale com o administrador da plataforma."
+          : "A IA lê o objeto, a modalidade, o valor e os itens do DFD, e só sugere: nada sai sem o seu clique."
   const iaIndisponivel = estadoDaIa !== "disponivel"
 
   const alternar = (id: string) => {
@@ -126,8 +125,11 @@ export function ClausulasCondicionais({
             showToast("A IA não achou cláusula que claramente não se aplique. Decida pelo texto de cada uma.")
           }
         },
-        onError: (erro) =>
-          showToast(erro instanceof Error && erro.message ? erro.message : "Não foi possível pedir a sugestão da IA."),
+        onError: (erro) => {
+          // O limite do plano abre o aviso próprio (ADR 109): repetir num toast seria dizer a mesma coisa duas vezes.
+          if (ehLimiteDaIa(erro)) return
+          showToast(erro instanceof Error && erro.message ? erro.message : "Não foi possível pedir a sugestão da IA.")
+        },
       },
     )
 

@@ -219,8 +219,8 @@ test.describe("elaboração do ETP", () => {
     await expect(page.getByText(/PCA 2026/)).toBeVisible()
 
     // O que não está no plano orienta e deixa seguir: o botão continua ativo.
-    await expect(page.getByText(/Um item não consta do plano/)).toBeVisible()
-    const citar = page.getByRole("button", { name: "Citar na seção" })
+    await expect(page.getByText(/1 item fora do PCA/)).toBeVisible()
+    const citar = page.getByRole("button", { name: "Preencher com dados do processo" })
     await expect(citar).toBeEnabled()
 
     await citar.click()

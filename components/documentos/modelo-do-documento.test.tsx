@@ -2,7 +2,6 @@ import { HttpResponse, http } from "msw"
 import { describe, expect, it, vi } from "vitest"
 
 import {
-  ApoioDaMinuta,
   EscolhaDoModelo,
   TextosDeOutroModelo,
   TrocaDeModelo,
@@ -11,7 +10,7 @@ import { documentoApi } from "@/lib/teste/fixtures-api"
 import { urlDaApi } from "@/lib/teste/handlers"
 import { renderizar, screen, userEvent, waitFor } from "@/lib/teste/renderizar"
 import { servidor } from "@/lib/teste/servidor-msw"
-import type { ModeloDeEstrutura, SecaoDocumento } from "@/lib/types"
+import type { ModeloDeEstrutura } from "@/lib/types"
 
 const PROCESSO = documentoApi.processId
 
@@ -156,68 +155,14 @@ describe("troca de minuta", () => {
   })
 })
 
-describe("texto e notas da minuta", () => {
-  const secao: SecaoDocumento = {
-    id: "PC00",
-    titulo: "Preâmbulo",
-    status: "Não iniciado",
-    obrigatoria: true,
-    conteudo: "",
-    origem: "catalogo",
-    textoDaMinuta: "Torna-se público que...",
-    notasDaMinuta: ["Nota explicativa: adapte ao órgão."],
-  }
-
-  it("seção em branco recebe o texto da minuta direto", async () => {
-    const setRascunho = vi.fn()
-    renderizar(<ApoioDaMinuta secao={secao} rascunho="" setRascunho={setRascunho} />)
-
-    await userEvent.click(screen.getByRole("button", { name: "Usar o Texto da Minuta" }))
-
-    expect(setRascunho).toHaveBeenCalledWith("Torna-se público que...")
-    expect(screen.getByText("Notas da AGU (1)")).toBeInTheDocument()
-  })
-
-  it("com texto escrito, substituir pede confirmação", async () => {
-    const setRascunho = vi.fn()
-    renderizar(<ApoioDaMinuta secao={secao} rascunho="Meu texto." setRascunho={setRascunho} />)
-
-    await userEvent.click(screen.getByRole("button", { name: "Usar o Texto da Minuta" }))
-    await userEvent.click(screen.getByRole("button", { name: "Manter o Atual" }))
-    expect(setRascunho).not.toHaveBeenCalled()
-
-    await userEvent.click(screen.getByRole("button", { name: "Usar o Texto da Minuta" }))
-    await userEvent.click(screen.getByRole("button", { name: "Substituir" }))
-    expect(setRascunho).toHaveBeenCalledWith("Torna-se público que...")
-  })
-
-  it("seção sem texto nem notas da minuta não mostra nada", () => {
-    const { container } = renderizar(
-      <ApoioDaMinuta secao={{ ...secao, textoDaMinuta: undefined, notasDaMinuta: [] }} rascunho="" setRascunho={vi.fn()} />,
-    )
-    expect(container).toBeEmptyDOMElement()
-
-    renderizar(<ApoioDaMinuta secao={{ ...secao, textoDaMinuta: undefined }} rascunho="" setRascunho={vi.fn()} />)
-    expect(screen.queryByRole("button", { name: "Usar o Texto da Minuta" })).not.toBeInTheDocument()
-    expect(screen.getByText("Notas da AGU (1)")).toBeInTheDocument()
-  })
-})
-
 describe("textos de outro modelo", () => {
-  it("lista o que ficou guardado e insere na seção aberta", async () => {
-    const onInserir = vi.fn()
-    renderizar(
-      <TextosDeOutroModelo
-        textos={[{ secao: "12", titulo: "Da Dotação Orçamentária", texto: "02.01.33." }]}
-        onInserir={onInserir}
-      />,
-    )
+  it("lista o que ficou guardado, só para leitura: inserir na seção é pelo bloco (§114)", async () => {
+    renderizar(<TextosDeOutroModelo textos={[{ secao: "12", titulo: "Da Dotação Orçamentária", texto: "02.01.33." }]} />)
 
     expect(screen.getByText("Textos de Outro Modelo (1)")).toBeInTheDocument()
     await userEvent.click(screen.getByText("Textos de Outro Modelo (1)"))
-    await userEvent.click(screen.getByRole("button", { name: "Inserir nesta Seção" }))
-
-    expect(onInserir).toHaveBeenCalledWith("02.01.33.")
+    expect(screen.getByText("02.01.33.")).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Inserir nesta Seção" })).not.toBeInTheDocument()
   })
 
   it("sem seção aberta, o texto é só para leitura, com título próprio", () => {
@@ -233,7 +178,7 @@ describe("textos de outro modelo", () => {
   })
 
   it("sem texto guardado, não aparece", () => {
-    const { container } = renderizar(<TextosDeOutroModelo textos={[]} onInserir={vi.fn()} />)
+    const { container } = renderizar(<TextosDeOutroModelo textos={[]} />)
     expect(container).toBeEmptyDOMElement()
   })
 })

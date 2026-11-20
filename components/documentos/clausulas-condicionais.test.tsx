@@ -64,7 +64,7 @@ function renderizarPainel(texto = TEXTO) {
 }
 
 /**
- * As cláusulas "(Se for o caso)" no editor (ADR 107): a plataforma lista, a IA sugere, e quem decide é quem assina.
+ * As cláusulas "(Se for o caso)" no editor (ADR 117): a plataforma lista, a IA sugere, e quem decide é quem assina.
  * Nada sai sem o clique, o texto só é gravado quando a pessoa salva a seção, e dá para desfazer.
  */
 describe("cláusulas condicionais da minuta", () => {

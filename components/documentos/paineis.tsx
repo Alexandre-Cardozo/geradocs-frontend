@@ -12,7 +12,7 @@ import {
   Textarea,
 } from "@/components/ui"
 import { IconCheckCircle, IconFileText } from "@/components/ui/icons"
-import { CaminhosDaSecao } from "@/components/documentos/caminhos-da-secao"
+import { CaminhosDaSecao, dadosDoProcesso } from "@/components/documentos/caminhos-da-secao"
 import { InlineSpinner } from "@/components/shared/estados"
 import { useToast } from "@/components/shared/providers"
 import { AvisoDaMemoria, EstimativaDoProcesso } from "@/components/documentos/estimativa-do-processo"
@@ -123,16 +123,18 @@ function PainelNecessidade({
         <CaminhosDaSecao
           gerando={gerando}
           onGerarComIa={onGerarComIa}
-          rascunhoAutomatico={
+          texto={rascunho}
+          setTexto={setRascunho}
+          preenchimentos={
             temBase
-              ? {
-                  rotulo: rascunho.trim() === "" ? "Escrever o rascunho" : "Refazer o rascunho",
-                  onEscrever: () => {
-                    setRascunho(rascunhoDaNecessidade(processo.data!, registrados))
+              ? [
+                  dadosDoProcesso("monta o parágrafo a partir do objeto e dos DFDs.", () => {
+                    const texto = rascunhoDaNecessidade(processo.data!, registrados)
                     showToast("Rascunho escrito a partir do processo. Revise antes de salvar.")
-                  },
-                }
-              : undefined
+                    return texto
+                  }),
+                ]
+              : []
           }
         />
       </div>
@@ -236,25 +238,22 @@ function PainelQuantidades({
         </div>
       </div>
 
-      <div className="mt-4">
+      <div className="mt-3">
         <CaminhosDaSecao
           gerando={gerando}
           onGerarComIa={onGerarComIa}
-          rascunhoAutomatico={
+          texto={rascunho}
+          setTexto={setRascunho}
+          preenchimentos={
             itens.length > 0
-              ? {
-                  rotulo:
-                    rascunho.trim() === ""
-                      ? "Escrever a memória a partir dos DFDs"
-                      : "Refazer a partir dos DFDs",
-                  onEscrever: () => {
-                    setRascunho(memoriaDasQuantidades(itens))
-                    showToast(
-                      "Memória de cálculo preenchida a partir dos DFDs. Revise antes de salvar.",
-                    )
-                  },
-                }
-              : undefined
+              ? [
+                  dadosDoProcesso("escreve a memória a partir das quantidades dos DFDs.", () => {
+                    const texto = memoriaDasQuantidades(itens)
+                    showToast("Memória de cálculo preenchida a partir dos DFDs. Revise antes de salvar.")
+                    return texto
+                  }),
+                ]
+              : []
           }
         />
       </div>
@@ -522,46 +521,41 @@ function PainelValor({
         </p>
       )}
 
-      <div className="mt-4">
+      <div className="mt-3">
         <CaminhosDaSecao
           gerando={gerando}
           onGerarComIa={onGerarComIa}
-          rascunhoAutomatico={
+          texto={rascunho}
+          setTexto={setRascunho}
+          preenchimentos={
             /*
               Sem a fonte não há rascunho a montar: o parágrafo afirma de onde
               saiu o preço, e escrevê-lo sem isso deixaria a lacuna que o
               Art. 23, § 1º não admite.
             */
             precificados.length > 0 && fonte.trim() !== ""
-              ? {
-                  rotulo:
-                    rascunho.trim() === ""
-                      ? "Escrever a memória a partir dos itens"
-                      : "Refazer a partir dos itens",
-                  onEscrever: () => {
-                    setRascunho(
-                      memoriaDoValor(
-                        precificados.map((item) => ({
-                          descricao: item.descricao,
-                          unidade: item.unidade,
-                          quantidade: item.quantidade,
-                          valorUnitario: item.valorUnitario,
-                          precoApurado: item.precoApurado,
-                          precosColetados: item.precosColetados,
-                          ...(item.codigoCatalogo ? { codigoCatalogo: item.codigoCatalogo } : {}),
-                        })),
-                        total,
-                        valorDeclarado,
-                        fonte,
-                        metodo,
-                      ),
+              ? [
+                  dadosDoProcesso("escreve a memória a partir dos itens precificados.", () => {
+                    const texto = memoriaDoValor(
+                      precificados.map((item) => ({
+                        descricao: item.descricao,
+                        unidade: item.unidade,
+                        quantidade: item.quantidade,
+                        valorUnitario: item.valorUnitario,
+                        precoApurado: item.precoApurado,
+                        precosColetados: item.precosColetados,
+                        ...(item.codigoCatalogo ? { codigoCatalogo: item.codigoCatalogo } : {}),
+                      })),
+                      total,
+                      valorDeclarado,
+                      fonte,
+                      metodo,
                     )
-                    showToast(
-                      "Memória de cálculo preenchida a partir dos itens. Revise antes de salvar.",
-                    )
-                  },
-                }
-              : undefined
+                    showToast("Memória de cálculo preenchida a partir dos itens. Revise antes de salvar.")
+                    return texto
+                  }),
+                ]
+              : []
           }
         />
       </div>

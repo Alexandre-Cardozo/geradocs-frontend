@@ -439,7 +439,7 @@ export function useGerarRascunhoDaSecao(processoId: string, tipo: TipoDocumento)
 }
 
 /**
- * As cláusulas "(Se for o caso)" do texto que o editor mostra (ADR 107; ADR-078 do back-end).
+ * As cláusulas "(Se for o caso)" do texto que o editor mostra (ADR 117; ADR-078 do back-end).
  *
  * `ativa` evita a chamada na seção que não tem a marcação. O texto entra na chave: os identificadores das
  * cláusulas valem só para aquele texto exato, e cache de outro texto apontaria para a linha errada.
@@ -1322,11 +1322,16 @@ export function useIaDisponivel() {
  * O que a tela pode prometer da IA agora (ADR-029 e ADR-064 do back-end).
  *
  * Cada estado tem um motivo diferente e uma saída diferente: sem modelo, é da
- * instalação; sem teto, é pedir ao administrador que defina; teto esgotado, é
- * esperar o mês. Enquanto a resposta não chega, é `verificando` — habilitar por
- * otimismo devolveria o clique que dá erro.
+ * instalação; sem teto, é pedir ao administrador que defina. Enquanto a
+ * resposta não chega, é `verificando`: habilitar por otimismo devolveria o
+ * clique que dá erro.
+ *
+ * <p>Teto definido e já consumido **não** desliga o botão (§109): o clique vai
+ * ao servidor, a recusa abre o aviso do limite com o contato da GovPro, e
+ * quando o limite é renovado ou ampliado a IA volta a responder no clique
+ * seguinte, sem esperar a tela reler o teto.
  */
-export type EstadoDaIa = "verificando" | "sem-modelo" | "sem-teto" | "teto-esgotado" | "disponivel"
+export type EstadoDaIa = "verificando" | "sem-modelo" | "sem-teto" | "disponivel"
 
 export function useEstadoDaIa(): EstadoDaIa {
   const ia = useIaDisponivel()
@@ -1334,7 +1339,7 @@ export function useEstadoDaIa(): EstadoDaIa {
   const teto = useTetoDeIa(ia.data === true ? (sessao.data?.usuario.entidadeId ?? "") : "")
   if (ia.isPending) return "verificando"
   if (ia.data !== true) return "sem-modelo"
-  if (teto.data !== undefined && !teto.data.disponivel) return teto.data.definido ? "teto-esgotado" : "sem-teto"
+  if (teto.data !== undefined && !teto.data.definido) return "sem-teto"
   return "disponivel"
 }
 

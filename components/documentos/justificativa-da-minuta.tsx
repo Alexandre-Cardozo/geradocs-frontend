@@ -3,6 +3,7 @@
 import { useState } from "react"
 
 import { Button, FormField, InfoBanner, Tag, Textarea } from "@/components/ui"
+import { LinhaDeAtencao } from "@/components/shared/linha-de-atencao"
 import { useToast } from "@/components/shared/providers"
 import { useJustificarDesvio, useJustificarModelo } from "@/lib/api/hooks"
 import type { SecaoDocumento, TipoDocumento } from "@/lib/types"
@@ -67,9 +68,14 @@ function CampoDeJustificativa({
 }
 
 /**
- * A seção que deixa de fora cláusulas da minuta pede a justificativa da
- * alteração (§88; ADR-055 do back-end). Orienta, não trava: o documento se
- * conclui sem ela.
+ * A seção que deixa de fora cláusulas obrigatórias da minuta pede a
+ * justificativa da alteração (§88; ADR-055 do back-end). Orienta, não trava: o
+ * documento se conclui sem ela.
+ *
+ * <p>É uma linha de atenção (§115): o que falta e o fundamento numa linha só;
+ * a lista das cláusulas e o campo da justificativa abrem a pedido. Era um
+ * cartão com aviso, lista aberta, campo grande e botão, acima do texto da
+ * seção. Justificada, a linha fica verde e recolhida.
  */
 export function JustificativaDoDesvio({
   processoId,
@@ -84,42 +90,54 @@ export function JustificativaDoDesvio({
   const showToast = useToast()
   const desvio = secao.desvioDaMinuta
   if (!desvio) return null
+  const justificada = Boolean(secao.justificativaDoDesvio)
+  const faltam = desvio.faltam.length
 
   return (
-    <div className="flex flex-col gap-2.5 rounded-lg border border-border bg-surface px-3.5 py-3">
-      <InfoBanner tone={secao.justificativaDoDesvio ? "info" : "warning"}>
-        O texto deixa de fora {desvio.faltam.length} de {desvio.clausulas}{" "}
-        {desvio.clausulas === 1 ? "cláusula" : "cláusulas"} da minuta.
-        {secao.justificativaDoDesvio ? " Alteração justificada." : ` Justifique a alteração (${FUNDAMENTO}).`}
-      </InfoBanner>
-      <details className="text-sm text-text-3">
-        <summary className="cursor-pointer font-semibold text-text-2">Cláusulas Fora do Texto</summary>
-        <ul className="m-0 mt-2 flex list-disc flex-col gap-1 pl-4">
-          {desvio.faltam.map((clausula) => (
-            <li key={clausula}>{clausula}</li>
-          ))}
-        </ul>
-      </details>
-      <CampoDeJustificativa
-        key={secao.id}
-        rotulo="Justificativa da Alteração"
-        salvo={secao.justificativaDoDesvio}
-        pendente={justificar.isPending}
-        onSalvar={(texto, aoSalvar) =>
-          justificar.mutate(
-            { secaoId: secao.id, texto },
-            {
-              onSuccess: () => {
-                aoSalvar()
-                showToast(texto.trim() ? "Justificativa salva." : "Justificativa retirada.")
-              },
-              onError: (erro) =>
-                showToast(erro instanceof Error ? erro.message : "Não foi possível salvar a justificativa."),
-            },
-          )
-        }
-      />
-    </div>
+    <LinhaDeAtencao
+      tom={justificada ? "resolvido" : "atencao"}
+      detalhe={{
+        rotulo: justificada ? "Ver" : "Justificar",
+        conteudo: (
+          <>
+            <div>
+              <div className="text-xs font-semibold text-text-2">
+                {faltam === 1 ? "Cláusula fora do texto" : "Cláusulas fora do texto"} ({faltam} de {desvio.clausulas}{" "}
+                {desvio.clausulas === 1 ? "obrigatória" : "obrigatórias"})
+              </div>
+              <ul className="m-0 mt-1 flex max-h-40 list-disc flex-col gap-1 overflow-y-auto pl-4 text-xs text-text-3">
+                {desvio.faltam.map((clausula) => (
+                  <li key={clausula}>{clausula}</li>
+                ))}
+              </ul>
+            </div>
+            <CampoDeJustificativa
+              key={secao.id}
+              rotulo="Justificativa da Alteração"
+              salvo={secao.justificativaDoDesvio}
+              pendente={justificar.isPending}
+              onSalvar={(texto, aoSalvar) =>
+                justificar.mutate(
+                  { secaoId: secao.id, texto },
+                  {
+                    onSuccess: () => {
+                      aoSalvar()
+                      showToast(texto.trim() ? "Justificativa salva." : "Justificativa retirada.")
+                    },
+                    onError: (erro) =>
+                      showToast(erro instanceof Error ? erro.message : "Não foi possível salvar a justificativa."),
+                  },
+                )
+              }
+            />
+          </>
+        ),
+      }}
+    >
+      {justificada
+        ? `Alteração da minuta justificada: ${faltam} ${faltam === 1 ? "cláusula" : "cláusulas"} fora do texto.`
+        : `${faltam} ${faltam === 1 ? "cláusula obrigatória" : "cláusulas obrigatórias"} da minuta fora do texto (${FUNDAMENTO}).`}
+    </LinhaDeAtencao>
   )
 }
 

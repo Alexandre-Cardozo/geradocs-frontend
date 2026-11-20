@@ -1,14 +1,10 @@
 "use client"
 
 import { ImportarPca } from "@/components/configuracoes/importar-pca"
-import { anoBrasilia } from "@/lib/format"
+import { anosDoPca } from "@/lib/dominio/anos-do-pca"
 
-/** Opções de ano do PCA: últimos 3 anos + o ano vigente (Brasília). */
-const anoAtual = anoBrasilia()
-const anosPCA = Array.from({ length: 4 }, (_, i) => {
-  const ano = String(anoAtual - 3 + i)
-  return { value: ano, label: ano }
-})
+/** Opções de ano do PCA: de 2025 a 2050 (§116). */
+const anosPCA = anosDoPca()
 
 /** O Plano de Contratações Anual do órgão: anexar, indexar e conferir. */
 export default function Pca() {

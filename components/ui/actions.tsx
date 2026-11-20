@@ -32,6 +32,8 @@ export function Button({
   type = "button",
   title,
   ariaDescribedBy,
+  ariaExpanded,
+  ariaControls,
 }: {
   variant?: keyof typeof buttonVariants
   size?: keyof typeof buttonSizes
@@ -51,6 +53,10 @@ export function Button({
    * tooltip não é lida em navegação por teclado.
    */
   ariaDescribedBy?: string
+  /** Para o botão que abre e fecha um trecho da tela (as notas da minuta, por exemplo). */
+  ariaExpanded?: boolean
+  /** O `id` do trecho que o botão abre e fecha. */
+  ariaControls?: string
 }) {
   return (
     <button
@@ -58,6 +64,8 @@ export function Button({
       disabled={disabled}
       title={title}
       aria-describedby={ariaDescribedBy}
+      aria-expanded={ariaExpanded}
+      aria-controls={ariaControls}
       onClick={onClick}
       style={style}
       className={`inline-flex cursor-pointer items-center justify-center gap-1.75 rounded-md font-body font-semibold whitespace-nowrap transition-colors disabled:cursor-not-allowed ${buttonSizes[size]} ${buttonVariants[variant]} ${className}`}

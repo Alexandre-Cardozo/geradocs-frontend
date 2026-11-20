@@ -264,6 +264,23 @@
       stroke-dashoffset: -100;
     }
   }
+
+  /*
+   * ── Animação da IA (§107) ────────────────────────────────────────────────
+   *
+   * A exceção à regra "animação só funcional" do DS, pedida pelo produto: o
+   * texto da IA chega com um gesto da marca, e não colado de uma vez. Fica só
+   * nos três pontos de IA (gerar, revisar, melhorar) e some com movimento
+   * reduzido (a regra global de `prefers-reduced-motion` mais abaixo).
+   *
+   * - `ia-fluxo`: as cores da marca correndo na borda do cartão e no texto
+   *   enquanto a IA trabalha;
+   * - `ia-brilho`: um reflexo que atravessa o campo enquanto o texto é escrito;
+   * - `ia-surgir`: o que a IA entrega aparece saindo de um desfoque leve.
+   */
+  --animate-ia-fluxo: ia-fluxo 2.4s linear infinite;
+  --animate-ia-brilho: ia-brilho 1.1s linear infinite;
+  --animate-ia-surgir: ia-surgir 0.5s ease-out;
 }
 
 /*
@@ -307,6 +324,99 @@
 }
 @utility gradient-hero {
   background-image: var(--gradient-hero);
+}
+
+/*
+  A IA trabalhando e escrevendo (§107). As cores são as do símbolo da marca:
+  azul, azul-claro, verde e amarelo, na ordem da faixa do papel timbrado.
+*/
+:root {
+  --gradient-ia: linear-gradient(
+    90deg,
+    var(--color-marca-azul),
+    var(--color-marca-azul-claro),
+    var(--color-marca-verde),
+    var(--color-marca-amarelo),
+    var(--color-marca-azul)
+  );
+}
+
+/* Borda com as cores da marca correndo, sobre o fundo `ice` do cartão. */
+@utility ia-aura {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(var(--color-ice), var(--color-ice)) padding-box,
+    var(--gradient-ia) border-box;
+  background-size: 100% 100%, 300% 100%;
+  animation: var(--animate-ia-fluxo);
+}
+
+/* Texto pintado com as mesmas cores, correndo junto. */
+@utility ia-texto-magico {
+  background-image: var(--gradient-ia);
+  background-size: 300% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  animation: ia-fluxo-texto 2.4s linear infinite;
+}
+
+@keyframes ia-fluxo {
+  from {
+    background-position: 0 0, 0% 0;
+  }
+  to {
+    background-position: 0 0, 300% 0;
+  }
+}
+
+@keyframes ia-brilho {
+  from {
+    background-position: 120% 0;
+  }
+  to {
+    background-position: -120% 0;
+  }
+}
+
+@keyframes ia-surgir {
+  from {
+    opacity: 0;
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+@keyframes ia-fluxo-texto {
+  from {
+    background-position: 0% 0;
+  }
+  to {
+    background-position: 300% 0;
+  }
+}
+
+/*
+  O campo em que a IA está escrevendo: borda azul-claro, cursor escondido e o
+  reflexo atravessando. Vale para todo campo de texto dentro da área marcada
+  com `data-ia-escrevendo`, menos os de `data-ia-fora-da-escrita` (a
+  orientação), que não recebem o texto.
+*/
+[data-ia-escrevendo] textarea:not([data-ia-fora-da-escrita] textarea) {
+  border-color: var(--color-electric);
+  caret-color: transparent;
+  background-image: linear-gradient(
+    100deg,
+    transparent 35%,
+    color-mix(in srgb, var(--color-electric) 14%, transparent) 50%,
+    transparent 65%
+  );
+  background-size: 250% 100%;
+  background-repeat: no-repeat;
+  animation: var(--animate-ia-brilho);
 }
 
 /* ── Base ──────────────────────────────────────────────────────────────────── */

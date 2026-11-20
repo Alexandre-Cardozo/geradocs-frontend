@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 
 import { Button, Dropdown, FormField, InfoBanner } from "@/components/ui"
+import { LinhaDeAtencao } from "@/components/shared/linha-de-atencao"
 import { CampoDeFonteDePreco } from "@/components/shared/campo-de-fonte-de-preco"
 import { useToast } from "@/components/shared/providers"
 import {
@@ -239,14 +240,14 @@ export function AvisoDaMemoria({
   if (divergencias.fonte === "ausente") avisos.push("não cita a fonte")
   const soAcrescenta = divergencias.metodo !== "diferente" && divergencias.fonte !== "diferente"
 
+  // Linha de atenção (§115): o que diverge e a correção, num clique.
   return (
     <div className="mt-4">
-      <InfoBanner tone="warning">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <span>A memória de cálculo {enumerar(avisos)}.</span>
+      <LinhaDeAtencao
+        acoes={
           <Button
             size="sm"
-            variant="secondary"
+            variant="ghost"
             onClick={() => {
               setRascunho(memoriaEmDia(rascunho, estimativa, divergencias))
               showToast("Memória atualizada. Revise e salve a seção.")
@@ -254,8 +255,10 @@ export function AvisoDaMemoria({
           >
             {soAcrescenta ? "Incluir na Memória" : "Atualizar a Memória"}
           </Button>
-        </div>
-      </InfoBanner>
+        }
+      >
+        A memória de cálculo {enumerar(avisos)}.
+      </LinhaDeAtencao>
     </div>
   )
 }

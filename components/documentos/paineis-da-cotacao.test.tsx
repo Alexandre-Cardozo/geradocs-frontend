@@ -106,7 +106,7 @@ describe("fornecedores e fontes consultadas", () => {
 
     expect(await screen.findByText(/Nenhum preço coletado/)).toBeInTheDocument()
     expect(
-      screen.queryByRole("button", { name: /Escrever a partir das fontes/ }),
+      screen.queryByRole("button", { name: "Preencher com dados do processo" }),
     ).not.toBeInTheDocument()
   })
 
@@ -118,7 +118,7 @@ describe("fornecedores e fontes consultadas", () => {
     )
 
     await userEvent.click(
-      await screen.findByRole("button", { name: /Escrever a partir das fontes/ }),
+      await screen.findByRole("button", { name: "Preencher com dados do processo" }),
     )
 
     const texto = setRascunho.mock.calls[0]?.[0] as string
@@ -286,7 +286,7 @@ describe("análise crítica", () => {
     )
 
     expect(await screen.findByText(/Item com menos de três preços/)).toBeInTheDocument()
-    await userEvent.click(screen.getByRole("button", { name: /Escrever a análise/ }))
+    await userEvent.click(screen.getByRole("button", { name: "Preencher com dados do processo" }))
     expect(setRascunho.mock.calls[0]?.[0]).toContain("Art. 6º da IN SEGES/ME nº 65/2021")
   })
 
@@ -407,7 +407,7 @@ describe("metodologia e preço de referência", () => {
     )
 
     await userEvent.click(
-      await screen.findByRole("button", { name: /Escrever a memória de cálculo/ }),
+      await screen.findByRole("button", { name: "Preencher com dados do processo" }),
     )
 
     const texto = setRascunho.mock.calls[0]?.[0] as string

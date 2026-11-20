@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { describe, expect, it, vi } from "vitest"
 
+import { OrientacaoDaIaContexto } from "@/components/documentos/orientacao-da-ia"
 import { TabelasDaSecao } from "@/components/documentos/tabelas-da-secao"
 import { renderizar, screen, userEvent } from "@/lib/teste/renderizar"
 
@@ -95,5 +96,37 @@ describe("editor de tabela da seção", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Inserir tabela" }))
     expect(screen.queryByRole("button", { name: "Excluir tabela" })).not.toBeInTheDocument()
+  })
+
+  describe("notas da minuta (§114)", () => {
+    const notas = ["Nota explicativa: adapte ao órgão.", "Indique o fundamento da dispensa."]
+
+    it("ficam recolhidas na mesma linha das ferramentas, à direita, e abrem numa lista compacta", async () => {
+      renderizar(
+        <OrientacaoDaIaContexto.Provider value={{ texto: "", onTexto: vi.fn(), avisos: [], notasDaMinuta: notas }}>
+          <TabelasDaSecao texto="" onChange={vi.fn()} />
+        </OrientacaoDaIaContexto.Provider>,
+      )
+
+      const botao = screen.getByRole("button", { name: "Notas da AGU (2)" })
+      // Mesma linha de "Inserir tabela": não ocupam uma faixa própria.
+      expect(botao.closest("div")).toContainElement(screen.getByRole("button", { name: "Inserir tabela" }))
+      expect(botao).toHaveAttribute("aria-expanded", "false")
+      expect(screen.queryByRole("list", { name: "Notas da AGU" })).not.toBeInTheDocument()
+
+      await userEvent.click(botao)
+      expect(botao).toHaveAttribute("aria-expanded", "true")
+      const lista = screen.getByRole("list", { name: "Notas da AGU" })
+      expect(botao).toHaveAttribute("aria-controls", lista.id)
+      expect(screen.getByText("Indique o fundamento da dispensa.")).toBeInTheDocument()
+
+      await userEvent.click(botao)
+      expect(screen.queryByRole("list", { name: "Notas da AGU" })).not.toBeInTheDocument()
+    })
+
+    it("sem notas, ou fora do editor, não aparecem", () => {
+      renderizar(<TabelasDaSecao texto="" onChange={vi.fn()} />)
+      expect(screen.queryByRole("button", { name: /Notas da AGU/ })).not.toBeInTheDocument()
+    })
   })
 })
