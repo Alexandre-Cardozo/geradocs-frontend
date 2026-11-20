@@ -1,6 +1,8 @@
 import "client-only";
 
 import { requisicaoProtegida } from "@/lib/api/auth-client";
+import type { components } from "@/lib/api/gerado/v1";
+import type { ClausulaCondicional, SugestaoDaClausula, Veredito } from "@/lib/documentos/clausulas-condicionais";
 import type { Elaboracao } from "@/lib/documentos/elaboracao";
 import { painelDaSecao, painelDoAssunto } from "@/lib/documentos";
 import type { BlocoDoDocumento } from "@/lib/dominio";
@@ -548,6 +550,92 @@ export async function gerarRascunhoDaSecaoComFontes(
     evidence: resposta.evidence ?? [],
     guidanceWarnings: resposta.guidanceWarnings ?? [],
   };
+}
+
+type ClausulaCondicionalApi = components["schemas"]["ConditionalClauseView"];
+type SugestaoApi = components["schemas"]["ClauseSuggestionView"];
+
+/** O veredito do contrato no vocabulário da interface: o mapeamento é à mão de propósito (camada anticorrupção). */
+const vereditos: Record<SugestaoApi["verdict"], Veredito> = {
+  LIKELY_NOT_APPLICABLE: "provavelmente-nao-se-aplica",
+  LIKELY_APPLICABLE: "provavelmente-se-aplica",
+  UNDETERMINED: "indeterminada",
+};
+
+function corpoDoTexto(texto: string): string {
+  return JSON.stringify({ content: texto });
+}
+
+function rotaDasClausulas(processoId: string, tipo: TipoDocumento, secaoId: string): string {
+  return `${rota(processoId, tipo)}/sections/${encodeURIComponent(secaoId)}/conditional-clauses`;
+}
+
+/**
+ * As cláusulas "(Se for o caso)" do texto que o editor mostra (ADR 107; ADR-078 do back-end).
+ *
+ * A análise é sobre o texto da tela, e não sobre o gravado: o servidor pode ter editado sem salvar. Não grava nada.
+ */
+export async function analisarClausulasCondicionais(
+  processoId: string,
+  tipo: TipoDocumento,
+  secaoId: string,
+  texto: string,
+): Promise<ClausulaCondicional[]> {
+  const resposta = await requisicaoProtegida<components["schemas"]["ConditionalClausesResponse"]>(
+    `${rotaDasClausulas(processoId, tipo, secaoId)}/analysis`,
+    { method: "POST", body: corpoDoTexto(texto) },
+  );
+  return resposta.clauses.map((c: ClausulaCondicionalApi) => ({
+    id: c.id,
+    numero: c.number,
+    previa: c.preview,
+    linhaInicial: c.firstLine,
+    linhaFinal: c.lastLine,
+    paiId: c.parentId,
+    alternativa: c.alternative,
+  }));
+}
+
+/**
+ * Pede à IA que sugira quais cláusulas provavelmente não se aplicam ao processo.
+ *
+ * Só sugere: não grava nem tira nada. Na dúvida a IA devolve "indeterminada", e uma cláusula sem sugestão não é
+ * cláusula que se aplica.
+ */
+export async function sugerirClausulasCondicionais(
+  processoId: string,
+  tipo: TipoDocumento,
+  secaoId: string,
+  texto: string,
+): Promise<SugestaoDaClausula[]> {
+  const resposta = await requisicaoProtegida<components["schemas"]["ClauseSuggestionsResponse"]>(
+    `${rotaDasClausulas(processoId, tipo, secaoId)}/suggestions`,
+    { method: "POST", body: corpoDoTexto(texto) },
+  );
+  return resposta.suggestions.map((s: SugestaoApi) => ({
+    clausulaId: s.clauseId,
+    veredito: vereditos[s.verdict] ?? "indeterminada",
+    motivo: s.reason,
+  }));
+}
+
+/**
+ * O texto sem as cláusulas escolhidas. Não grava: devolve o resultado para quem escolheu conferir e salvar.
+ *
+ * Se o texto mudou depois da análise o servidor recusa, e a tela analisa de novo.
+ */
+export async function tirarClausulasCondicionais(
+  processoId: string,
+  tipo: TipoDocumento,
+  secaoId: string,
+  texto: string,
+  clausulaIds: string[],
+): Promise<string> {
+  const resposta = await requisicaoProtegida<components["schemas"]["RemoveConditionalClausesResponse"]>(
+    `${rotaDasClausulas(processoId, tipo, secaoId)}/removal`,
+    { method: "POST", body: JSON.stringify({ content: texto, clauseIds: clausulaIds }) },
+  );
+  return resposta.content;
 }
 
 /** Natureza da retificação, no vocabulário do contrato. */
