@@ -37,6 +37,7 @@ import {
   deCampoDataHora,
   formatBRL,
   formatData,
+  formatNumeroBR,
   paraCampoDataHora,
   parseValorBR,
   SEM_VALOR,
@@ -741,7 +742,7 @@ export function PainelDoPrecoDeReferencia(props: PropsDoPainel) {
                           {formatBRL(unitario)}
                         </td>
                         <td className="py-2 pr-3 text-right font-mono text-text-3">
-                          {quantidade ?? SEM_VALOR}
+                          {quantidade == null ? SEM_VALOR : formatNumeroBR(quantidade)}
                         </td>
                         <td className="py-2 text-right font-mono font-semibold text-petroleum">
                           {quantidade == null ? SEM_VALOR : formatBRL(unitario * quantidade)}
