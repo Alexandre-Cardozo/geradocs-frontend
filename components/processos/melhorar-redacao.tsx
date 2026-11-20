@@ -109,7 +109,7 @@ export function MelhorarRedacao({
         <div className="flex flex-col gap-2 rounded-xl border border-border bg-ice px-4 py-3.5" role="region" aria-label="Sugestão de redação">
           <span className="text-2xs font-semibold tracking-caps text-text-muted uppercase">Sugestão de redação</span>
           {igual ? (
-            <p className="m-0 text-sm text-text-2">O texto já está bem escrito: a sugestão é igual ao que você escreveu.</p>
+            <p className="m-0 text-sm text-text-2">A IA não sugeriu mudanças: devolveu o mesmo texto que você escreveu. Isso não quer dizer que ele esteja bem escrito. Se tem gírias ou abreviações, reescreva essas partes e peça de novo.</p>
           ) : (
             <>
               <p className="m-0 text-sm whitespace-pre-wrap text-text-1">{sugestao}</p>
