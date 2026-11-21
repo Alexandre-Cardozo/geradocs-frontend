@@ -152,7 +152,7 @@ describe("melhorar a redação", () => {
     expect(usar).not.toHaveBeenCalled()
   })
 
-  it("quando a sugestão é igual ao que foi escrito, diz isso e não oferece trocar", async () => {
+  it("quando a sugestão é igual ao que foi escrito, diz que a IA não mudou nada, sem afirmar que o texto está bom, e não oferece trocar", async () => {
     comIa(true)
     // Só espaço e quebra de linha mudam: para quem lê, é o mesmo texto.
     comSugestao(`  ${ESCRITO}\n`)
@@ -161,10 +161,12 @@ describe("melhorar a redação", () => {
     await waitFor(() => expect(screen.getByRole("button", { name: "Melhorar a redação" })).toBeEnabled())
     await userEvent.click(screen.getByRole("button", { name: "Melhorar a redação" }))
 
-    expect(await screen.findByText(/O texto já está bem escrito/)).toBeInTheDocument()
+    expect(await screen.findByText(/A IA não sugeriu mudanças/)).toBeInTheDocument()
+    // Não afirma que o texto está bom: o modelo pode só não ter conseguido melhorar (gírias, abreviações).
+    expect(screen.getByText(/Isso não quer dizer que ele esteja bem escrito/)).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: "Usar sugestão" })).not.toBeInTheDocument()
     await userEvent.click(screen.getByRole("button", { name: "Fechar" }))
-    expect(screen.queryByText(/O texto já está bem escrito/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/A IA não sugeriu mudanças/)).not.toBeInTheDocument()
   })
 
   it("a recusa do servidor por não conseguir manter os fatos mantém o texto e diz isso com palavras de quem escreve", async () => {

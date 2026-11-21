@@ -29,9 +29,12 @@ import { lerAproveitamentoDaIa } from "@/lib/api/ai-proposal-summary-client"
 import { melhorarSituacaoProblema } from "@/lib/api/text-improvement-client"
 import { iaDisponivel } from "@/lib/api/ai-client"
 import {
+  analisarClausulasCondicionais,
   gerarRascunhoDaSecaoComFontes,
   lerPropostaPendenteDaSecao,
   rejeitarPropostaDeIa,
+  sugerirClausulasCondicionais,
+  tirarClausulasCondicionais,
 } from "@/lib/api/authoring-client"
 import { confirmarContextos, contextosDoProcesso } from "@/lib/api/contextos-client"
 import {
@@ -102,6 +105,8 @@ export const chaves = {
   tetoDeIa: (entidadeId: string) => ["teto-de-ia", entidadeId] as const,
   aproveitamentoDaIa: (entidadeId: string) => ["aproveitamento-da-ia", entidadeId] as const,
   secoes: (id: string, tipo: TipoDocumento) => ["secoes", id, tipo] as const,
+  clausulasCondicionais: (id: string, tipo: TipoDocumento, secaoId: string, texto: string) =>
+    ["clausulas-condicionais", id, tipo, secaoId, texto] as const,
   documentos: ["documentos"] as const,
   resumoDocumentos: ["documentos", "resumo"] as const,
   historicoVersoes: (id: string, tipo: TipoDocumento) => ["versoes", id, tipo] as const,
@@ -430,6 +435,43 @@ export function useGerarRascunhoDaSecao(processoId: string, tipo: TipoDocumento)
   return useMutation({
     mutationFn: (input: { secaoId: string; rascunho: string; orientacao?: string }) =>
       gerarRascunhoDaSecaoComFontes(processoId, tipo, input.secaoId, input.rascunho, input.orientacao),
+  })
+}
+
+/**
+ * As cláusulas "(Se for o caso)" do texto que o editor mostra (ADR 117; ADR-078 do back-end).
+ *
+ * `ativa` evita a chamada na seção que não tem a marcação. O texto entra na chave: os identificadores das
+ * cláusulas valem só para aquele texto exato, e cache de outro texto apontaria para a linha errada.
+ */
+export function useClausulasCondicionais(
+  processoId: string,
+  tipo: TipoDocumento,
+  secaoId: string,
+  texto: string,
+  ativa: boolean,
+) {
+  return useQuery({
+    queryKey: chaves.clausulasCondicionais(processoId, tipo, secaoId, texto),
+    queryFn: () => analisarClausulasCondicionais(processoId, tipo, secaoId, texto),
+    enabled: ativa,
+    staleTime: Infinity,
+  })
+}
+
+/** A sugestão da IA de quais cláusulas provavelmente não se aplicam. Não grava nem tira nada. */
+export function useSugerirClausulas(processoId: string, tipo: TipoDocumento) {
+  return useMutation({
+    mutationFn: (input: { secaoId: string; texto: string }) =>
+      sugerirClausulasCondicionais(processoId, tipo, input.secaoId, input.texto),
+  })
+}
+
+/** O texto sem as cláusulas escolhidas. Não grava: quem escolheu confere e salva pelo caminho de sempre. */
+export function useTirarClausulas(processoId: string, tipo: TipoDocumento) {
+  return useMutation({
+    mutationFn: (input: { secaoId: string; texto: string; clausulaIds: string[] }) =>
+      tirarClausulasCondicionais(processoId, tipo, input.secaoId, input.texto, input.clausulaIds),
   })
 }
 
