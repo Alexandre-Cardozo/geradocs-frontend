@@ -140,7 +140,7 @@ test.describe("dotação orçamentária", () => {
     // Sem crédito não há rascunho a montar: o parágrafo afirma de onde sai o
     // dinheiro.
     await expect(
-      page.getByRole("button", { name: /Escrever a partir dos créditos/ }),
+      page.getByRole("button", { name: "Preencher com dados do processo" }),
     ).toHaveCount(0)
   })
 
@@ -152,7 +152,7 @@ test.describe("dotação orçamentária", () => {
 
     await page.goto(rota(`/processos/documento?id=${processo.id}&tipo=edital`))
     await page.getByRole("button", { name: /Da Dotação Orçamentária/ }).first().click()
-    await page.getByRole("button", { name: /Escrever a partir dos créditos/ }).click()
+    await page.getByRole("button", { name: "Preencher com dados do processo" }).click()
 
     await expect(page.locator("main textarea")).toHaveValue(/12\.361\.0004\.2\.045/)
     // A IA continua ao lado: um rascunho não substitui o botão de gerar (§66).

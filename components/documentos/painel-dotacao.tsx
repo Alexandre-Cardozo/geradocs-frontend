@@ -3,7 +3,7 @@
 import Link from "next/link"
 
 import { InfoBanner, SectionBlock, Tag, Textarea } from "@/components/ui"
-import { CaminhosDaSecao } from "@/components/documentos/caminhos-da-secao"
+import { CaminhosDaSecao, dadosDoProcesso } from "@/components/documentos/caminhos-da-secao"
 import { InlineSpinner } from "@/components/shared/estados"
 import { useDotacoesDoProcesso, usePrevisaoNoPca, useProcesso } from "@/lib/api/hooks"
 import type { DotacaoOrcamentaria } from "@/lib/api/procurement-client"
@@ -130,16 +130,16 @@ export function PainelDotacao({
         <CaminhosDaSecao
           gerando={gerando}
           onGerarComIa={onGerarComIa}
-          rascunhoAutomatico={
+          texto={rascunho}
+          setTexto={setRascunho}
+          preenchimentos={
             creditos.length > 0
-              ? {
-                  rotulo: "Escrever a partir dos créditos",
-                  onEscrever: () =>
-                    setRascunho(
-                      textoDaDotacao(creditos, total, estimado, pca?.citacao),
-                    ),
-                }
-              : undefined
+              ? [
+                  dadosDoProcesso("escreve a partir dos créditos orçamentários declarados.", () =>
+                    textoDaDotacao(creditos, total, estimado, pca?.citacao),
+                  ),
+                ]
+              : []
           }
         />
       </div>

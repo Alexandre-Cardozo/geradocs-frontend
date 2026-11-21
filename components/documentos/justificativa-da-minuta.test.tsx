@@ -43,8 +43,18 @@ describe("justificativa da minuta", () => {
     const pedidos = comJustificativas()
     renderizar(<JustificativaDoDesvio processoId={PROCESSO} tipo="Edital" secao={secao()} />)
 
-    expect(screen.getByText(/deixa de fora 1 de 3 cláusulas da minuta/)).toBeInTheDocument()
-    expect(screen.getByText(/Justifique a alteração \(Art. 19, § 2º, Lei 14.133\/21\)/)).toBeInTheDocument()
+    // Uma linha só, com o fundamento (§115); a lista e o campo abrem a pedido.
+    expect(
+      screen.getByText("1 cláusula obrigatória da minuta fora do texto (Art. 19, § 2º, Lei 14.133/21)."),
+    ).toBeInTheDocument()
+    expect(screen.queryByText("1.5. O critério de julgamento será o menor preço.")).not.toBeInTheDocument()
+    expect(screen.queryByRole("textbox", { name: "Justificativa da Alteração" })).not.toBeInTheDocument()
+
+    const abrir = screen.getByRole("button", { name: "Justificar" })
+    expect(abrir).toHaveAttribute("aria-expanded", "false")
+    await userEvent.click(abrir)
+    expect(screen.getByRole("button", { name: "Ocultar" })).toHaveAttribute("aria-expanded", "true")
+    expect(screen.getByText("Cláusula fora do texto (1 de 3 obrigatórias)")).toBeInTheDocument()
     expect(screen.getByText("1.5. O critério de julgamento será o menor preço.")).toBeInTheDocument()
 
     await userEvent.type(screen.getByRole("textbox", { name: "Justificativa da Alteração" }), "Lei municipal.")
@@ -66,7 +76,11 @@ describe("justificativa da minuta", () => {
       />,
     )
 
-    expect(screen.getByText(/de 1 cláusula da minuta. Alteração justificada./)).toBeInTheDocument()
+    // Justificada, a linha fica resolvida e recolhida (§115).
+    expect(screen.getByText("Alteração da minuta justificada: 1 cláusula fora do texto.")).toBeInTheDocument()
+    expect(screen.queryByText("Lei municipal.")).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: "Ver" }))
+    expect(screen.getByText("Lei municipal.")).toBeInTheDocument()
     await userEvent.click(screen.getByRole("button", { name: "Editar Justificativa" }))
     expect(screen.getByRole("textbox", { name: "Justificativa da Alteração" })).toHaveValue("Lei municipal.")
     await userEvent.click(screen.getByRole("button", { name: "Cancelar" }))

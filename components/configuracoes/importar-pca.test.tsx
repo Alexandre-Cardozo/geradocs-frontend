@@ -5,6 +5,7 @@ import { ImportarPca } from "@/components/configuracoes/importar-pca"
 import { urlDaApi } from "@/lib/teste/handlers"
 import { renderizar, screen, userEvent, waitFor } from "@/lib/teste/renderizar"
 import { servidor } from "@/lib/teste/servidor-msw"
+import { anosDoPca } from "@/lib/dominio/anos-do-pca"
 import { anoBrasilia } from "@/lib/format"
 
 /**
@@ -138,6 +139,30 @@ describe("importar o PCA do órgão", () => {
     await waitFor(() => expect(exercicio).toBe(String(EXERCICIO)))
     expect(enviado).not.toBeNull()
     expect((enviado as unknown as File).name).toBe("pca-2026.csv")
+  })
+
+  it("o exercício vai de 2025 a 2050, e o PCA do ano seguinte (2027) pode ser importado", async () => {
+    semPlano()
+    let exercicio: string | null = null
+    servidor.use(
+      http.post(`${urlDaApi}/pca-plan`, ({ request }) => {
+        exercicio = new URL(request.url).searchParams.get("year")
+        return HttpResponse.json(plano(2027, 1))
+      }),
+    )
+    renderizar(<ImportarPca anos={anosDoPca()} />)
+
+    await userEvent.click(await screen.findByRole("button", { name: "Exercício do PCA" }))
+    const opcoes = screen.getAllByRole("option").map((opcao) => opcao.textContent)
+    expect(opcoes[0]).toBe("2025")
+    expect(opcoes.at(-1)).toBe("2050")
+    expect(opcoes).toHaveLength(26)
+
+    await userEvent.click(screen.getByRole("option", { name: "2027" }))
+    await userEvent.upload(screen.getByLabelText("Planilha do PCA"), arquivoCsv("pca-2027.csv"))
+    await userEvent.click(screen.getByRole("button", { name: "Importar e indexar" }))
+
+    await waitFor(() => expect(exercicio).toBe("2027"))
   })
 
   it("aceita XLSX, que é como a planilha costuma existir no órgão", async () => {

@@ -47,8 +47,7 @@ test("a orientação vai só no pedido da seção, com os avisos e a recusa no c
   })
 
   await page.goto(rota(`/processos/documento?id=${encodeURIComponent(processo.id)}&tipo=etp`))
-  await page.getByText("Orientar a IA (opcional)").click()
-  await page.getByRole("textbox", { name: "Orientação para esta seção" }).fill("Enfatizar entrega em lotes; indicar a marca.")
+  await page.getByRole("textbox", { name: "Orientação para a IA (opcional)" }).fill("Enfatizar entrega em lotes; indicar a marca.")
   await page.getByRole("button", { name: "Gerar com IA" }).click()
 
   await expect(page.getByLabel("Descrição da Necessidade")).toHaveValue("Necessidade com entrega em lotes mensais.")
@@ -59,7 +58,7 @@ test("a orientação vai só no pedido da seção, com os avisos e a recusa no c
   })
 
   // A recusa da curadoria aparece no campo, com o motivo.
-  await page.getByRole("textbox", { name: "Orientação para esta seção" }).fill("O fiscal é o CPF 529.982.247-25.")
+  await page.getByRole("textbox", { name: "Orientação para a IA (opcional)" }).fill("O fiscal é o CPF 529.982.247-25.")
   page.once("dialog", (dialog) => dialog.accept())
   await page.getByRole("button", { name: "Gerar com IA" }).click()
   await expect(page.getByText(/A orientação tem dado pessoal/)).toBeVisible()

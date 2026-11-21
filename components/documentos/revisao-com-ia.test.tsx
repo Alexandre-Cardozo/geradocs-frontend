@@ -165,4 +165,50 @@ describe("revisão com IA", () => {
     expect(screen.getByRole("status")).toHaveTextContent("0 com sugestão · 1 sem alteração")
     expect(pedidos).toHaveLength(1)
   })
+
+  it("com o limite de IA do plano esgotado, a revisão para na hora e diz por quê (§109)", async () => {
+    const pedidos: string[] = []
+    servidor.use(
+      http.get(`${urlDaApi}/ai/status`, () => HttpResponse.json({ available: true })),
+      http.post(`${urlDaApi}/procurement-processes/:id/documents/:tipo/sections/:secao/generate`, ({ params }) => {
+        pedidos.push(String(params.secao))
+        return HttpResponse.json(
+          { title: "Orçamento de IA indisponível", status: 402, detail: "O orçamento acabou.", code: "AI_BUDGET_EXHAUSTED" },
+          { status: 402, headers: { "Content-Type": "application/problem+json" } },
+        )
+      }),
+    )
+    renderizar(
+      <RevisaoComIa
+        processoId={PROCESSO}
+        tipo="ETP"
+        secoes={[secao("1", "Texto um."), secao("2", "Texto dois."), secao("3", "Texto três.")]}
+      />,
+    )
+
+    await waitFor(() => expect(screen.getByRole("button", { name: "Revisar com IA" })).toBeEnabled())
+    await userEvent.click(screen.getByRole("button", { name: "Revisar com IA" }))
+
+    expect(
+      await screen.findByText(/Não foi possível revisar: Seção 1\. O limite de IA do plano contratado acabou/),
+    ).toBeInTheDocument()
+    // As outras seções seriam recusadas igual: nenhum pedido a mais.
+    expect(pedidos).toEqual(["1"])
+  })
+
+  it("enquanto revisa, a IA aparece trabalhando nas cores da marca, com a seção da vez", async () => {
+    let liberar = () => {}
+    const espera = new Promise<void>((resolve) => (liberar = resolve))
+    comRevisao({ "1": "Texto um." }, espera)
+    renderizar(<RevisaoComIa processoId={PROCESSO} tipo="ETP" secoes={[secao("1", "Texto um.")]} />)
+
+    await waitFor(() => expect(screen.getByRole("button", { name: "Revisar com IA" })).toBeEnabled())
+    await userEvent.click(screen.getByRole("button", { name: "Revisar com IA" }))
+    const status = await screen.findByRole("status")
+    expect(status).toHaveTextContent("Revisando 1 de 1: Seção 1")
+    expect(status).toHaveClass("ia-aura")
+    expect(status.querySelector('[data-marca="carregando"]')).not.toBeNull()
+    liberar()
+    await waitFor(() => expect(screen.queryByText(/^Revisando/)).not.toBeInTheDocument())
+  })
 })

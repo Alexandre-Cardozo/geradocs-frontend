@@ -4,7 +4,7 @@ import { useState } from "react"
 
 import { Button, Dropdown, FormField, InfoBanner, Input, MoneyInput, SectionBlock, Tag, Textarea } from "@/components/ui"
 import { IconPlus, IconTrash } from "@/components/ui/icons"
-import { CaminhosDaSecao } from "@/components/documentos/caminhos-da-secao"
+import { CaminhosDaSecao, dadosDoProcesso } from "@/components/documentos/caminhos-da-secao"
 import { DocumentoDaColeta } from "@/components/documentos/documento-da-coleta"
 import { AvisoDaMemoria, EstimativaDoProcesso } from "@/components/documentos/estimativa-do-processo"
 import { CampoDeFonteDePreco } from "@/components/shared/campo-de-fonte-de-preco"
@@ -143,14 +143,9 @@ export function PainelDasFontes(props: PropsDoPainel) {
         <CaminhosDaSecao
           gerando={props.gerando}
           onGerarComIa={props.onGerarComIa}
-          rascunhoAutomatico={
-            serie.length > 0
-              ? {
-                  rotulo: "Escrever a partir das fontes",
-                  onEscrever: () => props.setRascunho(textoDasFontes(serie, usouPrioritaria)),
-                }
-              : undefined
-          }
+          texto={props.rascunho}
+          setTexto={props.setRascunho}
+          preenchimentos={serie.length > 0 ? [dadosDoProcesso("escreve a partir das fontes da pesquisa de preços.", () => textoDasFontes(serie, usouPrioritaria))] : []}
         />
       </div>
     </SectionBlock>
@@ -266,14 +261,9 @@ export function PainelDasColetas(props: PropsDoPainel) {
         <CaminhosDaSecao
           gerando={props.gerando}
           onGerarComIa={props.onGerarComIa}
-          rascunhoAutomatico={
-            serie.length > 0
-              ? {
-                  rotulo: "Escrever a partir da série",
-                  onEscrever: () => props.setRascunho(textoDaSerie(itens)),
-                }
-              : undefined
-          }
+          texto={props.rascunho}
+          setTexto={props.setRascunho}
+          preenchimentos={serie.length > 0 ? [dadosDoProcesso("escreve a partir da série de preços coletada.", () => textoDaSerie(itens))] : []}
         />
       </div>
     </SectionBlock>
@@ -664,14 +654,9 @@ export function PainelDaAnaliseCritica(props: PropsDoPainel) {
         <CaminhosDaSecao
           gerando={props.gerando}
           onGerarComIa={props.onGerarComIa}
-          rascunhoAutomatico={
-            itens.length > 0
-              ? {
-                  rotulo: "Escrever a análise",
-                  onEscrever: () => props.setRascunho(textoDaAnaliseCritica(itens)),
-                }
-              : undefined
-          }
+          texto={props.rascunho}
+          setTexto={props.setRascunho}
+          preenchimentos={itens.length > 0 ? [dadosDoProcesso("escreve a análise a partir da série de preços.", () => textoDaAnaliseCritica(itens))] : []}
         />
       </div>
     </SectionBlock>
@@ -787,15 +772,9 @@ export function PainelDoPrecoDeReferencia(props: PropsDoPainel) {
         <CaminhosDaSecao
           gerando={props.gerando}
           onGerarComIa={props.onGerarComIa}
-          rascunhoAutomatico={
-            itens.length > 0
-              ? {
-                  rotulo: "Escrever a memória de cálculo",
-                  onEscrever: () =>
-                    props.setRascunho(textoDoPrecoDeReferencia(itens, metodo, quantidadePor)),
-                }
-              : undefined
-          }
+          texto={props.rascunho}
+          setTexto={props.setRascunho}
+          preenchimentos={itens.length > 0 ? [dadosDoProcesso("escreve a memória de cálculo a partir da série de preços.", () => textoDoPrecoDeReferencia(itens, metodo, quantidadePor))] : []}
         />
       </div>
     </SectionBlock>
