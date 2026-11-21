@@ -14,6 +14,7 @@ import {
 import { IconFileText } from "@/components/ui/icons"
 import { CaminhosDaSecao, dadosDoProcesso } from "@/components/documentos/caminhos-da-secao"
 import { InlineSpinner } from "@/components/shared/estados"
+import { RevisaoDaAta } from "@/components/documentos/revisao-da-ata"
 import { useToast } from "@/components/shared/providers"
 import { AvisoDaMemoria, EstimativaDoProcesso } from "@/components/documentos/estimativa-do-processo"
 import { Th } from "@/components/shared/tabela"
@@ -684,7 +685,7 @@ const modosATA: Array<{ key: ModoATA; label: string; desc: string }> = [
   {
     key: "anexar",
     label: "Anexar ATA para revisão pela IA",
-    desc: "Envie a ATA que deseja utilizar. A IA verificará validade, compatibilidade e emitirá parecer.",
+    desc: "Envie a ATA que deseja utilizar. A IA lê o documento e aponta órgão, vigência, objeto e itens, com o trecho que sustenta cada ponto.",
   },
   {
     key: "delegar",
@@ -694,7 +695,7 @@ const modosATA: Array<{ key: ModoATA; label: string; desc: string }> = [
   {
     key: "combinado",
     label: "Anexar ATA e buscar outras opções",
-    desc: "A IA revisará sua ATA e também sugerirá alternativas encontradas para comparação.",
+    desc: "A IA lerá sua ATA e também sugerirá alternativas encontradas para comparação.",
   },
 ]
 
@@ -702,11 +703,12 @@ const modosATA: Array<{ key: ModoATA; label: string; desc: string }> = [
  * Adesão a Ata de Registro de Preços — acompanha o Levantamento de Mercado
  * (Art. 18, § 1º, V), onde a adesão é avaliada como alternativa de solução.
  */
-export function PainelATA() {
+export function PainelATA({ processoId }: { processoId: string }) {
   const showToast = useToast()
   const [aberto, setAberto] = useState(false)
   const [ataMode, setATAMode] = useState<ModoATA | "">("")
   const [ataFile, setATAFile] = useState<string | null>(null)
+  const [ataArquivo, setATAArquivo] = useState<File | null>(null)
 
   return (
     <div className="mt-5">
@@ -718,7 +720,7 @@ export function PainelATA() {
           <div className="mb-1 font-display text-md font-bold text-on-dark">A solução proposta é Adesão de ATA?</div>
           <p className="m-0 text-base text-on-dark-65">
             Se o levantamento de mercado concluir que a solução mais vantajosa é a Adesão a Ata de Registro de Preços,
-            configure a ATA aqui para que o modelo possa validar ou encontrar opções adequadas.
+            configure a ATA aqui para que o modelo possa ler o documento e apontar o que ele diz.
           </p>
         </div>
         <Button size="sm" onClick={() => setAberto(!aberto)}>
@@ -748,18 +750,12 @@ export function PainelATA() {
                 <div>
                   <FileUpload
                     file={ataFile}
-                    onChange={(f) => {
-                      setATAFile(f)
-                    }}
+                    onChange={setATAFile}
+                    onArquivo={setATAArquivo}
                     placeholder="Clique para selecionar a ATA (PDF ou DOCX)"
                     accept=".pdf,.docx"
                   />
-                  {ataFile && (
-                    <p className="mb-0 mt-2.5 text-sm text-text-3" role="note">
-                      A revisão da ATA pela IA ainda não está disponível. Confira a vigência, o órgão gerenciador e a
-                      compatibilidade com o objeto no próprio documento (Art. 86 da Lei 14.133/21).
-                    </p>
-                  )}
+                  <RevisaoDaAta processoId={processoId} arquivo={ataArquivo} />
                 </div>
               </FormField>
             </div>
@@ -768,7 +764,7 @@ export function PainelATA() {
 
           {ataMode !== "" && (
             <div className="mt-3.5">
-              <Button variant="dark" onClick={() => showToast("A configuração da ATA ainda não é gravada no processo: a revisão pela IA está em desenvolvimento.")}>
+              <Button variant="dark" onClick={() => showToast("A configuração da ATA ainda não é gravada no processo: a leitura pela IA serve só à sua conferência.")}>
                 Confirmar configuração da ATA
               </Button>
             </div>

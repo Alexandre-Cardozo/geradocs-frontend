@@ -804,6 +804,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/procurement-processes/{processId}/ata-review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["review"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/procurement-processes/{processId}/bundle": {
         parameters: {
             query?: never;
@@ -1651,6 +1667,26 @@ export interface components {
             fileName: string;
             mediaType: string;
             sha256: string;
+        };
+        AtaFindingView: {
+            /** @enum {string} */
+            kind: "ITEMS" | "OBJECT" | "OTHER" | "PRICES" | "VALIDITY";
+            quote: string;
+            text: string;
+        };
+        AtaReviewResponse: {
+            ataObject?: string;
+            /** @enum {string} */
+            compatibility: "COMPATIBLE" | "INCOMPATIBLE" | "PARTIAL" | "UNDETERMINED";
+            compatibilityReason: string;
+            findings: components["schemas"]["AtaFindingView"][];
+            managingBody?: string;
+            textTruncated: boolean;
+            /** Format: date */
+            validityDate?: string;
+            /** @enum {string} */
+            validityStatus: "EXPIRED" | "UNKNOWN" | "VALID";
+            validityText?: string;
         };
         AttachDfdRequest: {
             /** Format: uuid */
@@ -4475,6 +4511,35 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ProcessTrailEntryResponse"][];
+                };
+            };
+        };
+    };
+    review: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                processId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AtaReviewResponse"];
                 };
             };
         };

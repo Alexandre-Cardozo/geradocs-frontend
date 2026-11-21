@@ -261,6 +261,61 @@
         "required" : [ "byteSize", "fileName", "mediaType", "sha256" ],
         "type" : "object"
       },
+      "AtaFindingView" : {
+        "properties" : {
+          "kind" : {
+            "enum" : [ "ITEMS", "OBJECT", "OTHER", "PRICES", "VALIDITY" ],
+            "type" : "string"
+          },
+          "quote" : {
+            "type" : "string"
+          },
+          "text" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "kind", "quote", "text" ],
+        "type" : "object"
+      },
+      "AtaReviewResponse" : {
+        "properties" : {
+          "ataObject" : {
+            "type" : "string"
+          },
+          "compatibility" : {
+            "enum" : [ "COMPATIBLE", "INCOMPATIBLE", "PARTIAL", "UNDETERMINED" ],
+            "type" : "string"
+          },
+          "compatibilityReason" : {
+            "type" : "string"
+          },
+          "findings" : {
+            "items" : {
+              "$ref" : "#/components/schemas/AtaFindingView"
+            },
+            "type" : "array"
+          },
+          "managingBody" : {
+            "type" : "string"
+          },
+          "textTruncated" : {
+            "type" : "boolean"
+          },
+          "validityDate" : {
+            "format" : "date",
+            "type" : "string"
+          },
+          "validityStatus" : {
+            "enum" : [ "EXPIRED", "UNKNOWN", "VALID" ],
+            "type" : "string"
+          },
+          "validityText" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "compatibility", "compatibilityReason", "findings", "textTruncated", "validityStatus" ],
+        "type" : "object"
+      },
       "AttachDfdRequest" : {
         "properties" : {
           "departmentId" : {
@@ -6022,6 +6077,49 @@
           }
         },
         "tags" : [ "procurement-process-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{processId}/ata-review" : {
+      "post" : {
+        "operationId" : "review",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "multipart/form-data" : {
+              "schema" : {
+                "properties" : {
+                  "file" : {
+                    "format" : "binary",
+                    "type" : "string"
+                  }
+                },
+                "required" : [ "file" ],
+                "type" : "object"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AtaReviewResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "ata-review-controller" ]
       }
     },
     "/api/v1/procurement-processes/{processId}/bundle" : {

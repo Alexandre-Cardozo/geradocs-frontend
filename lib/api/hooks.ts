@@ -28,6 +28,7 @@ import { definirTetoDeIa, lerTetoDeIa } from "@/lib/api/ai-budget-client"
 import { lerAproveitamentoDaIa } from "@/lib/api/ai-proposal-summary-client"
 import { melhorarSituacaoProblema } from "@/lib/api/text-improvement-client"
 import { iaDisponivel } from "@/lib/api/ai-client"
+import { revisarAta } from "@/lib/api/ata-client"
 import {
   analisarClausulasCondicionais,
   gerarRascunhoDaSecaoComFontes,
@@ -465,6 +466,11 @@ export function useSugerirClausulas(processoId: string, tipo: TipoDocumento) {
     mutationFn: (input: { secaoId: string; texto: string }) =>
       sugerirClausulasCondicionais(processoId, tipo, input.secaoId, input.texto),
   })
+}
+
+/** A IA lê a ATA anexada na adesão e a compara com o processo. Não grava nada, e não é parecer. */
+export function useRevisarAta(processoId: string) {
+  return useMutation({ mutationFn: (arquivo: File) => revisarAta(processoId, arquivo) })
 }
 
 /** O texto sem as cláusulas escolhidas. Não grava: quem escolheu confere e salva pelo caminho de sempre. */
