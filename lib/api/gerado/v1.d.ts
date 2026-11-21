@@ -1060,6 +1060,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/sections/{sectionCode}/conditional-clauses/analysis": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["analyzeConditionalClauses"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/sections/{sectionCode}/conditional-clauses/removal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["removeConditionalClauses"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/sections/{sectionCode}/conditional-clauses/suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["suggest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/procurement-processes/{processId}/documents/{documentType}/sections/{sectionCode}/generate": {
         parameters: {
             query?: never;
@@ -1701,8 +1749,34 @@ export interface components {
         ChangeStructureModelRequest: {
             code: string;
         };
+        ClauseSuggestionView: {
+            clauseId: string;
+            reason: string;
+            /** @enum {string} */
+            verdict: "LIKELY_APPLICABLE" | "LIKELY_NOT_APPLICABLE" | "UNDETERMINED";
+        };
+        ClauseSuggestionsResponse: {
+            suggestions: components["schemas"]["ClauseSuggestionView"][];
+        };
         CloseProcurementProcessRequest: {
             justification?: string;
+        };
+        ConditionalClauseView: {
+            alternative: boolean;
+            /** Format: int32 */
+            firstLine: number;
+            id: string;
+            /** Format: int32 */
+            lastLine: number;
+            number?: string;
+            parentId?: string;
+            preview: string;
+        };
+        ConditionalClausesRequest: {
+            content: string;
+        };
+        ConditionalClausesResponse: {
+            clauses: components["schemas"]["ConditionalClauseView"][];
         };
         ConfirmContextsRequest: {
             codes: string[];
@@ -2487,6 +2561,13 @@ export interface components {
         };
         RejectAiProposalRequest: {
             reason?: string;
+        };
+        RemoveConditionalClausesRequest: {
+            clauseIds: string[];
+            content: string;
+        };
+        RemoveConditionalClausesResponse: {
+            content: string;
         };
         RenameSectionRequest: {
             title: string;
@@ -4881,6 +4962,90 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    analyzeConditionalClauses: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                documentType: "AVISO" | "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
+                processId: string;
+                sectionCode: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConditionalClausesRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ConditionalClausesResponse"];
+                };
+            };
+        };
+    };
+    removeConditionalClauses: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                documentType: "AVISO" | "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
+                processId: string;
+                sectionCode: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RemoveConditionalClausesRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RemoveConditionalClausesResponse"];
+                };
+            };
+        };
+    };
+    suggest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                documentType: "AVISO" | "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
+                processId: string;
+                sectionCode: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConditionalClausesRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ClauseSuggestionsResponse"];
+                };
             };
         };
     };
