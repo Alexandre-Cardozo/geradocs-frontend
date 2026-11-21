@@ -11,7 +11,7 @@ import {
   SectionBlock,
   Textarea,
 } from "@/components/ui"
-import { IconCheckCircle, IconFileText } from "@/components/ui/icons"
+import { IconFileText } from "@/components/ui/icons"
 import { CaminhosDaSecao, dadosDoProcesso } from "@/components/documentos/caminhos-da-secao"
 import { InlineSpinner } from "@/components/shared/estados"
 import { useToast } from "@/components/shared/providers"
@@ -707,7 +707,6 @@ export function PainelATA() {
   const [aberto, setAberto] = useState(false)
   const [ataMode, setATAMode] = useState<ModoATA | "">("")
   const [ataFile, setATAFile] = useState<string | null>(null)
-  const [ataReview, setATAReview] = useState<null | "loading" | "done">(null)
 
   return (
     <div className="mt-5">
@@ -751,43 +750,15 @@ export function PainelATA() {
                     file={ataFile}
                     onChange={(f) => {
                       setATAFile(f)
-                      if (f === null) setATAReview(null)
                     }}
                     placeholder="Clique para selecionar a ATA (PDF ou DOCX)"
                     accept=".pdf,.docx"
                   />
-                  {ataFile && ataReview === null && (
-                    <div className="mt-2.5">
-                      <Button
-                        size="sm"
-                        onClick={() => {
-                          setATAReview("loading")
-                          setTimeout(() => setATAReview("done"), 2200)
-                        }}
-                      >
-                        Enviar para revisão pela IA
-                      </Button>
-                    </div>
-                  )}
-                  {ataReview === "loading" && (
-                    <div className="mt-2.5">
-                      <InlineSpinner label="Analisando ATA... aguarde." />
-                    </div>
-                  )}
-                  {ataReview === "done" && (
-                    <div className="mt-2.5 rounded-xl border border-tint-success-border bg-tint-success-bg px-4 py-3.5">
-                      <div className="mb-2 flex items-center gap-2">
-                        <span className="flex text-success">
-                          <IconCheckCircle size={16} strokeWidth={2.5} />
-                        </span>
-                        <span className="text-base font-bold text-tint-success-fg">Parecer da IA: ATA Válida</span>
-                      </div>
-                      <p className="m-0 text-sm leading-[1.6] text-tint-success-fg-soft">
-                        A ATA analisada está vigente, com objeto compatível ao ETP e dentro dos limites legais para
-                        adesão (Art. 86 da Lei 14.133/21). Prazo de vigência: 30/11/2025. Órgão gerenciador: Governo do
-                        Estado de São Paulo. Nenhuma irregularidade identificada.
-                      </p>
-                    </div>
+                  {ataFile && (
+                    <p className="mb-0 mt-2.5 text-sm text-text-3" role="note">
+                      A revisão da ATA pela IA ainda não está disponível. Confira a vigência, o órgão gerenciador e a
+                      compatibilidade com o objeto no próprio documento (Art. 86 da Lei 14.133/21).
+                    </p>
                   )}
                 </div>
               </FormField>
@@ -797,7 +768,7 @@ export function PainelATA() {
 
           {ataMode !== "" && (
             <div className="mt-3.5">
-              <Button variant="dark" onClick={() => showToast("Configuração da ATA registrada no processo.")}>
+              <Button variant="dark" onClick={() => showToast("A configuração da ATA ainda não é gravada no processo: a revisão pela IA está em desenvolvimento.")}>
                 Confirmar configuração da ATA
               </Button>
             </div>
