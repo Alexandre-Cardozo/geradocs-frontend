@@ -4,8 +4,11 @@ import { useState } from "react"
 
 import { Button, ValidationMsg } from "@/components/ui"
 import { IconSparkles } from "@/components/ui/icons"
+import { IaTrabalhando, TextoRevelado } from "@/components/shared/ia-magica"
 import { ApiError } from "@/lib/api/auth-client"
 import { useEstadoDaIa, useMelhorarSituacaoProblema, type EstadoDaIa } from "@/lib/api/hooks"
+import { ehLimiteDaIa } from "@/lib/api/limite-da-ia"
+import { ETAPAS_DA_MELHORIA } from "@/lib/dominio/revelacao"
 
 /** O limite do campo no servidor: a sugestão também precisa caber nele. */
 const LIMITE = 2000
@@ -17,8 +20,6 @@ function motivoDoEstado(estado: EstadoDaIa): string | null {
       return "Verificando a IA..."
     case "sem-modelo":
       return "Nenhum modelo de IA configurado nesta instalação."
-    case "teto-esgotado":
-      return "O teto de IA do mês acabou. Fale com o administrador da plataforma."
     case "sem-teto":
       return "A IA não está liberada para esta entidade. Fale com o administrador da plataforma."
     case "disponivel":
@@ -79,7 +80,10 @@ export function MelhorarRedacao({
     setSugestao(null)
     melhorar.mutate(texto, {
       onSuccess: (resposta) => setSugestao(resposta),
-      onError: (falha) => setErro(mensagemDoErro(falha)),
+      // O limite do plano tem aviso próprio, que abre sozinho (§109).
+      onError: (falha) => {
+        if (!ehLimiteDaIa(falha)) setErro(mensagemDoErro(falha))
+      },
     })
   }
 
@@ -103,16 +107,23 @@ export function MelhorarRedacao({
         </span>
       </div>
 
+      {melhorar.isPending && <IaTrabalhando etapas={ETAPAS_DA_MELHORIA} anuncio="Melhorando a redação com IA." />}
+
       {erro && <ValidationMsg type="error" msg={erro} />}
 
       {sugestao !== null && (
-        <div className="flex flex-col gap-2 rounded-xl border border-border bg-ice px-4 py-3.5" role="region" aria-label="Sugestão de redação">
+        <div
+          className="flex animate-ia-surgir flex-col gap-2 rounded-xl border border-border bg-ice px-4 py-3.5"
+          role="region"
+          aria-label="Sugestão de redação"
+        >
           <span className="text-2xs font-semibold tracking-caps text-text-muted uppercase">Sugestão de redação</span>
           {igual ? (
             <p className="m-0 text-sm text-text-2">A IA não sugeriu mudanças: devolveu o mesmo texto que você escreveu. Isso não quer dizer que ele esteja bem escrito. Se tem gírias ou abreviações, reescreva essas partes e peça de novo.</p>
           ) : (
             <>
-              <p className="m-0 text-sm whitespace-pre-wrap text-text-1">{sugestao}</p>
+              {/* A sugestão aparece escrita (§107); "Usar" leva o texto inteiro. */}
+              <TextoRevelado texto={sugestao} className="m-0 text-sm whitespace-pre-wrap text-text-1" />
               <p className="m-0 text-xs text-text-3">Confira se nenhum fato mudou antes de usar.</p>
             </>
           )}

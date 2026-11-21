@@ -3,9 +3,10 @@
 import { useEffect, useId, useRef, useState } from "react"
 
 import { Button, InfoBanner } from "@/components/ui"
-import { InlineSpinner } from "@/components/shared/estados"
+import { IaTrabalhando } from "@/components/shared/ia-magica"
 import { useToast } from "@/components/shared/providers"
 import { useAtualizarSecao, useIaDisponivel, useRevisarSecao } from "@/lib/api/hooks"
+import { ehLimiteDaIa, MOTIVO_DO_LIMITE_ESGOTADO } from "@/lib/api/limite-da-ia"
 import { compararRevisao, revisaoMudouOTexto } from "@/lib/documentos/revisao"
 import type { SecaoDocumento, TipoDocumento } from "@/lib/types"
 import { avisoDasTabelas, semLinhasEmBranco } from "@/lib/dominio/tabela"
@@ -80,6 +81,12 @@ export function RevisaoComIa({
         }
       } catch (erro) {
         parcial.falhas.push(secao.titulo)
+        // Com o limite do plano esgotado, as próximas seções seriam recusadas
+        // igual: a revisão para aqui, e o aviso do limite abre sozinho (§109).
+        if (ehLimiteDaIa(erro)) {
+          parcial.erro = MOTIVO_DO_LIMITE_ESGOTADO
+          break
+        }
         parcial.erro ??= erro instanceof Error ? erro.message : undefined
       }
     }
@@ -139,7 +146,9 @@ export function RevisaoComIa({
 
       {andamento && (
         <div className="flex flex-wrap items-center justify-between gap-2.5">
-          <InlineSpinner label={`Revisando ${andamento.indice} de ${andamento.total}: ${andamento.titulo}`} />
+          <div className="min-w-0 flex-1">
+            <IaTrabalhando rotulo={`Revisando ${andamento.indice} de ${andamento.total}: ${andamento.titulo}`} />
+          </div>
           <Button size="sm" variant="ghost" onClick={() => (parar.current = true)}>
             Parar
           </Button>
@@ -159,7 +168,7 @@ export function RevisaoComIa({
       )}
 
       {resultado?.sugestoes.map((sugestao) => (
-        <article key={sugestao.secaoId} className="flex flex-col gap-2.5 border-t border-border-soft pt-3">
+        <article key={sugestao.secaoId} className="flex animate-ia-surgir flex-col gap-2.5 border-t border-border-soft pt-3">
           <h4 className="m-0 text-sm font-semibold text-text-1">{sugestao.titulo}</h4>
           {/* A tabela que a IA mexeu é o erro que não pode passar despercebido (§101). */}
           {avisoDasTabelas(sugestao.atual, sugestao.sugerido) && (

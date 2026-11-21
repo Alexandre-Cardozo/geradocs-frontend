@@ -84,7 +84,7 @@ describe("melhorar a redação", () => {
     await waitFor(() => expect(screen.getByRole("button", { name: "Melhorar a redação" })).toBeEnabled())
   })
 
-  it("sem teto definido ou com o teto esgotado, diz qual dos dois é", async () => {
+  it("sem teto definido, diz por quê; com o teto esgotado, o botão segue clicável (§109)", async () => {
     comIa(true)
     servidor.use(
       http.get(`${urlDaApi}/organizations/:id/ai-budget`, () =>
@@ -101,8 +101,9 @@ describe("melhorar a redação", () => {
       ),
     )
     renderizar(<MelhorarRedacao processoId={PROCESSO} texto={ESCRITO} onUsar={vi.fn()} />)
-    expect(await screen.findByText(/O teto de IA do mês acabou/)).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "Melhorar a redação" })).toBeDisabled()
+    // O clique vai ao servidor, e a recusa abre o aviso do limite.
+    await waitFor(() => expect(screen.getByRole("button", { name: "Melhorar a redação" })).toBeEnabled())
+    expect(screen.getByText("A IA só melhora a escrita. Você decide o que usar.")).toBeInTheDocument()
   })
 
   it("com IA, mas sem texto ou com texto maior que o campo, o botão fica desligado e diz por quê", async () => {
@@ -218,10 +219,25 @@ describe("melhorar a redação", () => {
     await userEvent.click(screen.getByRole("button", { name: "Melhorar a redação" }))
     const ocupado = await screen.findByRole("button", { name: "Melhorando..." })
     expect(ocupado).toBeDisabled()
+    // A IA trabalhando, nas cores da marca, no lugar de só o rótulo do botão (§107).
+    expect(screen.getByRole("status")).toHaveTextContent("Melhorando a redação com IA.")
     await userEvent.click(ocupado)
     expect(pedidos).toBe(1)
 
     liberar()
     expect(await screen.findByText(MELHORADO)).toBeInTheDocument()
+  })
+
+  it("com o limite do plano esgotado, a linha de erro não repete o aviso, que abre sozinho (§109)", async () => {
+    comIa(true)
+    recusa(402, "AI_BUDGET_EXHAUSTED", "O orçamento de IA da organização já foi consumido neste período.")
+    renderizarMelhoria()
+
+    await waitFor(() => expect(screen.getByRole("button", { name: "Melhorar a redação" })).toBeEnabled())
+    await userEvent.click(screen.getByRole("button", { name: "Melhorar a redação" }))
+
+    await waitFor(() => expect(screen.getByRole("button", { name: "Melhorar a redação" })).toBeEnabled())
+    expect(screen.queryByText(/orçamento de IA/)).not.toBeInTheDocument()
+    expect(screen.queryByRole("region", { name: "Sugestão de redação" })).not.toBeInTheDocument()
   })
 })

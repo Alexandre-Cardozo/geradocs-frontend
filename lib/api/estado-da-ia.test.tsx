@@ -31,7 +31,7 @@ describe("estado da IA", () => {
     expect(await screen.findByText("sem-modelo")).toBeInTheDocument()
   })
 
-  it("com modelo e sem teto definido é sem-teto; com o teto consumido é teto-esgotado", async () => {
+  it("com modelo e sem teto definido é sem-teto; com o teto consumido continua disponível (§109)", async () => {
     comIa(true)
     comTeto({ spentAmount: 0, defined: false, available: false })
     const { unmount } = renderizar(<Estado />)
@@ -40,7 +40,8 @@ describe("estado da IA", () => {
 
     comTeto({ period: "2026-11", limitAmount: 10, spentAmount: 10, remainingAmount: 0, defined: true, available: false })
     renderizar(<Estado />)
-    expect(await screen.findByText("teto-esgotado")).toBeInTheDocument()
+    // O clique vai ao servidor, e a recusa abre o aviso do limite.
+    expect(await screen.findByText("disponivel")).toBeInTheDocument()
   })
 
   it("com modelo e teto com saldo, está disponível", async () => {

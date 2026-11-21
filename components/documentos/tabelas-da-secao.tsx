@@ -1,9 +1,10 @@
 "use client"
 
-import { useId, useState } from "react"
+import { useContext, useId, useState } from "react"
 
 import { Button, Input } from "@/components/ui"
-import { IconPencil, IconPlus, IconTrash, IconX } from "@/components/ui/icons"
+import { IconInfo, IconPencil, IconPlus, IconTrash, IconX } from "@/components/ui/icons"
+import { OrientacaoDaIaContexto } from "@/components/documentos/orientacao-da-ia"
 import { inserirTabela, problemaDaTabela, substituirTabela, tabelaEmBranco, tabelasDoTexto } from "@/lib/dominio/tabela"
 
 /**
@@ -17,6 +18,9 @@ import { inserirTabela, problemaDaTabela, substituirTabela, tabelaEmBranco, tabe
  */
 export function TabelasDaSecao({ texto, onChange }: { texto: string; onChange: (texto: string) => void }) {
   const tabelas = tabelasDoTexto(texto)
+  const notas = useContext(OrientacaoDaIaContexto)?.notasDaMinuta ?? []
+  const [notasAbertas, setNotasAbertas] = useState(false)
+  const notasId = useId()
   // `indice` nulo é a tabela nova, que ainda não está no texto.
   const [editando, setEditando] = useState<{ indice: number | null; linhas: string[][] } | null>(null)
 
@@ -41,27 +45,59 @@ export function TabelasDaSecao({ texto, onChange }: { texto: string; onChange: (
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
-      {tabelas.map((tabela, i) => (
+    <div className="flex flex-col gap-1.5">
+      {/*
+        As ferramentas do texto (§112): o ícone alinha com a borda do campo
+        acima, e não com o recuo do botão. As notas da minuta ficam na mesma
+        linha, à direita, recolhidas (§114).
+      */}
+      <div className="-mx-3.5 flex flex-wrap items-center gap-1">
+        {tabelas.map((tabela, i) => (
+          <Button
+            key={tabela.inicio}
+            size="sm"
+            variant="ghost"
+            icon={<IconPencil size={13} />}
+            title={tabela.linhas[0]?.join(" · ")}
+            onClick={() => setEditando({ indice: i, linhas: tabela.linhas.map((linha) => [...linha]) })}
+          >
+            {`Editar tabela ${i + 1}`}
+          </Button>
+        ))}
         <Button
-          key={tabela.inicio}
           size="sm"
           variant="ghost"
-          icon={<IconPencil size={13} />}
-          title={tabela.linhas[0]?.join(" · ")}
-          onClick={() => setEditando({ indice: i, linhas: tabela.linhas.map((linha) => [...linha]) })}
+          icon={<IconPlus size={13} />}
+          onClick={() => setEditando({ indice: null, linhas: tabelaEmBranco() })}
         >
-          {`Editar tabela ${i + 1}`}
+          Inserir tabela
         </Button>
-      ))}
-      <Button
-        size="sm"
-        variant="ghost"
-        icon={<IconPlus size={13} />}
-        onClick={() => setEditando({ indice: null, linhas: tabelaEmBranco() })}
-      >
-        Inserir tabela
-      </Button>
+        {notas.length > 0 && (
+          <span className="ml-auto">
+            <Button
+              size="sm"
+              variant="ghost"
+              icon={<IconInfo size={13} />}
+              ariaExpanded={notasAbertas}
+              ariaControls={notasId}
+              onClick={() => setNotasAbertas((estavam) => !estavam)}
+            >
+              {`Notas da AGU (${notas.length})`}
+            </Button>
+          </span>
+        )}
+      </div>
+      {notasAbertas && (
+        <ul
+          id={notasId}
+          aria-label="Notas da AGU"
+          className="m-0 flex max-h-48 list-disc flex-col gap-1 overflow-y-auto rounded-md bg-ice py-2 pr-3 pl-7 text-xs text-text-3"
+        >
+          {notas.map((nota) => (
+            <li key={nota}>{nota}</li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 }

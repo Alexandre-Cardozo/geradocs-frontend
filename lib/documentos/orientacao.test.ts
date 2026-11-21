@@ -3,6 +3,12 @@ import { describe, expect, it } from "vitest"
 import { LIMITE_DA_ORIENTACAO, sobraDaOrientacao } from "@/lib/documentos/orientacao"
 
 describe("orientação à IA (§91)", () => {
+  it("o limite é de 1000 caracteres, o mesmo do servidor (ADR-073)", () => {
+    expect(LIMITE_DA_ORIENTACAO).toBe(1000)
+    expect(sobraDaOrientacao("a".repeat(1000))).toBe(0)
+    expect(sobraDaOrientacao("a".repeat(1001))).toBe(-1)
+  })
+
   it("conta como o servidor conta: sem as bordas e com os espaços juntados", () => {
     expect(sobraDaOrientacao("  Entrega   em lotes.  ")).toBe(LIMITE_DA_ORIENTACAO - "Entrega em lotes.".length)
     expect(sobraDaOrientacao("a".repeat(LIMITE_DA_ORIENTACAO + 3))).toBe(-3)
