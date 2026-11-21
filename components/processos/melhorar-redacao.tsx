@@ -119,7 +119,7 @@ export function MelhorarRedacao({
         >
           <span className="text-2xs font-semibold tracking-caps text-text-muted uppercase">Sugestão de redação</span>
           {igual ? (
-            <p className="m-0 text-sm text-text-2">O texto já está bem escrito: a sugestão é igual ao que você escreveu.</p>
+            <p className="m-0 text-sm text-text-2">A IA não sugeriu mudanças: devolveu o mesmo texto que você escreveu. Isso não quer dizer que ele esteja bem escrito. Se tem gírias ou abreviações, reescreva essas partes e peça de novo.</p>
           ) : (
             <>
               {/* A sugestão aparece escrita (§107); "Usar" leva o texto inteiro. */}

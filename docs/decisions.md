@@ -1418,6 +1418,7 @@ Pedido de quem usa: os tópicos seguem um depois do outro, sem buraco, na tela e
 - **O que entrou.** O botão **"Melhorar a redação"** abaixo da situação-problema, no cadastro do DFD e na edição dele (back, ADR-072). A IA reescreve o que a pessoa escreveu, sem acrescentar nem retirar fato; a tela mostra a sugestão e a pessoa escolhe "Usar sugestão" ou "Descartar". O campo só muda no clique dela, e o DFD só muda quando ela o salva. Se o servidor recusar a sugestão por não conseguir manter os fatos (`502`), a tela diz que o texto foi mantido.
 - **O botão diz por que está desligado.** Sem modelo, sem teto, teto esgotado, campo vazio ou acima de 2000 caracteres: o motivo vem escrito e anunciado (`aria-describedby`), como no "Gerar com IA" da seção. O estado da IA que os dois usam virou `useEstadoDaIa`.
 - **Só a situação-problema.** Descrição e especificação dos itens não têm o botão: são técnicas, e mexer nelas pode mudar o sentido.
+- **Sugestão igual ao texto não é elogio.** Quando a IA devolve o mesmo texto, a tela diz que ela não sugeriu mudanças e que isso não quer dizer que o texto esteja bem escrito: o modelo pode só não ter conseguido melhorar (gírias e abreviações como "pq" e "ta" voltaram idênticas num teste). A mensagem antiga, "O texto já está bem escrito", afirmava uma qualidade que ninguém avaliou.
 
 ## 107. O texto da IA chega escrito, e não colado, com a marca trabalhando enquanto o pedido corre
 
