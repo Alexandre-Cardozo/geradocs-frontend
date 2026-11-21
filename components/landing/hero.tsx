@@ -7,7 +7,8 @@ import { FaixaDaMarca, FaixasDeCanto } from "@/components/shared/marca"
 import { CONTEUDO, HREF_DEMONSTRACAO, HREF_ENTRAR } from "@/lib/landing/conteudo"
 
 /**
- * Hero em navy. Entrada escalonada por CSS (`Entrada`), sem observador: a captura
+ * Hero do GeraDocs em navy, logo depois da abertura da GovPro (§120): o título é
+ * `h2`, porque o `h1` da página é o slogan da abertura. Entrada escalonada por CSS (`Entrada`), sem observador: a captura
  * é o maior elemento da dobra e não pode esperar JavaScript (LCP). Os efeitos
  * decorativos têm `pointer-events-none`.
  */
@@ -30,7 +31,7 @@ export function Hero() {
             <FaixaDaMarca className="mt-3 w-64" />
           </Entrada>
           <Entrada indice={1}>
-            <h1 className="m-0 font-display text-landing-h1 font-extrabold text-balance text-on-dark">{hero.titulo}</h1>
+            <h2 className="m-0 font-display text-landing-h1 font-extrabold text-balance text-on-dark">{hero.titulo}</h2>
           </Entrada>
           <Entrada indice={2}>
             <p className="m-0 max-w-xl text-landing-lead text-pretty text-on-dark-65">{hero.apoio}</p>

@@ -1525,3 +1525,20 @@ A escala do aplicativo tem corpo de 13px e tamanhos fixos em px: serve a uma int
 ## 119. A landing vive em `app/landing-page/`, sem sessão e sem fetch
 
 A rota `/landing-page` fica fora de `(app)` e de `(auth)`, portanto não herda a barra lateral nem a guarda de sessão. É um componente de servidor que exporta `metadata` próprio; é estática, sem chamada à API, sem hook de dados. Os componentes ficam em `components/landing/`, e a copy em `lib/landing/conteudo.ts`. A ordem dos documentos é lida de `lib/documentos/catalogo.ts`, a fonte única. A ação principal é um `mailto:` para `contato@govpro.com.br`; não há formulário nem backend novo. A rota `/` não muda.
+
+## 120. A landing abre com a sede da GovPro em paralaxe
+
+A primeira coisa que a landing mostra passa a ser a instituição: a sede da GovPro, com a marca na fachada e um jardim à frente, em camadas que se movem em profundidades diferentes. O slogan "Inteligência para Gestão Pública" vira o `h1` da página, e o título do GeraDocs desce para `h2` no hero logo abaixo. Esta decisão abre duas exceções no §117, que proibia parallax e loop, e só dentro da abertura (`components/landing/abertura.tsx`):
+
+- **Paralaxe de rolagem.** A seção tem 270svh e um palco preso no topo. Rolar aproxima a câmera da sede: cada camada cresce conforme a profundidade, o título sobe e some, a cena escurece e entra o manifesto, que fica até a seção terminar. É `transform` e `opacity`, nada mais, aplicado direto no elemento a cada quadro (`requestAnimationFrame`), sem estado do React.
+- **Paralaxe de ponteiro.** Com mouse (`pointer: fine`), as camadas se deslocam até 38px, a mais próxima mais. No toque não há nada.
+- **Dois loops lentos:** as nuvens derivam 2,5% para cada lado em 38s, e a seta de rolar pinga. Nada mais repete.
+- **Sem biblioteca nova.** O protótipo usou GSAP; aqui o mesmo comportamento sai de uma função pura (`lib/landing/paralaxe.ts`, coberta por teste) e de um efeito de 60 linhas. Uma dependência para mover cinco camadas não se paga.
+
+**Movimento reduzido:** nenhuma camada se move e o ponteiro é ignorado. A rolagem ainda escurece a cena e mostra o manifesto, porque isso é opacidade, não deslocamento. A regra global de `globals.css` zera a entrada e os dois loops.
+
+**Sem JavaScript:** a cena, o título e a frase aparecem parados, a seção tem a altura da tela e o manifesto vem no fluxo, logo abaixo. O palco de 270svh só existe depois que o componente monta (`data-movimento="ativo"`).
+
+**As imagens** são cinco camadas transparentes em WebP (`public/landing/abertura/`), em dois enquadramentos: largo (2400x1350) e alto (1080x1920, para tela com proporção até 4:5, escolhido por `<picture>`). São importadas, não referenciadas por caminho, para que o `basePath` do GitHub Pages entre na URL. Foram renderizadas de uma cena 3D procedural; trocar por imagens fotográficas é só substituir os arquivos, desde que as cinco camadas saiam da mesma câmera.
+
+O cabeçalho fica transparente enquanto a página está no topo, sobre o céu da abertura, e volta ao navy assim que a página rola.

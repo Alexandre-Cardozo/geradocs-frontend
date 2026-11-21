@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 
+import { Abertura } from "@/components/landing/abertura"
 import { Cabecalho } from "@/components/landing/cabecalho"
 import { Confianca } from "@/components/landing/confianca"
 import { Demonstracao } from "@/components/landing/demonstracao"
@@ -33,6 +34,7 @@ export default function PaginaLanding() {
       </a>
       <Cabecalho />
       <main id="conteudo" tabIndex={-1} className="outline-none">
+        <Abertura />
         <Hero />
         <Problema />
         <FluxoGeradocs />

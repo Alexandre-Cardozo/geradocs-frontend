@@ -14,7 +14,7 @@ describe("Hero", () => {
     render(<Hero />)
     expect(screen.getByText("Contratações públicas inteligentes")).toBeInTheDocument()
     expect(
-      screen.getByRole("heading", { level: 1, name: "Documentos da Contratação Pública, Conforme a Lei 14.133/21" }),
+      screen.getByRole("heading", { level: 2, name: "Documentos da Contratação Pública, Conforme a Lei 14.133/21" }),
     ).toBeInTheDocument()
     expect(screen.getByText(/O GeraDocs, solução da GovPro/)).toBeInTheDocument()
   })

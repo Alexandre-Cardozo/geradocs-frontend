@@ -25,6 +25,14 @@ describe("tokens da landing no @theme", () => {
     "@keyframes landing-entrada",
     "@keyframes landing-menu-abre",
     "@keyframes landing-menu-fecha",
+    "--ease-landing-cena:",
+    "--text-landing-abertura:",
+    "--animate-landing-camada:",
+    "--animate-landing-deriva:",
+    "--animate-landing-gota:",
+    "@keyframes landing-camada",
+    "@keyframes landing-deriva",
+    "@keyframes landing-gota",
   ])("declara %s", (token) => {
     expect(css).toContain(token)
   })

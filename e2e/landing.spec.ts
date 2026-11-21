@@ -16,9 +16,56 @@ test("abre sem sessão, sem redirecionar para o login", async ({ page }) => {
 
   await expect(page).toHaveURL(new RegExp(`${ROTA}/?$`));
   await expect(page).toHaveTitle("GovPro | GeraDocs — Contratações públicas inteligentes");
+  await expect(page.getByRole("heading", { level: 1, name: "Inteligência para Gestão Pública" })).toBeVisible();
   await expect(
-    page.getByRole("heading", { level: 1, name: "Documentos da Contratação Pública, Conforme a Lei 14.133/21" }),
-  ).toBeVisible();
+    page.getByRole("heading", { level: 2, name: "Documentos da Contratação Pública, Conforme a Lei 14.133/21" }),
+  ).toBeAttached();
+});
+
+test.describe("abertura em paralaxe (§120)", () => {
+  test("mostra a sede da GovPro e o slogan na primeira tela", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 810 });
+    await page.goto(rota(ROTA));
+    await expect(page.getByRole("img", { name: /Sede da GovPro/ })).toBeInViewport();
+    await expect(page.getByRole("heading", { level: 1 })).toBeInViewport();
+    // As imagens chegam com o basePath, também no modo publicado.
+    const carregadas = await page.locator("section[aria-label=GovPro] img").evaluateAll((imgs) =>
+      imgs.map((img) => (img as HTMLImageElement).complete && (img as HTMLImageElement).naturalWidth > 0),
+    );
+    expect(carregadas).toEqual([true, true, true, true, true]);
+  });
+
+  test("em tela em pé usa o enquadramento alto", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(rota(ROTA));
+    const sede = page.getByRole("img", { name: /Sede da GovPro/ });
+    await expect.poll(() => sede.evaluate((img) => (img as HTMLImageElement).naturalWidth)).toBe(1080);
+  });
+
+  test("ao rolar, a câmera avança, o título sai e o manifesto aparece", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 810 });
+    await page.goto(rota(ROTA));
+    const secao = page.locator("section[aria-label=GovPro]");
+    await expect(secao).toHaveAttribute("data-movimento", "ativo");
+    const percurso = await secao.evaluate((s) => s.getBoundingClientRect().height - window.innerHeight);
+    await page.evaluate((y) => window.scrollTo(0, y), Math.round(percurso * 0.82));
+    await expect(page.getByText(/A GovPro nasceu para estar ao lado dessas pessoas/)).toBeInViewport();
+    await expect.poll(() => page.locator("[data-manifesto]").evaluate((el) => Number(getComputedStyle(el).opacity))).toBeGreaterThan(0.9);
+    await expect.poll(() => page.locator("[data-titulo]").evaluate((el) => Number(getComputedStyle(el).opacity))).toBe(0);
+    const escala = await page.locator('[data-camada="frente"]').evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).a);
+    expect(escala).toBeGreaterThan(1.3);
+  });
+
+  test("sem JavaScript, a cena aparece parada e o manifesto vem no fluxo", async ({ browser }) => {
+    const contexto = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 1280, height: 800 } });
+    const pagina = await contexto.newPage();
+    await pagina.goto(rota(ROTA));
+    await expect(pagina.getByRole("heading", { level: 1, name: "Inteligência para Gestão Pública" })).toBeVisible();
+    const manifesto = pagina.getByText(/A GovPro nasceu para estar ao lado dessas pessoas/);
+    await manifesto.scrollIntoViewIfNeeded();
+    await expect(manifesto).toBeVisible();
+    await contexto.close();
+  });
 });
 
 test("o pedido de demonstração é um mailto com assunto", async ({ page }) => {
@@ -111,6 +158,15 @@ test.describe("com movimento reduzido", () => {
   // query seguia em `no-preference`); emular na página, antes do `goto`, vale.
   test.beforeEach(async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
+  });
+
+  test("as camadas da abertura não se movem ao rolar", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 810 });
+    await page.goto(rota(ROTA));
+    await page.evaluate(() => window.scrollTo(0, window.innerHeight));
+    await expect.poll(() => page.locator("[data-manifesto]").evaluate((el) => Number(getComputedStyle(el).opacity))).toBeGreaterThan(0);
+    const transformacoes = await page.locator("[data-camada]").evaluateAll((els) => els.map((el) => getComputedStyle(el).transform));
+    expect(transformacoes.every((t) => t === "none" || t === "matrix(1, 0, 0, 1, 0, 0)")).toBe(true);
   });
 
   test("nada é escondido", async ({ page }) => {

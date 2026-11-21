@@ -13,10 +13,13 @@ vi.mock("@/public/landing/proposta-ia.png", () => ({
 }))
 
 describe("/landing-page", () => {
-  it("tem um único h1 e as sete seções, na ordem", () => {
+  it("tem um único h1, o slogan da abertura, e as seções na ordem", () => {
     const { container } = render(<PaginaLanding />)
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
-    // O hero é a primeira <section> e não tem id; as demais são as âncoras.
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Inteligência para Gestão Pública")
+    const secoes = Array.from(container.querySelectorAll("main > section"))
+    expect(secoes[0]).toHaveAttribute("aria-label", "GovPro")
+    // A abertura e o hero vêm primeiro, sem id; as demais são as âncoras.
     const ids = Array.from(container.querySelectorAll("main > section"))
       .map((s) => s.id)
       .filter(Boolean)

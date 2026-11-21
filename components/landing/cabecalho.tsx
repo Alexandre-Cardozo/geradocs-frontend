@@ -13,9 +13,10 @@ import { CONTEUDO, HREF_DEMONSTRACAO, HREF_ENTRAR } from "@/lib/landing/conteudo
 type Menu = "fechado" | "aberto" | "fechando"
 
 /**
- * Cabeçalho fixo da landing. No desktop (lg), âncoras e o pedido de demonstração;
- * abaixo disso, um menu que abre em 250ms e fecha em 150ms (§117). A borda
- * inferior só aparece depois de rolar. Sobre o navy, o foco é `electric` (`.on-dark`).
+ * Cabeçalho fixo da landing. No topo da página ele é transparente, sobre o céu da
+ * abertura (§120), e vira navy ao rolar ou ao abrir o menu. No desktop (lg),
+ * âncoras e o pedido de demonstração; abaixo disso, um menu que abre em 250ms e fecha em 150ms (§117). A borda
+ * inferior só aparece junto com o fundo. Sobre o navy, o foco é `electric` (`.on-dark`).
  */
 export function Cabecalho() {
   const [menu, setMenu] = useState<Menu>("fechado")
@@ -45,8 +46,8 @@ export function Cabecalho() {
 
   return (
     <header
-      className={`on-dark sticky top-0 z-30 border-b bg-navy transition-colors duration-200 ease-linear ${
-        rolou ? "border-on-dark-border" : "border-transparent"
+      className={`on-dark sticky top-0 z-30 border-b transition-colors duration-200 ease-linear ${
+        rolou || menu !== "fechado" ? "border-on-dark-border bg-navy" : "border-transparent bg-transparent"
       }`}
     >
       <div className="mx-auto flex h-16 max-w-landing items-center justify-between gap-4 px-4 sm:px-6">

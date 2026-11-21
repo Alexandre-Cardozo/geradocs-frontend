@@ -155,7 +155,7 @@ Componentes reutilizáveis que **não são primitivos do DS** nem moldura: estad
 
 ### `components/landing/` — A landing
 
-**`components/landing/`** guarda a landing: cada seção é um componente sem fetch; a copy vem de `lib/landing/conteudo.ts`; a rota é `app/landing-page/`, fora de `(app)` e `(auth)`.
+**`components/landing/`** guarda a landing: cada seção é um componente sem fetch; a abertura em paralaxe (§120) lê as camadas de `public/landing/abertura/` e a conta da rolagem de `lib/landing/paralaxe.ts`; a copy vem de `lib/landing/conteudo.ts`; a rota é `app/landing-page/`, fora de `(app)` e `(auth)`.
 
 ### `lib/` — Dados e domínio
 

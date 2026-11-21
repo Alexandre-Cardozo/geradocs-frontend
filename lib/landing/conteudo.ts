@@ -33,6 +33,18 @@ export const CONTEUDO = {
     { id: "confianca", rotulo: "Confiança" },
   ],
 
+  abertura: {
+    titulo: ["Inteligência para", "Gestão Pública"],
+    frase: "Tecnologia a serviço da Administração Pública.",
+    altSede:
+      "Sede da GovPro: fachada branca em arco com a marca no pórtico central, palmeiras e um jardim com canteiros amarelos e verdes à frente.",
+    manifesto: {
+      inicio: "Por trás de cada contratação existe um servidor que precisou planejá-la.",
+      destaque: "A GovPro nasceu para estar ao lado dessas pessoas.",
+      assinatura: "Colatina/ES · tecnologia para a Administração Pública",
+    },
+  },
+
   hero: {
     eyebrow: "Contratações públicas inteligentes",
     titulo: "Documentos da Contratação Pública, Conforme a Lei 14.133/21",

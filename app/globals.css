@@ -310,6 +310,19 @@
   --animate-landing-menu-abre: landing-menu-abre 250ms cubic-bezier(0.2, 0, 0, 1) both;
   --animate-landing-menu-fecha: landing-menu-fecha 150ms cubic-bezier(0.2, 0, 0, 1) both;
 
+  /*
+   * Abertura em paralaxe (§120). As camadas sobem até o lugar em 1,5s, de trás
+   * para a frente; as nuvens derivam e a seta pinga em loop lento. Com movimento
+   * reduzido a regra global zera tudo e cada elemento fica no estado final.
+   */
+  --ease-landing-cena: cubic-bezier(0.215, 0.61, 0.355, 1);
+  --text-landing-abertura: clamp(2.125rem, min(6vw, 7.8vh), 6.5rem);
+  --text-landing-abertura--line-height: 0.98;
+  --text-landing-abertura--letter-spacing: -0.025em;
+  --animate-landing-camada: landing-camada 1500ms cubic-bezier(0.215, 0.61, 0.355, 1) both;
+  --animate-landing-deriva: landing-deriva 38s ease-in-out infinite alternate;
+  --animate-landing-gota: landing-gota 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+
   @keyframes landing-entrada {
     from {
       opacity: 0;
@@ -320,6 +333,42 @@
       opacity: 1;
       transform: none;
       filter: blur(0);
+    }
+  }
+
+  /* `--landing-de` e `--landing-opacidade-de` vêm de cada camada. */
+  @keyframes landing-camada {
+    from {
+      opacity: var(--landing-opacidade-de, 1);
+      transform: translateY(var(--landing-de, 0)) scale(var(--landing-escala-de, 1));
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes landing-deriva {
+    from {
+      transform: translateX(-2.5%);
+    }
+    to {
+      transform: translateX(2.5%);
+    }
+  }
+
+  @keyframes landing-gota {
+    0% {
+      transform: scaleY(0);
+      opacity: 1;
+    }
+    55% {
+      transform: scaleY(1);
+      opacity: 1;
+    }
+    100% {
+      transform: scaleY(1);
+      opacity: 0;
     }
   }
 
