@@ -199,17 +199,20 @@ describe("gerar texto da seção", () => {
     expect(gravou).toBe(false)
   })
 
-  it("os avisos da curadoria da orientação voltam com o texto (§91)", async () => {
+  it("os avisos da curadoria da orientação voltam à parte dos avisos da seção (§91)", async () => {
     servidor.use(
-      http.post(`${urlDaApi}/procurement-processes/:id/documents/:tipo/sections/:secao/generate`, () =>
-        HttpResponse.json({ text: "Texto.", guidanceWarnings: ["Marca só com justificativa."] }),
+      http.post(`${urlDaApi}/procurement-processes/:id/documents/:tipo/sections/:secao/ai-draft-with-sources`, () =>
+        HttpResponse.json({
+          documentType: "ETP", sectionCode: "1", content: "Texto.",
+          warnings: ["Aviso da seção."], guidanceWarnings: ["Marca só com justificativa."],
+        }),
       ),
     )
-    const { pedirTextoDaSecao } = await carregarClienteLimpo()
+    const { gerarRascunhoDaSecaoComFontes } = await carregarClienteLimpo()
 
-    expect(await pedirTextoDaSecao(PROCESSO, "ETP", "1", undefined, "redacao", "Indicar a marca.")).toEqual({
-      texto: "Texto.",
-      avisos: ["Marca só com justificativa."],
+    expect(await gerarRascunhoDaSecaoComFontes(PROCESSO, "ETP", "1", "", "Indicar a marca.")).toMatchObject({
+      warnings: ["Aviso da seção."],
+      guidanceWarnings: ["Marca só com justificativa."],
     })
   })
 
@@ -239,13 +242,6 @@ describe("gerar texto da seção", () => {
     expect(corpo?.draft).toBeNull()
     expect(corpo).not.toHaveProperty("mode")
 
-    // A orientação do servidor vai junto só quando há (§91).
-    const { pedirTextoDaSecao } = await carregarClienteLimpo()
-    await pedirTextoDaSecao(PROCESSO, "ETP", "1", "Texto.", "redacao", "Enfatizar lotes.")
-    expect(corpo).toEqual({ draft: "Texto.", guidance: "Enfatizar lotes." })
-    await pedirTextoDaSecao(PROCESSO, "ETP", "1", "Texto.", "redacao", "   ")
-    expect(corpo).toEqual({ draft: "Texto." })
-
     // Na revisão, o texto é o que se revisa, e o modo vai declarado (§87).
     await gerarTextoDaSecao(PROCESSO, "ETP", "1", "Texto a revisar.", "revisao")
     expect(corpo).toEqual({ draft: "Texto a revisar.", mode: "REVIEW" })
@@ -272,7 +268,7 @@ describe("rascunho com fontes de qualquer seção", () => {
     const resultado = await gerarRascunhoDaSecaoComFontes(PROCESSO, "TR", "1", "texto anterior")
     expect(resultado).toEqual({
       content: "Texto para revisão.", missingFacts: ["Preço não informado."],
-      evidence: [{ source: "Processo", fact: "Objeto cadastrado." }], warnings: [],
+      evidence: [{ source: "Processo", fact: "Objeto cadastrado." }], warnings: [], guidanceWarnings: [],
     })
     expect(gravou).toBe(false)
   })
@@ -305,42 +301,51 @@ describe("rascunho com fontes de qualquer seção", () => {
   })
 })
 
-describe("rascunho transitório da necessidade do ETP", () => {
-  it("usa o endpoint real, transporta o texto atual e não grava a seção", async () => {
-    let corpo: Record<string, unknown> | undefined
+describe("a orientação do servidor na redação com fontes (ADR-068)", () => {
+  it("vai junto só quando há, no mesmo pedido que traz o rascunho, e não grava a seção", async () => {
+    const corpos: Record<string, unknown>[] = []
     let gravou = false
     servidor.use(
-      http.post(`${urlDaApi}/procurement-processes/:id/documents/ETP/sections/1/ai-draft`, async ({ request }) => {
-        corpo = (await request.json()) as Record<string, unknown>
-        return HttpResponse.json({ documentType: "ETP", sectionCode: "1", content: "Rascunho da necessidade.",
-          missingFacts: ["Problema não informado."], evidence: [{ source: "DFD 1", fact: "10 notebooks" }] })
-      }),
+      http.post(
+        `${urlDaApi}/procurement-processes/:id/documents/ETP/sections/1/ai-draft-with-sources`,
+        async ({ request }) => {
+          corpos.push((await request.json()) as Record<string, unknown>)
+          return HttpResponse.json({
+            documentType: "ETP", sectionCode: "1", content: "Rascunho da necessidade.",
+            missingFacts: ["Problema não informado."], evidence: [{ source: "DFD 1", fact: "10 notebooks" }],
+          })
+        },
+      ),
       http.put(`${urlDaApi}/procurement-processes/:id/documents/ETP/sections/1`, () => {
         gravou = true
         return HttpResponse.json(documentoApi)
       }),
     )
-    const { gerarRascunhoDaNecessidadeEtp } = await carregarClienteLimpo()
+    const { gerarRascunhoDaSecaoComFontes } = await carregarClienteLimpo()
 
-    expect(await gerarRascunhoDaNecessidadeEtp(PROCESSO, "Texto atual.")).toEqual({
+    expect(await gerarRascunhoDaSecaoComFontes(PROCESSO, "ETP", "1", "Texto atual.")).toEqual({
       content: "Rascunho da necessidade.", missingFacts: ["Problema não informado."],
-      warnings: [], evidence: [{ source: "DFD 1", fact: "10 notebooks" }],
+      warnings: [], evidence: [{ source: "DFD 1", fact: "10 notebooks" }], guidanceWarnings: [],
     })
-    expect(corpo).toEqual({ draft: "Texto atual." })
+    await gerarRascunhoDaSecaoComFontes(PROCESSO, "ETP", "1", "Texto.", "Enfatizar lotes.")
+    await gerarRascunhoDaSecaoComFontes(PROCESSO, "ETP", "1", "Texto.", "   ")
+
+    expect(corpos).toEqual([
+      { draft: "Texto atual." },
+      { draft: "Texto.", guidance: "Enfatizar lotes." },
+      { draft: "Texto." },
+    ])
     expect(gravou).toBe(false)
   })
 
   it("rejeita resposta vazia ou de outra seção", async () => {
-    servidor.use(http.post(`${urlDaApi}/procurement-processes/:id/documents/ETP/sections/1/ai-draft`, () =>
-      HttpResponse.json({ documentType: "TR", sectionCode: "2", content: "Texto errado." }),
-    ))
-    const { gerarRascunhoDaNecessidadeEtp } = await carregarClienteLimpo()
-    await expect(gerarRascunhoDaNecessidadeEtp(PROCESSO, "")).rejects.toThrow("rascunho válido")
+    const rota = `${urlDaApi}/procurement-processes/:id/documents/ETP/sections/1/ai-draft-with-sources`
+    servidor.use(http.post(rota, () => HttpResponse.json({ documentType: "TR", sectionCode: "2", content: "Texto errado." })))
+    const { gerarRascunhoDaSecaoComFontes } = await carregarClienteLimpo()
+    await expect(gerarRascunhoDaSecaoComFontes(PROCESSO, "ETP", "1", "")).rejects.toThrow("rascunho válido")
 
-    servidor.use(http.post(`${urlDaApi}/procurement-processes/:id/documents/ETP/sections/1/ai-draft`, () =>
-      HttpResponse.json({ documentType: "ETP", sectionCode: "1", content: "   " }),
-    ))
-    await expect(gerarRascunhoDaNecessidadeEtp(PROCESSO, " ")).rejects.toThrow("rascunho válido")
+    servidor.use(http.post(rota, () => HttpResponse.json({ documentType: "ETP", sectionCode: "1", content: "   " })))
+    await expect(gerarRascunhoDaSecaoComFontes(PROCESSO, "ETP", "1", " ")).rejects.toThrow("rascunho válido")
   })
 })
 
@@ -992,5 +997,162 @@ describe("modelo de estrutura", () => {
     const trocado = await trocarModeloDoDocumento(PROCESSO, "Edital", "AGU-EDITAL-TP")
     expect(pedido).toMatchObject({ metodo: "PUT", corpo: { code: "AGU-EDITAL-TP" } })
     expect(trocado.estrutura.codigoDoModelo).toBe("AGU-EDITAL-PC")
+  })
+})
+
+describe("propostas de IA (ADR-066)", () => {
+  it("o rascunho traz o id da proposta, para salvar ou rejeitar depois", async () => {
+    servidor.use(
+      http.post(`${urlDaApi}/procurement-processes/:id/documents/:tipo/sections/:secao/ai-draft-with-sources`, () =>
+        HttpResponse.json({ documentType: "ETP", sectionCode: "4", content: "Texto.", proposalId: "p-1" }),
+      ),
+    )
+    const { gerarRascunhoDaSecaoComFontes } = await carregarClienteLimpo()
+
+    expect((await gerarRascunhoDaSecaoComFontes(PROCESSO, "ETP", "4", "")).proposalId).toBe("p-1")
+  })
+
+  it("a redação com orientação também devolve o id da proposta", async () => {
+    servidor.use(
+      http.post(`${urlDaApi}/procurement-processes/:id/documents/:tipo/sections/:secao/ai-draft-with-sources`, () =>
+        HttpResponse.json({ documentType: "ETP", sectionCode: "1", content: "Texto.", proposalId: "p-2" }),
+      ),
+    )
+    const { gerarRascunhoDaSecaoComFontes } = await carregarClienteLimpo()
+
+    expect(
+      (await gerarRascunhoDaSecaoComFontes(PROCESSO, "ETP", "1", "", "Ênfase nas escolas rurais.")).proposalId,
+    ).toBe("p-2")
+  })
+
+  it("salvar a seção leva a proposta de onde o texto veio, e só quando veio de uma", async () => {
+    const corpos: Record<string, unknown>[] = []
+    servidor.use(
+      http.put(`${urlDaApi}/procurement-processes/:id/documents/:tipo/sections/:secao`, async ({ request }) => {
+        corpos.push((await request.json()) as Record<string, unknown>)
+        return HttpResponse.json(documentoApi)
+      }),
+    )
+    const { salvarSecao } = await carregarClienteLimpo()
+
+    await salvarSecao(PROCESSO, "ETP", "1", "Texto.", undefined, "p-1")
+    await salvarSecao(PROCESSO, "ETP", "1", "Texto.")
+
+    expect(corpos[0]).toMatchObject({ content: "Texto.", aiProposalId: "p-1" })
+    expect(corpos[1]).not.toHaveProperty("aiProposalId")
+  })
+
+  it("lê a proposta pendente da seção e devolve nada quando não há (204)", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id/documents/:tipo/sections/:secao/ai-proposal`, ({ params }) =>
+        params.secao === "4"
+          ? HttpResponse.json({
+              documentType: "ETP", sectionCode: "4", content: "Rascunho pendente.", proposalId: "p-9",
+              missingFacts: ["Sem histórico de consumo."], warnings: [],
+              evidence: [{ source: "DFD", fact: "1.200 pacotes" }], guidanceWarnings: [],
+            })
+          : new HttpResponse(null, { status: 204 }),
+      ),
+    )
+    const { lerPropostaPendenteDaSecao } = await carregarClienteLimpo()
+
+    expect(await lerPropostaPendenteDaSecao(PROCESSO, "ETP", "4")).toEqual({
+      proposalId: "p-9", content: "Rascunho pendente.", missingFacts: ["Sem histórico de consumo."], warnings: [],
+      evidence: [{ source: "DFD", fact: "1.200 pacotes" }], guidanceWarnings: [],
+    })
+    expect(await lerPropostaPendenteDaSecao(PROCESSO, "ETP", "1")).toBeNull()
+  })
+
+  it("uma proposta restaurada sem lacunas, avisos nem evidências volta com listas vazias", async () => {
+    servidor.use(
+      http.get(`${urlDaApi}/procurement-processes/:id/documents/:tipo/sections/:secao/ai-proposal`, () =>
+        HttpResponse.json({ content: "Só o texto.", proposalId: "p-3" }),
+      ),
+    )
+    const { lerPropostaPendenteDaSecao } = await carregarClienteLimpo()
+
+    expect(await lerPropostaPendenteDaSecao(PROCESSO, "ETP", "4")).toEqual({
+      proposalId: "p-3", content: "Só o texto.", missingFacts: [], warnings: [], evidence: [], guidanceWarnings: [],
+    })
+  })
+
+  it("rejeitar manda o motivo só quando há motivo", async () => {
+    const corpos: Record<string, unknown>[] = []
+    servidor.use(
+      http.post(
+        `${urlDaApi}/procurement-processes/:id/documents/:tipo/sections/:secao/ai-proposals/:proposta/reject`,
+        async ({ request }) => {
+          corpos.push((await request.json()) as Record<string, unknown>)
+          return new HttpResponse(null, { status: 204 })
+        },
+      ),
+    )
+    const { rejeitarPropostaDeIa } = await carregarClienteLimpo()
+
+    await rejeitarPropostaDeIa(PROCESSO, "ETP", "4", "p-1", "  Não reflete a necessidade.  ")
+    await rejeitarPropostaDeIa(PROCESSO, "ETP", "4", "p-2")
+
+    expect(corpos).toEqual([{ reason: "Não reflete a necessidade." }, {}])
+  })
+})
+
+describe("quando o servidor recusa a geração por IA", () => {
+  const rotaDaGeracao = `${urlDaApi}/procurement-processes/:id/documents/:tipo/sections/:secao/ai-draft-with-sources`
+
+  function recusa(status: number, code: string, detail: string, cabecalhos?: Record<string, string>) {
+    servidor.use(
+      http.post(
+        rotaDaGeracao,
+        () =>
+          HttpResponse.json(
+            { title: "Recusada", status, detail, code },
+            { status, headers: { "Content-Type": "application/problem+json", ...cabecalhos } },
+          ),
+      ),
+    )
+  }
+
+  it("geração em andamento (429): a mensagem do servidor chega inteira, com o código para a tela decidir", async () => {
+    recusa(429, "AI_BUSY", "Já existe uma geração em andamento para esta seção. Aguarde alguns segundos.", {
+      "Retry-After": "3",
+    })
+    const { gerarRascunhoDaSecaoComFontes } = await carregarClienteLimpo()
+
+    await expect(gerarRascunhoDaSecaoComFontes(PROCESSO, "ETP", "1", "Texto.")).rejects.toMatchObject({
+      status: 429,
+      code: "AI_BUSY",
+      message: "Já existe uma geração em andamento para esta seção. Aguarde alguns segundos.",
+    })
+  })
+
+  it("teto do mês esgotado (402) e IA não configurada (503) também chegam com o código e o motivo", async () => {
+    const { gerarRascunhoDaSecaoComFontes } = await carregarClienteLimpo()
+
+    recusa(402, "AI_BUDGET_EXHAUSTED", "O teto de IA do mês acabou. A escrita manual segue disponível.")
+    await expect(gerarRascunhoDaSecaoComFontes(PROCESSO, "ETP", "1", "")).rejects.toMatchObject({
+      status: 402,
+      code: "AI_BUDGET_EXHAUSTED",
+      message: expect.stringContaining("escrita manual"),
+    })
+
+    recusa(503, "AI_PROVIDER_NOT_CONFIGURED", "A IA não está configurada neste ambiente.")
+    await expect(gerarRascunhoDaSecaoComFontes(PROCESSO, "ETP", "1", "")).rejects.toMatchObject({
+      status: 503,
+      code: "AI_PROVIDER_NOT_CONFIGURED",
+    })
+  })
+
+  it("o 429 da geração não é tratado como bloqueio de login nem derruba a sessão", async () => {
+    recusa(429, "AI_BUSY", "Já existe uma geração em andamento.")
+    const { gerarRascunhoDaSecaoComFontes } = await carregarClienteLimpo()
+
+    const erro = await gerarRascunhoDaSecaoComFontes(PROCESSO, "ETP", "1", "").catch((falha: unknown) => falha)
+
+    expect(erro).toMatchObject({ status: 429 })
+    // Quem pediu continua autenticado: o servidor só pede para esperar.
+    servidor.use(
+      http.post(rotaDaGeracao, () => HttpResponse.json({ documentType: "ETP", sectionCode: "1", content: "Texto." })),
+    )
+    expect(await gerarRascunhoDaSecaoComFontes(PROCESSO, "ETP", "1", "")).toMatchObject({ content: "Texto." })
   })
 })

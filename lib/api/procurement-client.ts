@@ -136,7 +136,7 @@ function mapear(item: ProcessoApi): Processo {
     documentos: ordenar(item.documents.map((tipo) => tiposDaApi[tipo] as TipoDocumento)),
     fundamentoLegal: item.legalBasis,
     ata: null,
-    fases: { verificacaoDFD: false, retificacao: false },
+    fases: { retificacao: false },
     urgente: item.urgency,
     versao: item.version,
   };

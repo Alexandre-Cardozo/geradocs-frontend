@@ -24,8 +24,15 @@ import {
   obterFotoDePerfil,
   removerFotoDePerfil,
 } from "@/lib/api/avatar-client"
+import { definirTetoDeIa, lerTetoDeIa } from "@/lib/api/ai-budget-client"
+import { lerAproveitamentoDaIa } from "@/lib/api/ai-proposal-summary-client"
+import { melhorarSituacaoProblema } from "@/lib/api/text-improvement-client"
 import { iaDisponivel } from "@/lib/api/ai-client"
-import { gerarRascunhoDaNecessidadeEtp, gerarRascunhoDaSecaoComFontes } from "@/lib/api/authoring-client"
+import {
+  gerarRascunhoDaSecaoComFontes,
+  lerPropostaPendenteDaSecao,
+  rejeitarPropostaDeIa,
+} from "@/lib/api/authoring-client"
 import { confirmarContextos, contextosDoProcesso } from "@/lib/api/contextos-client"
 import {
   desativarModelo,
@@ -85,7 +92,6 @@ export const chaves = {
   estatisticas: ["estatisticas"] as const,
   processos: (params: ListaProcessosParams) => ["processos", params] as const,
   processo: (id: string) => ["processo", id] as const,
-  parecerDFD: (id: string) => ["parecer-dfd", id] as const,
   dfds: (id: string) => ["dfds", id] as const,
   versoesDfd: (processoId: string, dfdId: string) => ["versoes-dfd", processoId, dfdId] as const,
   dotacoes: (id: string) => ["dotacoes", id] as const,
@@ -93,6 +99,8 @@ export const chaves = {
   alternativasMercado: (id: string) => ["alternativas-mercado", id] as const,
   dispensa: (id: string) => ["conferencia-dispensa", id] as const,
   iaDisponivel: ["ia-disponivel"] as const,
+  tetoDeIa: (entidadeId: string) => ["teto-de-ia", entidadeId] as const,
+  aproveitamentoDaIa: (entidadeId: string) => ["aproveitamento-da-ia", entidadeId] as const,
   secoes: (id: string, tipo: TipoDocumento) => ["secoes", id, tipo] as const,
   documentos: ["documentos"] as const,
   resumoDocumentos: ["documentos", "resumo"] as const,
@@ -308,24 +316,6 @@ export function useAtualizarProcesso() {
   })
 }
 
-export function useParecerDFD(processoId: string) {
-  return useQuery({
-    queryKey: chaves.parecerDFD(processoId),
-    queryFn: () => api.getParecerDFD(processoId),
-    enabled: processoId !== "",
-  })
-}
-
-export function useAnalisarDFD(processoId: string) {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (arquivo: string) => api.analisarDFD(processoId, arquivo),
-    onSuccess: (parecer) => {
-      queryClient.setQueryData(chaves.parecerDFD(processoId), parecer)
-    },
-  })
-}
-
 /**
  * O documento em elaboração inteiro.
  *
@@ -359,6 +349,8 @@ export function useAtualizarSecao(processoId: string, tipo: TipoDocumento) {
       conteudo: string
       status?: import("@/lib/types").StatusDocumento
       justificativaDispensa?: string
+      /** A proposta de IA de onde o texto veio (ADR-066): salvar é aceitá-la. */
+      propostaId?: string
     }) => api.atualizarSecao({ processoId, tipo, ...input }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: chaves.secoes(processoId, tipo) })
@@ -392,24 +384,52 @@ export function useTrocarModelo(processoId: string, tipo: TipoDocumento) {
   })
 }
 
-export function useGerarSecao(processoId: string, tipo: TipoDocumento) {
-  return useMutation({
-    mutationFn: (input: { secaoId: string; rascunho?: string; orientacao?: string }) =>
-      api.gerarSecao(processoId, tipo, input.secaoId, input.rascunho, input.orientacao),
+/**
+ * A proposta de IA que ainda espera o servidor na seção (ADR-066).
+ *
+ * Sem cache: a pergunta é "o que há pendente agora", e uma resposta guardada
+ * restauraria um rascunho que já foi salvo ou descartado.
+ */
+const chaveDaPropostaPendente = (processoId: string, tipo: TipoDocumento, secaoId: string | null) =>
+  ["proposta-pendente", processoId, tipo, secaoId] as const
+
+export function usePropostaPendente(processoId: string, tipo: TipoDocumento, secaoId: string | null) {
+  return useQuery({
+    queryKey: chaveDaPropostaPendente(processoId, tipo, secaoId),
+    queryFn: () => lerPropostaPendenteDaSecao(processoId, tipo, String(secaoId)),
+    enabled: processoId !== "" && secaoId != null,
+    staleTime: 0,
+    gcTime: 0,
+    retry: false,
   })
 }
 
-/** Não invalida o documento: a geração só altera o rascunho local do editor. */
-export function useGerarRascunhoEtp(processoId: string) {
+/**
+ * Diz à tela que a seção já não tem proposta pendente (foi salva, descartada ou
+ * trocada por outra): sem isso, a resposta guardada a restauraria de novo.
+ */
+export function useLimparPropostaPendente(processoId: string, tipo: TipoDocumento) {
+  const queryClient = useQueryClient()
+  return (secaoId: string) =>
+    queryClient.setQueryData(chaveDaPropostaPendente(processoId, tipo, secaoId), null)
+}
+
+/** O servidor descartou a proposta de IA; o motivo é opcional. */
+export function useRejeitarPropostaDeIa(processoId: string, tipo: TipoDocumento) {
   return useMutation({
-    mutationFn: (rascunho: string) => gerarRascunhoDaNecessidadeEtp(processoId, rascunho),
+    mutationFn: (input: { secaoId: string; propostaId: string; motivo?: string }) =>
+      rejeitarPropostaDeIa(processoId, tipo, input.secaoId, input.propostaId, input.motivo),
   })
 }
 
+/**
+ * A redação da seção, sempre pelo mesmo caminho (ADR-068): com a orientação do
+ * servidor, quando há, e com as fontes, as lacunas e os avisos.
+ */
 export function useGerarRascunhoDaSecao(processoId: string, tipo: TipoDocumento) {
   return useMutation({
-    mutationFn: (input: { secaoId: string; rascunho: string }) =>
-      gerarRascunhoDaSecaoComFontes(processoId, tipo, input.secaoId, input.rascunho),
+    mutationFn: (input: { secaoId: string; rascunho: string; orientacao?: string }) =>
+      gerarRascunhoDaSecaoComFontes(processoId, tipo, input.secaoId, input.rascunho, input.orientacao),
   })
 }
 
@@ -779,6 +799,36 @@ export function useAtualizarLimiteDeUsuarios() {
     onSuccess: (tenant) => {
       void queryClient.invalidateQueries({ queryKey: chaves.entidades })
       void queryClient.invalidateQueries({ queryKey: chaves.tenant(tenant.id) })
+    },
+  })
+}
+
+/** O teto mensal de IA da entidade (ADR-064 do back-end). */
+export function useTetoDeIa(entidadeId: string) {
+  return useQuery({
+    queryKey: chaves.tetoDeIa(entidadeId),
+    queryFn: () => lerTetoDeIa(entidadeId),
+    enabled: entidadeId !== "",
+  })
+}
+
+/** Quanto da IA a entidade aproveita no mês (ADR-071 do back-end). */
+export function useAproveitamentoDaIa(entidadeId: string) {
+  return useQuery({
+    queryKey: chaves.aproveitamentoDaIa(entidadeId),
+    queryFn: () => lerAproveitamentoDaIa(entidadeId),
+    enabled: entidadeId !== "",
+  })
+}
+
+/** Só o administrador da plataforma define; o servidor recusa os demais. */
+export function useDefinirTetoDeIa() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ entidadeId, teto }: { entidadeId: string; teto: number }) =>
+      definirTetoDeIa(entidadeId, teto),
+    onSuccess: (_resposta, { entidadeId }) => {
+      void queryClient.invalidateQueries({ queryKey: chaves.tetoDeIa(entidadeId) })
     },
   })
 }
@@ -1223,6 +1273,43 @@ export function useIaDisponivel() {
     queryKey: chaves.iaDisponivel,
     queryFn: iaDisponivel,
     staleTime: Infinity,
+  })
+}
+
+/**
+ * O que a tela pode prometer da IA agora (ADR-029 e ADR-064 do back-end).
+ *
+ * Cada estado tem um motivo diferente e uma saída diferente: sem modelo, é da
+ * instalação; sem teto, é pedir ao administrador que defina. Enquanto a
+ * resposta não chega, é `verificando`: habilitar por otimismo devolveria o
+ * clique que dá erro.
+ *
+ * <p>Teto definido e já consumido **não** desliga o botão (§109): o clique vai
+ * ao servidor, a recusa abre o aviso do limite com o contato da GovPro, e
+ * quando o limite é renovado ou ampliado a IA volta a responder no clique
+ * seguinte, sem esperar a tela reler o teto.
+ */
+export type EstadoDaIa = "verificando" | "sem-modelo" | "sem-teto" | "disponivel"
+
+export function useEstadoDaIa(): EstadoDaIa {
+  const ia = useIaDisponivel()
+  const sessao = useSessao()
+  const teto = useTetoDeIa(ia.data === true ? (sessao.data?.usuario.entidadeId ?? "") : "")
+  if (ia.isPending) return "verificando"
+  if (ia.data !== true) return "sem-modelo"
+  if (teto.data !== undefined && !teto.data.definido) return "sem-teto"
+  return "disponivel"
+}
+
+/**
+ * A sugestão de redação da situação-problema do DFD (ADR-072 do back-end).
+ *
+ * Não invalida nada: a sugestão não grava no DFD, e o texto só muda quando a
+ * pessoa o salva pelo caminho de sempre.
+ */
+export function useMelhorarSituacaoProblema(processoId: string) {
+  return useMutation({
+    mutationFn: (texto: string) => melhorarSituacaoProblema(processoId, texto),
   })
 }
 

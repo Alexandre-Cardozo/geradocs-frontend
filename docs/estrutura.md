@@ -23,7 +23,7 @@ GeraDocs/
 │   ├── (auth)/                   # Route group SEM shell — telas de autenticação
 │   │   ├── layout.tsx            # Shell mínimo (sem sidebar/header)
 │   │   └── login/page.tsx        # Login CPF + senha .......................... rota  /login
-│   ├── landing-page/             # Landing da GovPro com o GeraDocs: estática, sem sessão, sem fetch (§109)
+│   ├── landing-page/             # Landing da GovPro com o GeraDocs: estática, sem sessão, sem fetch (§119)
 │   └── (app)/                    # Route group do shell autenticado (guarda de sessão + RBAC)
 │       ├── layout.tsx            # GuardaSessao + AppShell (sidebar + header)
 │       ├── error.tsx             # Error boundary das telas
@@ -64,7 +64,7 @@ GeraDocs/
 │   ├── documentos/               # Componentes de DOMÍNIO dos documentos (não são do DS)
 │   │   └── paineis.tsx           # Painéis especiais do editor, acionados por SecaoDocumento.painel:
 │   │                             #   PainelATA (adesão a ARP), quantidades e valor (ETP, incisos IV e VI)
-│   ├── landing/                  # Seções, cabeçalho, rodapé e peças de movimento da /landing-page (§109)
+│   ├── landing/                  # Seções, cabeçalho, rodapé e peças de movimento da /landing-page (§119)
 │   └── shared/                   # Componentes de apoio usados por várias telas (não são do DS)
 │       ├── providers.tsx         # QueryClientProvider (TanStack Query) + Toast global
 │       ├── estados.tsx           # LoadingState, SkeletonRows, ErrorState, EmptyState, InlineSpinner

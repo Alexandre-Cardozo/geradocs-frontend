@@ -83,9 +83,9 @@ Menos movimento é o padrão. Nada em loop, nada de parallax, sem biblioteca nov
 
 ## 7. ADRs (antes do código)
 
-- **§107** — exceção do DS para entrada animada, restrita à landing e aos valores da §6.
-- **§108** — escala tipográfica de marketing e contêiner de largura máxima como tokens novos.
-- **§109** — a landing vive em `app/landing-page/`, fora de `(app)` e `(auth)`, sem sessão e sem fetch; a rota `/` não muda.
+- **§117** — exceção do DS para entrada animada, restrita à landing e aos valores da §6.
+- **§118** — escala tipográfica de marketing e contêiner de largura máxima como tokens novos.
+- **§119** — a landing vive em `app/landing-page/`, fora de `(app)` e `(auth)`, sem sessão e sem fetch; a rota `/` não muda.
 
 ## 8. Testes e critério de pronto
 
@@ -106,7 +106,7 @@ Menos movimento é o padrão. Nada em loop, nada de parallax, sem biblioteca nov
 ## 10. Ordem de entrega (commits pequenos, Conventional Commits)
 
 1. Branch nova a partir de `integration/ai-frontend`.
-2. ADRs §107–§109.
+2. ADRs §117–§119.
 3. Tokens no `@theme` (tipografia, contêiner, animação) + teste de guarda.
 4. `lib/landing/conteudo.ts` + testes.
 5. Componentes de base: `Revelar`, `moldura-de-tela`, cabeçalho, rodapé.

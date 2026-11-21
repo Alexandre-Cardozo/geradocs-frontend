@@ -11,7 +11,7 @@ import { QuemSomos } from "@/components/landing/quem-somos"
 import { Rodape } from "@/components/landing/rodape"
 
 /**
- * Landing da GovPro com o GeraDocs em destaque (§109). Fica fora de `(app)` e de
+ * Landing da GovPro com o GeraDocs em destaque (§119). Fica fora de `(app)` e de
  * `(auth)`: sem sessão, sem barra lateral, sem chamada à API. Componente de
  * servidor — o HTML é estático e o `metadata` é próprio. `title.absolute` ignora o
  * sufixo "Homologação" do layout raiz, que descreve o aplicativo e não esta página.

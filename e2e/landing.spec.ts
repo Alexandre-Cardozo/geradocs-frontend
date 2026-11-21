@@ -4,7 +4,7 @@ import { expect, test } from "@playwright/test";
 import { rota, semSessao } from "./api";
 
 /**
- * A landing (§109): estática, sem sessão, sem chamada à API. A varredura de
+ * A landing (§119): estática, sem sessão, sem chamada à API. A varredura de
  * acessibilidade **não** exclui os tokens sobre navy, como faz a do aplicativo —
  * a landing só usa `on-dark`, `-65`, `-60` e `-55`, todos acima de 4,5:1.
  */

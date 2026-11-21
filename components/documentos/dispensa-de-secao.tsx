@@ -2,7 +2,8 @@
 
 import { useId, useState } from "react"
 
-import { Button, InfoBanner, Textarea } from "@/components/ui"
+import { Button, Textarea } from "@/components/ui"
+import { LinhaDeAtencao } from "@/components/shared/linha-de-atencao"
 import type { SecaoDocumento, TipoDocumento } from "@/lib/types"
 
 /**
@@ -40,20 +41,27 @@ export function DispensaDeSecao({
   const motivoId = useId()
   const vazia = justificativa.trim() === ""
 
+  // Dispensada, é uma linha de atenção neutra (§115): o registro e as ações,
+  // com a justificativa inteira na dica e na leitura de tela.
   if (jaDispensada && !aberto) {
     return (
-      <InfoBanner tone="info">
-        <div className="font-semibold">Seção dispensada</div>
-        <p className="m-0 mt-1">{secao.justificativaDispensa}</p>
-        <div className="mt-2.5 flex flex-wrap gap-2.5">
-          <Button size="sm" variant="secondary" disabled={pendente} onClick={() => setAberto(true)}>
-            Editar justificativa
-          </Button>
-          <Button size="sm" variant="ghost" disabled={pendente} onClick={onDesfazer}>
-            Desfazer dispensa
-          </Button>
-        </div>
-      </InfoBanner>
+      <LinhaDeAtencao
+        tom="neutro"
+        acoes={
+          <>
+            <Button size="sm" variant="ghost" disabled={pendente} onClick={() => setAberto(true)}>
+              Editar
+            </Button>
+            <Button size="sm" variant="ghost" disabled={pendente} onClick={onDesfazer}>
+              Desfazer dispensa
+            </Button>
+          </>
+        }
+      >
+        <span className="block truncate" title={secao.justificativaDispensa}>
+          <span className="font-semibold">Seção dispensada:</span> {secao.justificativaDispensa}
+        </span>
+      </LinhaDeAtencao>
     )
   }
 

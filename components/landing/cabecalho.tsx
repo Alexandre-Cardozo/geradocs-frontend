@@ -14,7 +14,7 @@ type Menu = "fechado" | "aberto" | "fechando"
 
 /**
  * Cabeçalho fixo da landing. No desktop (lg), âncoras e o pedido de demonstração;
- * abaixo disso, um menu que abre em 250ms e fecha em 150ms (§107). A borda
+ * abaixo disso, um menu que abre em 250ms e fecha em 150ms (§117). A borda
  * inferior só aparece depois de rolar. Sobre o navy, o foco é `electric` (`.on-dark`).
  */
 export function Cabecalho() {

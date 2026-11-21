@@ -1395,7 +1395,115 @@ Pedido de quem usa: os tópicos seguem um depois do outro, sem buraco, na tela e
 - **Lista de anos, e não campo livre.** "Exercício" é um `Dropdown` com o ano atual (Brasília) já marcado, o anterior e os quatro seguintes, que são os do plano plurianual. O ano de uma dotação já gravada fora dessa faixa continua na lista, para a correção não trocar o ano sem pedido (`exerciciosDaDotacao`, em `lib/processos`).
 - **De onde vinha o "2100".** O back-end aceita exercício de 2000 a 2100, uma peneira contra erro de digitação. Com o campo livre, "30906" chegava ao servidor, e o toast mostrava a mensagem padrão da validação, que não dizia o campo. Agora a lista não deixa digitar, e o servidor diz "O exercício precisa estar entre 2000 e 2100." para quem chamar a API direto.
 
-## 107. A landing tem entrada animada, e só ela
+## 104. O teto de IA da entidade aparece antes do clique, e o administrador o define na tela das entidades
+
+- **A tela diz o motivo antes do clique (ADR-064 do back-end).** Com modelo de IA configurado e a entidade sem teto, o servidor respondia `402` só depois do clique, e o aviso era um toast que sumia. Agora o `CaminhosDaSecao` consulta o teto da entidade da sessão: sem teto, escreve "A IA não está liberada para esta entidade"; com o teto do mês consumido, "O teto de IA do mês acabou". Nos dois casos manda falar com o administrador da plataforma, desabilita o botão e liga o motivo por `aria-describedby`. Como o componente é um só e serve os dez painéis, nenhum painel precisou mudar.
+- **Sem modelo, nada muda.** Se a instalação não tem IA, o motivo continua sendo a falta de modelo, e o teto nem é consultado.
+- **Só o administrador define.** A coluna "Teto Mensal de IA" na tela de entidades (`/admin/entidades`) mostra o valor por mês e o gasto, e edita com o `MoneyInput`. Zero desliga a IA da entidade. O servidor recusa quem não é administrador, e a mensagem dele vai para o aviso.
+- **Entidade sem teto não é traço.** O estado "Sem teto" diz que a IA fica indisponível até definir, porque a tela do administrador é o único lugar em que isso se resolve.
+- **Os testes não leem mais o `.env`.** Em paralelo, o back fixou o provedor `none` no perfil de teste: quem tinha `AI_PROVIDER=gemini` no `.env` rodava a suíte com o provedor real ligado.
+
+## 105. O rascunho da IA que ficou sem salvar volta ao reabrir a seção, e salvar ou descartar é o que o servidor registra
+
+- **O rascunho já foi pago.** Recarregar a página perdia o texto que a IA acabara de escrever, e refazê-lo custava outra chamada. Agora o back (ADR-066) guarda cada rascunho como proposta pendente, e o editor, ao abrir uma seção, pergunta se há uma. Se há e o campo continua como foi gravado, o rascunho volta com o painel de fontes e um aviso: "O texto salvo só muda quando você salvar." Quem já digitou não tem o texto trocado por baixo.
+- **Salvar é aceitar.** O `PUT` da seção leva o `aiProposalId` do rascunho de onde o texto veio, e o servidor registra se foi aceito como veio ou com edição. Não há botão de "Aceitar": o que a pessoa já faz, salvar, é a decisão. Se a proposta já não está pendente, o texto é salvo igual — a tela nunca trava por causa do registro.
+- **Descartar é um botão.** O painel "Revise o Rascunho da IA" ganhou "Descartar rascunho": volta o texto salvo e registra a rejeição. Pede confirmação só quando há texto a perder.
+- **Sair da seção não rejeita.** O aviso agora diz a verdade: o rascunho fica guardado e volta ao reabrir, mas as alterações feitas nele se perdem. Gerar de novo substitui a pendente sem perguntar ao servidor.
+- **Após salvar, descartar ou gerar, o cache da pendência é limpo** (`useLimparPropostaPendente`), senão a resposta guardada restauraria por cima do texto que acabou de ser salvo.
+- **A revisão de um texto que já está na seção** (§87) não muda: tem painel próprio e não vira proposta.
+
+## 106. A IA do DFD melhora a redação da situação-problema, e a "verificação do DFD pela IA" saiu
+
+- **O que saiu.** A etapa "Verificação do DFD pela IA" (a página `/processos/dfd`, o cartão no detalhe do processo e o interruptor no assistente de novo processo) mostrava, para qualquer arquivo, o mesmo parecer de protótipo: nota 74 e achados fixos. O resultado tinha a marca de dado sintético, mas a etapa inteira prometia uma análise que nenhum modelo fazia. Saíram com ela `analisarDFD`, `getParecerDFD`, `parecerDfd`, o `fases.verificacaoDFD` do processo e o mecanismo de dado sintético (`MarcaSintetica`, `DADOS_SINTETICOS` e o guarda-corpo nº 8): `parecerDfd` era o único campo que ele marcava, e um mecanismo sem campo é código sem uso.
+- **O que entrou.** O botão **"Melhorar a redação"** abaixo da situação-problema, no cadastro do DFD e na edição dele (back, ADR-072). A IA reescreve o que a pessoa escreveu, sem acrescentar nem retirar fato; a tela mostra a sugestão e a pessoa escolhe "Usar sugestão" ou "Descartar". O campo só muda no clique dela, e o DFD só muda quando ela o salva. Se o servidor recusar a sugestão por não conseguir manter os fatos (`502`), a tela diz que o texto foi mantido.
+- **O botão diz por que está desligado.** Sem modelo, sem teto, teto esgotado, campo vazio ou acima de 2000 caracteres: o motivo vem escrito e anunciado (`aria-describedby`), como no "Gerar com IA" da seção. O estado da IA que os dois usam virou `useEstadoDaIa`.
+- **Só a situação-problema.** Descrição e especificação dos itens não têm o botão: são técnicas, e mexer nelas pode mudar o sentido.
+
+## 107. O texto da IA chega escrito, e não colado, com a marca trabalhando enquanto o pedido corre
+
+Pedido de quem usa: a geração por IA precisa dar a sensação de algo acontecendo, e não só colar o texto de uma vez.
+
+- **Exceção à regra de animação do DS, só na IA.** O DS pede animação funcional e sem entrada. Os três pontos de IA (Gerar com IA da seção e dos painéis, Revisão com IA e Melhorar a redação do DFD) ganham um gesto da marca; o resto da interface continua como estava. Com movimento reduzido no sistema, nada anima: a regra global de `prefers-reduced-motion` desliga as animações, e o texto entra de uma vez, como antes.
+- **Enquanto a IA trabalha.** `IaTrabalhando` (`components/shared/ia-magica.tsx`) troca o antigo "aguarde": o símbolo `MarcaCarregando` se desenhando, a faixa tricolor e a etapa do pedido escrita nas cores da marca ("Lendo o processo e o DFD", "Redigindo a seção", "Conferindo fatos e normas"). O cartão "Gerar com IA" ganha a borda com as cores do símbolo correndo (`ia-aura`). O leitor de tela ouve um anúncio fixo, e não uma frase nova a cada dois segundos.
+- **Quando a resposta chega.** `useRevelacaoDaIa` escreve o texto no campo palavra por palavra, entre 0,7 e 1,6 s conforme o tamanho, com um reflexo atravessando o campo (`data-ia-escrevendo`). A linha de tabela aparece inteira, para o editor de tabela não piscar (`trechoRevelado`, em `lib/dominio/revelacao.ts`). Na sugestão do DFD, `TextoRevelado` faz o mesmo só na exibição; "Usar sugestão" leva o texto inteiro. As sugestões da revisão surgem de um desfoque leve.
+- **Ninguém grava texto pela metade.** O primeiro clique ou tecla em qualquer ponto do editor durante a escrita completa o texto antes da ação: salvar, trocar de seção ou inserir tabela pegam o texto inteiro, e a tecla não é digitada no meio dele. Outra entrada no campo (corretor, preenchimento automático) para a escrita e fica com o que entrou. Trocar de seção cancela a escrita. O "Gerar com IA" fica ocupado até a escrita terminar.
+- **Nada muda no que é gravado.** O estado do editor, a proposta de IA (§105) e o aviso das tabelas (§101) são os mesmos; só o momento em que cada pedaço do texto aparece mudou.
+
+## 108. A orientação à IA vai até 1000 caracteres
+
+- **Eram 500.** Pedido de quem usa: não cabia o contexto real de uma seção. O contador da tela (`LIMITE_DA_ORIENTACAO`) e a curadoria do servidor (ADR-073 do back-end) passam a 1000, contados do mesmo jeito: sem as bordas e com os espaços juntados.
+- **A trilha guarda a orientação inteira.** A justificativa de um evento da auditoria passou de 500 para 2000 caracteres (V069 do back-end), e o `AI_GUIDANCE_USED` registra os 1000 caracteres sem corte, com o documento e a seção na frente.
+
+## 109. O limite de IA do plano esgotado abre um aviso, e não um toast
+
+- **O que acontecia.** Com o teto do mês consumido no meio do uso, o servidor recusava com `402` (`AI_BUDGET_EXHAUSTED`) e a tela mostrava um toast que sumia em três segundos, a mensagem caía no campo da orientação, ou a revisão seguia pedindo seção por seção para ouvir a mesma recusa.
+- **Um aviso só, para os três pontos de IA.** O `MutationCache` do cliente da aplicação (`Providers`) reconhece a recusa por limite (`ehLimiteDaIa`, em `lib/api/limite-da-ia.ts`) e abre `AvisoDeLimiteDaIa`: "Limite de IA Atingido", o limite do plano contratado, falar com a GovPro para contratar mais, com o botão "Falar com a GovPro" (e-mail com o assunto já escrito) e "Entendi". É modal de verdade: foco no contato, Tab preso, Esc fecha.
+- **O botão não desliga.** Decisão de quem usa: com o teto esgotado, o "Gerar com IA" e o "Melhorar a redação" continuam clicáveis, cada clique volta com a recusa e reabre o aviso, e quando o limite é renovado ou ampliado o clique seguinte já gera, sem a tela precisar reler o teto. Por isso `useEstadoDaIa` deixou de ter o estado `teto-esgotado` (que desligava o botão desde a §104). "Sem teto definido" continua desligando com o motivo: ali quem resolve é o administrador da plataforma, e não um contrato novo.
+- **Sem repetir.** O editor não mostra o toast nem marca a orientação; o "Melhorar a redação" não mostra a linha de erro; a revisão para na seção em que o limite acabou e diz isso no resumo. As outras recusas (geração em andamento, IA fora do ar, texto recusado) continuam com a mensagem própria.
+
+## 110. A orientação à IA fica aberta, ao lado do botão "Gerar com IA"
+
+- **O que mudou.** O campo era um `details` recolhido ("Orientar a IA (opcional)") acima do botão: quem não sabia que podia orientar a IA não abria. Agora ele aparece sempre que há IA, à direita do botão, com o rótulo "Orientação para a IA (opcional)".
+- **Layout pela largura do cartão.** O cartão é um `@container`: a partir de 448 px, botão à esquerda (alinhado ao topo do campo) e campo à direita; abaixo disso, como no celular e nos painéis estreitos, o campo vem primeiro e o botão embaixo, na ordem de quem escreve a orientação e depois gera. O Tab segue a mesma ordem: campo, depois "Gerar com IA". O rascunho automático do painel fica embaixo do "Gerar com IA", na mesma coluna.
+- **Compacto.** O aviso de dado pessoal e o contador dividem uma linha só embaixo do campo ("Vai só nesta seção. Não inclua dados pessoais." e "0/1000"). A recusa e os avisos da curadoria continuam embaixo do campo, na coluna dele.
+- **Sem IA, sem campo.** Sem modelo ou sem teto definido, o campo não aparece, como antes; fora do editor (sem quem guarde a orientação), também não.
+
+## 111. O cartão da IA fica só com o botão e o campo
+
+Pedido de quem usa: os textos do cartão repetiam o que o botão já diz.
+
+- **Sem título nem frase de fontes.** Saíram o título "Gerar com IA" e a frase "Rascunho com base no DFD e no processo. Revise antes de salvar.". As fontes ficam na dica do botão (`title`). O cartão só escreve algo quando a IA não pode responder (sem modelo, sem teto definido, verificando), e aí o motivo continua antes do clique, ligado ao botão por `aria-describedby` (guarda-corpo nº 7).
+- **Sem o aviso de dado pessoal na tela.** A curadoria do servidor (ADR-057) recusa a orientação com dado pessoal e diz o motivo no próprio campo.
+- **O campo começa na altura dos botões.** 32 px ao lado de um botão, 74 px ao lado de dois (com o rascunho automático), e cresce com o texto (`field-sizing: content`) até 240 px, quando passa a rolar.
+- **Sem o aviso "Rascunho ainda não salvo".** A linha embaixo do campo da seção saiu: o painel "Revise o Rascunho da IA" e o toast da geração já dizem que o texto não foi salvo.
+
+## 112. O que fica embaixo do texto da seção segue uma ordem só
+
+Pedido de quem usa: tabelas, botões da IA, orientação e base do rascunho poluíam a tela, cada painel do seu jeito.
+
+- **Duas faixas, sempre na mesma ordem.** Embaixo do campo: (1) as ferramentas do texto ("Editar tabela N", "Inserir tabela"), alinhadas à borda esquerda do campo; (2) o bloco da IA, um cartão só. O editor de tabela abre entre as duas, quando pedido. Entre o campo e o bloco, o espaço é o mesmo em todos os painéis.
+- **O bloco da IA é simétrico.** Botões de mesma largura à esquerda, orientação à direita, com o contador na linha do rótulo: o campo começa e termina na altura dos botões. Embaixo, só aparece o que está acontecendo (a IA trabalhando) ou o que ficou para decidir (a base do rascunho).
+- **"Preencher com dados do processo", o mesmo rótulo em toda seção.** Era "Refazer o rascunho", "Citar na seção", "Escrever a partir dos créditos"... e nada dizia que esse caminho não usa IA. A dica do botão diz "Sem IA:" e de onde vêm os dados. Com texto na seção, o clique pede confirmação antes de substituí-lo.
+- **A base do rascunho virou rodapé.** O cartão "Revise o Rascunho da IA" saiu. No rodapé do bloco da IA fica uma linha neutra, "Base do rascunho: 3 dados de origem · 2 lacunas", com "Ver detalhes" (lacunas, fontes não integradas e dados de origem, com a nota de que é informativo) e "Descartar rascunho" na mesma linha. Some ao salvar, descartar ou gerar de novo.
+- **O aviso do PCA cabe numa linha.** "1 item fora do PCA: justifique no texto (Art. 18, § 1º, II)." no lugar de título e parágrafo. Ele fica, porque o inciso II exige a justificativa da contratação não prevista. A linha "Sem item do plano a citar" só aparece quando não há esse aviso, para não dizer a mesma coisa duas vezes.
+
+## 113. O bloco da IA é um compositor: o campo em cima e a barra de ações embaixo
+
+A tentativa de pôr os botões numa coluna ao lado do campo (botão alinhado ao rótulo, segundo botão em duas linhas) não ficou proporcional: as alturas não batiam, e o desenho mudava com um ou dois botões.
+
+- **O campo ocupa a largura toda**, com o rótulo e o contador na mesma linha, e começa com duas linhas (cresce com o texto até 240 px).
+- **A barra de ações fica embaixo, alinhada às bordas do campo.** "Gerar com IA" à direita, como ação principal no fim da leitura; "Preencher com dados do processo" à esquerda, como caminho sem IA. Os dois têm a mesma altura, numa linha só, e o desenho é o mesmo com um botão ou com dois. No celular (abaixo de 480 px), os dois ocupam a largura toda, um embaixo do outro.
+- **O Tab segue a ordem de uso**: campo, "Gerar com IA", e depois "Preencher com dados do processo". "Gerar com IA" vem primeiro no código e vai para a direita com `ml-auto`; o preenchimento vai para a esquerda com `order-first`.
+- **Embaixo da barra**, só o que está acontecendo (a IA trabalhando) ou o que ficou para decidir (a base do rascunho, §112).
+
+## 114. O que escreve na seção sem IA fica num lugar só, e o editor não usa mais popup do navegador
+
+- **Um lugar só para escrever sem IA.** À esquerda da barra do bloco: um botão quando a seção tem uma origem, ou "Preencher com" e um menu quando tem mais de uma. As origens são os dados do processo (os painéis), o texto da minuta e o texto do modelo anterior (o editor, para qualquer seção, painéis inclusive). Saíram o botão "Usar o Texto da Minuta" acima do campo e o "Inserir nesta Seção" do cartão "Textos de Outro Modelo". A etapa final continua listando, só para leitura, o que não tem seção correspondente. O texto do modelo anterior é acrescentado ao fim, e o menu diz isso.
+- **Ficou fora** o "Incluir/Atualizar a Memória": é correção ligada ao aviso de divergência da memória de cálculo, e só faz sentido ao lado dele.
+- **Nenhuma escrita automática pergunta antes; todas podem ser desfeitas.** "Gerar com IA" e "Preencher" escrevem na hora, e o rodapé do bloco oferece "Desfazer" enquanto o texto continua como a escrita deixou. Desfazer devolve o texto de antes, salvo ou não. Desfazer um rascunho da IA é também rejeitá-lo (ADR-066). O rascunho restaurado ao reabrir a seção também começa com "Desfazer", que volta ao texto salvo.
+- **Descartar confirma na própria linha.** Depois de editar o rascunho da IA, o rodapé troca "Desfazer" por "Descartar rascunho", que pergunta "Voltar ao texto salvo?" ali mesmo, com "Descartar" e "Manter".
+- **Trocar de seção salva sozinho**, como já acontecia com o texto escrito à mão, agora também com o rascunho da IA, que é aceito ao salvar (ADR-066). Substitui o aviso da §105 de que as alterações no rascunho se perdiam ao sair.
+- **Notas da AGU recolhidas na linha das ferramentas do texto**, à direita de "Inserir tabela", como "ⓘ Notas da AGU (N)". Abrem numa lista compacta, com rolagem a partir de 192 px, e valem também nas seções com painel.
+- **A seção concluída mostra o bloco** como as demais: era o único lugar em que o texto da minuta ficava fora de alcance.
+- **O `Button` do DS ganhou `ariaExpanded` e `ariaControls`**, para o botão que abre e fecha um trecho da tela.
+
+## 115. O que a seção pede além do texto cabe numa linha de atenção
+
+- **O que eram.** Cada pedido da seção tinha um cartão do seu jeito: as cláusulas da minuta fora do texto (aviso, lista aberta, campo grande e botão, acima do campo), a seção dispensada (título, parágrafo e dois botões), a memória de cálculo que diverge da estimativa e o item fora do PCA. Juntos, empurravam o texto da seção para baixo.
+- **`LinhaDeAtencao`** (`components/shared`): o que falta, com o fundamento, numa linha só; as ações à direita; o detalhe abre e fecha na própria linha, com `aria-expanded`. Três tons nos tokens do DS: atenção (a ardósia dos avisos, §95), resolvido (verde) e neutro (registro).
+- **Cláusulas da minuta fora do texto (Art. 19, § 2º):** "1 cláusula obrigatória da minuta fora do texto (Art. 19, § 2º, Lei 14.133/21)." com "Justificar", que abre a lista (com "1 de N obrigatórias") e o campo. Justificada, a linha fica verde: "Alteração da minuta justificada: 1 cláusula fora do texto." com "Ver".
+- **Seção dispensada (Art. 18, § 2º):** "Seção dispensada: {justificativa}", numa linha (a justificativa inteira fica na dica), com "Editar" e "Desfazer dispensa". O convite "Dispensar esta seção" e o formulário continuam como estavam.
+- **Memória de cálculo divergente e item fora do PCA:** a mesma linha, com a correção ("Incluir na Memória") à direita.
+- **Falso positivo corrigido no back-end (ADR-075).** A cláusula "(Se for o caso)" numerada ("3.2.1. (Se for o caso) ...") não era reconhecida como opcional, e 89 das 157 seções com texto de minuta podiam pedir justificativa por engano. Com a correção, a linha só aparece quando falta cláusula obrigatória.
+- **Ficaram como estavam:** os subtópicos removidos do contexto, que já eram uma linha com "Escolher" e "Restaurar", e o resumo "Minuta da AGU" da etapa final.
+
+## 116. O PCA pode ser importado para os exercícios de 2025 a 2050
+
+- **O que era.** A lista de exercícios da importação era o ano vigente e os três anteriores (em 2026: 2023 a 2026). O plano do ano seguinte, que o órgão prepara durante o exercício corrente, não tinha como entrar.
+- **Agora** a faixa é fixa, de 2025 a 2050, em ordem crescente (`anosDoPca`, em `lib/dominio/anos-do-pca.ts`). O exercício vigente continua escolhido ao abrir a tela.
+- **O servidor já aceitava** de 2021 a 2100 (`pca_plans_year_ck`, V019), então a mudança é só da tela. Os planos de anos anteriores a 2025 que já foram importados continuam na lista e podem ser baixados.
+
+## 117. A landing tem entrada animada, e só ela
 
 O design system diz "sem animações de entrada", e continua valendo para o aplicativo. A landing é uma página de apresentação, lida uma vez por quem ainda não usa o produto, e ali uma entrada discreta ajuda a ler. A exceção é estreita:
 
@@ -1406,7 +1514,7 @@ O design system diz "sem animações de entrada", e continua valendo para o apli
 - **Movimento reduzido:** nenhum elemento é escondido, e a regra global de `globals.css` já zera as durações.
 - Keyframes e curva vivem no `@theme` (`--animate-landing-*`, `--ease-landing`), como `--animate-marca-varredura`.
 
-## 108. A landing tem escala tipográfica e contêiner próprios
+## 118. A landing tem escala tipográfica e contêiner próprios
 
 A escala do aplicativo tem corpo de 13px e tamanhos fixos em px: serve a uma interface densa e é pequena demais para uma página de leitura. A landing ganha tokens próprios no `@theme`, em vez de valores soltos nas classes:
 
@@ -1414,6 +1522,6 @@ A escala do aplicativo tem corpo de 13px e tamanhos fixos em px: serve a uma int
 - `--container-landing` (70rem), porque o aplicativo não tem teto de largura e uma página de leitura precisa dele.
 - Os tokens do aplicativo não mudam, e o aplicativo não usa os da landing.
 
-## 109. A landing vive em `app/landing-page/`, sem sessão e sem fetch
+## 119. A landing vive em `app/landing-page/`, sem sessão e sem fetch
 
 A rota `/landing-page` fica fora de `(app)` e de `(auth)`, portanto não herda a barra lateral nem a guarda de sessão. É um componente de servidor que exporta `metadata` próprio; é estática, sem chamada à API, sem hook de dados. Os componentes ficam em `components/landing/`, e a copy em `lib/landing/conteudo.ts`. A ordem dos documentos é lida de `lib/documentos/catalogo.ts`, a fonte única. A ação principal é um `mailto:` para `contato@govpro.com.br`; não há formulário nem backend novo. A rota `/` não muda.

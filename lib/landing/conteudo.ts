@@ -1,7 +1,7 @@
 import { CATALOGO, ORDEM_FLUXO } from "@/lib/documentos"
 
 /**
- * Toda a copy da landing (§109). Sem JSX: a página só compõe, e o texto se
+ * Toda a copy da landing (§119). Sem JSX: a página só compõe, e o texto se
  * revisa num lugar só. Só entra fato que existe no produto; o que falta sobre a
  * GovPro é uma `[LACUNA: …]` visível, e não texto inventado.
  */

@@ -1,7 +1,7 @@
 import type { ReactNode } from "react"
 
 /**
- * Entrada escalonada do hero (§107), feita só com CSS: o elemento já nasce com o
+ * Entrada escalonada do hero (§117), feita só com CSS: o elemento já nasce com o
  * estado inicial da animação (`both`) e não depende de JavaScript nem de
  * observador — não atrasa o LCP e aparece mesmo se o script falhar.
  * 100ms entre um elemento e o seguinte.

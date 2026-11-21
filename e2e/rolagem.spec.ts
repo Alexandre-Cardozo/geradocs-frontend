@@ -162,7 +162,6 @@ test.describe("a rolagem termina no conteúdo", () => {
     ["os usuários", "/configuracoes/usuarios"],
     ["o processo", `/processos/detalhe?id=${processo.id}`],
     ["o editor", `/processos/documento?id=${processo.id}&tipo=etp`],
-    ["a verificação do DFD", `/processos/dfd?id=${processo.id}`],
   ] as const
 
   for (const [nome, caminho] of TELAS) {

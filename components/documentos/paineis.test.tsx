@@ -131,7 +131,7 @@ describe("painel de quantidades", () => {
 
     // O código aparece também na tabela do painel, sob o nome do item.
     expect(await screen.findByText("CATMAT/CATSER 461777")).toBeInTheDocument()
-    await userEvent.click(await screen.findByRole("button", { name: /a partir dos DFDs/ }))
+    await userEvent.click(await screen.findByRole("button", { name: "Preencher com dados do processo" }))
 
     const texto = setRascunho.mock.calls[0]?.[0] as string
     expect(partesDoTexto(texto)).toContainEqual({
@@ -181,7 +181,7 @@ describe("painel de quantidades", () => {
     ])
     const { setRascunho } = renderizarPainel("quantidades")
 
-    await userEvent.click(await screen.findByRole("button", { name: /a partir dos DFDs/ }))
+    await userEvent.click(await screen.findByRole("button", { name: "Preencher com dados do processo" }))
 
     const texto = setRascunho.mock.calls[0]?.[0] as string
     // Em tabela (§100), que a prévia, o PDF e o DOCX desenham como tabela.
@@ -246,13 +246,13 @@ describe("painel de valor", () => {
 
     await screen.findByText(/R\$ 2\.500,00/)
     // Sem a fonte não há rascunho: o parágrafo afirma de onde saiu o preço.
-    expect(screen.queryByRole("button", { name: /a partir dos itens/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Preencher com dados do processo" })).not.toBeInTheDocument()
     expect(screen.getByText(/Escolha a fonte para escrever a memória/)).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole("button", { name: /Fonte de pesquisa de preços/ }))
     await userEvent.click(await screen.findByRole("option", { name: /Painel de Preços/ }))
     // A escolha grava no processo na hora — antes ela só existia na aba.
-    await userEvent.click(await screen.findByRole("button", { name: /a partir dos itens/ }))
+    await userEvent.click(await screen.findByRole("button", { name: "Preencher com dados do processo" }))
     expect(gravadas).toEqual([
       { method: null, source: "Painel de Preços do Governo Federal (Compras.gov.br)" },
     ])
@@ -362,7 +362,7 @@ describe("painel da necessidade", () => {
     comDfds([dfd("DFD 003/2026", "Secretaria de Educação", [papel])])
     const { setRascunho } = renderizarPainel("necessidade")
 
-    await userEvent.click(await screen.findByRole("button", { name: /Escrever o rascunho/ }))
+    await userEvent.click(await screen.findByRole("button", { name: "Preencher com dados do processo" }))
 
     const texto = setRascunho.mock.calls[0]?.[0] as string
     expect(texto).toContain("Secretaria de Educação")
@@ -396,10 +396,10 @@ describe("rascunho e IA convivem", () => {
 
     // Um rascunho não substitui a IA: um serve a quem não usa o modelo, o
     // outro a quem usa — e o modelo parte do que já está escrito.
-    await screen.findByRole("button", { name: /Escrever o rascunho/ })
+    await screen.findByRole("button", { name: "Preencher com dados do processo" })
     expect(screen.getByRole("button", { name: /Gerar com IA/ })).toBeInTheDocument()
 
-    await userEvent.click(screen.getByRole("button", { name: /Escrever o rascunho/ }))
+    await userEvent.click(screen.getByRole("button", { name: "Preencher com dados do processo" }))
     expect(screen.getByRole("button", { name: /Gerar com IA/ })).toBeInTheDocument()
   })
 
@@ -411,7 +411,7 @@ describe("rascunho e IA convivem", () => {
     await userEvent.click(await screen.findByRole("button", { name: /Fonte de pesquisa de preços/ }))
     await userEvent.click(await screen.findByRole("option", { name: /Painel de Preços/ }))
 
-    expect(await screen.findByRole("button", { name: /a partir dos itens/ })).toBeInTheDocument()
+    expect(await screen.findByRole("button", { name: "Preencher com dados do processo" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /Gerar com IA/ })).toBeInTheDocument()
   })
 })
@@ -577,7 +577,7 @@ describe("o valor apurado na pesquisa", () => {
       await screen.findByRole("button", { name: /Fonte de pesquisa de preços/ }),
     )
     await userEvent.click(await screen.findByRole("option", { name: /Painel de Preços/ }))
-    await userEvent.click(await screen.findByRole("button", { name: /a partir dos itens/ }))
+    await userEvent.click(await screen.findByRole("button", { name: "Preencher com dados do processo" }))
 
     const texto = setRascunho.mock.calls[0]?.[0] as string
     // Apresentar preço pesquisado e preço preliminar como a mesma coisa faria a

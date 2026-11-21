@@ -166,7 +166,7 @@ test.describe("pesquisa de preços", () => {
     await abrir(page, "Fornecedores e Fontes Consultadas")
     await expect(page.getByText(/Nenhum preço coletado/)).toBeVisible()
     await expect(
-      page.getByRole("button", { name: /Escrever a partir das fontes/ }),
+      page.getByRole("button", { name: "Preencher com dados do processo" }),
     ).toHaveCount(0)
   })
 

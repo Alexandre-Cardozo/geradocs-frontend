@@ -287,7 +287,7 @@ describe("criarProcessoReal", () => {
       secretaria: DEPARTAMENTO_ID,
       valorEstimado: 12000,
       documentos: ["TR"],
-      fases: { verificacaoDFD: false, retificacao: false },
+      fases: { retificacao: false },
     }
     await criarProcessoReal(entrada)
 
@@ -312,7 +312,7 @@ describe("criarProcessoReal", () => {
       secretaria: DEPARTAMENTO_ID,
       fundamentoLegal: "Art. 28, I, Lei 14.133/21",
       documentos: ["ETP"],
-      fases: { verificacaoDFD: false, retificacao: false },
+      fases: { retificacao: false },
     })
 
     expect(processo.objetoDemanda).toBe("Papel A4, canetas e pastas")
@@ -336,7 +336,7 @@ describe("criarProcessoReal", () => {
       modalidade: "Inexigibilidade",
       secretaria: DEPARTAMENTO_ID,
       documentos: ["TR"],
-      fases: { verificacaoDFD: false, retificacao: false },
+      fases: { retificacao: false },
     })
 
     expect(corpo.estimatedValue).toBe(0)
@@ -360,7 +360,7 @@ describe("criarProcessoReal", () => {
       modalidade: "Pregão Eletrônico",
       secretaria: DEPARTAMENTO_ID,
       documentos: ["ETP"],
-      fases: { verificacaoDFD: false, retificacao: false },
+      fases: { retificacao: false },
       dfdConteudo: new File(["%PDF-1.7"], "DFD-2026-014.pdf", { type: "application/pdf" }),
     })
 
@@ -926,6 +926,18 @@ describe("atualizarItensDoDfd", () => {
     expect(corpo.items?.[0]?.quantity).toBe(1200)
     // A data vai sempre junto: a rota troca itens e data, e omiti-la a apagaria.
     expect((corpo as { expectedCompletionDate?: string }).expectedCompletionDate).toBe("2026-12-15")
+  })
+
+  it("manda a situação-problema, sem espaços nas pontas, só quando ela foi informada", async () => {
+    const corpo = capturar()
+    const { atualizarItensDoDfd } = await carregarClienteLimpo()
+
+    await atualizarItensDoDfd(
+      PROCESSO, "d-1", [{ descricao: "Papel A4", unidade: "RESMA", quantidade: "1.200" }], null,
+      "  Os notebooks têm cinco anos.  ",
+    )
+
+    expect((corpo as { problemDescription?: string }).problemDescription).toBe("Os notebooks têm cinco anos.")
   })
 
   it("sem preço informado, manda nulo — e não zero", async () => {

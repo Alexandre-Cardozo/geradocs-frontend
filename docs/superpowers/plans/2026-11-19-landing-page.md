@@ -32,7 +32,7 @@
 
 | Arquivo | Responsabilidade |
 |---|---|
-| `docs/decisions.md` | ADRs §107, §108, §109 |
+| `docs/decisions.md` | ADRs §117, §118, §119 |
 | `app/globals.css` | tokens da landing no `@theme` (tipografia, contêiner, curva, keyframes) |
 | `lib/landing/conteudo.ts` | toda a copy e os links, como dados |
 | `lib/landing/conteudo.test.ts`, `lib/landing/tokens.test.ts` | testes de copy e de tokens |
@@ -76,12 +76,12 @@ Expected: ESLint, oxlint, `tsc --noEmit` e `vitest run` terminam sem erro. Se fa
 
 ---
 
-### Task 1: ADRs §107–§109
+### Task 1: ADRs §117–§119
 
 **Files:**
 - Modify: `docs/decisions.md` (acrescentar ao final)
 
-**Interfaces:** Produces: as referências §107, §108, §109 que os comentários de código das tasks seguintes citam.
+**Interfaces:** Produces: as referências §117, §118, §119 que os comentários de código das tasks seguintes citam.
 
 - [ ] **Step 1: Acrescentar as três decisões ao final do arquivo**
 
@@ -89,7 +89,7 @@ Run (uma só vez):
 ```bash
 cat >> docs/decisions.md <<'EOF'
 
-## 107. A landing tem entrada animada, e só ela
+## 117. A landing tem entrada animada, e só ela
 
 O design system diz "sem animações de entrada", e continua valendo para o aplicativo. A landing é uma página de apresentação, lida uma vez por quem ainda não usa o produto, e ali uma entrada discreta ajuda a ler. A exceção é estreita:
 
@@ -100,7 +100,7 @@ O design system diz "sem animações de entrada", e continua valendo para o apli
 - **Movimento reduzido:** nenhum elemento é escondido, e a regra global de `globals.css` já zera as durações.
 - Keyframes e curva vivem no `@theme` (`--animate-landing-*`, `--ease-landing`), como `--animate-marca-varredura`.
 
-## 108. A landing tem escala tipográfica e contêiner próprios
+## 118. A landing tem escala tipográfica e contêiner próprios
 
 A escala do aplicativo tem corpo de 13px e tamanhos fixos em px: serve a uma interface densa e é pequena demais para uma página de leitura. A landing ganha tokens próprios no `@theme`, em vez de valores soltos nas classes:
 
@@ -108,7 +108,7 @@ A escala do aplicativo tem corpo de 13px e tamanhos fixos em px: serve a uma int
 - `--container-landing` (70rem), porque o aplicativo não tem teto de largura e uma página de leitura precisa dele.
 - Os tokens do aplicativo não mudam, e o aplicativo não usa os da landing.
 
-## 109. A landing vive em `app/landing-page/`, sem sessão e sem fetch
+## 119. A landing vive em `app/landing-page/`, sem sessão e sem fetch
 
 A rota `/landing-page` fica fora de `(app)` e de `(auth)`, portanto não herda a barra lateral nem a guarda de sessão. É um componente de servidor que exporta `metadata` próprio; é estática, sem chamada à API, sem hook de dados. Os componentes ficam em `components/landing/`, e a copy em `lib/landing/conteudo.ts`. A ordem dos documentos é lida de `lib/documentos/catalogo.ts`, a fonte única. A ação principal é um `mailto:` para `contato@govpro.com.br`; não há formulário nem backend novo. A rota `/` não muda.
 EOF
@@ -117,7 +117,7 @@ EOF
 - [ ] **Step 2: Conferir que o arquivo termina bem formado**
 
 Run: `tail -n 8 docs/decisions.md`
-Expected: termina no parágrafo da §109, sem marcador `EOF` solto.
+Expected: termina no parágrafo da §119, sem marcador `EOF` solto.
 
 - [ ] **Step 3: Commit**
 
@@ -148,7 +148,7 @@ import { join } from "node:path"
 import { describe, expect, it } from "vitest"
 
 /**
- * Os tokens da landing (§107, §108) vivem no `@theme` de `app/globals.css`, e as
+ * Os tokens da landing (§117, §118) vivem no `@theme` de `app/globals.css`, e as
  * classes dos componentes dependem deles. Se um token sumir, o Tailwind simplesmente
  * não gera a classe e a página perde o estilo sem erro algum — este teste é o aviso.
  */
@@ -174,7 +174,7 @@ describe("tokens da landing no @theme", () => {
   })
 
   it("não declara cor hex nos tokens da landing", () => {
-    const trecho = css.slice(css.indexOf("Landing (§107"), css.indexOf("/*\n  `sr-only`"))
+    const trecho = css.slice(css.indexOf("Landing (§117"), css.indexOf("/*\n  `sr-only`"))
     expect(trecho.length).toBeGreaterThan(0)
     expect(trecho).not.toMatch(/#[0-9a-fA-F]{3,8}\b/)
   })
@@ -204,7 +204,7 @@ Substituir por:
   }
 
   /*
-   * ── Landing (§107, §108) ─────────────────────────────────────────────────
+   * ── Landing (§117, §118) ─────────────────────────────────────────────────
    *
    * Tokens da página de apresentação. O aplicativo não os usa.
    */
@@ -419,7 +419,7 @@ Create `lib/landing/conteudo.ts`:
 import { CATALOGO, ORDEM_FLUXO } from "@/lib/documentos"
 
 /**
- * Toda a copy da landing (§109). Sem JSX: a página só compõe, e o texto se
+ * Toda a copy da landing (§119). Sem JSX: a página só compõe, e o texto se
  * revisa num lugar só. Só entra fato que existe no produto; o que falta sobre a
  * GovPro é uma `[LACUNA: …]` visível, e não texto inventado.
  */
@@ -907,7 +907,7 @@ Create `components/landing/entrada.tsx`:
 import type { ReactNode } from "react"
 
 /**
- * Entrada escalonada do hero (§107), feita só com CSS: o elemento já nasce com o
+ * Entrada escalonada do hero (§117), feita só com CSS: o elemento já nasce com o
  * estado inicial da animação (`both`) e não depende de JavaScript nem de
  * observador — não atrasa o LCP e aparece mesmo se o script falhar.
  * 100ms entre um elemento e o seguinte.
@@ -936,7 +936,7 @@ Create `components/landing/revelar.tsx`:
 import { useEffect, useRef, type ReactNode } from "react"
 
 /**
- * Revela o bloco uma vez, ao entrar na tela (§107).
+ * Revela o bloco uma vez, ao entrar na tela (§117).
  *
  * O estado escondido é aplicado aqui, depois da montagem, e só em elemento que
  * está abaixo da dobra: sem JavaScript, ou com movimento reduzido, nada fica
@@ -1184,7 +1184,7 @@ type Menu = "fechado" | "aberto" | "fechando"
 
 /**
  * Cabeçalho fixo da landing. No desktop (lg), âncoras e o pedido de demonstração;
- * abaixo disso, um menu que abre em 250ms e fecha em 150ms (§107). A borda
+ * abaixo disso, um menu que abre em 250ms e fecha em 150ms (§117). A borda
  * inferior só aparece depois de rolar. Sobre o navy, o foco é `electric` (`.on-dark`).
  */
 export function Cabecalho() {
@@ -2130,7 +2130,7 @@ import { QuemSomos } from "@/components/landing/quem-somos"
 import { Rodape } from "@/components/landing/rodape"
 
 /**
- * Landing da GovPro com o GeraDocs em destaque (§109). Fica fora de `(app)` e de
+ * Landing da GovPro com o GeraDocs em destaque (§119). Fica fora de `(app)` e de
  * `(auth)`: sem sessão, sem barra lateral, sem chamada à API. Componente de
  * servidor — o HTML é estático e o `metadata` é próprio. `title.absolute` ignora o
  * sufixo "Homologação" do layout raiz, que descreve o aplicativo e não esta página.
@@ -2204,7 +2204,7 @@ import { expect, test } from "@playwright/test"
 import { rota, semSessao } from "./api"
 
 /**
- * A landing (§109): estática, sem sessão, sem chamada à API. A varredura de
+ * A landing (§119): estática, sem sessão, sem chamada à API. A varredura de
  * acessibilidade **não** exclui os tokens sobre navy, como faz a do aplicativo —
  * a landing só usa `on-dark`, `-65`, `-60` e `-55`, todos acima de 4,5:1.
  */
@@ -2346,11 +2346,11 @@ Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
 
 Abrir `docs/estrutura.md`, localizar a árvore de pastas (o trecho com `components/ui/` — "Design System LAHHM/GeraDocs portado…") e acrescentar, no mesmo formato e nível de recuo das linhas vizinhas, as entradas:
 ```
-│   ├── landing/                  # Seções, cabeçalho, rodapé e peças de movimento da /landing-page (§109)
+│   ├── landing/                  # Seções, cabeçalho, rodapé e peças de movimento da /landing-page (§119)
 ```
 sob `components/`, e
 ```
-│   ├── landing-page/             # Landing da GovPro com o GeraDocs: estática, sem sessão, sem fetch (§109)
+│   ├── landing-page/             # Landing da GovPro com o GeraDocs: estática, sem sessão, sem fetch (§119)
 ```
 sob `app/`, além de uma linha em `lib/`:
 ```
@@ -2363,7 +2363,7 @@ Depois, na seção que explica as camadas, acrescentar um parágrafo curto: "**`
 Acrescentar ao final do arquivo:
 ```markdown
 
-## A landing (§107–§109)
+## A landing (§117–§119)
 
 A rota `/landing-page` tem escala tipográfica própria (`text-landing-h1`, `text-landing-h2`, `text-landing-lead`, `text-landing-body`), contêiner próprio (`max-w-landing`) e movimento próprio (`animate-landing-entrada`, `animate-landing-menu-*`, `ease-landing`) — todos no `@theme`, e nenhum usado fora dela. Regras: só `transform`, `opacity` e `filter`; nada em loop; texto sobre navy só em `text-on-dark`, `-65`, `-60` ou `-55`; o estado escondido da revelação nunca vem do servidor (sem JavaScript, o conteúdo aparece).
 ```

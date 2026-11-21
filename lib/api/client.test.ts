@@ -369,18 +369,6 @@ describe("processo", () => {
   })
 })
 
-describe("DFD", () => {
-  it("o parecer não existe antes da análise, e passa a existir depois", async () => {
-    const api = await fachadaLimpa()
-
-    expect(await api.getParecerDFD(PROCESSO)).toBeNull()
-
-    const parecer = await api.analisarDFD(PROCESSO, "dfd-2026-014.pdf")
-    expect(parecer.arquivo).toBe("dfd-2026-014.pdf")
-    expect((await api.getParecerDFD(PROCESSO))?.processoId).toBe(PROCESSO)
-  })
-})
-
 describe("seções do documento", () => {
   const documento = {
     secoes: [{ id: "1", titulo: "Necessidade", conteudo: "texto", status: "Completo" }],
@@ -398,7 +386,22 @@ describe("seções do documento", () => {
     })
 
     expect(secao.id).toBe("1")
-    expect(elaboracao.salvarSecao).toHaveBeenCalledWith(PROCESSO, "ETP", "1", "texto", undefined)
+    expect(elaboracao.salvarSecao).toHaveBeenCalledWith(PROCESSO, "ETP", "1", "texto", undefined, undefined)
+  })
+
+  it("salvar leva a proposta de IA de onde o texto veio (ADR-066 do back-end)", async () => {
+    const api = await fachadaLimpa()
+    vi.mocked(elaboracao.salvarSecao).mockResolvedValue(documento as never)
+
+    await api.atualizarSecao({
+      processoId: PROCESSO,
+      tipo: "ETP",
+      secaoId: "1",
+      conteudo: "texto",
+      propostaId: "p-1",
+    })
+
+    expect(elaboracao.salvarSecao).toHaveBeenCalledWith(PROCESSO, "ETP", "1", "texto", undefined, "p-1")
   })
 
   it("seção que o documento não tem é erro, e não `undefined` na tela", async () => {
@@ -409,27 +412,6 @@ describe("seções do documento", () => {
     await expect(
       api.atualizarSecao({ processoId: PROCESSO, tipo: "ETP", secaoId: "99", conteudo: "x" }),
     ).rejects.toThrow(/Seção 99/)
-    await expect(api.gerarSecao(PROCESSO, "ETP", "99")).rejects.toThrow(/Seção 99/)
-  })
-
-  it("gerar devolve o texto proposto sem gravá-lo", async () => {
-    const api = await fachadaLimpa()
-    vi.mocked(elaboracao.abrirDocumento).mockResolvedValue(documento as never)
-    vi.mocked(elaboracao.pedirTextoDaSecao).mockResolvedValue({
-      texto: "Texto proposto pelo servidor.",
-      avisos: ["Indicação de marca só com justificativa técnica."],
-    })
-
-    const secao = await api.gerarSecao(PROCESSO, "ETP", "1", undefined, "Enfatizar a entrega em lotes.")
-
-    // Quem decide se aquilo entra no documento é quem assina.
-    expect(secao.conteudo).toBe("Texto proposto pelo servidor.")
-    expect(secao.avisosDaOrientacao).toEqual(["Indicação de marca só com justificativa técnica."])
-    // A orientação vai só no pedido desta seção (§91).
-    expect(elaboracao.pedirTextoDaSecao).toHaveBeenCalledWith(
-      PROCESSO, "ETP", "1", undefined, "redacao", "Enfatizar a entrega em lotes.",
-    )
-    expect(elaboracao.salvarSecao).not.toHaveBeenCalled()
   })
 
   it("as justificativas da minuta passam direto ao servidor (§88)", async () => {

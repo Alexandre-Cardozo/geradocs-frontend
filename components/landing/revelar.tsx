@@ -3,7 +3,7 @@
 import { useEffect, useRef, type ReactNode } from "react"
 
 /**
- * Revela o bloco uma vez, ao entrar na tela (§107).
+ * Revela o bloco uma vez, ao entrar na tela (§117).
  *
  * O estado escondido é aplicado aqui, depois da montagem, e só em elemento que
  * está abaixo da dobra: sem JavaScript, ou com movimento reduzido, nada fica
