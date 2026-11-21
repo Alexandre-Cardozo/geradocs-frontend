@@ -98,6 +98,17 @@ describe("cláusulas condicionais da minuta", () => {
     expect(botao).toHaveAccessibleDescription("Marque as cláusulas que não se aplicam a esta contratação.")
   })
 
+  it("veredito que o front não conhece vale como indeterminado: sem motivo e sem marcar nada", async () => {
+    comServidor({ sugestoes: [{ clauseId: "c4", verdict: "VEREDITO_NOVO", reason: "Motivo que não deve aparecer." }] })
+    renderizarPainel()
+
+    await userEvent.click(await screen.findByRole("button", { name: "Sugerir com IA" }))
+
+    expect(await screen.findByRole("button", { name: "Sugerir de Novo com IA" })).toBeInTheDocument()
+    await waitFor(() => expect(screen.queryByText("Motivo que não deve aparecer.")).not.toBeInTheDocument())
+    expect(screen.queryByRole("button", { name: /Marcar as Sugeridas/ })).not.toBeInTheDocument()
+  })
+
   it("a IA sugere, mostra o motivo só do que sugere tirar, e marcar as sugeridas não tira nada", async () => {
     const pedidos = comServidor()
     const { aoMudar } = renderizarPainel()
