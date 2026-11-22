@@ -58,7 +58,6 @@ import {
   type FormaDaDispensa,
   type FundamentoDaDispensa,
   type Modalidade,
-  type ModoATA,
   type TipoDocumento,
 } from "@/lib/types";
 
@@ -115,24 +114,6 @@ const modalidades: Array<{
     valor: "Credenciamento",
     desc: "Para seleção de prestadores de serviços",
     icon: <IconClipboard size={22} />,
-  },
-];
-
-const modosATA: Array<{ key: ModoATA; label: string; desc: string }> = [
-  {
-    key: "anexar",
-    label: "Anexar ATA para revisão pela IA",
-    desc: "A plataforma analisará a ATA enviada e verificará sua compatibilidade com o objeto.",
-  },
-  {
-    key: "delegar",
-    label: "Delegar ao modelo a busca de ATAs válidas",
-    desc: "A IA buscará ATAs compatíveis; você poderá visualizar as origens e selecionar.",
-  },
-  {
-    key: "combinado",
-    label: "Anexar ATA e também buscar outras opções",
-    desc: "A IA revisa sua ATA e ainda sugere alternativas encontradas.",
   },
 ];
 
@@ -216,10 +197,6 @@ export default function NovoProcesso() {
   */
   const [formaDaDispensa, setFormaDaDispensa] = useState<FormaDaDispensa | "">("");
   const [naturezaDoObjeto, setNaturezaDoObjeto] = useState<NaturezaDoObjeto | "">("");
-  const [isAdesaoATA, setIsAdesaoATA] = useState(false);
-  const [ataMode, setATAMode] = useState<ModoATA | "">("");
-  const [ataFile, setATAFile] = useState<string | null>(null);
-  const [ataMotivo, setATAMotivo] = useState("");
 
   // Passo 2 — identificação
   const [secretaria, setSecretaria] = useState("");
@@ -370,8 +347,7 @@ export default function NovoProcesso() {
   const canProceed =
     (step === 1 &&
       modalidade !== "" &&
-      (!ehDispensa || formaDaDispensa !== "") &&
-      (!isAdesaoATA || (ataMode !== "" && ataMotivo.trim() !== ""))) ||
+      (!ehDispensa || formaDaDispensa !== "")) ||
     (step === 2 && secretaria !== "" && objeto.trim() !== "" && dfdOuObjeto) ||
     step === 3;
 
@@ -397,10 +373,6 @@ export default function NovoProcesso() {
         valorEstimado: valorNumerico,
         fundamentoLegal: fundamento.trim() || undefined,
         dfdConteudo,
-        ata:
-          isAdesaoATA && ataMode !== ""
-            ? { modo: ataMode, motivo: ataMotivo.trim(), arquivo: ataFile }
-            : null,
         documentos: documentosEscolhidos,
         fases: {
           // Fase de retificação: implementação real fica para a Fase 2 (com
@@ -508,75 +480,6 @@ export default function NovoProcesso() {
                   </FormField>
                 </div>
               )}
-
-              {/* Adesão de ATA antecipada */}
-              <div className="rounded-card border border-border bg-surface px-5 py-4.5">
-                <div className="flex items-start gap-3">
-                  <div className="pt-0.5">
-                    <Toggle
-                      checked={isAdesaoATA}
-                      onChange={setIsAdesaoATA}
-                      label="Processo como Adesão de ATA"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <div className="font-display text-md font-bold text-text-1">
-                      Este processo será instaurado como Adesão de Ata de
-                      Registro de Preços
-                    </div>
-                    <p className="m-0 mt-1 text-base text-text-3">
-                      Quando a solução já está definida antes do ETP.
-                    </p>
-                  </div>
-                </div>
-
-                {isAdesaoATA && (
-                  <div className="mt-4.5 flex flex-col gap-4 border-t border-border-soft pt-4.5">
-                    <FormField
-                      label="Motivo da decisão prévia pela Adesão de ATA"
-                      required
-                    >
-                      <Textarea
-                        value={ataMotivo}
-                        onChange={(e) => setATAMotivo(e.target.value)}
-                        rows={3}
-                        placeholder="Ex: Existe ATA vigente do PNCP com objeto compatível e condições vantajosas devidamente comprovadas..."
-                      />
-                    </FormField>
-
-                    <div>
-                      <span className={labelClasses}>Gestão da ATA</span>
-                      <div className="mt-2 flex flex-col gap-2">
-                        {modosATA.map((opt) => (
-                          <ChoiceCard
-                            key={opt.key}
-                            size="small"
-                            selected={ataMode === opt.key}
-                            onClick={() => setATAMode(opt.key)}
-                            title={opt.label}
-                            desc={opt.desc}
-                          />
-                        ))}
-                      </div>
-                    </div>
-
-                    {(ataMode === "anexar" || ataMode === "combinado") && (
-                      <FormField
-                        label="Anexar ATA"
-                        hint="PDF ou DOCX."
-                      >
-                        <FileUpload
-                          file={ataFile}
-                          onChange={setATAFile}
-                          placeholder="Clique para selecionar a ATA ou arraste o arquivo"
-                          accept=".pdf,.docx"
-                        />
-                      </FormField>
-                    )}
-
-                  </div>
-                )}
-              </div>
             </div>
           )}
 
