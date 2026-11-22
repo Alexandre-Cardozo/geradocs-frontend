@@ -16,7 +16,6 @@ import {
   StepIndicator,
   Tag,
   Textarea,
-  Toggle,
   ValidationMsg,
 } from "@/components/ui";
 import {
@@ -182,7 +181,7 @@ export default function NovoProcesso() {
 
   const [step, setStep] = useState(1);
 
-  // Passo 1 — modalidade e opções de ATA
+  // Passo 1 — modalidade
   const [modalidade, setModalidade] = useState("");
   /*
     O inciso do Art. 75. Só a dispensa o tem, e o artigo tem dezoito incisos —
