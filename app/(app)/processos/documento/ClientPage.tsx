@@ -32,6 +32,7 @@ import { OrientacaoDaIaContexto } from "@/components/documentos/orientacao-da-ia
 import { DispensaDeSecao } from "@/components/documentos/dispensa-de-secao"
 import { EtapaFinal } from "@/components/documentos/etapa-final"
 import { TopicosDoContexto } from "@/components/documentos/topicos-do-contexto"
+import { ClausulasCondicionais } from "@/components/documentos/clausulas-condicionais"
 import { AlteracoesDaMinuta, JustificativaDoDesvio } from "@/components/documentos/justificativa-da-minuta"
 import { RevisaoComIa } from "@/components/documentos/revisao-com-ia"
 import {
@@ -916,6 +917,20 @@ export default function EditorDocumento() {
               </div>
             </SectionBlock>
           ) : null}
+
+          {/*
+            As cláusulas "(Se for o caso)" valem em qualquer seção, inclusive nas de painel próprio: o texto é o mesmo
+            `rascunho`, e quem decide quais tirar é quem assina (ADR 117).
+          */}
+          {!naEtapaFinal && active && (
+            <ClausulasCondicionais
+              processoId={processoId}
+              tipo={tipo}
+              secaoId={active.id}
+              texto={rascunho}
+              onTextoChange={(texto) => setRascunho(semLinhasEmBranco(texto))}
+            />
+          )}
 
           {/* A adesão à ATA e as alternativas de mercado são ferramentas distintas da seção V. */}
           {active?.painel === "ata" && <PainelATA />}

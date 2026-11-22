@@ -545,6 +545,34 @@
         "required" : [ "code" ],
         "type" : "object"
       },
+      "ClauseSuggestionView" : {
+        "properties" : {
+          "clauseId" : {
+            "type" : "string"
+          },
+          "reason" : {
+            "type" : "string"
+          },
+          "verdict" : {
+            "enum" : [ "LIKELY_APPLICABLE", "LIKELY_NOT_APPLICABLE", "UNDETERMINED" ],
+            "type" : "string"
+          }
+        },
+        "required" : [ "clauseId", "reason", "verdict" ],
+        "type" : "object"
+      },
+      "ClauseSuggestionsResponse" : {
+        "properties" : {
+          "suggestions" : {
+            "items" : {
+              "$ref" : "#/components/schemas/ClauseSuggestionView"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "suggestions" ],
+        "type" : "object"
+      },
       "CloseProcurementProcessRequest" : {
         "properties" : {
           "justification" : {
@@ -553,6 +581,58 @@
             "type" : "string"
           }
         },
+        "type" : "object"
+      },
+      "ConditionalClauseView" : {
+        "properties" : {
+          "alternative" : {
+            "type" : "boolean"
+          },
+          "firstLine" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "lastLine" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "number" : {
+            "type" : "string"
+          },
+          "parentId" : {
+            "type" : "string"
+          },
+          "preview" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "alternative", "firstLine", "id", "lastLine", "preview" ],
+        "type" : "object"
+      },
+      "ConditionalClausesRequest" : {
+        "properties" : {
+          "content" : {
+            "maxLength" : 100000,
+            "minLength" : 0,
+            "type" : "string"
+          }
+        },
+        "required" : [ "content" ],
+        "type" : "object"
+      },
+      "ConditionalClausesResponse" : {
+        "properties" : {
+          "clauses" : {
+            "items" : {
+              "$ref" : "#/components/schemas/ConditionalClauseView"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "clauses" ],
         "type" : "object"
       },
       "ConfirmContextsRequest" : {
@@ -2826,6 +2906,36 @@
             "type" : "string"
           }
         },
+        "type" : "object"
+      },
+      "RemoveConditionalClausesRequest" : {
+        "properties" : {
+          "clauseIds" : {
+            "items" : {
+              "maxLength" : 20,
+              "minLength" : 1,
+              "type" : "string"
+            },
+            "maxItems" : 200,
+            "minItems" : 0,
+            "type" : "array"
+          },
+          "content" : {
+            "maxLength" : 100000,
+            "minLength" : 0,
+            "type" : "string"
+          }
+        },
+        "required" : [ "clauseIds", "content" ],
+        "type" : "object"
+      },
+      "RemoveConditionalClausesResponse" : {
+        "properties" : {
+          "content" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "content" ],
         "type" : "object"
       },
       "RenameSectionRequest" : {
@@ -6720,6 +6830,162 @@
           }
         },
         "tags" : [ "ai-proposal-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/sections/{sectionCode}/conditional-clauses/analysis" : {
+      "post" : {
+        "operationId" : "analyzeConditionalClauses",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "documentType",
+          "required" : true,
+          "schema" : {
+            "enum" : [ "AVISO", "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "sectionCode",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ConditionalClausesRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ConditionalClausesResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "document-authoring-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/sections/{sectionCode}/conditional-clauses/removal" : {
+      "post" : {
+        "operationId" : "removeConditionalClauses",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "documentType",
+          "required" : true,
+          "schema" : {
+            "enum" : [ "AVISO", "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "sectionCode",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RemoveConditionalClausesRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RemoveConditionalClausesResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "document-authoring-controller" ]
+      }
+    },
+    "/api/v1/procurement-processes/{processId}/documents/{documentType}/sections/{sectionCode}/conditional-clauses/suggestions" : {
+      "post" : {
+        "operationId" : "suggest",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "documentType",
+          "required" : true,
+          "schema" : {
+            "enum" : [ "AVISO", "CONTRATO", "COTACAO", "EDITAL", "ETP", "MAPA", "TR" ],
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "processId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "sectionCode",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ConditionalClausesRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ClauseSuggestionsResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "clause-suggestion-controller" ]
       }
     },
     "/api/v1/procurement-processes/{processId}/documents/{documentType}/sections/{sectionCode}/generate" : {
