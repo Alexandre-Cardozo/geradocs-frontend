@@ -1519,3 +1519,12 @@ A tentativa de pôr os botões numa coluna ao lado do campo (botão alinhado ao 
 - **Por que sai.** É um parecer jurídico que ninguém emitiu, sobre um documento que ninguém leu, e pode levar à adesão a uma ata sem conferência. A regra de produto é orientar e alertar, não afirmar o que não foi verificado.
 - **Agora.** O botão e o parecer saem. Com a ATA anexada, a tela avisa que a revisão pela IA ainda não está disponível e manda conferir vigência, órgão gerenciador e compatibilidade no documento (Art. 86 da Lei 14.133/21). O aviso de "Confirmar configuração" também deixa de dizer que a ATA foi registrada no processo, porque não é gravada.
 - **Depois.** A revisão real (o servidor lê a ATA, a IA confere objeto e limites legais com validador contra invenção) será ligada a esta tela quando o endpoint existir, em decisão própria.
+
+## 119. A revisão da ATA pela IA lê o documento de verdade e mostra o trecho que sustenta cada ponto
+
+- **O que muda.** Com a ATA anexada na adesão, o botão **"Revisar a ATA com IA"** manda o arquivo (PDF ou DOCX) ao servidor (`POST /procurement-processes/{id}/ata-review`, ADR-080 do back-end). A tela mostra o que a IA leu: a compatibilidade do objeto com o do processo (compatível, parcial, incompatível ou indeterminada), o órgão gerenciador e o objeto, como a ATA os escreve, e os pontos a conferir, **cada um com o trecho da própria ATA**.
+- **A IA não emite parecer.** A tela nunca diz que a ATA é válida ou regular, e avisa que é leitura de apoio: a validade e os limites da adesão (Art. 86 da Lei 14.133/21) são de quem decide aderir. Isto substitui o parecer fixo que a ADR 118 retirou.
+- **A vigência vem da data.** O servidor lê a data que a ATA declara e compara com hoje: vigente, vencida ou, sem data legível, "confira no documento". A vencida aparece em destaque (aviso de perigo).
+- **Nada é gravado.** A leitura vale para o arquivo que está na tela: remover ou trocar o arquivo a descarta (estado que guarda o arquivo a que pertence, sem efeito para limpar). O servidor também não guarda a ATA.
+- **Estados.** O botão diz por que está desligado (sem modelo, sem teto), mostra "Lendo a ATA..." enquanto espera, e o erro do servidor (ATA sem texto, formato recusado) aparece junto do botão. O limite do plano abre o aviso próprio (ADR 109) e não repete a linha de erro. ATA muito longa avisa que só o começo foi lido.
+- **Ordem de deploy.** O endpoint só existe no back-end novo (V076): mesclar depois do back estar no ar.
