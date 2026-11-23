@@ -4,7 +4,6 @@ import { useState } from "react"
 
 import {
   Button,
-  ChoiceCard,
   FileUpload,
   FormField,
   InfoBanner,
@@ -38,7 +37,7 @@ import {
 import { tabelaEmTexto } from "@/lib/dominio/tabela"
 import { rotuloDaUnidade } from "@/lib/dominio/unidades"
 import { formatBRL, formatNumeroBR, parseValorBR, SEM_VALOR } from "@/lib/format"
-import type { ModoATA, PainelSecao, Processo, SecaoDocumento } from "@/lib/types"
+import type { PainelSecao, Processo, SecaoDocumento } from "@/lib/types"
 import { TabelasDaSecao } from "@/components/documentos/tabelas-da-secao"
 
 /**
@@ -681,32 +680,12 @@ export function memoriaDoValor(
   return partes.join("\n")
 }
 
-const modosATA: Array<{ key: ModoATA; label: string; desc: string }> = [
-  {
-    key: "anexar",
-    label: "Anexar ATA para revisão pela IA",
-    desc: "Envie a ATA que deseja utilizar. A IA lê o documento e aponta órgão, vigência, objeto e itens, com o trecho que sustenta cada ponto.",
-  },
-  {
-    key: "delegar",
-    label: "Delegar ao modelo a busca de ATAs válidas",
-    desc: "A IA buscará ATAs compatíveis com o objeto. Você visualizará as origens e selecionará a desejada.",
-  },
-  {
-    key: "combinado",
-    label: "Anexar ATA e buscar outras opções",
-    desc: "A IA lerá sua ATA e também sugerirá alternativas encontradas para comparação.",
-  },
-]
-
 /**
  * Adesão a Ata de Registro de Preços — acompanha o Levantamento de Mercado
  * (Art. 18, § 1º, V), onde a adesão é avaliada como alternativa de solução.
  */
 export function PainelATA({ processoId }: { processoId: string }) {
-  const showToast = useToast()
   const [aberto, setAberto] = useState(false)
-  const [ataMode, setATAMode] = useState<ModoATA | "">("")
   const [ataFile, setATAFile] = useState<string | null>(null)
   const [ataArquivo, setATAArquivo] = useState<File | null>(null)
 
@@ -720,55 +699,30 @@ export function PainelATA({ processoId }: { processoId: string }) {
           <div className="mb-1 font-display text-md font-bold text-on-dark">A solução proposta é Adesão de ATA?</div>
           <p className="m-0 text-base text-on-dark-65">
             Se o levantamento de mercado concluir que a solução mais vantajosa é a Adesão a Ata de Registro de Preços,
-            configure a ATA aqui para que o modelo possa ler o documento e apontar o que ele diz.
+            anexe a ATA aqui para que o modelo leia o documento e aponte o que ele diz. A busca de ATAs não é feita pela
+            plataforma: a ATA vem do PNCP ou do órgão gerenciador, e a escolha é sua.
           </p>
         </div>
         <Button size="sm" onClick={() => setAberto(!aberto)}>
-          {aberto ? "Fechar" : "Configurar ATA"}
+          {aberto ? "Fechar" : "Anexar ATA"}
         </Button>
       </div>
 
       {aberto && (
         <div className="mt-2.5 rounded-card border border-border bg-surface px-5.5 py-5">
-          <h4 className="m-0 mb-1 font-display text-md font-bold text-text-1">Gestão da Ata de Registro de Preços</h4>
-          <div className="mb-4 flex flex-col gap-2">
-            {modosATA.map((opt) => (
-              <ChoiceCard
-                key={opt.key}
-                size="small"
-                selected={ataMode === opt.key}
-                onClick={() => setATAMode(opt.key)}
-                title={opt.label}
-                desc={opt.desc}
+          <h4 className="m-0 mb-1 font-display text-md font-bold text-text-1">Leitura da Ata de Registro de Preços</h4>
+          <FormField label="Anexar ATA" required>
+            <div>
+              <FileUpload
+                file={ataFile}
+                onChange={setATAFile}
+                onArquivo={setATAArquivo}
+                placeholder="Clique para selecionar a ATA (PDF ou DOCX)"
+                accept=".pdf,.docx"
               />
-            ))}
-          </div>
-
-          {(ataMode === "anexar" || ataMode === "combinado") && (
-            <div className="mb-4">
-              <FormField label="Anexar ATA" required>
-                <div>
-                  <FileUpload
-                    file={ataFile}
-                    onChange={setATAFile}
-                    onArquivo={setATAArquivo}
-                    placeholder="Clique para selecionar a ATA (PDF ou DOCX)"
-                    accept=".pdf,.docx"
-                  />
-                  <RevisaoDaAta processoId={processoId} arquivo={ataArquivo} />
-                </div>
-              </FormField>
+              <RevisaoDaAta processoId={processoId} arquivo={ataArquivo} />
             </div>
-          )}
-
-
-          {ataMode !== "" && (
-            <div className="mt-3.5">
-              <Button variant="dark" onClick={() => showToast("A configuração da ATA ainda não é gravada no processo: a leitura pela IA serve só à sua conferência.")}>
-                Confirmar configuração da ATA
-              </Button>
-            </div>
-          )}
+          </FormField>
         </div>
       )}
     </div>

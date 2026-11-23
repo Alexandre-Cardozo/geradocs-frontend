@@ -42,8 +42,7 @@ function comServidor(resposta: () => Response | Promise<Response>, ia = true) {
 
 async function anexarAta(nome = "ata.pdf") {
   renderizar(<PainelATA processoId={PROCESSO} />)
-  await userEvent.click(screen.getByRole("button", { name: "Configurar ATA" }))
-  await userEvent.click(screen.getByText("Anexar ATA para revisão pela IA"))
+  await userEvent.click(screen.getByRole("button", { name: "Anexar ATA" }))
   const arquivo = new File(["%PDF-1.4"], nome, { type: "application/pdf" })
   await userEvent.upload(document.querySelector("input[type=file]") as HTMLInputElement, arquivo)
 }
@@ -58,8 +57,7 @@ describe("painel de adesão a ATA", () => {
   it("sem arquivo anexado não há botão de revisão", async () => {
     comServidor(() => HttpResponse.json(leitura()))
     renderizar(<PainelATA processoId={PROCESSO} />)
-    await userEvent.click(screen.getByRole("button", { name: "Configurar ATA" }))
-    await userEvent.click(screen.getByText("Anexar ATA para revisão pela IA"))
+    await userEvent.click(screen.getByRole("button", { name: "Anexar ATA" }))
 
     expect(screen.queryByRole("button", { name: /Revisar a ATA com IA/ })).not.toBeInTheDocument()
   })

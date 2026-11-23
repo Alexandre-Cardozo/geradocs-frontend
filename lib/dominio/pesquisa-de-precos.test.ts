@@ -273,6 +273,20 @@ describe("a memória de cálculo do preço de referência", () => {
     expect(metodoDeclarado(texto)).toBe("mediana")
   })
 
+  it("a média em dízima vira centavos antes de multiplicar, e a quantidade sai com milhar (homologação, 23/11/2026)", () => {
+    // Três preços de caneta cuja média é 48,9666...: o documento mostrava R$ 48,97 x 500 = R$ 24.483,33.
+    const canetas = porItem([
+      coleta("Caneta azul", "Painel de Preços", "46,00"),
+      coleta("Caneta azul", "Contratações similares", "49,90"),
+      coleta("Caneta azul", "Pesquisa direta", "51,00"),
+    ])
+
+    expect(apurar(canetas[0]!, "media")).toBe(48.97)
+    const tabela = tabelaDe(textoDoPrecoDeReferencia(canetas, "media", () => 2000))
+    expect(tabela?.[1]?.slice(2)).toEqual(["R$ 48,97", "2.000", "R$ 97.940,00"])
+    expect(tabela?.at(-1)).toEqual(["Total", "", "", "", "R$ 97.940,00"])
+  })
+
   it("sem quantidade conhecida, deixa a lacuna em vez de somar zero", () => {
     const texto = textoDoPrecoDeReferencia(serie, "menor", () => undefined)
 
