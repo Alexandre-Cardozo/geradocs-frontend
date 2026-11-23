@@ -24,6 +24,13 @@ export function formatNumeroBR(valor: number): string {
   return numeroBR.format(valor)
 }
 
+const contagemBR = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 0 })
+
+/** 20000 → "20.000" — contagem (caracteres, itens), sem casas decimais. */
+export function formatContagemBR(valor: number): string {
+  return contagemBR.format(valor)
+}
+
 /** "485.000,00" → 485000. Aceita texto sujo ("R$ 485.000,00"); vazio ou inválido → 0. */
 export function parseValorBR(texto: string): number {
   const limpo = texto.replace(/[^\d,]/g, "").replace(",", ".")

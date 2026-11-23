@@ -10,6 +10,7 @@ import {
   formatData,
   formatarBytes,
   formatDataHora,
+  formatContagemBR,
   formatNumeroBR,
   horaBrasilia,
   mascaraValorBR,
@@ -42,6 +43,13 @@ describe("formatBRL", () => {
 
   it("formata valor negativo sem perder o padrão", () => {
     expect(formatBRL(-1500)).toContain("1.500,00")
+  })
+})
+
+describe("formatContagemBR", () => {
+  it("conta sem casas decimais, com ponto de milhar", () => {
+    expect(formatContagemBR(20000)).toBe("20.000")
+    expect(formatContagemBR(7)).toBe("7")
   })
 })
 
