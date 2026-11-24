@@ -112,3 +112,11 @@ describe("tela de login", () => {
     expect(await screen.findByText(`${descritor.rotulo} ou senha inválida.`)).toBeInTheDocument()
   })
 })
+
+describe("Login: caminho de volta ao site", () => {
+  it("o endosso da GovPro leva à página da GovPro, na raiz", async () => {
+    const Login = await importarTela()
+    renderizar(<Login />)
+    expect(screen.getByRole("link", { name: /GeraDocs é uma solução/ })).toHaveAttribute("href", "/")
+  })
+})

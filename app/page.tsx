@@ -35,6 +35,15 @@ export const metadata: Metadata = {
   title: { absolute: "GovPro | Inteligência para a Gestão Pública" },
   description:
     "A GovPro desenvolve tecnologia para a Administração Pública. Conheça o GeraDocs: os documentos da fase preparatória da Lei 14.133/21 em poucos cliques, com IA revisável e o timbre da sua entidade.",
+  // Como a página aparece quando o link é compartilhado (WhatsApp, e-mail, redes).
+  openGraph: {
+    type: "website",
+    locale: "pt_BR",
+    siteName: "GovPro",
+    title: "GovPro | Inteligência para a Gestão Pública",
+    description:
+      "Tecnologia para a Administração Pública. Conheça o GeraDocs: os documentos da fase preparatória da Lei 14.133/21 em poucos cliques.",
+  },
 }
 
 export default function PaginaLanding() {

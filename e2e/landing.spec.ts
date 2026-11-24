@@ -146,6 +146,13 @@ test("a âncora do cabeçalho põe a seção logo abaixo dele, sem sobra da ante
   expect(Math.abs(topo - 64)).toBeLessThanOrEqual(2);
 });
 
+test("o endereço do QR do carimbo (?documento=) abre a página da GovPro (§128)", async ({ page }) => {
+  await page.goto(rota(ROTA) + "?documento=ABCD-1234-EF56");
+  await esperarHidratacao(page);
+  await expect(page.getByRole("heading", { level: 1, name: "Inteligência para Gestão Pública" })).toBeVisible();
+  await expect(page).toHaveURL(/\?documento=ABCD-1234-EF56$/);
+});
+
 test("abrir a página já com a âncora leva à seção", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(rota(ROTA) + "#solucoes");
