@@ -1616,3 +1616,13 @@ A GovPro passa a ter dois personagens de identidade: a **GovPri**, Assistente de
 A escala da abertura é de primeiro plano. Com a câmera da cena (vista aérea a 13,5 m de altura), uma pessoa de 1,65 m no gramado visível ocuparia uns 4% da altura da tela e ficaria ilegível. A GovPri ocupa 26% (16% no celular), com a cabeça na linha do térreo da sede, menor que as árvores e as palmeiras; o GovBô tem uns 40% da altura dela.
 
 Os mascotes são decorativos (`aria-hidden`): o texto de cada seção continua dizendo tudo. Sem JavaScript, eles não aparecem e nada da página se perde.
+
+## 128. O QR do carimbo abre a página da GovPro em govpro.com.br, e o prefixo da publicação vem do Pages
+
+O carimbo de todo documento gerado traz um QR para `https://govpro.com.br/?documento={código}` (ADR-058 do back-end). O domínio ainda não aponta para lugar nenhum, então o QR dos documentos já gerados não abre nada. A decisão é fazer o domínio abrir a página da GovPro (§125, §126), e não trocar o endereço no back-end: assim os documentos já impressos passam a funcionar, o arquivo gerado não muda e a reprodutibilidade (ADR-020 do back-end) fica intacta.
+
+- **O prefixo vem do Pages.** O build lê `steps.pages.outputs.base_path` do `configure-pages`: `/geradocs-frontend` enquanto o site é servido em `alexandre-cardozo.github.io`, e vazio quando o domínio próprio está configurado. Ativar o domínio não pede mudança de código, só publicar de novo. Uma trava para o deploy se o host for `github.io` e o prefixo vier vazio.
+- **O código no endereço é inofensivo.** A página abre normalmente com `?documento=`. A consulta pública do código, quando o back-end a oferecer, entra aqui sem reimprimir nada.
+- **Saídas para o site.** A página não encontrada oferece o início (a página da GovPro) e o painel, e o endosso "GeraDocs é uma solução GovPro" do login leva ao site.
+- **Ativação:** o passo a passo (DNS, domínio no Pages, HTTPS, nova publicação e as variáveis do back-end) está em `docs/dominio-proprio.md`.
+

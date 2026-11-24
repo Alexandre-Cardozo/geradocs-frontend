@@ -23,14 +23,23 @@ export default function NotFound() {
       </div>
       <h1 className="m-0 font-display text-2xl font-extrabold tracking-tight text-text-1">Página Não Encontrada</h1>
       <p className="m-0 max-w-[420px] text-center text-md text-text-3">
-        O endereço acessado não existe ou foi movido. Verifique o número do processo ou retorne ao Dashboard.
+        O endereço acessado não existe ou foi movido. Verifique o número do processo ou volte ao início.
       </p>
-      <Link
-        href={ROTA_PAINEL}
-        className="mt-4 inline-flex h-10 items-center gap-1.75 rounded-md bg-royal px-5 text-md font-semibold text-surface no-underline transition-colors hover:bg-royal-hover"
-      >
-        Voltar ao Dashboard →
-      </Link>
+      {/* A raiz é a página da GovPro (§126): quem chega pelo site volta a ela; quem usa o sistema vai ao painel. */}
+      <div className="mt-4 flex flex-wrap justify-center gap-2">
+        <Link
+          href="/"
+          className="inline-flex h-10 items-center rounded-md bg-royal px-5 text-md font-semibold text-surface no-underline transition-colors hover:bg-royal-hover"
+        >
+          Ir para o Início
+        </Link>
+        <Link
+          href={ROTA_PAINEL}
+          className="inline-flex h-10 items-center rounded-md border border-border bg-surface px-5 text-md font-semibold text-text-1 no-underline transition-colors hover:bg-ice"
+        >
+          Ir para o Painel
+        </Link>
+      </div>
     </div>
   )
 }

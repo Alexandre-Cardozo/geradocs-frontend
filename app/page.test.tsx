@@ -63,5 +63,6 @@ describe("/ (página da GovPro)", () => {
     expect(metadata.title).toEqual({ absolute: "GovPro | Inteligência para a Gestão Pública" })
     expect(metadata.description).toContain("GeraDocs")
     expect(metadata.description).toContain("Lei 14.133/21")
+    expect(metadata.openGraph).toMatchObject({ siteName: "GovPro", locale: "pt_BR" })
   })
 })
