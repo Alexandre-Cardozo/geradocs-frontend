@@ -1626,3 +1626,14 @@ O carimbo de todo documento gerado traz um QR para `https://govpro.com.br/?docum
 - **Saídas para o site.** A página não encontrada oferece o início (a página da GovPro) e o painel, e o endosso "GeraDocs é uma solução GovPro" do login leva ao site.
 - **Ativação:** o passo a passo (DNS, domínio no Pages, HTTPS, nova publicação e as variáveis do back-end) está em `docs/dominio-proprio.md`.
 
+
+## 129. O GovBô acompanha cada ação com IA
+
+Toda ação que chama o modelo de IA traz o GovBô (§127): **Gerar com IA** na seção, **Revisar com IA** o documento (o lote inteiro é uma ação só), **Sugerir com IA** as cláusulas condicionais, **Revisar a ATA com IA** e **Melhorar a redação** da situação-problema. As demais ações, inclusive tirar cláusulas, continuam só com o carregamento padrão.
+
+- **A sequência.** Começou o pedido, o Bô entra voando em arco de uma borda sorteada e para ao lado do botão apertado (do lado com espaço; sem botão, no canto de baixo à direita), flutuando com o balão de pensamento. A resposta chegou, ele faz uma ação e uma expressão sorteadas (pular, girar, acenar, comemorar ou inclinar; alegre, animado, rindo, piscando, confiante, apaixonado ou sorridente) e, no pico, solta confetes nas cores da marca. Só então a resposta é entregue e escrita no campo, e o Bô vai embora por outra borda. Com erro, a mensagem aparece na hora, sem esperar a animação, e o Bô sai triste, sem confetes.
+- **O tempo.** Com resposta imediata, a sequência dura uns 4 segundos: entrada (0,7 s), pensando (1 s), comemoração (1,6 s) e saída (0,65 s). Com resposta demorada, o Bô fica pensando o tempo que for, e a comemoração começa assim que a resposta chega. Com movimento reduzido, ele aparece e some no lugar, sem voo nem confetes, e o atraso total cai para pouco mais de 1 segundo.
+- **Quem sincroniza.** `acompanharIa`, em `lib/api/acompanhar-ia.ts`, envolve a chamada ao modelo nos hooks de `lib/api/hooks.ts` e avisa o palco de cada momento; os tempos vêm do palco. Sem palco registrado (testes, telas fora do aplicativo), a chamada passa direto, sem atraso. Uma ação dentro de outra não chama o Bô de novo.
+- **Leve.** O palco (`components/mascotes/palco-da-ia.tsx`, montado no layout do aplicativo) não desenha nada fora de uma ação: a camada, o Bô e o laço de quadros nascem quando a ação começa e somem no fim do voo de saída. Os confetes são um `<canvas>` que só existe durante a explosão (cerca de 2 s), com menos partículas em máquina de poucos núcleos ou tela estreita.
+
+O carregamento de cada tela continua (o texto do botão e o indicador da IA trabalhando, §107): é ele que o leitor de tela anuncia. O Bô e os confetes são decorativos (`aria-hidden`) e não recebem clique.
