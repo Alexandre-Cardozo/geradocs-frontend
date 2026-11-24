@@ -363,7 +363,9 @@
    * atraso e o final depois dele. Com movimento reduzido a regra global zera a
    * duração e o elemento fica no estado final.
    */
-  --animate-landing-entrada: landing-entrada 300ms cubic-bezier(0.2, 0, 0, 1) both;
+  /* `backwards`, e não `both`: o estado final não fica preso no elemento. Um blur(0) preso deixava o
+     título da abertura embaçado no Safari do iPhone; ao terminar, o texto volta ao estilo normal. */
+  --animate-landing-entrada: landing-entrada 300ms cubic-bezier(0.2, 0, 0, 1) backwards;
   --animate-landing-menu-abre: landing-menu-abre 250ms cubic-bezier(0.2, 0, 0, 1) both;
   --animate-landing-menu-fecha: landing-menu-fecha 150ms cubic-bezier(0.2, 0, 0, 1) both;
 
