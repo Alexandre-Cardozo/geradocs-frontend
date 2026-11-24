@@ -1513,6 +1513,28 @@ A tentativa de pôr os botões numa coluna ao lado do campo (botão alinhado ao 
 - **Sem bloqueio e sem justificativa.** Nada trava: a pessoa pode salvar com ou sem as cláusulas, e tirar a condicional não pede a justificativa do Art. 19, § 2º, Lei 14.133/21 (essa continua para a cláusula **obrigatória** que sumiu, ADR 88).
 - **Camadas.** As regras puras (reconhecer a marcação, contar o que sai com os subitens, rótulos dos vereditos) ficam em `lib/documentos/clausulas-condicionais.ts`; os três endpoints (`analysis`, `suggestions`, `removal`), tipados pelo contrato gerado e com o veredito traduzido à mão, em `lib/api/authoring-client.ts`; o componente só usa os hooks. O estado da seleção guarda o texto a que pertence, em vez de zerar num efeito: os identificadores valem só para o texto analisado.
 
+## 118. A revisão da ATA pela IA não é simulada: enquanto o servidor não a faz, a tela diz isso
+
+- **O que era.** No painel de adesão a ATA, "Enviar para revisão pela IA" esperava 2,2 s e mostrava um parecer fixo: "ATA Válida", com órgão gerenciador e vigência inventados e "nenhuma irregularidade identificada". Nada era enviado ao servidor, que também não tem endpoint de revisão de ATA.
+- **Por que sai.** É um parecer jurídico que ninguém emitiu, sobre um documento que ninguém leu, e pode levar à adesão a uma ata sem conferência. A regra de produto é orientar e alertar, não afirmar o que não foi verificado.
+- **Agora.** O botão e o parecer saem. Com a ATA anexada, a tela avisa que a revisão pela IA ainda não está disponível e manda conferir vigência, órgão gerenciador e compatibilidade no documento (Art. 86 da Lei 14.133/21). O aviso de "Confirmar configuração" também deixa de dizer que a ATA foi registrada no processo, porque não é gravada.
+- **Depois.** A revisão real (o servidor lê a ATA, a IA confere objeto e limites legais com validador contra invenção) será ligada a esta tela quando o endpoint existir, em decisão própria.
+
+## 119. A revisão da ATA pela IA lê o documento de verdade e mostra o trecho que sustenta cada ponto
+
+- **O que muda.** Com a ATA anexada na adesão, o botão **"Revisar a ATA com IA"** manda o arquivo (PDF ou DOCX) ao servidor (`POST /procurement-processes/{id}/ata-review`, ADR-080 do back-end). A tela mostra o que a IA leu: a compatibilidade do objeto com o do processo (compatível, parcial, incompatível ou indeterminada), o órgão gerenciador e o objeto, como a ATA os escreve, e os pontos a conferir, **cada um com o trecho da própria ATA**.
+- **A IA não emite parecer.** A tela nunca diz que a ATA é válida ou regular, e avisa que é leitura de apoio: a validade e os limites da adesão (Art. 86 da Lei 14.133/21) são de quem decide aderir. Isto substitui o parecer fixo que a ADR 118 retirou.
+- **A vigência vem da data.** O servidor lê a data que a ATA declara e compara com hoje: vigente, vencida ou, sem data legível, "confira no documento". A vencida aparece em destaque (aviso de perigo).
+- **Nada é gravado.** A leitura vale para o arquivo que está na tela: remover ou trocar o arquivo a descarta (estado que guarda o arquivo a que pertence, sem efeito para limpar). O servidor também não guarda a ATA.
+- **Estados.** O botão diz por que está desligado (sem modelo, sem teto), mostra "Lendo a ATA..." enquanto espera, e o erro do servidor (ATA sem texto, formato recusado) aparece junto do botão. O limite do plano abre o aviso próprio (ADR 109) e não repete a linha de erro. ATA muito longa avisa que só o começo foi lido.
+- **Ordem de deploy.** O endpoint só existe no back-end novo (V076): mesclar depois do back estar no ar.
+
+## 120. Tiram-se as promessas da ATA que a plataforma não cumpre: buscar ATAs e configurar a adesão no assistente
+
+- **O que era.** Três coisas prometiam o que não existia. (1) "Delegar ao modelo a busca de ATAs válidas" e "Anexar ATA e buscar outras opções", nos dois lugares em que a ATA aparece: não havia busca nenhuma, e a escolha era descartada. (2) No assistente de novo processo, o interruptor "Adesão de ATA" pedia motivo, modo e arquivo, dizia que "a plataforma analisará a ATA enviada" e, ao criar, **não enviava nada disso** ao servidor. (3) No painel da ATA, "Confirmar configuração da ATA" só mostrava um aviso de que nada era gravado.
+- **Por que a busca não entra.** Um modelo de linguagem não consulta o PNCP: ele escreveria ATAs plausíveis, com órgão, número e vigência inventados, e a pessoa poderia aderir a uma ata que não existe. É o mesmo risco do parecer falso (ADR 118), em outra forma. A busca real exigiria uma fonte oficial consultada pelo servidor, o que é decisão própria do back-end.
+- **Agora.** O painel da ATA (Levantamento de Mercado, Art. 18, § 1º, V) fica só com o que funciona: **Anexar ATA** e **Revisar a ATA com IA** (ADR 119), e diz que a ATA vem do PNCP ou do órgão gerenciador e que a escolha é de quem decide. Sem os três modos e sem o botão de confirmar. No assistente, o bloco de adesão sai: o processo se abre como os demais, e a ATA é anexada e lida no painel, onde existe processo para a leitura se apoiar. Os tipos `ModoATA` e `ConfigATA` saem junto.
+
 ## 117. A landing tem entrada animada, e só ela
 
 O design system diz "sem animações de entrada", e continua valendo para o aplicativo. A landing é uma página de apresentação, lida uma vez por quem ainda não usa o produto, e ali uma entrada discreta ajuda a ler. A exceção é estreita:

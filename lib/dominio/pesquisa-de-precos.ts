@@ -21,6 +21,11 @@ import type { MetodoDaEstimativa } from "@/lib/types"
 
 import { tabelaEmTexto } from "./tabela"
 
+/** "2000" vira "2.000" e "12.5" vira "12,5": a quantidade como o documento escreve. */
+function formatQuantidade(quantidade: number): string {
+  return quantidade.toLocaleString("pt-BR", { maximumFractionDigits: 3 })
+}
+
 /** O conjunto mínimo que o Art. 6º exige para média, mediana ou menor valor. */
 export const MINIMO_DE_PRECOS = 3
 
@@ -123,9 +128,10 @@ export function porItem(coletas: ColetaDePreco[]): ItemPesquisado[] {
 
 /** O preço apurado de um item pelo método escolhido. */
 export function apurar(item: ItemPesquisado, metodo: MetodoDeApuracao): number {
-  if (metodo === "mediana") return item.mediana
-  if (metodo === "menor") return item.menor
-  return item.media
+  const bruto = metodo === "mediana" ? item.mediana : metodo === "menor" ? item.menor : item.media
+  // O preço de referência é o que o documento mostra, em centavos, e o total sai dele: com a média
+  // em dízima, "R$ 48,97 x 500" aparecia como R$ 24.483,33 em vez de R$ 24.485,00.
+  return Math.round(bruto * 100) / 100
 }
 
 /** As fontes efetivamente consultadas, sem repetição e na ordem em que aparecem. */
@@ -290,7 +296,7 @@ export function textoDoPrecoDeReferencia(
       item.item,
       String(item.precos.length),
       formatBRL(unitario),
-      quantidade == null ? "" : String(quantidade).replace(".", ","),
+      quantidade == null ? "" : formatQuantidade(quantidade),
       quantidade == null ? "" : formatBRL(unitario * quantidade),
     ]
   })

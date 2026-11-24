@@ -4,16 +4,16 @@ import { useState } from "react"
 
 import {
   Button,
-  ChoiceCard,
   FileUpload,
   FormField,
   InfoBanner,
   SectionBlock,
   Textarea,
 } from "@/components/ui"
-import { IconCheckCircle, IconFileText } from "@/components/ui/icons"
+import { IconFileText } from "@/components/ui/icons"
 import { CaminhosDaSecao, dadosDoProcesso } from "@/components/documentos/caminhos-da-secao"
 import { InlineSpinner } from "@/components/shared/estados"
+import { RevisaoDaAta } from "@/components/documentos/revisao-da-ata"
 import { useToast } from "@/components/shared/providers"
 import { AvisoDaMemoria, EstimativaDoProcesso } from "@/components/documentos/estimativa-do-processo"
 import { Th } from "@/components/shared/tabela"
@@ -37,7 +37,7 @@ import {
 import { tabelaEmTexto } from "@/lib/dominio/tabela"
 import { rotuloDaUnidade } from "@/lib/dominio/unidades"
 import { formatBRL, formatNumeroBR, parseValorBR, SEM_VALOR } from "@/lib/format"
-import type { ModoATA, PainelSecao, Processo, SecaoDocumento } from "@/lib/types"
+import type { PainelSecao, Processo, SecaoDocumento } from "@/lib/types"
 import { TabelasDaSecao } from "@/components/documentos/tabelas-da-secao"
 
 /**
@@ -680,34 +680,14 @@ export function memoriaDoValor(
   return partes.join("\n")
 }
 
-const modosATA: Array<{ key: ModoATA; label: string; desc: string }> = [
-  {
-    key: "anexar",
-    label: "Anexar ATA para revisão pela IA",
-    desc: "Envie a ATA que deseja utilizar. A IA verificará validade, compatibilidade e emitirá parecer.",
-  },
-  {
-    key: "delegar",
-    label: "Delegar ao modelo a busca de ATAs válidas",
-    desc: "A IA buscará ATAs compatíveis com o objeto. Você visualizará as origens e selecionará a desejada.",
-  },
-  {
-    key: "combinado",
-    label: "Anexar ATA e buscar outras opções",
-    desc: "A IA revisará sua ATA e também sugerirá alternativas encontradas para comparação.",
-  },
-]
-
 /**
  * Adesão a Ata de Registro de Preços — acompanha o Levantamento de Mercado
  * (Art. 18, § 1º, V), onde a adesão é avaliada como alternativa de solução.
  */
-export function PainelATA() {
-  const showToast = useToast()
+export function PainelATA({ processoId }: { processoId: string }) {
   const [aberto, setAberto] = useState(false)
-  const [ataMode, setATAMode] = useState<ModoATA | "">("")
   const [ataFile, setATAFile] = useState<string | null>(null)
-  const [ataReview, setATAReview] = useState<null | "loading" | "done">(null)
+  const [ataArquivo, setATAArquivo] = useState<File | null>(null)
 
   return (
     <div className="mt-5">
@@ -719,89 +699,30 @@ export function PainelATA() {
           <div className="mb-1 font-display text-md font-bold text-on-dark">A solução proposta é Adesão de ATA?</div>
           <p className="m-0 text-base text-on-dark-65">
             Se o levantamento de mercado concluir que a solução mais vantajosa é a Adesão a Ata de Registro de Preços,
-            configure a ATA aqui para que o modelo possa validar ou encontrar opções adequadas.
+            anexe a ATA aqui para que o modelo leia o documento e aponte o que ele diz. A busca de ATAs não é feita pela
+            plataforma: a ATA vem do PNCP ou do órgão gerenciador, e a escolha é sua.
           </p>
         </div>
         <Button size="sm" onClick={() => setAberto(!aberto)}>
-          {aberto ? "Fechar" : "Configurar ATA"}
+          {aberto ? "Fechar" : "Anexar ATA"}
         </Button>
       </div>
 
       {aberto && (
         <div className="mt-2.5 rounded-card border border-border bg-surface px-5.5 py-5">
-          <h4 className="m-0 mb-1 font-display text-md font-bold text-text-1">Gestão da Ata de Registro de Preços</h4>
-          <div className="mb-4 flex flex-col gap-2">
-            {modosATA.map((opt) => (
-              <ChoiceCard
-                key={opt.key}
-                size="small"
-                selected={ataMode === opt.key}
-                onClick={() => setATAMode(opt.key)}
-                title={opt.label}
-                desc={opt.desc}
+          <h4 className="m-0 mb-1 font-display text-md font-bold text-text-1">Leitura da Ata de Registro de Preços</h4>
+          <FormField label="Anexar ATA" required>
+            <div>
+              <FileUpload
+                file={ataFile}
+                onChange={setATAFile}
+                onArquivo={setATAArquivo}
+                placeholder="Clique para selecionar a ATA (PDF ou DOCX)"
+                accept=".pdf,.docx"
               />
-            ))}
-          </div>
-
-          {(ataMode === "anexar" || ataMode === "combinado") && (
-            <div className="mb-4">
-              <FormField label="Anexar ATA" required>
-                <div>
-                  <FileUpload
-                    file={ataFile}
-                    onChange={(f) => {
-                      setATAFile(f)
-                      if (f === null) setATAReview(null)
-                    }}
-                    placeholder="Clique para selecionar a ATA (PDF ou DOCX)"
-                    accept=".pdf,.docx"
-                  />
-                  {ataFile && ataReview === null && (
-                    <div className="mt-2.5">
-                      <Button
-                        size="sm"
-                        onClick={() => {
-                          setATAReview("loading")
-                          setTimeout(() => setATAReview("done"), 2200)
-                        }}
-                      >
-                        Enviar para revisão pela IA
-                      </Button>
-                    </div>
-                  )}
-                  {ataReview === "loading" && (
-                    <div className="mt-2.5">
-                      <InlineSpinner label="Analisando ATA... aguarde." />
-                    </div>
-                  )}
-                  {ataReview === "done" && (
-                    <div className="mt-2.5 rounded-xl border border-tint-success-border bg-tint-success-bg px-4 py-3.5">
-                      <div className="mb-2 flex items-center gap-2">
-                        <span className="flex text-success">
-                          <IconCheckCircle size={16} strokeWidth={2.5} />
-                        </span>
-                        <span className="text-base font-bold text-tint-success-fg">Parecer da IA: ATA Válida</span>
-                      </div>
-                      <p className="m-0 text-sm leading-[1.6] text-tint-success-fg-soft">
-                        A ATA analisada está vigente, com objeto compatível ao ETP e dentro dos limites legais para
-                        adesão (Art. 86 da Lei 14.133/21). Prazo de vigência: 30/11/2025. Órgão gerenciador: Governo do
-                        Estado de São Paulo. Nenhuma irregularidade identificada.
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </FormField>
+              <RevisaoDaAta processoId={processoId} arquivo={ataArquivo} />
             </div>
-          )}
-
-
-          {ataMode !== "" && (
-            <div className="mt-3.5">
-              <Button variant="dark" onClick={() => showToast("Configuração da ATA registrada no processo.")}>
-                Confirmar configuração da ATA
-              </Button>
-            </div>
-          )}
+          </FormField>
         </div>
       )}
     </div>

@@ -141,14 +141,6 @@ export const MODALIDADE_LABEL: Record<Modalidade, string> = {
 }
 
 /** Modo de gestão da Ata de Registro de Preços. */
-export type ModoATA = "anexar" | "delegar" | "combinado"
-
-export interface ConfigATA {
-  modo: ModoATA
-  motivo?: string
-  arquivo?: string | null
-}
-
 /** Como o preço de referência sai da série de preços coletados (IN SEGES 65/2021, Art. 6º). */
 export type MetodoDaEstimativa = "media" | "mediana" | "menor"
 
@@ -212,8 +204,6 @@ export interface Processo {
   /** Documentos solicitados para o processo (definidos no wizard, editáveis no hub). */
   documentos: Array<TipoDocumento>
   fundamentoLegal?: string
-  /** Flags do modo de ATA (anexar / delegar busca à IA / combinado). */
-  ata?: ConfigATA | null
   fases: {
     retificacao: boolean
   }
@@ -244,7 +234,6 @@ export interface NovoProcessoInput {
    * demanda pode vir de várias secretarias, cada uma com o seu documento.
    */
   dfdConteudo?: File | null
-  ata?: ConfigATA | null
   documentos: Array<TipoDocumento>
   fases: {
     retificacao: boolean

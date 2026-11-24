@@ -933,7 +933,7 @@ export default function EditorDocumento() {
           )}
 
           {/* A adesão à ATA e as alternativas de mercado são ferramentas distintas da seção V. */}
-          {active?.painel === "ata" && <PainelATA />}
+          {active?.painel === "ata" && <PainelATA processoId={processoId} />}
           {active?.painel === "ata" && <PainelAlternativasMercado processoId={processoId} />}
 
           {/*
