@@ -1,7 +1,7 @@
 "use client"
 
 import { getImageProps, type StaticImageData } from "next/image"
-import { Fragment, useEffect, useRef, type CSSProperties } from "react"
+import { Fragment, useEffect, useRef, type CSSProperties, type ReactNode } from "react"
 
 import ceuAlto from "@/public/landing/abertura/alto/ceu.webp"
 import edificioAlto from "@/public/landing/abertura/alto/edificio.webp"
@@ -14,6 +14,7 @@ import frenteLargo from "@/public/landing/abertura/largo/frente.webp"
 import meioLargo from "@/public/landing/abertura/largo/meio.webp"
 import nuvensLargo from "@/public/landing/abertura/largo/nuvens.webp"
 
+import { GovBo, GovPri } from "@/components/mascotes/mascotes"
 import { FaixaDaMarca } from "@/components/shared/marca"
 import { CONTEUDO } from "@/lib/landing/conteudo"
 import {
@@ -50,7 +51,7 @@ const ENTRADA: Record<NomeDaCamada, { estilo: Record<string, string>; atraso: nu
   frente: { estilo: { "--landing-de": "18%" }, atraso: 300 },
 }
 
-function Camada({ nome, alt }: { nome: NomeDaCamada; alt: string }) {
+function Camada({ nome, alt, children }: { nome: NomeDaCamada; alt: string; children?: ReactNode }) {
   const { largo, alto } = IMAGENS[nome]
   const comum = { alt, sizes: "100vw", loading: "eager" as const, fetchPriority: "high" as const }
   const fonteAlta = getImageProps({ ...comum, ...ALTO, src: alto }).props
@@ -79,6 +80,7 @@ function Camada({ nome, alt }: { nome: NomeDaCamada; alt: string }) {
           style={{ ...estilo, animationDelay: `${atraso}ms` } as CSSProperties}
         >
           {nome === "nuvens" ? <div className="absolute inset-0 animate-landing-deriva">{imagem}</div> : imagem}
+          {children}
         </div>
       </div>
     </div>
@@ -234,7 +236,23 @@ export function Abertura() {
 
         <Camada nome="edificio" alt={abertura.altSede} />
         <Camada nome="meio" alt="" />
-        <Camada nome="frente" alt="" />
+        <Camada nome="frente" alt="">
+          {/* Os mascotes (§127) no gramado, na camada da frente: andam com a paralaxe da cena. A escala é de
+              primeiro plano: a GovPri com a cabeça na linha do térreo da sede, o GovBô com uns 40% da altura dela. */}
+          <GovPri
+            corpo="inteiro"
+            expressao="alegre"
+            acao="acenar"
+            manter
+            className="absolute bottom-[3%] left-[14%] aspect-[480/910] h-[26%] portrait:bottom-[9%] portrait:left-[7%] portrait:h-[16%]"
+          />
+          <GovBo
+            expressao="alegre"
+            acao="pular"
+            repetir
+            className="absolute right-[16%] bottom-[14%] aspect-[320/340] h-[11%] portrait:right-[9%] portrait:bottom-[19%] portrait:h-[7%]"
+          />
+        </Camada>
 
         {/* Escurece o alto para o cabeçalho e o título, e a cena inteira antes do manifesto. */}
         <div

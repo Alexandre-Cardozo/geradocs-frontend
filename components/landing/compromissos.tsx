@@ -1,5 +1,6 @@
 import { Revelar } from "@/components/landing/revelar"
 import { TituloDeSecao } from "@/components/landing/titulo-de-secao"
+import { GovPri } from "@/components/mascotes/mascotes"
 import { CONTEUDO } from "@/lib/landing/conteudo"
 
 /** Os sete compromissos e o que a GovPro não promete (§125). */
@@ -7,9 +8,14 @@ export function Compromissos() {
   const { compromissos } = CONTEUDO
   return (
     <section id={compromissos.id} className="bg-ice py-16 lg:py-28">
-      <div className="mx-auto max-w-landing px-4 sm:px-6 lg:px-10 xl:px-14">
+      <div className="relative mx-auto max-w-landing px-4 sm:px-6 lg:px-10 xl:px-14">
         <TituloDeSecao rotulo={compromissos.rotulo} titulo={compromissos.titulo} />
-        <ol className="m-0 mt-12 grid list-none gap-4 p-0 sm:grid-cols-2 lg:grid-cols-4">
+        {/* A GovPri, que cuida da relação com o órgão (§127), de pé atrás da última coluna: os cartões escondem a cintura. Só em tela larga. */}
+        <GovPri
+          expressao="sorridente"
+          className="absolute -top-12 right-11 hidden aspect-[480/496] h-56 lg:block xl:right-24 xl:h-64"
+        />
+        <ol className="relative z-10 m-0 mt-12 grid list-none gap-4 p-0 sm:grid-cols-2 lg:grid-cols-4">
           {compromissos.itens.map((item, indice) => (
             <li key={item.titulo}>
               <Revelar atraso={(indice % 4) * 80} className="h-full rounded-card border border-border bg-surface p-6 lg:p-7">
