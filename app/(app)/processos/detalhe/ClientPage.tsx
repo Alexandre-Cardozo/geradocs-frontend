@@ -311,6 +311,9 @@ export default function HubProcesso() {
     const concluidas = secoesLista.filter((s) => s.status === "Completo").length
     const total = secoesLista.length
     const progresso = finalizado ? 100 : total > 0 ? Math.round((concluidas / total) * 100) : 0
+    // Enquanto as seções não chegam, o cartão não afirma "0%" nem "Elaborar":
+    // no Render frio isso durava até 15 s, em documento já completo.
+    const carregandoSecoes = !finalizado && secoesPorTipo[tipo].isPending
     // Só as seções indispensáveis liberam a geração (no ETP, Art. 18, § 2º).
     const obrigatoriasOk =
       total > 0 && secoesLista.filter((s) => s.obrigatoria).every((s) => s.status === "Completo")
@@ -392,6 +395,8 @@ export default function HubProcesso() {
                 </span>
               )}
             </span>
+          ) : carregandoSecoes ? (
+            <span role="status" className="text-sm text-text-muted">Carregando...</span>
           ) : (
             <span className="text-sm font-semibold text-text-3">{progresso}%</span>
           )}
@@ -458,7 +463,7 @@ export default function HubProcesso() {
               icon={<IconArrowRight size={13} strokeWidth={2.5} />}
               onClick={() => router.push(editorHref)}
             >
-              {progresso > 0 ? `Continuar ${tipo}` : `Elaborar ${tipo}`}
+              {carregandoSecoes ? `Abrir ${tipo}` : progresso > 0 ? `Continuar ${tipo}` : `Elaborar ${tipo}`}
             </Button>
           )}
           {/*

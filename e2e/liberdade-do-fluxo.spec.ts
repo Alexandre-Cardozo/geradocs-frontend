@@ -13,6 +13,26 @@ import { comProcessoEDocumento, comSessao, processo, rota } from "./api"
 const API = "**/api/v1"
 
 test.describe("liberdade no fluxo do processo", () => {
+  test("enquanto as seções carregam, o cartão não diz 0% nem Elaborar", async ({ page }) => {
+    // Homologação, 24/11/2026: no Render frio, documentos já completos ficavam até 15 s como "0% · Elaborar".
+    await comSessao(page)
+    await comProcessoEDocumento(page)
+    let liberar: () => void = () => {}
+    const segura = new Promise<void>((resolve) => (liberar = resolve))
+    await page.route(`${API}/procurement-processes/*/documents/TR`, async (rotaDaApi) => {
+      if (rotaDaApi.request().method() === "GET") await segura
+      await rotaDaApi.fallback()
+    })
+
+    await page.goto(rota(`/processos/detalhe?id=${processo.id}`))
+
+    await expect(page.getByRole("button", { name: "Abrir TR" })).toBeVisible()
+    await expect(page.getByRole("status").filter({ hasText: "Carregando..." }).first()).toBeVisible()
+    await expect(page.getByRole("button", { name: /Elaborar TR|Continuar TR/ })).toHaveCount(0)
+    liberar()
+    await expect(page.getByRole("button", { name: /Elaborar TR|Continuar TR|Revisar e Gerar/ }).first()).toBeVisible()
+  })
+
   test("documento que depende de outro pode ser aberto e elaborado", async ({ page }) => {
     await comSessao(page)
     await comProcessoEDocumento(page)
