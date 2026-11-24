@@ -1,5 +1,7 @@
 import Link from "next/link"
 
+import { ROTA_PAINEL } from "@/lib/auth/acesso"
+
 export default function NotFound() {
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center gap-2 bg-ice p-7">
@@ -24,7 +26,7 @@ export default function NotFound() {
         O endereço acessado não existe ou foi movido. Verifique o número do processo ou retorne ao Dashboard.
       </p>
       <Link
-        href="/"
+        href={ROTA_PAINEL}
         className="mt-4 inline-flex h-10 items-center gap-1.75 rounded-md bg-royal px-5 text-md font-semibold text-surface no-underline transition-colors hover:bg-royal-hover"
       >
         Voltar ao Dashboard →

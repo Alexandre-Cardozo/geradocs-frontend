@@ -1,9 +1,9 @@
 "use client"
 
 import Image from "next/image"
-import { useEffect, useRef, useState } from "react"
+import Link from "next/link"
+import { useEffect, useRef, useState, type MouseEvent } from "react"
 
-import geradocsLogo from "@/public/geradocs-logo-white.svg"
 import govproLogo from "@/public/govpro-logo-white.svg"
 
 import { BotaoLink } from "@/components/landing/botao-link"
@@ -13,9 +13,9 @@ import { CONTEUDO, HREF_DEMONSTRACAO, HREF_ENTRAR } from "@/lib/landing/conteudo
 type Menu = "fechado" | "aberto" | "fechando"
 
 /**
- * Cabeçalho fixo da landing. No topo da página ele é transparente, sobre o céu da
- * abertura (§120), e vira navy ao rolar ou ao abrir o menu. No desktop (lg),
- * âncoras e o pedido de demonstração; abaixo disso, um menu que abre em 250ms e fecha em 150ms (§117). A borda
+ * Cabeçalho fixo da página da GovPro (§125), com a marca da empresa. No topo da página ele é transparente, sobre o céu da
+ * abertura (§124), e vira navy ao rolar ou ao abrir o menu. No desktop (lg),
+ * âncoras e o pedido de demonstração; abaixo disso, um menu que abre em 250ms e fecha em 150ms (§121). A borda
  * inferior só aparece junto com o fundo. Sobre o navy, o foco é `electric` (`.on-dark`).
  */
 export function Cabecalho() {
@@ -43,6 +43,20 @@ export function Cabecalho() {
 
   const aberto = menu === "aberto"
   const fechar = () => setMenu("fechando")
+  const { cabecalho } = CONTEUDO
+
+  /**
+   * A marca volta ao início da página, na abertura. Na própria página, rola até
+   * o topo e tira a âncora da URL; vindo de outra rota, o `Link` navega para `/`.
+   */
+  const voltarAoInicio = (evento: MouseEvent<HTMLAnchorElement>) => {
+    if (!document.querySelector("[data-landing]")) return
+    evento.preventDefault()
+    if (menu === "aberto") fechar()
+    const reduzido = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false
+    window.scrollTo({ top: 0, behavior: reduzido ? "auto" : "smooth" })
+    window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search)
+  }
 
   return (
     <header
@@ -50,12 +64,10 @@ export function Cabecalho() {
         rolou || menu !== "fechado" ? "border-on-dark-border bg-navy" : "border-transparent bg-transparent"
       }`}
     >
-      <div className="mx-auto flex h-16 max-w-landing items-center justify-between gap-4 px-4 sm:px-6">
-        <div className="flex items-center gap-3">
-          <Image src={geradocsLogo} alt="GeraDocs" width={113} height={24} className="h-6 w-auto" />
-          <span className="h-4 w-px bg-on-dark-border" aria-hidden />
-          <Image src={govproLogo} alt="Uma solução GovPro" width={60} height={14} className="h-3.5 w-auto" />
-        </div>
+      <div className="mx-auto flex h-16 max-w-landing items-center justify-between gap-4 px-4 sm:px-6 lg:px-10 xl:px-14">
+        <Link href="/" onClick={voltarAoInicio} className="flex items-center rounded-sm" aria-label={cabecalho.marca}>
+          <Image src={govproLogo} alt="" width={119} height={30} className="h-7 w-auto" priority />
+        </Link>
 
         <nav aria-label="Seções da página" className="hidden items-center gap-6 lg:flex">
           {CONTEUDO.navegacao.map((item) => (
@@ -69,13 +81,13 @@ export function Cabecalho() {
           ))}
         </nav>
 
-        <div className="hidden items-center gap-3 lg:flex">
-          <div className="hidden xl:block">
-            <BotaoLink href={HREF_ENTRAR} variante="secundario-escuro">
-              {CONTEUDO.hero.ctaSecundario}
-            </BotaoLink>
-          </div>
-          <BotaoLink href={HREF_DEMONSTRACAO}>{CONTEUDO.hero.ctaPrimario}</BotaoLink>
+        <div className="hidden items-center gap-2 lg:flex">
+          <BotaoLink href={HREF_ENTRAR} tamanho="sm" variante="secundario-escuro" nome={cabecalho.entrar.nome}>
+            {cabecalho.entrar.rotulo}
+          </BotaoLink>
+          <BotaoLink href={HREF_DEMONSTRACAO} tamanho="sm" nome={cabecalho.demonstracao.nome}>
+            {cabecalho.demonstracao.rotulo}
+          </BotaoLink>
         </div>
 
         <button
@@ -113,10 +125,10 @@ export function Cabecalho() {
           </nav>
           <div className="mt-3 flex flex-col gap-3">
             <BotaoLink href={HREF_DEMONSTRACAO} tamanho="lg">
-              {CONTEUDO.hero.ctaPrimario}
+              {CONTEUDO.acoes.demonstracao}
             </BotaoLink>
             <BotaoLink href={HREF_ENTRAR} tamanho="lg" variante="secundario-escuro">
-              {CONTEUDO.hero.ctaSecundario}
+              {CONTEUDO.acoes.acessar}
             </BotaoLink>
           </div>
         </div>

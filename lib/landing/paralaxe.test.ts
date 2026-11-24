@@ -55,7 +55,7 @@ describe("quadroDaRolagem", () => {
     const q = quadroDaRolagem(0.8, { movimento: true })
     expect(q.titulo.opacidade).toBe(0)
     expect(q.seta).toBe(0)
-    expect(q.veu).toBeCloseTo(0.84)
+    expect(q.veu).toBeCloseTo(0.92)
     expect(q.manifesto).toEqual({ opacidade: 1, deslocamento: 0 })
   })
 

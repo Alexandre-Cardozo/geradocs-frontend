@@ -4,25 +4,25 @@ import { expect, test } from "@playwright/test";
 import { rota, semSessao } from "./api";
 
 /**
- * A landing (§119): estática, sem sessão, sem chamada à API. A varredura de
+ * A página da GovPro (§123, §125): estática, sem sessão, sem chamada à API. A varredura de
  * acessibilidade **não** exclui os tokens sobre navy, como faz a do aplicativo —
  * a landing só usa `on-dark`, `-65`, `-60` e `-55`, todos acima de 4,5:1.
  */
-const ROTA = "/landing-page";
+const ROTA = "/";
 
 test("abre sem sessão, sem redirecionar para o login", async ({ page }) => {
   await semSessao(page);
   await page.goto(rota(ROTA));
 
-  await expect(page).toHaveURL(new RegExp(`${ROTA}/?$`));
-  await expect(page).toHaveTitle("GovPro | GeraDocs — Contratações públicas inteligentes");
+  await expect(page).not.toHaveURL(/\/login/);
+  await expect(page).toHaveTitle("GovPro | Inteligência para a Gestão Pública");
   await expect(page.getByRole("heading", { level: 1, name: "Inteligência para Gestão Pública" })).toBeVisible();
   await expect(
-    page.getByRole("heading", { level: 2, name: "Documentos da Contratação Pública, Conforme a Lei 14.133/21" }),
+    page.getByRole("heading", { level: 2, name: "A Contratação Pública Bem Planejada Começa Aqui" }),
   ).toBeAttached();
 });
 
-test.describe("abertura em paralaxe (§120)", () => {
+test.describe("abertura em paralaxe (§124)", () => {
   test("mostra a sede da GovPro e o slogan na primeira tela", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 810 });
     await page.goto(rota(ROTA));
@@ -33,6 +33,13 @@ test.describe("abertura em paralaxe (§120)", () => {
       imgs.map((img) => (img as HTMLImageElement).complete && (img as HTMLImageElement).naturalWidth > 0),
     );
     expect(carregadas).toEqual([true, true, true, true, true]);
+  });
+
+  test("a abertura encosta no topo, sem fresta acima do cabeçalho", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(rota(ROTA));
+    const topo = await page.locator("section[aria-label=GovPro]").evaluate((s) => s.getBoundingClientRect().top);
+    expect(topo).toBeLessThanOrEqual(0);
   });
 
   test("em tela em pé usa o enquadramento alto", async ({ page }) => {
@@ -73,7 +80,28 @@ test("o pedido de demonstração é um mailto com assunto", async ({ page }) => 
   const cta = page.getByRole("link", { name: "Solicitar Demonstração" }).first();
   const href = (await cta.getAttribute("href")) ?? "";
   expect(href.startsWith("mailto:contato@govpro.com.br?subject=")).toBe(true);
+  // O e-mail já vem escrito: quem pede só preenche os próprios dados.
+  const corpo = new URL(href).searchParams.get("body") ?? "";
+  for (const campo of ["Nome:", "Setor:", "Cargo:", "Instituição pública:"]) expect(corpo).toContain(campo);
   await expect(page.getByRole("link", { name: "Acessar o GeraDocs" }).first()).toHaveAttribute("href", /\/login\/?$/);
+});
+
+test("a marca do cabeçalho volta à abertura", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(rota(ROTA));
+  await page.getByRole("navigation", { name: "Seções da página" }).getByRole("link", { name: "Contato" }).click();
+  await expect(page).toHaveURL(/#contato$/);
+  await page.getByRole("link", { name: "GovPro, voltar ao início" }).click();
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+  await expect(page).not.toHaveURL(/#/);
+  await expect(page.getByRole("heading", { level: 1 })).toBeInViewport();
+});
+
+test("o conteúdo ocupa a largura da tela larga", async ({ page }) => {
+  await page.setViewportSize({ width: 1920, height: 1000 });
+  await page.goto(rota(ROTA));
+  const marca = await page.getByRole("link", { name: "GovPro, voltar ao início" }).boundingBox();
+  expect(marca?.x ?? 999).toBeLessThan(80);
 });
 
 test("as âncoras levam à seção", async ({ page }) => {
@@ -81,20 +109,88 @@ test("as âncoras levam à seção", async ({ page }) => {
   await page.goto(rota(ROTA));
   await page.getByRole("navigation", { name: "Seções da página" }).getByRole("link", { name: "Confiança" }).click();
   await expect(page).toHaveURL(/#confianca$/);
-  await expect(page.getByRole("heading", { level: 2, name: "Feito para o Controle da Contratação" })).toBeInViewport();
+  await expect(page.getByRole("heading", { level: 2, name: "Segurança Jurídica Para Quem Assina" })).toBeInViewport();
 });
 
-test("o fluxo mostra os seis documentos na ordem", async ({ page }) => {
+test("a vitrine mostra os sete tipos na ordem do fluxo, a juntada e a errata", async ({ page }) => {
   await page.goto(rota(ROTA));
-  const itens = page.getByRole("list", { name: "Documentos gerados, na ordem do fluxo" }).getByRole("listitem");
-  await expect(itens).toHaveCount(6);
-  await expect(itens.first()).toContainText("Cotação de Mercado");
-  await expect(itens.last()).toContainText("Minuta de Contrato");
+  const legendas = page.getByRole("region", { name: "Documentos gerados pelo GeraDocs" }).locator("figcaption");
+  await expect(legendas).toHaveCount(9);
+  await expect(legendas.first()).toContainText("Cotação de Mercado");
+  await expect(legendas.nth(6)).toContainText("Minuta de Contrato");
+  await expect(legendas.nth(7)).toContainText("Juntada dos Autos");
+  await expect(legendas.last()).toContainText("Errata");
 });
 
-test("a lacuna de Quem Somos fica visível", async ({ page }) => {
+test("a âncora do cabeçalho põe a seção logo abaixo dele, sem sobra da anterior", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(rota(ROTA));
-  await expect(page.getByRole("note")).toContainText("[LACUNA:");
+  await page.getByRole("navigation", { name: "Seções da página" }).getByRole("link", { name: "Soluções" }).click();
+  const topo = await page.locator("#solucoes").evaluate((s) => s.getBoundingClientRect().top);
+  expect(Math.abs(topo - 64)).toBeLessThanOrEqual(2);
+});
+
+test("abrir a página já com a âncora leva à seção", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(rota(ROTA) + "#solucoes");
+  await expect(page.getByRole("heading", { level: 2, name: "Um Portfólio Que Nasce da Rotina de Quem Contrata" })).toBeInViewport();
+});
+
+test("o portfólio leva à seção do GeraDocs", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto(rota(ROTA));
+  await page.getByRole("link", { name: /Conhecer o GeraDocs/ }).click();
+  await expect(page).toHaveURL(/#geradocs$/);
+  await expect(page.getByRole("heading", { level: 2, name: "A Contratação Pública Bem Planejada Começa Aqui" })).toBeInViewport();
+});
+
+test.describe("palcos de rolagem em tela larga (§125)", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+  });
+
+  test("a demonstração avança as etapas conforme a rolagem", async ({ page }) => {
+    await page.goto(rota(ROTA));
+    const secao = page.locator("#poucos-cliques");
+    await expect(secao).toHaveAttribute("data-movimento", "ativo");
+    const ir = (fracao: number) =>
+      secao.evaluate((s, f) => {
+        const topo = s.getBoundingClientRect().top + window.scrollY;
+        window.scrollTo(0, topo + (s.offsetHeight - window.innerHeight) * f);
+      }, fracao);
+    await ir(0.05);
+    await expect(page.getByRole("button", { name: /Abra o Processo/ })).toHaveAttribute("aria-current", "step");
+    await ir(0.95);
+    await expect(page.getByRole("button", { name: /Gere DOCX e PDF/ })).toHaveAttribute("aria-current", "step");
+  });
+
+  test("a vitrine desliza as folhas na horizontal", async ({ page }) => {
+    await page.goto(rota(ROTA));
+    const secao = page.locator("#documentos");
+    await expect(secao).toHaveAttribute("data-movimento", "ativo");
+    await secao.evaluate((s) => {
+      const topo = s.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo(0, topo + (s.offsetHeight - window.innerHeight) * 0.9);
+    });
+    const faixa = page.getByRole("region", { name: "Documentos gerados pelo GeraDocs" }).locator("ol");
+    await expect.poll(() => faixa.evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).m41)).toBeLessThan(-200);
+  });
+});
+
+test("o seletor de modalidade mostra os documentos da forma escolhida", async ({ page }) => {
+  await page.goto(rota(ROTA));
+  await page.getByRole("button", { name: "Dispensa com Disputa" }).click();
+  const lista = page.getByRole("list", { name: /Documentos do processo: Dispensa com Disputa/ });
+  await expect(lista.getByRole("listitem").filter({ hasText: "Aviso de Contratação Direta" })).toContainText("Obrigatório");
+  await expect(lista.getByRole("listitem").filter({ hasText: "Edital de Licitação" })).toContainText("Não se aplica");
+});
+
+test("em tela estreita a demonstração é um seletor por clique", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(rota(ROTA));
+  await expect(page.locator("#poucos-cliques")).not.toHaveAttribute("data-movimento", "ativo");
+  await page.getByRole("button", { name: /Revise e Aceite/ }).click();
+  await expect(page.getByRole("button", { name: /Revise e Aceite/ })).toHaveAttribute("aria-current", "step");
 });
 
 test("não rola na horizontal em 320px", async ({ page }) => {
@@ -112,8 +208,8 @@ test("o menu móvel abre e leva às âncoras", async ({ page }) => {
   await page.getByRole("button", { name: "Menu" }).click();
   const menu = page.locator("#menu-landing");
   await expect(menu).toBeVisible();
-  await menu.getByRole("link", { name: "IA", exact: true }).click();
-  await expect(page).toHaveURL(/#ia$/);
+  await menu.getByRole("link", { name: "Documentos", exact: true }).click();
+  await expect(page).toHaveURL(/#documentos$/);
   await expect(menu).toHaveCount(0);
 });
 
@@ -167,6 +263,14 @@ test.describe("com movimento reduzido", () => {
     await expect.poll(() => page.locator("[data-manifesto]").evaluate((el) => Number(getComputedStyle(el).opacity))).toBeGreaterThan(0);
     const transformacoes = await page.locator("[data-camada]").evaluateAll((els) => els.map((el) => getComputedStyle(el).transform));
     expect(transformacoes.every((t) => t === "none" || t === "matrix(1, 0, 0, 1, 0, 0)")).toBe(true);
+  });
+
+  test("os palcos de rolagem não prendem a página", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(rota(ROTA));
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    await expect(page.locator("#poucos-cliques")).not.toHaveAttribute("data-movimento", "ativo");
+    await expect(page.locator("#documentos")).not.toHaveAttribute("data-movimento", "ativo");
   });
 
   test("nada é escondido", async ({ page }) => {

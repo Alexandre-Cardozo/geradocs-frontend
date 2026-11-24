@@ -118,7 +118,7 @@ test.describe("largura do conteúdo", () => {
     })
 
   for (const [nome, caminho] of [
-    ["o painel", "/"],
+    ["o painel", "/painel"],
     ["a listagem de processos", "/processos"],
     ["os documentos", "/documentos"],
   ] as const) {
@@ -151,7 +151,7 @@ test.describe("largura do conteúdo", () => {
  */
 test.describe("a rolagem termina no conteúdo", () => {
   const TELAS = [
-    ["o painel", "/"],
+    ["o painel", "/painel"],
     ["a listagem", "/processos"],
     ["os documentos", "/documentos"],
     ["o novo processo", "/processos/novo"],

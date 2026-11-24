@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 
 import { fireEvent, render, screen, userEvent } from "@/lib/teste/renderizar"
 
@@ -16,15 +16,39 @@ function terminarAnimacao(elemento: HTMLElement) {
 }
 
 describe("Cabecalho", () => {
-  it("traz as âncoras das seções e os dois logos", () => {
+  it("traz a marca da GovPro e as âncoras das seções", () => {
     render(<Cabecalho />)
     const nav = screen.getByRole("navigation", { name: "Seções da página" })
-    expect(nav.querySelector('a[href="#problema"]')).toHaveTextContent("O Problema")
-    expect(nav.querySelector('a[href="#geradocs"]')).toHaveTextContent("GeraDocs")
-    expect(nav.querySelector('a[href="#ia"]')).toHaveTextContent("IA")
-    expect(nav.querySelector('a[href="#confianca"]')).toHaveTextContent("Confiança")
-    expect(screen.getByRole("img", { name: "GeraDocs" })).toBeInTheDocument()
-    expect(screen.getByRole("img", { name: "Uma solução GovPro" })).toBeInTheDocument()
+    expect(nav.querySelector('a[href="#quem-somos"]')).toHaveTextContent("Quem Somos")
+    expect(nav.querySelector('a[href="#solucoes"]')).toHaveTextContent("Soluções")
+    expect(nav.querySelector('a[href="#documentos"]')).toHaveTextContent("Documentos")
+    expect(nav.querySelector('a[href="#contato"]')).toHaveTextContent("Contato")
+    expect(screen.getByRole("link", { name: "GovPro, voltar ao início" })).toHaveAttribute("href", "/")
+  })
+
+  it("os botões do cabeçalho são curtos, com o nome acessível completo", () => {
+    render(<Cabecalho />)
+    const entrar = screen.getByRole("link", { name: "Entrar no GeraDocs" })
+    expect(entrar).toHaveTextContent(/^Entrar$/)
+    expect(entrar).toHaveAttribute("href", "/login")
+    const demonstracao = screen.getByRole("link", { name: "Solicitar demonstração" })
+    expect(demonstracao).toHaveTextContent(/^Demonstração$/)
+    expect(demonstracao.getAttribute("href")).toMatch(/^mailto:contato@govpro\.com\.br\?subject=.*&body=/)
+  })
+
+  it("na página da GovPro, a marca rola até a abertura em vez de navegar", async () => {
+    const usuario = userEvent.setup()
+    const rolar = vi.fn()
+    window.scrollTo = rolar as unknown as typeof window.scrollTo
+    window.history.replaceState(null, "", "/#documentos")
+    render(
+      <div data-landing>
+        <Cabecalho />
+      </div>,
+    )
+    await usuario.click(screen.getByRole("link", { name: "GovPro, voltar ao início" }))
+    expect(rolar).toHaveBeenCalledWith({ top: 0, behavior: "smooth" })
+    expect(window.location.hash).toBe("")
   })
 
   it("o menu móvel abre e fecha pelo botão", async () => {
@@ -63,7 +87,7 @@ describe("Cabecalho", () => {
     render(<Cabecalho />)
     await usuario.click(screen.getByRole("button", { name: "Menu" }))
     const menu = document.getElementById("menu-landing") as HTMLElement
-    await usuario.click(menu.querySelector('a[href="#ia"]') as HTMLElement)
+    await usuario.click(menu.querySelector('a[href="#documentos"]') as HTMLElement)
     terminarAnimacao(document.getElementById("menu-landing") as HTMLElement)
     expect(document.getElementById("menu-landing")).toBeNull()
   })

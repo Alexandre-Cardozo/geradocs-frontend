@@ -1,29 +1,39 @@
-import { describe, expect, it, vi } from "vitest"
+import { describe, expect, it } from "vitest"
 
 import { render, screen } from "@/lib/teste/renderizar"
 
 import PaginaLanding, { metadata } from "./page"
 
-// O vitest não processa .png como o Next: sem o mock, next/image reclama de `width`.
-vi.mock("@/public/landing/editor-etp.png", () => ({
-  default: { src: "/editor-etp.png", width: 1440, height: 900 },
-}))
-vi.mock("@/public/landing/proposta-ia.png", () => ({
-  default: { src: "/proposta-ia.png", width: 1440, height: 900 },
-}))
 
-describe("/landing-page", () => {
+describe("/ (página da GovPro)", () => {
   it("tem um único h1, o slogan da abertura, e as seções na ordem", () => {
     const { container } = render(<PaginaLanding />)
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Inteligência para Gestão Pública")
     const secoes = Array.from(container.querySelectorAll("main > section"))
     expect(secoes[0]).toHaveAttribute("aria-label", "GovPro")
-    // A abertura e o hero vêm primeiro, sem id; as demais são as âncoras.
+    // A abertura vem primeiro, sem id; as demais são as âncoras.
     const ids = Array.from(container.querySelectorAll("main > section"))
       .map((s) => s.id)
       .filter(Boolean)
-    expect(ids).toEqual(["problema", "geradocs", "ia", "confianca", "quem-somos", "demonstracao"])
+    expect(ids).toEqual([
+      "quem-somos",
+      "desafio",
+      "solucoes",
+      "geradocs",
+      "poucos-cliques",
+      "documentos",
+      "modalidades",
+      "produtividade",
+      "ia",
+      "confianca",
+      "perfis",
+      "valores",
+      "metodo",
+      "compromissos",
+      "faq",
+      "contato",
+    ])
   })
 
   it("o conteúdo principal é o alvo do link para pular a navegação", () => {
@@ -40,8 +50,18 @@ describe("/landing-page", () => {
     expect(document.querySelector("aside")).toBeNull()
   })
 
-  it("exporta metadata próprio, sem o sufixo de homologação do aplicativo", () => {
-    expect(metadata.title).toEqual({ absolute: "GovPro | GeraDocs — Contratações públicas inteligentes" })
+  it("toda âncora da navegação tem a sua seção", () => {
+    const { container } = render(<PaginaLanding />)
+    const ancoras = Array.from(container.querySelectorAll('nav[aria-label="Seções da página"] a')).map((a) =>
+      a.getAttribute("href"),
+    )
+    expect(ancoras.length).toBeGreaterThan(0)
+    for (const ancora of ancoras) expect(container.querySelector(`section${ancora}`)).not.toBeNull()
+  })
+
+  it("exporta metadata próprio, da GovPro, sem o sufixo de homologação do aplicativo", () => {
+    expect(metadata.title).toEqual({ absolute: "GovPro | Inteligência para a Gestão Pública" })
+    expect(metadata.description).toContain("GeraDocs")
     expect(metadata.description).toContain("Lei 14.133/21")
   })
 })

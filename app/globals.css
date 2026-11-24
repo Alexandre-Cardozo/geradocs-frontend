@@ -283,11 +283,12 @@
   --animate-ia-surgir: ia-surgir 0.5s ease-out;
 
   /*
-   * ── Landing (§117, §118) ─────────────────────────────────────────────────
+   * ── Landing (§121, §122) ─────────────────────────────────────────────────
    *
    * Tokens da página de apresentação. O aplicativo não os usa.
    */
-  --container-landing: 70rem;
+  /* Larga o bastante para ocupar a tela de um monitor comum (§126); as margens crescem com a tela. */
+  --container-landing: 120rem;
   --ease-landing: cubic-bezier(0.2, 0, 0, 1);
 
   --text-landing-h1: clamp(2rem, 5vw, 3.5rem);
@@ -311,7 +312,7 @@
   --animate-landing-menu-fecha: landing-menu-fecha 150ms cubic-bezier(0.2, 0, 0, 1) both;
 
   /*
-   * Abertura em paralaxe (§120). As camadas sobem até o lugar em 1,5s, de trás
+   * Abertura em paralaxe (§124). As camadas sobem até o lugar em 1,5s, de trás
    * para a frente; as nuvens derivam e a seta pinga em loop lento. Com movimento
    * reduzido a regra global zera tudo e cada elemento fica no estado final.
    */
@@ -322,6 +323,37 @@
   --animate-landing-camada: landing-camada 1500ms cubic-bezier(0.215, 0.61, 0.355, 1) both;
   --animate-landing-deriva: landing-deriva 38s ease-in-out infinite alternate;
   --animate-landing-gota: landing-gota 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+
+  /*
+   * Página da GovPro (§125): manifesto de Quem Somos, números grandes e o
+   * clique do cursor na demonstração, que toca uma vez a cada etapa.
+   */
+  --text-landing-manifesto: clamp(1.75rem, 4.2vw, 3.5rem);
+  --text-landing-manifesto--line-height: 1.12;
+  --text-landing-manifesto--letter-spacing: -0.02em;
+  --text-landing-numero: clamp(2.25rem, 4vw, 3.25rem);
+  --text-landing-numero--line-height: 1;
+  --text-landing-numero--letter-spacing: -0.03em;
+  --animate-landing-clique: landing-clique 600ms cubic-bezier(0.2, 0, 0, 1) 700ms both;
+  --animate-landing-pressiona: landing-pressiona 260ms cubic-bezier(0.2, 0, 0, 1) 650ms both;
+
+  /* O cursor aperta ao chegar ao botão, logo antes do anel do clique. */
+  @keyframes landing-pressiona {
+    50% {
+      transform: scale(0.82);
+    }
+  }
+
+  @keyframes landing-clique {
+    from {
+      opacity: 1;
+      transform: scale(0.3);
+    }
+    to {
+      opacity: 0;
+      transform: scale(1.6);
+    }
+  }
 
   @keyframes landing-entrada {
     from {
@@ -436,6 +468,15 @@
 }
 @utility gradient-hero {
   background-image: var(--gradient-hero);
+}
+
+/* Landing (§125): grade fina sobre o navy, que some nas bordas. Só decorativa. */
+@utility landing-grade {
+  background-image:
+    linear-gradient(var(--color-on-dark-border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-on-dark-border) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 20%, transparent 80%);
 }
 
 /*
@@ -612,9 +653,15 @@
     background: var(--color-text-muted);
   }
 
-  /* Landing: o cabeçalho fixo (64px) não cobre o foco de quem navega por Tab */
+  /*
+   * Landing: a âncora para logo abaixo do cabeçalho fixo (64px), e o foco de
+   * quem navega por Tab não fica coberto. As seções não somam margem própria
+   * (§126): a soma das duas deixava uma faixa da seção anterior à vista.
+   */
   html:has([data-landing]) {
-    scroll-padding-top: 5rem;
+    scroll-padding-top: 4rem;
+    /* O fundo da página é o navy da marca: nenhuma fresta clara aparece no topo nem ao puxar a página. */
+    background-color: var(--color-navy);
   }
 
   /* Acessibilidade: respeita a preferência por movimento reduzido */

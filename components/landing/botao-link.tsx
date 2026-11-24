@@ -7,6 +7,7 @@ import type { ReactNode } from "react"
  * `mailto:` e "Acessar" é uma navegação. Os alvos têm 44px (md) e 48px (lg).
  */
 const TAMANHOS = {
+  sm: "h-10 px-4",
   md: "h-11 px-5",
   lg: "h-12 px-6",
 } as const
@@ -23,6 +24,7 @@ export function BotaoLink({
   tamanho = "md",
   className = "",
   seta = false,
+  nome,
   children,
 }: {
   href: string
@@ -31,11 +33,14 @@ export function BotaoLink({
   className?: string
   /** Seta decorativa: fica fora do nome acessível do link. */
   seta?: boolean
+  /** Nome acessível quando o rótulo visível é curto; precisa conter o rótulo. */
+  nome?: string
   children: ReactNode
 }) {
   return (
     <Link
       href={href}
+      aria-label={nome}
       className={`inline-flex items-center justify-center gap-2 rounded-md font-body text-landing-body font-semibold whitespace-nowrap no-underline transition-[background-color,transform] duration-150 ease-out active:scale-96 ${TAMANHOS[tamanho]} ${VARIANTES[variante]} ${className}`}
     >
       {children}

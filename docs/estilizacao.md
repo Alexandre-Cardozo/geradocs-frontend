@@ -70,8 +70,10 @@ const buttonVariants = {
 
 Componentes aceitam `className` opcional para ajustes pontuais do chamador (ex.: `flex-1` num botão dentro de uma linha de ações), concatenado ao final — o chamador estende, nunca reescreve o token.
 
-## A landing (§117–§119)
+## A landing (§121–§123)
 
-A rota `/landing-page` tem escala tipográfica própria (`text-landing-h1`, `text-landing-h2`, `text-landing-lead`, `text-landing-body`), contêiner próprio (`max-w-landing`) e movimento próprio (`animate-landing-entrada`, `animate-landing-menu-*`, `ease-landing`) — todos no `@theme`, e nenhum usado fora dela. Regras: só `transform`, `opacity` e `filter`; nada em loop; texto sobre navy só em `text-on-dark`, `-65`, `-60` ou `-55`; o estado escondido da revelação nunca vem do servidor (sem JavaScript, o conteúdo aparece).
+A página da GovPro, na raiz `/` (§126), tem escala tipográfica própria (`text-landing-h1`, `text-landing-h2`, `text-landing-lead`, `text-landing-body`), contêiner próprio (`max-w-landing`) e movimento próprio (`animate-landing-entrada`, `animate-landing-menu-*`, `ease-landing`), todos no `@theme` e nenhum usado fora dela. Regras: só `transform`, `opacity` e `filter`; nada em loop; texto sobre navy só em `text-on-dark`, `-65`, `-60` ou `-55`; o estado escondido da revelação nunca vem do servidor (sem JavaScript, o conteúdo aparece).
 
-A abertura (§120) é a exceção ao "nada em loop, nada de parallax": paralaxe de rolagem e de ponteiro só em `transform` e `opacity`, nuvens e seta em loop lento, título com `text-landing-abertura`. As contas ficam em `lib/landing/paralaxe.ts`; o componente só aplica o quadro.
+A abertura (§124) é a exceção ao "nada em loop, nada de parallax": paralaxe de rolagem e de ponteiro só em `transform` e `opacity`, nuvens e seta em loop lento, título com `text-landing-abertura`. As contas ficam em `lib/landing/paralaxe.ts`; o componente só aplica o quadro.
+
+A página da GovPro (§125) estende essas exceções a três seções: a demonstração em poucos cliques e a vitrine de documentos prendem o palco só em `lg` e sem movimento reduzido (`palcoPermitido` em `components/landing/rolagem.ts`), e o manifesto de Quem Somos acende palavra por palavra. As contas ficam em `lib/landing/rolagem.ts`. Tokens próprios: `text-landing-manifesto`, `text-landing-numero`, `animate-landing-clique` e a utility `landing-grade`, a grade fina sobre o navy.

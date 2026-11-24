@@ -21,7 +21,16 @@ export function MolduraDeTela({
         <span className="size-2 rounded-full bg-border" />
         <span className="size-2 rounded-full bg-border" />
       </div>
-      <Image src={src} alt={alt} priority={prioridade} sizes="(min-width: 1024px) 544px, 100vw" className="block h-auto w-full" />
+      {/* As capturas são telas inteiras do aplicativo, em 16:10 (1.600 x 1.000). */}
+      <Image
+        src={src}
+        alt={alt}
+        width={1600}
+        height={1000}
+        priority={prioridade}
+        sizes="(min-width: 1024px) 50vw, 100vw"
+        className="block h-auto w-full"
+      />
     </figure>
   )
 }

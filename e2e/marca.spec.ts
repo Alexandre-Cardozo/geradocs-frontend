@@ -45,7 +45,7 @@ test("o login mostra o logo oficial do GeraDocs e o crédito da GovPro", async (
 
 test("a barra lateral traz o logo e a assinatura da GovPro", async ({ page }) => {
   await comSessao(page)
-  await page.goto(rota("/"))
+  await page.goto(rota("/painel"))
 
   const barra = page.locator("aside").first()
   await esperarCarregada(barra.getByRole("img", { name: "GeraDocs" }))

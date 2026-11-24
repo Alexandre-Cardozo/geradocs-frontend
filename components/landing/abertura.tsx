@@ -14,6 +14,7 @@ import frenteLargo from "@/public/landing/abertura/largo/frente.webp"
 import meioLargo from "@/public/landing/abertura/largo/meio.webp"
 import nuvensLargo from "@/public/landing/abertura/largo/nuvens.webp"
 
+import { FaixaDaMarca } from "@/components/shared/marca"
 import { CONTEUDO } from "@/lib/landing/conteudo"
 import {
   CAMADAS,
@@ -85,7 +86,7 @@ function Camada({ nome, alt }: { nome: NomeDaCamada; alt: string }) {
 }
 
 /**
- * Abertura da landing (§120): a sede da GovPro em cinco camadas que se movem em
+ * Abertura da landing (§124): a sede da GovPro em cinco camadas que se movem em
  * profundidades diferentes. Rolar aproxima a câmera e traz o manifesto; o mouse
  * desloca as camadas de leve.
  *
@@ -194,7 +195,7 @@ export function Abertura() {
     <section
       ref={ref}
       aria-label="GovPro"
-      className="group/abertura relative -mt-16 bg-navy data-[movimento=ativo]:h-[270svh]"
+      className="group/abertura relative -mt-[calc(4rem+1px)] bg-navy data-[movimento=ativo]:h-[270svh]"
     >
       <div className="relative h-svh overflow-hidden bg-navy group-data-[movimento=ativo]/abertura:sticky group-data-[movimento=ativo]/abertura:top-0">
         <Camada nome="ceu" alt="" />
@@ -257,13 +258,16 @@ export function Abertura() {
       {/* Manifesto: no fluxo sem JavaScript; com o palco ativo, preso no centro da tela. */}
       <div className="z-20 bg-navy group-data-[movimento=ativo]/abertura:pointer-events-none group-data-[movimento=ativo]/abertura:absolute group-data-[movimento=ativo]/abertura:inset-0 group-data-[movimento=ativo]/abertura:bg-transparent">
         <div className="grid place-items-center px-4 py-20 text-center sm:px-6 group-data-[movimento=ativo]/abertura:sticky group-data-[movimento=ativo]/abertura:top-0 group-data-[movimento=ativo]/abertura:h-svh group-data-[movimento=ativo]/abertura:py-0">
+          {/* A primeira frase de valor da página: branca e grande, com o destaque na cor da marca. */}
           <p
             data-manifesto
-            className="m-0 max-w-[22ch] font-display text-landing-h2 font-bold text-balance text-on-dark group-data-[movimento=ativo]/abertura:opacity-0"
+            className="m-0 flex max-w-[26ch] flex-col items-center gap-5 font-display text-landing-manifesto font-extrabold text-balance text-on-dark text-shadow-lg text-shadow-navy/60 group-data-[movimento=ativo]/abertura:opacity-0"
           >
-            <span className="text-on-dark-65">{abertura.manifesto.inicio}</span> {abertura.manifesto.destaque}
-            <span className="mt-4 block font-body text-landing-body font-medium text-on-dark-65">
-              {abertura.manifesto.assinatura}
+            <span>{abertura.manifesto.inicio}</span>
+            <span className="text-marca-amarelo">{abertura.manifesto.destaque}</span>
+            <span className="mt-2 flex flex-col items-center gap-4 font-body text-landing-lead font-semibold text-on-dark text-shadow-none">
+              <FaixaDaMarca className="w-28" />
+              {abertura.manifesto.valor}
             </span>
           </p>
         </div>

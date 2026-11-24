@@ -56,7 +56,7 @@ test("o modelo do órgão aparece com a justificativa e o aviso da minuta nova",
     }),
   )
 
-  await page.goto(rota("/"))
+  await page.goto(rota("/painel"))
   await page.getByRole("link", { name: "Modelos do Órgão" }).first().click()
 
   await expect(page.getByRole("heading", { name: "Edital do Município" })).toBeVisible()
@@ -67,7 +67,7 @@ test("o modelo do órgão aparece com a justificativa e o aviso da minuta nova",
 
 test("o servidor não tem normas nem modelos do órgão no menu, e a rota volta para o painel", async ({ page }) => {
   await comSessao(page)
-  await page.goto(rota("/"))
+  await page.goto(rota("/painel"))
   await expect(page.getByRole("link", { name: "Processos" }).first()).toBeVisible()
   await expect(page.getByRole("link", { name: "Modelos do Órgão" })).toHaveCount(0)
   await expect(page.getByRole("link", { name: "Normas do Órgão" })).toHaveCount(0)

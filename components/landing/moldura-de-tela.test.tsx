@@ -4,7 +4,7 @@ import { render, screen } from "@/lib/teste/renderizar"
 
 import { MolduraDeTela } from "./moldura-de-tela"
 
-const captura = { src: "/landing/editor-etp.png", width: 1440, height: 900 }
+const captura = { src: "/landing/telas/produto.webp", width: 1600, height: 1000 }
 
 describe("MolduraDeTela", () => {
   it("mostra a captura com o texto alternativo dado", () => {

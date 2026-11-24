@@ -1,5 +1,5 @@
 /**
- * A conta da abertura em paralaxe (§120): onde está a rolagem e onde fica cada
+ * A conta da abertura em paralaxe (§124): onde está a rolagem e onde fica cada
  * camada. Sem DOM e sem React, para que o componente só aplique o quadro.
  */
 
@@ -69,7 +69,8 @@ export function quadroDaRolagem(progresso: number, { movimento }: { movimento: b
     camadas,
     titulo: { subida: -14 * trecho(p, 0, 0.6) + 0, opacidade: 1 - trecho(progresso, 0.22, 0.47) },
     seta: 1 - trecho(progresso, 0, 0.1),
-    veu: 0.84 * trecho(progresso, 0.38, 0.52) + 0.16 * trecho(progresso, 0.8, 1),
+    // 0,92 de navy por trás do manifesto: a frase precisa de contraste pleno sobre a cena.
+    veu: 0.92 * trecho(progresso, 0.38, 0.52) + 0.08 * trecho(progresso, 0.8, 1),
     manifesto: { opacidade: entra, deslocamento: movimento ? 40 * (1 - entra) : 0 },
   }
 }
