@@ -47,7 +47,7 @@ export function Modalidades() {
                   type="button"
                   aria-pressed={ativa}
                   onClick={() => setEscolhida(opcao)}
-                  className={`h-10 cursor-pointer rounded-full border px-4 text-md font-semibold transition-colors duration-150 ${
+                  className={`min-h-10 cursor-pointer rounded-full border px-4 py-2 text-md leading-tight font-semibold text-balance transition-colors duration-150 ${
                     ativa ? "border-navy bg-navy text-on-dark" : "border-border bg-surface text-text-2 hover:border-royal hover:text-royal"
                   }`}
                 >
