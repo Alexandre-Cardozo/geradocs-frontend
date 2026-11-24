@@ -11,6 +11,7 @@ import { FaixaDaMarca, FaixasDeCanto } from "@/components/shared/marca";
 import { Button, FormField, Input, ValidationMsg } from "@/components/ui";
 import { IconArrowRight, IconCheckCircle } from "@/components/ui/icons";
 import { useLogin, useRecuperarSenha, useSessao } from "@/lib/api/hooks";
+import { ROTA_PAINEL } from "@/lib/auth/acesso";
 import { IDENTIFICADOR, mensagemCredencialRecusada } from "@/lib/auth/identificador";
 
 export default function Login() {
@@ -29,7 +30,7 @@ export default function Login() {
   // Já logado → vai direto para o app (efeito, nunca durante o render).
   const jaLogado = sessao.isSuccess && sessao.data != null;
   useEffect(() => {
-    if (jaLogado) router.replace("/");
+    if (jaLogado) router.replace(ROTA_PAINEL);
   }, [jaLogado, router]);
 
   const entrar = () => {
@@ -37,7 +38,7 @@ export default function Login() {
     login.mutate(
       { identificador, senha },
       {
-        onSuccess: () => router.replace("/"),
+        onSuccess: () => router.replace(ROTA_PAINEL),
         onError: (e) =>
           setErro(e instanceof Error ? e.message : mensagemCredencialRecusada()),
       },

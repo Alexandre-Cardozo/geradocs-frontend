@@ -74,7 +74,7 @@ test("o login não tem violação grave", async ({ page }) => {
 
 test("o painel não tem violação grave", async ({ page }) => {
   await comSessao(page)
-  await page.goto(rota("/"))
+  await page.goto(rota("/painel"))
 
   expect(await violacoesGraves(page)).toEqual([])
 })

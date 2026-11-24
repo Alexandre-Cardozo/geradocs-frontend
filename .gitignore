@@ -21,3 +21,7 @@ npm-debug.log*
 /test-results
 /playwright-report
 /blob-report
+
+# skill reanimate: dependencias locais e evidencias de captura
+.claude/skills/*/scripts/node_modules/
+.reanimate/

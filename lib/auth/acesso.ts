@@ -8,7 +8,13 @@
 
 import type { PerfilAcesso } from "@/lib/types"
 
-/** Prefixo de rota → perfis que podem acessá-lo. A raiz "/" é liberada a todos. */
+/**
+ * O painel do aplicativo (§126). A raiz `/` é a página da GovPro, pública; quem
+ * entra, quem é barrado pelo RBAC e quem clica em Dashboard vem para cá.
+ */
+export const ROTA_PAINEL = "/painel"
+
+/** Prefixo de rota → perfis que podem acessá-lo. O painel é liberado a todos. */
 const ACESSO_ROTA: Array<{ prefixo: string; perfis: PerfilAcesso[] }> = [
   { prefixo: "/admin", perfis: ["admin_geral"] },
   { prefixo: "/configuracoes", perfis: ["coordenador"] },
@@ -53,13 +59,13 @@ export interface ItemNav {
 export function navPrincipal(perfil: PerfilAcesso): ItemNav[] {
   if (perfil === "admin_geral") {
     return [
-      { href: "/", label: "Painel do Sistema", icone: "dashboard" },
+      { href: ROTA_PAINEL, label: "Painel do Sistema", icone: "dashboard" },
       { href: "/admin/entidades", label: "Entidades", icone: "entidades" },
       { href: "/admin/servidores", label: "Servidores", icone: "servidores" },
     ]
   }
   return [
-    { href: "/", label: "Dashboard", icone: "dashboard" },
+    { href: ROTA_PAINEL, label: "Dashboard", icone: "dashboard" },
     { href: "/processos", label: "Processos", icone: "processos" },
     { href: "/documentos", label: "Documentos", icone: "documentos" },
   ]

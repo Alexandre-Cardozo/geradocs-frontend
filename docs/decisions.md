@@ -1534,3 +1534,72 @@ A tentativa de pôr os botões numa coluna ao lado do campo (botão alinhado ao 
 - **O que era.** Três coisas prometiam o que não existia. (1) "Delegar ao modelo a busca de ATAs válidas" e "Anexar ATA e buscar outras opções", nos dois lugares em que a ATA aparece: não havia busca nenhuma, e a escolha era descartada. (2) No assistente de novo processo, o interruptor "Adesão de ATA" pedia motivo, modo e arquivo, dizia que "a plataforma analisará a ATA enviada" e, ao criar, **não enviava nada disso** ao servidor. (3) No painel da ATA, "Confirmar configuração da ATA" só mostrava um aviso de que nada era gravado.
 - **Por que a busca não entra.** Um modelo de linguagem não consulta o PNCP: ele escreveria ATAs plausíveis, com órgão, número e vigência inventados, e a pessoa poderia aderir a uma ata que não existe. É o mesmo risco do parecer falso (ADR 118), em outra forma. A busca real exigiria uma fonte oficial consultada pelo servidor, o que é decisão própria do back-end.
 - **Agora.** O painel da ATA (Levantamento de Mercado, Art. 18, § 1º, V) fica só com o que funciona: **Anexar ATA** e **Revisar a ATA com IA** (ADR 119), e diz que a ATA vem do PNCP ou do órgão gerenciador e que a escolha é de quem decide. Sem os três modos e sem o botão de confirmar. No assistente, o bloco de adesão sai: o processo se abre como os demais, e a ATA é anexada e lida no painel, onde existe processo para a leitura se apoiar. Os tipos `ModoATA` e `ConfigATA` saem junto.
+
+## 121. A landing tem entrada animada, e só ela
+
+O design system diz "sem animações de entrada", e continua valendo para o aplicativo. A landing é uma página de apresentação, lida uma vez por quem ainda não usa o produto, e ali uma entrada discreta ajuda a ler. A exceção é estreita:
+
+- **Só na rota `/landing-page`.** As telas do aplicativo não ganham nenhum efeito novo.
+- **Só estes efeitos:** entrada escalonada no hero (opacidade, blur de 4px e deslocamento de 12px, 300ms, `cubic-bezier(0.2, 0, 0, 1)`, 100ms entre elementos) e a mesma revelação, uma vez, ao rolar. O menu móvel abre em 250ms e fecha em 150ms.
+- **Só `transform`, `opacity` e `filter`.** Nunca `transition: all`, nunca loop, nunca parallax.
+- **Sem JavaScript o conteúdo aparece.** O estado escondido só é aplicado depois que o componente monta no navegador, e só em elementos abaixo da dobra.
+- **Movimento reduzido:** nenhum elemento é escondido, e a regra global de `globals.css` já zera as durações.
+- Keyframes e curva vivem no `@theme` (`--animate-landing-*`, `--ease-landing`), como `--animate-marca-varredura`.
+
+## 122. A landing tem escala tipográfica e contêiner próprios
+
+A escala do aplicativo tem corpo de 13px e tamanhos fixos em px: serve a uma interface densa e é pequena demais para uma página de leitura. A landing ganha tokens próprios no `@theme`, em vez de valores soltos nas classes:
+
+- `--text-landing-h1` e `--text-landing-h2` fluidos com `clamp()`, `--text-landing-lead` (18px) e `--text-landing-body` (16px), cada um com `line-height` e, nos títulos, `letter-spacing` negativo.
+- `--container-landing` (70rem), porque o aplicativo não tem teto de largura e uma página de leitura precisa dele.
+- Os tokens do aplicativo não mudam, e o aplicativo não usa os da landing.
+
+## 123. A landing vive em `app/landing-page/`, sem sessão e sem fetch
+
+A rota `/landing-page` fica fora de `(app)` e de `(auth)`, portanto não herda a barra lateral nem a guarda de sessão. É um componente de servidor que exporta `metadata` próprio; é estática, sem chamada à API, sem hook de dados. Os componentes ficam em `components/landing/`, e a copy em `lib/landing/conteudo.ts`. A ordem dos documentos é lida de `lib/documentos/catalogo.ts`, a fonte única. A ação principal é um `mailto:` para `contato@govpro.com.br`; não há formulário nem backend novo. A rota `/` não muda.
+
+## 124. A landing abre com a sede da GovPro em paralaxe
+
+A primeira coisa que a landing mostra passa a ser a instituição: a sede da GovPro, com a marca na fachada e um jardim à frente, em camadas que se movem em profundidades diferentes. O slogan "Inteligência para Gestão Pública" vira o `h1` da página, e o título do GeraDocs desce para `h2` no hero logo abaixo. Esta decisão abre duas exceções no §121, que proibia parallax e loop, e só dentro da abertura (`components/landing/abertura.tsx`):
+
+- **Paralaxe de rolagem.** A seção tem 270svh e um palco preso no topo. Rolar aproxima a câmera da sede: cada camada cresce conforme a profundidade, o título sobe e some, a cena escurece e entra o manifesto, que fica até a seção terminar. É `transform` e `opacity`, nada mais, aplicado direto no elemento a cada quadro (`requestAnimationFrame`), sem estado do React.
+- **Paralaxe de ponteiro.** Com mouse (`pointer: fine`), as camadas se deslocam até 38px, a mais próxima mais. No toque não há nada.
+- **Dois loops lentos:** as nuvens derivam 2,5% para cada lado em 38s, e a seta de rolar pinga. Nada mais repete.
+- **Sem biblioteca nova.** O protótipo usou GSAP; aqui o mesmo comportamento sai de uma função pura (`lib/landing/paralaxe.ts`, coberta por teste) e de um efeito de 60 linhas. Uma dependência para mover cinco camadas não se paga.
+
+**Movimento reduzido:** nenhuma camada se move e o ponteiro é ignorado. A rolagem ainda escurece a cena e mostra o manifesto, porque isso é opacidade, não deslocamento. A regra global de `globals.css` zera a entrada e os dois loops.
+
+**Sem JavaScript:** a cena, o título e a frase aparecem parados, a seção tem a altura da tela e o manifesto vem no fluxo, logo abaixo. O palco de 270svh só existe depois que o componente monta (`data-movimento="ativo"`).
+
+**As imagens** são cinco camadas transparentes em WebP (`public/landing/abertura/`), em dois enquadramentos: largo (2400x1350) e alto (1080x1920, para tela com proporção até 4:5, escolhido por `<picture>`). São importadas, não referenciadas por caminho, para que o `basePath` do GitHub Pages entre na URL. Foram renderizadas de uma cena 3D procedural; trocar por imagens fotográficas é só substituir os arquivos, desde que as cinco camadas saiam da mesma câmera.
+
+O cabeçalho fica transparente enquanto a página está no topo, sobre o céu da abertura, e volta ao navy assim que a página rola.
+
+## 125. A landing passa a ser a página da GovPro, com o GeraDocs em foco
+
+A landing deixa de ser a página de um produto com a empresa no rodapé e passa a ser a página da empresa: a GovPro se apresenta (manifesto, quem somos, propósito, valores, método, compromissos) e o GeraDocs ocupa o centro, como a primeira solução do portfólio. A rota continua `/landing-page`, estática e sem sessão (§123), e a abertura em paralaxe (§124) continua sendo a primeira tela.
+
+- **Portfólio por dados.** As soluções vivem em `PRODUTOS`, em `lib/landing/conteudo.ts`. A seção Soluções, o menu e o rodapé leem dessa lista: uma solução nova é uma entrada nova, sem componente novo. Com uma solução só, ela ocupa o cartão largo e o espaço ao lado diz que o portfólio cresce com o mesmo método, sem anunciar produto que não existe.
+- **Nada inventado.** Sem número de clientes, logos, depoimentos ou ano de fundação. Os números da página são do produto (documentos, modalidades, minutas, seções, tópicos) e a produtividade aparece como estimativa da GovPro. Missão, visão e valores vêm da apresentação institucional.
+- **Os documentos são desenhados, não fotografados.** A vitrine mostra os sete documentos como folhas em HTML, cada uma com o miolo do seu tipo (série de preços, incisos do Art. 18, matriz de riscos, alíneas, anexos, cláusulas, aviso) e com a identificação do documento gerado: marca d'água, tarja na margem e carimbo com QR Code. Título, fundamento e cor vêm de `lib/documentos/catalogo.ts`.
+- **Poucos cliques, mostrado.** Uma janela do aplicativo desenhada em HTML percorre cinco etapas (abrir o processo, trazer a demanda, gerar com IA, revisar e gerar o arquivo). O seletor de modalidade lê `regraDe` e mostra o que é obrigatório, recomendado e opcional, sem regra copiada para a página.
+
+**Movimento.** Esta decisão estende as exceções do §124 a três seções, sempre em `transform` e `opacity`, aplicadas por `requestAnimationFrame` a partir de funções puras em `lib/landing/rolagem.ts`:
+
+- **Palco preso na demonstração e na vitrine**, só em tela larga (`lg`) e sem movimento reduzido. A rolagem avança as etapas da demonstração e desliza as folhas da vitrine na horizontal. Abaixo de `lg`, a demonstração é um seletor de etapas por clique e a vitrine é uma faixa com rolagem horizontal própria, com encaixe.
+- **Manifesto palavra por palavra** em Quem Somos: cada palavra acende conforme a rolagem. Com movimento reduzido, o texto aparece inteiro.
+- **Contadores** dos números do GeraDocs sobem uma vez ao entrar na tela.
+
+Sem JavaScript, ou com movimento reduzido, nada fica escondido: a demonstração mostra a última etapa e a lista das cinco, a vitrine é a faixa com rolagem, e os contadores mostram o valor final. Continua sem biblioteca de animação.
+
+## 126. A página da GovPro é a raiz do site; o painel vai para `/painel`
+
+Quem acessa govpro.com.br chega à página da GovPro (§125), e não ao login. A página sai de `app/landing-page/` para `app/page.tsx`, fora de `(app)` e de `(auth)`, ainda sem sessão e sem fetch (§123). O painel do aplicativo, que ocupava a raiz, passa a `/painel` (`app/(app)/painel/`). A rota vive numa constante só, `ROTA_PAINEL` em `lib/auth/acesso.ts`: o login, a guarda de sessão (RBAC), o menu lateral, o título do cabeçalho e a página não encontrada leem dela. A rota `/landing-page` deixa de existir. Esta decisão substitui o "a rota `/` não muda" do §123.
+
+Todas as seções têm o mesmo respiro vertical (`py-16`, `lg:py-28`), inclusive as que prendem o palco: nelas o respiro fica fora de um trilho interno, e o palco preso começa logo abaixo do cabeçalho (`top-16`, altura da janela menos o cabeçalho). A ordem da página passa a ser Quem Somos, O Desafio e então Soluções.
+
+As âncoras do cabeçalho param a seção logo abaixo dele: só o `scroll-padding-top` de 4rem (a altura do cabeçalho) conta, e as seções não têm margem de rolagem própria. Quem abre a página já com uma âncora é levado à seção de novo depois que os palcos de rolagem crescem (`AncoraAoAbrir`).
+
+**As imagens são telas reais do aplicativo.** A seção do GeraDocs, a demonstração em poucos cliques e a seção da IA mostram capturas da tela inteira do aplicativo (menu, cabeçalho e conteúdo), com dados ilustrativos, em `public/landing/telas/`. Quem as gera é `e2e/capturas-landing.spec.ts` (`CAPTURAS_LANDING=1`), seguido de `node scripts/capturas-para-webp.mjs`. O mesmo gerador mede, em cada tela da demonstração, onde fica o botão que a etapa clica e grava em `lib/landing/alvos-das-telas.json`: o cursor anda até ali, aperta e marca o clique. Quando o aplicativo mudar, basta gerar de novo.
+
+O pedido de demonstração continua sendo um `mailto:` (§123), agora com o corpo pronto: nome, setor, cargo, instituição pública, telefone e o que a entidade quer ver, para quem escreve só preencher.

@@ -64,7 +64,7 @@ test.describe("guarda de sessão", () => {
   test("backend fora do ar mostra o motivo, não uma tela quebrada", async ({ page }) => {
     await page.route("**/api/v1/**", (rota) => rota.abort("failed"))
 
-    await page.goto(rota("/"))
+    await page.goto(rota("/painel"))
 
     await expect(page.getByText(/Servidor Indisponível|CPF/i).first()).toBeVisible()
   })
@@ -74,7 +74,7 @@ test.describe("navegação por perfil", () => {
   test("o servidor vê processos e documentos", async ({ page }) => {
     await comSessao(page)
 
-    await page.goto(rota("/"))
+    await page.goto(rota("/painel"))
 
     await expect(menuLateral(page).getByRole("link", { name: "Processos" })).toBeVisible()
     await expect(menuLateral(page).getByRole("link", { name: "Documentos" })).toBeVisible()
@@ -84,21 +84,21 @@ test.describe("navegação por perfil", () => {
   test("o administrador geral vê a área do sistema, não a de processos", async ({ page }) => {
     await comSessao(page, sessaoAdmin)
 
-    await page.goto(rota("/"))
+    await page.goto(rota("/painel"))
 
     await expect(menuLateral(page).getByRole("link", { name: "Entidades" })).toBeVisible()
     await expect(menuLateral(page).getByRole("link", { name: "Servidores" })).toBeVisible()
     await expect(menuLateral(page).getByRole("link", { name: "Processos" })).toHaveCount(0)
   })
 
-  test("rota fora do perfil devolve para a raiz", async ({ page }) => {
+  test("rota fora do perfil devolve para o painel", async ({ page }) => {
     await comSessao(page)
 
     await page.goto(rota("/admin/entidades"))
 
     // O RBAC de rota é conveniência de interface — quem barra de verdade é o
     // backend —, mas mostrar a tela e depois falhar seria pior que não mostrar.
-    await expect(page).toHaveURL(new RegExp(`^http://localhost:\\d+${APP}/?$`))
+    await expect(page).toHaveURL(new RegExp(`^http://localhost:\\d+${APP}/painel/?$`))
   })
 
   test("o título do cabeçalho acompanha a rota", async ({ page }) => {
@@ -117,7 +117,7 @@ test.describe("navegação por perfil", () => {
       await expect(titulo).toHaveText(esperado)
     }
 
-    // Voltar ao painel pelo menu é ir para "/" — a rota que recarregava a página.
+    // Voltar ao painel pelo menu é ir para "/painel" (§126), a rota que recarregava a página quando era "/".
     await page.evaluate(() => Object.assign(window, { __semRecarregar: true }))
     await menuLateral(page).getByRole("link", { name: "Dashboard" }).click()
     await expect(titulo).toHaveText("Dashboard")

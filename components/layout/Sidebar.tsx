@@ -24,7 +24,7 @@ import {
 import { FotoDePerfil } from "@/components/shared/foto-de-perfil";
 import { FaixaDaMarca } from "@/components/shared/marca";
 import { useBrasao, useLogout, useSessao, useTimbre } from "@/lib/api/hooks";
-import { navPrincipal, navSistema, type IconeNav } from "@/lib/auth/acesso";
+import { ROTA_PAINEL, navPrincipal, navSistema, type IconeNav } from "@/lib/auth/acesso";
 import { PERFIL_ACESSO_LABEL, TIPO_ENTIDADE_LABEL } from "@/lib/types";
 
 import { useRotaAtual } from "./use-rota-atual";
@@ -132,7 +132,7 @@ export default function Sidebar({
     href: i.href,
     label: i.label,
     icon: ICONES[i.icone],
-    match: (p) => (i.href === "/" ? p === "/" : p.startsWith(i.href)),
+    match: (p) => (i.href === ROTA_PAINEL ? p === ROTA_PAINEL : p.startsWith(i.href)),
   });
 
   const navItems: NavItem[] = navPrincipal(perfil).map(paraItem);
