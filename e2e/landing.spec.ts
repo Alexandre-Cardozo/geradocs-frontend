@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 import { rota, semSessao } from "./api";
 
@@ -10,9 +10,25 @@ import { rota, semSessao } from "./api";
  */
 const ROTA = "/";
 
+/**
+ * Espera o React assumir a página. No CI esta suíte roda contra um `next dev`
+ * recém-iniciado: a página chega pronta do servidor, mas um clique antes da
+ * hidratação cai num HTML sem reação (o botão não muda o estado, o link não
+ * navega pela âncora). A abertura marca `data-movimento="ativo"` ao montar, e a
+ * página hidrata de uma vez só: com a marca, todos os componentes já respondem.
+ */
+async function esperarHidratacao(page: Page) {
+  await expect(page.locator("section[aria-label=GovPro]")).toHaveAttribute("data-movimento", "ativo");
+}
+
+async function abrir(page: Page) {
+  await page.goto(rota(ROTA));
+  await esperarHidratacao(page);
+}
+
 test("abre sem sessão, sem redirecionar para o login", async ({ page }) => {
   await semSessao(page);
-  await page.goto(rota(ROTA));
+  await abrir(page);
 
   await expect(page).not.toHaveURL(/\/login/);
   await expect(page).toHaveTitle("GovPro | Inteligência para a Gestão Pública");
@@ -25,7 +41,7 @@ test("abre sem sessão, sem redirecionar para o login", async ({ page }) => {
 test.describe("abertura em paralaxe (§124)", () => {
   test("mostra a sede da GovPro e o slogan na primeira tela", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 810 });
-    await page.goto(rota(ROTA));
+    await abrir(page);
     await expect(page.getByRole("img", { name: /Sede da GovPro/ })).toBeInViewport();
     await expect(page.getByRole("heading", { level: 1 })).toBeInViewport();
     // As imagens chegam com o basePath, também no modo publicado.
@@ -37,21 +53,21 @@ test.describe("abertura em paralaxe (§124)", () => {
 
   test("a abertura encosta no topo, sem fresta acima do cabeçalho", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto(rota(ROTA));
+    await abrir(page);
     const topo = await page.locator("section[aria-label=GovPro]").evaluate((s) => s.getBoundingClientRect().top);
     expect(topo).toBeLessThanOrEqual(0);
   });
 
   test("em tela em pé usa o enquadramento alto", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto(rota(ROTA));
+    await abrir(page);
     const sede = page.getByRole("img", { name: /Sede da GovPro/ });
     await expect.poll(() => sede.evaluate((img) => (img as HTMLImageElement).naturalWidth)).toBe(1080);
   });
 
   test("ao rolar, a câmera avança, o título sai e o manifesto aparece", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 810 });
-    await page.goto(rota(ROTA));
+    await abrir(page);
     const secao = page.locator("section[aria-label=GovPro]");
     await expect(secao).toHaveAttribute("data-movimento", "ativo");
     const percurso = await secao.evaluate((s) => s.getBoundingClientRect().height - window.innerHeight);
@@ -76,7 +92,7 @@ test.describe("abertura em paralaxe (§124)", () => {
 });
 
 test("o pedido de demonstração é um mailto com assunto", async ({ page }) => {
-  await page.goto(rota(ROTA));
+  await abrir(page);
   const cta = page.getByRole("link", { name: "Solicitar Demonstração" }).first();
   const href = (await cta.getAttribute("href")) ?? "";
   expect(href.startsWith("mailto:contato@govpro.com.br?subject=")).toBe(true);
@@ -88,7 +104,7 @@ test("o pedido de demonstração é um mailto com assunto", async ({ page }) => 
 
 test("a marca do cabeçalho volta à abertura", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto(rota(ROTA));
+  await abrir(page);
   await page.getByRole("navigation", { name: "Seções da página" }).getByRole("link", { name: "Contato" }).click();
   await expect(page).toHaveURL(/#contato$/);
   await page.getByRole("link", { name: "GovPro, voltar ao início" }).click();
@@ -99,21 +115,21 @@ test("a marca do cabeçalho volta à abertura", async ({ page }) => {
 
 test("o conteúdo ocupa a largura da tela larga", async ({ page }) => {
   await page.setViewportSize({ width: 1920, height: 1000 });
-  await page.goto(rota(ROTA));
+  await abrir(page);
   const marca = await page.getByRole("link", { name: "GovPro, voltar ao início" }).boundingBox();
   expect(marca?.x ?? 999).toBeLessThan(80);
 });
 
 test("as âncoras levam à seção", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
-  await page.goto(rota(ROTA));
+  await abrir(page);
   await page.getByRole("navigation", { name: "Seções da página" }).getByRole("link", { name: "Confiança" }).click();
   await expect(page).toHaveURL(/#confianca$/);
   await expect(page.getByRole("heading", { level: 2, name: "Segurança Jurídica Para Quem Assina" })).toBeInViewport();
 });
 
 test("a vitrine mostra os sete tipos na ordem do fluxo, a juntada e a errata", async ({ page }) => {
-  await page.goto(rota(ROTA));
+  await abrir(page);
   const legendas = page.getByRole("region", { name: "Documentos gerados pelo GeraDocs" }).locator("figcaption");
   await expect(legendas).toHaveCount(9);
   await expect(legendas.first()).toContainText("Cotação de Mercado");
@@ -124,7 +140,7 @@ test("a vitrine mostra os sete tipos na ordem do fluxo, a juntada e a errata", a
 
 test("a âncora do cabeçalho põe a seção logo abaixo dele, sem sobra da anterior", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto(rota(ROTA));
+  await abrir(page);
   await page.getByRole("navigation", { name: "Seções da página" }).getByRole("link", { name: "Soluções" }).click();
   const topo = await page.locator("#solucoes").evaluate((s) => s.getBoundingClientRect().top);
   expect(Math.abs(topo - 64)).toBeLessThanOrEqual(2);
@@ -133,12 +149,13 @@ test("a âncora do cabeçalho põe a seção logo abaixo dele, sem sobra da ante
 test("abrir a página já com a âncora leva à seção", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(rota(ROTA) + "#solucoes");
+  await esperarHidratacao(page);
   await expect(page.getByRole("heading", { level: 2, name: "Um Portfólio Que Nasce da Rotina de Quem Contrata" })).toBeInViewport();
 });
 
 test("o portfólio leva à seção do GeraDocs", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
-  await page.goto(rota(ROTA));
+  await abrir(page);
   await page.getByRole("link", { name: /Conhecer o GeraDocs/ }).click();
   await expect(page).toHaveURL(/#geradocs$/);
   await expect(page.getByRole("heading", { level: 2, name: "A Contratação Pública Bem Planejada Começa Aqui" })).toBeInViewport();
@@ -150,7 +167,7 @@ test.describe("palcos de rolagem em tela larga (§125)", () => {
   });
 
   test("a demonstração avança as etapas conforme a rolagem", async ({ page }) => {
-    await page.goto(rota(ROTA));
+    await abrir(page);
     const secao = page.locator("#poucos-cliques");
     await expect(secao).toHaveAttribute("data-movimento", "ativo");
     const ir = (fracao: number) =>
@@ -165,7 +182,7 @@ test.describe("palcos de rolagem em tela larga (§125)", () => {
   });
 
   test("a vitrine desliza as folhas na horizontal", async ({ page }) => {
-    await page.goto(rota(ROTA));
+    await abrir(page);
     const secao = page.locator("#documentos");
     await expect(secao).toHaveAttribute("data-movimento", "ativo");
     await secao.evaluate((s) => {
@@ -178,7 +195,7 @@ test.describe("palcos de rolagem em tela larga (§125)", () => {
 });
 
 test("o seletor de modalidade mostra os documentos da forma escolhida", async ({ page }) => {
-  await page.goto(rota(ROTA));
+  await abrir(page);
   await page.getByRole("button", { name: "Dispensa com Disputa" }).click();
   const lista = page.getByRole("list", { name: /Documentos do processo: Dispensa com Disputa/ });
   await expect(lista.getByRole("listitem").filter({ hasText: "Aviso de Contratação Direta" })).toContainText("Obrigatório");
@@ -187,7 +204,7 @@ test("o seletor de modalidade mostra os documentos da forma escolhida", async ({
 
 test("em tela estreita a demonstração é um seletor por clique", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(rota(ROTA));
+  await abrir(page);
   await expect(page.locator("#poucos-cliques")).not.toHaveAttribute("data-movimento", "ativo");
   await page.getByRole("button", { name: /Revise e Aceite/ }).click();
   await expect(page.getByRole("button", { name: /Revise e Aceite/ })).toHaveAttribute("aria-current", "step");
@@ -195,7 +212,7 @@ test("em tela estreita a demonstração é um seletor por clique", async ({ page
 
 test("não rola na horizontal em 320px", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 700 });
-  await page.goto(rota(ROTA));
+  await abrir(page);
   const estoura = await page.evaluate(
     () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
   );
@@ -204,7 +221,7 @@ test("não rola na horizontal em 320px", async ({ page }) => {
 
 test("o menu móvel abre e leva às âncoras", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 800 });
-  await page.goto(rota(ROTA));
+  await abrir(page);
   await page.getByRole("button", { name: "Menu" }).click();
   const menu = page.locator("#menu-landing");
   await expect(menu).toBeVisible();
@@ -217,7 +234,7 @@ test("o menu móvel não passa da janela: em janela baixa (400% de zoom) o últi
   page,
 }) => {
   await page.setViewportSize({ width: 320, height: 256 });
-  await page.goto(rota(ROTA));
+  await abrir(page);
   await page.getByRole("button", { name: "Menu" }).click();
   const menu = page.locator("#menu-landing");
   await expect(menu).toBeVisible();
@@ -232,14 +249,14 @@ test("o menu móvel não passa da janela: em janela baixa (400% de zoom) o últi
 });
 
 test("o link para pular a navegação aparece ao receber foco", async ({ page }) => {
-  await page.goto(rota(ROTA));
+  await abrir(page);
   await page.keyboard.press("Tab");
   await expect(page.getByRole("link", { name: "Ir para o conteúdo" })).toBeFocused();
   await expect(page.getByRole("link", { name: "Ir para o conteúdo" })).toBeInViewport();
 });
 
 test("ao rolar, tudo que estava escondido é revelado", async ({ page }) => {
-  await page.goto(rota(ROTA));
+  await abrir(page);
   await expect(page.locator('[data-estado="oculto"]').first()).toBeAttached();
   const altura = await page.evaluate(() => document.documentElement.scrollHeight);
   for (let y = 0; y <= altura; y += 400) {
@@ -258,7 +275,7 @@ test.describe("com movimento reduzido", () => {
 
   test("as camadas da abertura não se movem ao rolar", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 810 });
-    await page.goto(rota(ROTA));
+    await abrir(page);
     await page.evaluate(() => window.scrollTo(0, window.innerHeight));
     await expect.poll(() => page.locator("[data-manifesto]").evaluate((el) => Number(getComputedStyle(el).opacity))).toBeGreaterThan(0);
     const transformacoes = await page.locator("[data-camada]").evaluateAll((els) => els.map((el) => getComputedStyle(el).transform));
@@ -267,20 +284,20 @@ test.describe("com movimento reduzido", () => {
 
   test("os palcos de rolagem não prendem a página", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto(rota(ROTA));
+    await abrir(page);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     await expect(page.locator("#poucos-cliques")).not.toHaveAttribute("data-movimento", "ativo");
     await expect(page.locator("#documentos")).not.toHaveAttribute("data-movimento", "ativo");
   });
 
   test("nada é escondido", async ({ page }) => {
-    await page.goto(rota(ROTA));
+    await abrir(page);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     await expect(page.locator('[data-estado="oculto"]')).toHaveCount(0);
   });
 
   test("não tem violação grave de acessibilidade, nem de contraste", async ({ page }) => {
-    await page.goto(rota(ROTA));
+    await abrir(page);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     const resultado = await new AxeBuilder({ page }).analyze();
     const graves = resultado.violations.filter((v) => ["serious", "critical"].includes(v.impact ?? ""));
