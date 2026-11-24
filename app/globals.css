@@ -24,6 +24,62 @@
   --font-marca: var(--font-montserrat), "Montserrat", system-ui, sans-serif;
 }
 
+/*
+ * Tokens usados só dentro dos SVG dos mascotes e do símbolo completo da marca,
+ * como var(--color-...): nenhuma classe utilitária os referencia, então o bloco
+ * é `static` para o Tailwind emitir as variáveis mesmo assim (§127).
+ */
+@theme static {
+  /* As faces de sombra da seta do símbolo completo (o "G" com a seta, usado no peito dos mascotes). */
+  --color-marca-amarelo-sombra: #F0A500;
+  --color-marca-verde-sombra: #0E8A3E;
+  /*
+   * ── Cores: mascotes GovPri e GovBô (§127) ──────────────────────────────
+   *
+   * A paleta das folhas de personagem aprovadas em 24/11/2026. Servem só ao
+   * desenho dos mascotes (components/mascotes), nunca à interface. O que já
+   * existe na marca (azuis, verde, amarelo, navy) é reaproveitado de lá.
+   */
+  --color-mascote-bo-luz: #5CE6FF;
+  --color-mascote-bo-coracao: #FF5C8A;
+  --color-mascote-bo-casco-sombra: #C9D3E6;
+  --color-mascote-bo-visor: #0E1B3D;
+  --color-mascote-bo-visor-fundo: #03081A;
+  --color-mascote-bo-ponta: #FFE24D;
+  --color-mascote-bo-fone-claro: #2D9C74;
+  --color-mascote-bo-fone-escuro: #0F5E45;
+  --color-mascote-pele: #F7C9A9;
+  --color-mascote-pele-clara: #FCD6BB;
+  --color-mascote-pele-sombra: #E7A685;
+  --color-mascote-pele-traco: #D3916F;
+  --color-mascote-rubor: #F2848A;
+  --color-mascote-cabelo: #8C4A28;
+  --color-mascote-cabelo-claro: #A4602F;
+  --color-mascote-cabelo-luz: #C47A47;
+  --color-mascote-cabelo-profundo: #74391D;
+  --color-mascote-cabelo-escuro: #5E2C15;
+  --color-mascote-sobrancelha: #6B3518;
+  --color-mascote-cilio: #2A1408;
+  --color-mascote-iris-clara: #C98642;
+  --color-mascote-iris: #8A4C1F;
+  --color-mascote-iris-escura: #4E2810;
+  --color-mascote-pupila: #170A04;
+  --color-mascote-labio: #C24E5C;
+  --color-mascote-boca: #8E2B3A;
+  --color-mascote-lingua: #E57A85;
+  --color-mascote-blazer-claro: #2A3B7A;
+  --color-mascote-blazer: #1F2D63;
+  --color-mascote-blazer-escuro: #141F49;
+  --color-mascote-blazer-realce: #33478F;
+  --color-mascote-ouro-claro: #FFF1B0;
+  --color-mascote-ouro: #E2B33F;
+  --color-mascote-ouro-escuro: #A87B16;
+  --color-mascote-prata: #AEB6C3;
+  --color-mascote-prata-escura: #8E97A6;
+  --color-mascote-tablet: #323B50;
+}
+
+
 @theme {
   /* ── Breakpoints (mobile-first: 480 · 640 · 768 · 1024) ─────────────────── */
   --breakpoint-xs: 480px;

@@ -7,6 +7,7 @@ import {
   progressoDaEtapa,
   progressoDaPassagem,
   valorDoContador,
+  vooDoCursor,
 } from "./rolagem"
 
 describe("progressoDaPassagem", () => {
@@ -75,5 +76,37 @@ describe("valorDoContador", () => {
     expect(valorDoContador(10, 0.5)).toBe(9)
     expect(valorDoContador(10, 2)).toBe(10)
     expect(valorDoContador(10, -1)).toBe(0)
+  })
+})
+
+describe("vooDoCursor", () => {
+  const alvos = [
+    { x: 10, y: 20 },
+    { x: 90, y: 60 },
+    { x: 50, y: 80 },
+  ]
+
+  it("na primeira etapa não há de onde voar: fica sobre o primeiro botão", () => {
+    expect(vooDoCursor(0, alvos)).toEqual({ etapa: 0, x: 10, y: 20, emVoo: true })
+    expect(vooDoCursor(0.2, alvos)).toMatchObject({ x: 10, y: 20, emVoo: false })
+  })
+
+  it("no começo da etapa voa em arco do botão anterior até o dela", () => {
+    // Etapa 1 começa em 1/3; metade do voo em 1/3 + 0,4/3/2.
+    const meio = vooDoCursor(1 / 3 + 0.2 / 3, alvos)
+    expect(meio.etapa).toBe(1)
+    expect(meio.emVoo).toBe(true)
+    expect(meio.x).toBeCloseTo(50)
+    // O arco sobe 8 pontos no meio do caminho.
+    expect(meio.y).toBeCloseTo(40 - 8)
+  })
+
+  it("chega ao botão no fim do voo e fica lá até a próxima etapa", () => {
+    expect(vooDoCursor(1 / 3 + 0.4 / 3 + 0.001, alvos)).toMatchObject({ etapa: 1, x: 90, y: 60, emVoo: false })
+    expect(vooDoCursor(1, alvos)).toMatchObject({ etapa: 2, x: 50, y: 80, emVoo: false })
+  })
+
+  it("sem botões, fica no centro", () => {
+    expect(vooDoCursor(0.5, [])).toMatchObject({ x: 50, y: 50 })
   })
 })

@@ -51,3 +51,32 @@ export function valorDoContador(alvo: number, progresso: number): number {
   const p = Math.min(1, Math.max(0, progresso))
   return Math.round(alvo * (1 - (1 - p) ** 3))
 }
+
+export type Ponto = { x: number; y: number }
+
+/**
+ * Onde o GovBô está na demonstração em poucos cliques (§127), em % da tela.
+ * No começo do trecho de cada etapa (`fracaoDoVoo`) ele voa em arco do botão da
+ * etapa anterior até o desta; no resto do trecho fica sobre o botão. Rolar aos
+ * poucos leva o voo aos poucos, nos dois sentidos. `emVoo` diz se ainda não
+ * chegou: a chegada é o momento do clique.
+ */
+export function vooDoCursor(
+  progresso: number,
+  alvos: Ponto[],
+  fracaoDoVoo = 0.4,
+  arco = 8,
+): Ponto & { etapa: number; emVoo: boolean } {
+  const etapa = etapaDoProgresso(progresso, alvos.length)
+  const destino = alvos[etapa] ?? { x: 50, y: 50 }
+  const origem = alvos[etapa - 1] ?? destino
+  const local = Math.min(1, Math.max(0, progresso * alvos.length - etapa))
+  const t = Math.min(1, local / fracaoDoVoo)
+  const k = t * t * (3 - 2 * t)
+  return {
+    etapa,
+    x: origem.x + (destino.x - origem.x) * k,
+    y: origem.y + (destino.y - origem.y) * k - arco * Math.sin(Math.PI * k),
+    emVoo: t < 1,
+  }
+}

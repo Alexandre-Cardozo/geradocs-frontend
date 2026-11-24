@@ -65,6 +65,7 @@ GeraDocs/
 │   │   └── paineis.tsx           # Painéis especiais do editor, acionados por SecaoDocumento.painel:
 │   │                             #   PainelATA (adesão a ARP), quantidades e valor (ETP, incisos IV e VI)
 │   ├── landing/                  # Seções, cabeçalho, rodapé e peças de movimento da página da GovPro, na raiz (§123, §126)
+│   ├── mascotes/                 # GovPri e GovBô: desenho SVG e animação em código, com componente React (§127)
 │   └── shared/                   # Componentes de apoio usados por várias telas (não são do DS)
 │       ├── providers.tsx         # QueryClientProvider (TanStack Query) + Toast global
 │       ├── estados.tsx           # LoadingState, SkeletonRows, ErrorState, EmptyState, InlineSpinner
