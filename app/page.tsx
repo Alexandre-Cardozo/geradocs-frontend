@@ -16,6 +16,7 @@ import { Perguntas } from "@/components/landing/perguntas"
 import { PoucosCliques } from "@/components/landing/poucos-cliques"
 import { Produtividade } from "@/components/landing/produtividade"
 import { QuemSomos } from "@/components/landing/quem-somos"
+import { RetornoASecao } from "@/components/landing/retorno-a-secao"
 import { Rodape } from "@/components/landing/rodape"
 import { Solucoes } from "@/components/landing/solucoes"
 import { Valores } from "@/components/landing/valores"
@@ -75,6 +76,7 @@ export default function PaginaLanding() {
         <Perguntas />
         <Contato />
         <AncoraAoAbrir />
+        <RetornoASecao />
       </main>
       <Rodape />
     </div>

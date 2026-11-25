@@ -91,15 +91,32 @@ test.describe("abertura em paralaxe (§124)", () => {
   });
 });
 
-test("o pedido de demonstração é um mailto com assunto", async ({ page }) => {
+test("o pedido de demonstração abre o onboarding da GovPri, com a origem do botão (§130)", async ({ page }) => {
   await abrir(page);
   const cta = page.getByRole("link", { name: "Solicitar Demonstração" }).first();
-  const href = (await cta.getAttribute("href")) ?? "";
-  expect(href.startsWith("mailto:contato@govpro.com.br?subject=")).toBe(true);
-  // O e-mail já vem escrito: quem pede só preenche os próprios dados.
-  const corpo = new URL(href).searchParams.get("body") ?? "";
-  for (const campo of ["Nome:", "Setor:", "Cargo:", "Instituição pública:"]) expect(corpo).toContain(campo);
+  await expect(cta).toHaveAttribute("href", /\/onboarding\/?\?origem=[a-z-]+$/);
   await expect(page.getByRole("link", { name: "Acessar o GeraDocs" }).first()).toHaveAttribute("href", /\/login\/?$/);
+});
+
+test("quem sai por um botão e volta pelo navegador cai na mesma seção (§131)", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await abrir(page);
+  const contato = page.locator("#contato");
+  await contato.evaluate((el) => window.scrollTo({ top: window.scrollY + el.getBoundingClientRect().top + 60, behavior: "instant" }));
+  const antes = await contato.evaluate((el) => Math.round(el.getBoundingClientRect().top));
+  await page.getByRole("link", { name: "Fale com a GovPro" }).click();
+  await expect(page).toHaveURL(/\/onboarding\/?\?origem=contato$/);
+  // Recarregar o onboarding obriga a página da GovPro a montar do zero na volta: o caso em que o navegador erra.
+  await page.reload();
+  await page.goBack();
+  await esperarHidratacao(page);
+  await expect.poll(() => contato.evaluate((el) => Math.round(el.getBoundingClientRect().top))).toBe(antes);
+
+  // Entrar de novo por um link (e não pelo voltar) começa do alto.
+  await page.getByRole("link", { name: "Fale com a GovPro" }).click();
+  await page.getByRole("link", { name: "Página da GovPro" }).click();
+  await esperarHidratacao(page);
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
 });
 
 test("a marca do cabeçalho volta à abertura", async ({ page }) => {

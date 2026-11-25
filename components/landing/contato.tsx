@@ -2,7 +2,7 @@ import { BotaoLink } from "@/components/landing/botao-link"
 import { Revelar } from "@/components/landing/revelar"
 import { TituloDeSecao } from "@/components/landing/titulo-de-secao"
 import { FaixasDeCanto } from "@/components/shared/marca"
-import { CONTEUDO, EMAIL_CONTATO, HREF_CONTATO, HREF_DEMONSTRACAO } from "@/lib/landing/conteudo"
+import { CONTEUDO, EMAIL_CONTATO, HREF_CONTATO, hrefOnboarding } from "@/lib/landing/conteudo"
 import { GovBo, GovPri } from "@/components/mascotes/mascotes"
 
 /** A chamada final: três passos e o pedido de demonstração (§125). */
@@ -42,10 +42,10 @@ export function Contato() {
 
         <Revelar className="mt-10 flex flex-col items-center gap-4">
           <div className="flex flex-wrap justify-center gap-3">
-            <BotaoLink href={HREF_DEMONSTRACAO} tamanho="lg" seta>
+            <BotaoLink href={hrefOnboarding("contato-demonstracao")} tamanho="lg" seta>
               {acoes.demonstracao}
             </BotaoLink>
-            <BotaoLink href={HREF_CONTATO} tamanho="lg" variante="secundario-escuro">
+            <BotaoLink href={hrefOnboarding("contato")} tamanho="lg" variante="secundario-escuro">
               {acoes.conversar}
             </BotaoLink>
           </div>

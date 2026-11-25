@@ -28,6 +28,8 @@ import { definirTetoDeIa, lerTetoDeIa } from "@/lib/api/ai-budget-client"
 import { lerAproveitamentoDaIa } from "@/lib/api/ai-proposal-summary-client"
 import { melhorarSituacaoProblema } from "@/lib/api/text-improvement-client"
 import { iaDisponivel } from "@/lib/api/ai-client"
+import { enviarLead, municipiosDaUf } from "@/lib/api/onboarding-client"
+import type { Respostas } from "@/lib/onboarding/respostas"
 import { acompanharIa } from "@/lib/api/acompanhar-ia"
 import { revisarAta } from "@/lib/api/ata-client"
 import {
@@ -1443,5 +1445,25 @@ export function useVersoesDaNorma(id: string, aberto: boolean) {
     queryKey: [...CHAVE_NORMAS, id, "versoes"],
     queryFn: () => versoesDaNorma(id),
     enabled: aberto,
+  })
+}
+
+/* ── Onboarding da GovPri (§130) ────────────────────────────────────────────── */
+
+/** Os municípios da UF (IBGE). Lista estável: fica em cache a sessão inteira. */
+export function useMunicipiosDaUf(uf: string | undefined) {
+  return useQuery({
+    queryKey: ["municipios-da-uf", uf],
+    queryFn: () => municipiosDaUf(uf as string),
+    enabled: Boolean(uf),
+    staleTime: Infinity,
+    retry: 1,
+  })
+}
+
+/** Envia o lead do onboarding. Sem sessão e sem cache para invalidar. */
+export function useEnviarLead() {
+  return useMutation({
+    mutationFn: (input: { respostas: Respostas; origem: string }) => enviarLead(input.respostas, input.origem),
   })
 }

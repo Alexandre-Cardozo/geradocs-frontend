@@ -8,7 +8,7 @@ import { Contador } from "@/components/landing/contador"
 import { MolduraDeTela } from "@/components/landing/moldura-de-tela"
 import { Revelar } from "@/components/landing/revelar"
 import { FaixaDaMarca, FaixasDeCanto } from "@/components/shared/marca"
-import { CONTEUDO, HREF_DEMONSTRACAO, HREF_ENTRAR } from "@/lib/landing/conteudo"
+import { CONTEUDO, HREF_ENTRAR, hrefOnboarding } from "@/lib/landing/conteudo"
 
 /**
  * O GeraDocs em foco dentro da página da GovPro (§125): a logo com o endosso,
@@ -48,7 +48,7 @@ export function Geradocs() {
           </Revelar>
           <Revelar atraso={300}>
             <div className="flex flex-wrap gap-3">
-              <BotaoLink href={HREF_DEMONSTRACAO} tamanho="lg" seta>
+              <BotaoLink href={hrefOnboarding("geradocs")} tamanho="lg" seta>
                 {acoes.demonstracao}
               </BotaoLink>
               <BotaoLink href={HREF_ENTRAR} tamanho="lg" variante="secundario-escuro">

@@ -1300,6 +1300,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/public/leads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["submit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/regulations": {
         parameters: {
             query?: never;
@@ -2208,6 +2224,40 @@ export interface components {
             documentType: "AVISO" | "CONTRATO" | "COTACAO" | "EDITAL" | "ETP" | "MAPA" | "TR";
             /** Format: int32 */
             documentVersion: number;
+        };
+        LeadReceivedResponse: {
+            /** Format: uuid */
+            id: string;
+        };
+        LeadRequest: {
+            /** @enum {string} */
+            annualVolume: "ATE_50" | "DE_201_A_500" | "DE_51_A_200" | "MAIS_DE_500" | "NAO_SEI";
+            consent: boolean;
+            consentGiven?: boolean;
+            /** Format: email */
+            contactEmail: string;
+            contactName: string;
+            contactPhone: string;
+            currentPractices: ("CONSULTORIA" | "IA_GENERICA" | "MODELOS_OFICIAIS" | "OUTRO_SISTEMA" | "PROCESSOS_ANTERIORES" | "SEM_PADRAO" | "WORD_E_MODELOS")[];
+            department?: string;
+            ibgeCode?: string;
+            municipality?: string;
+            municipalityInformed?: boolean;
+            organizationName: string;
+            /** @enum {string} */
+            organizationType: "AUTARQUIA" | "CAMARA" | "CONSORCIO" | "GOVERNO_ESTADUAL" | "OUTRO_PUBLICO" | "PREFEITURA" | "PRIVADO";
+            origin: string;
+            pains: ("APONTAMENTOS" | "FALTA_DE_PADRAO" | "POUCA_GENTE" | "PRAZOS" | "RETRABALHO" | "TEMPO_ETP_TR")[];
+            /** @enum {string} */
+            requestingUnits: "ATE_3" | "DE_11_A_20" | "DE_4_A_10" | "MAIS_DE_20";
+            /** @enum {string} */
+            role: "AGENTE_CONTRATACAO" | "AREA_REQUISITANTE" | "CONTROLE_INTERNO" | "COORDENACAO_COMPRAS" | "GESTOR_MAXIMO" | "JURIDICO" | "OUTRO";
+            /** @enum {string} */
+            teamSize: "DE_16_A_40" | "DE_2_A_5" | "DE_6_A_15" | "MAIS_DE_40" | "SO_EU";
+            /** @enum {string} */
+            timing: "AGORA" | "CONHECER" | "ESTE_ANO" | "TRES_MESES";
+            uf: string;
+            website?: string;
         };
         LetterheadResponse: {
             footerText: string;
@@ -5439,6 +5489,30 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["PcaVerificationResponse"];
+                };
+            };
+        };
+    };
+    submit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeadRequest"];
+            };
+        };
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["LeadReceivedResponse"];
                 };
             };
         };
