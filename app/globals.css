@@ -381,6 +381,17 @@
   --animate-landing-camada: landing-camada 1500ms cubic-bezier(0.215, 0.61, 0.355, 1) both;
   --animate-landing-deriva: landing-deriva 38s ease-in-out infinite alternate;
   --animate-landing-gota: landing-gota 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  /* A barra da análise do onboarding (§130): enche no tempo mínimo da análise. */
+  --animate-onboarding-barra: onboarding-barra 2.6s cubic-bezier(0.4, 0, 0.2, 1) both;
+
+  @keyframes onboarding-barra {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
 
   /*
    * Página da GovPro (§125): manifesto de Quem Somos, números grandes e o

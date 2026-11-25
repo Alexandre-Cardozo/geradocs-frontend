@@ -1920,6 +1920,124 @@
         "required" : [ "documentType", "documentVersion" ],
         "type" : "object"
       },
+      "LeadReceivedResponse" : {
+        "properties" : {
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        },
+        "required" : [ "id" ],
+        "type" : "object"
+      },
+      "LeadRequest" : {
+        "properties" : {
+          "annualVolume" : {
+            "enum" : [ "ATE_50", "DE_201_A_500", "DE_51_A_200", "MAIS_DE_500", "NAO_SEI" ],
+            "type" : "string"
+          },
+          "consent" : {
+            "type" : "boolean"
+          },
+          "consentGiven" : {
+            "type" : "boolean"
+          },
+          "contactEmail" : {
+            "format" : "email",
+            "maxLength" : 160,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "contactName" : {
+            "maxLength" : 120,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "contactPhone" : {
+            "minLength" : 1,
+            "pattern" : "\\+?[0-9 ()-]{10,20}",
+            "type" : "string"
+          },
+          "currentPractices" : {
+            "items" : {
+              "enum" : [ "CONSULTORIA", "IA_GENERICA", "MODELOS_OFICIAIS", "OUTRO_SISTEMA", "PROCESSOS_ANTERIORES", "SEM_PADRAO", "WORD_E_MODELOS" ],
+              "type" : "string"
+            },
+            "maxItems" : 7,
+            "minItems" : 1,
+            "type" : "array"
+          },
+          "department" : {
+            "maxLength" : 120,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "ibgeCode" : {
+            "pattern" : "\\d{7}",
+            "type" : "string"
+          },
+          "municipality" : {
+            "maxLength" : 120,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "municipalityInformed" : {
+            "type" : "boolean"
+          },
+          "organizationName" : {
+            "maxLength" : 160,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "organizationType" : {
+            "enum" : [ "AUTARQUIA", "CAMARA", "CONSORCIO", "GOVERNO_ESTADUAL", "OUTRO_PUBLICO", "PREFEITURA", "PRIVADO" ],
+            "type" : "string"
+          },
+          "origin" : {
+            "maxLength" : 60,
+            "minLength" : 0,
+            "pattern" : "[a-z0-9-]+",
+            "type" : "string"
+          },
+          "pains" : {
+            "items" : {
+              "enum" : [ "APONTAMENTOS", "FALTA_DE_PADRAO", "POUCA_GENTE", "PRAZOS", "RETRABALHO", "TEMPO_ETP_TR" ],
+              "type" : "string"
+            },
+            "maxItems" : 6,
+            "minItems" : 0,
+            "type" : "array"
+          },
+          "requestingUnits" : {
+            "enum" : [ "ATE_3", "DE_11_A_20", "DE_4_A_10", "MAIS_DE_20" ],
+            "type" : "string"
+          },
+          "role" : {
+            "enum" : [ "AGENTE_CONTRATACAO", "AREA_REQUISITANTE", "CONTROLE_INTERNO", "COORDENACAO_COMPRAS", "GESTOR_MAXIMO", "JURIDICO", "OUTRO" ],
+            "type" : "string"
+          },
+          "teamSize" : {
+            "enum" : [ "DE_16_A_40", "DE_2_A_5", "DE_6_A_15", "MAIS_DE_40", "SO_EU" ],
+            "type" : "string"
+          },
+          "timing" : {
+            "enum" : [ "AGORA", "CONHECER", "ESTE_ANO", "TRES_MESES" ],
+            "type" : "string"
+          },
+          "uf" : {
+            "minLength" : 1,
+            "pattern" : "[A-Z]{2}",
+            "type" : "string"
+          },
+          "website" : {
+            "maxLength" : 200,
+            "minLength" : 0,
+            "type" : "string"
+          }
+        },
+        "required" : [ "annualVolume", "consent", "contactEmail", "contactName", "contactPhone", "currentPractices", "organizationName", "organizationType", "origin", "pains", "requestingUnits", "role", "teamSize", "timing", "uf" ],
+        "type" : "object"
+      },
       "LetterheadResponse" : {
         "properties" : {
           "footerText" : {
@@ -7615,6 +7733,34 @@
           }
         },
         "tags" : [ "pca-controller" ]
+      }
+    },
+    "/api/v1/public/leads" : {
+      "post" : {
+        "operationId" : "submit",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/LeadRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "202" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LeadReceivedResponse"
+                }
+              }
+            },
+            "description" : "Accepted"
+          }
+        },
+        "tags" : [ "public-lead-controller" ]
       }
     },
     "/api/v1/regulations" : {

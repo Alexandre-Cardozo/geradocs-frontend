@@ -119,6 +119,8 @@ export const IconMenu = makeIcon("IconMenu", (
 export const IconChevronDown = makeIcon("IconChevronDown", <polyline points="6 9 12 15 18 9" />)
 export const IconChevronRight = makeIcon("IconChevronRight", <polyline points="9 18 15 12 9 6" />)
 
+export const IconChevronLeft = makeIcon("IconChevronLeft", <polyline points="15 18 9 12 15 6" />)
+
 export const IconMoreVertical = makeIcon("IconMoreVertical", (
   <>
     <circle cx="12" cy="12" r="1" />
@@ -380,4 +382,34 @@ export const IconMessageCircle = makeIcon("IconMessageCircle", (
 
 export const IconPencil = makeIcon("IconPencil", (
   <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+))
+
+export const IconShield = makeIcon("IconShield", (
+  <>
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    <polyline points="9 12 11 14 15 10" />
+  </>
+))
+
+export const IconVolume = makeIcon("IconVolume", (
+  <>
+    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+    <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+    <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+  </>
+))
+
+export const IconVolumeX = makeIcon("IconVolumeX", (
+  <>
+    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+    <line x1="22" y1="9" x2="16" y2="15" />
+    <line x1="16" y1="9" x2="22" y2="15" />
+  </>
+))
+
+export const IconMail = makeIcon("IconMail", (
+  <>
+    <rect x="2" y="4" width="20" height="16" rx="2" />
+    <path d="m22 7-10 6L2 7" />
+  </>
 ))

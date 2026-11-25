@@ -53,7 +53,7 @@ describe("seções da página da GovPro", () => {
     expect(screen.getByRole("img", { name: "GeraDocs, uma solução GovPro" })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: /Solicitar Demonstração/ })).toHaveAttribute(
       "href",
-      expect.stringMatching(/^mailto:contato@govpro\.com\.br\?subject=/),
+      "/onboarding?origem=geradocs",
     )
     expect(screen.getAllByRole("definition")).toHaveLength(5)
   })
@@ -102,6 +102,7 @@ describe("seções da página da GovPro", () => {
   it("Contato pede a demonstração e mostra o e-mail", () => {
     render(<Contato />)
     expect(screen.getByRole("link", { name: "contato@govpro.com.br" })).toHaveAttribute("href", "mailto:contato@govpro.com.br")
-    expect(screen.getByRole("link", { name: /Fale com a GovPro/ })).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: /Fale com a GovPro/ })).toHaveAttribute("href", "/onboarding?origem=contato")
+    expect(screen.getByRole("link", { name: /Solicitar Demonstração/ })).toHaveAttribute("href", "/onboarding?origem=contato-demonstracao")
   })
 })

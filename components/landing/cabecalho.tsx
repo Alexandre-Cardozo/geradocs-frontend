@@ -8,7 +8,7 @@ import govproLogo from "@/public/govpro-logo-white.svg"
 
 import { BotaoLink } from "@/components/landing/botao-link"
 import { IconMenu, IconX } from "@/components/ui/icons"
-import { CONTEUDO, HREF_DEMONSTRACAO, HREF_ENTRAR } from "@/lib/landing/conteudo"
+import { CONTEUDO, HREF_ENTRAR, hrefOnboarding } from "@/lib/landing/conteudo"
 
 type Menu = "fechado" | "aberto" | "fechando"
 
@@ -85,7 +85,7 @@ export function Cabecalho() {
           <BotaoLink href={HREF_ENTRAR} tamanho="sm" variante="secundario-escuro" nome={cabecalho.entrar.nome}>
             {cabecalho.entrar.rotulo}
           </BotaoLink>
-          <BotaoLink href={HREF_DEMONSTRACAO} tamanho="sm" nome={cabecalho.demonstracao.nome}>
+          <BotaoLink href={hrefOnboarding("cabecalho")} tamanho="sm" nome={cabecalho.demonstracao.nome}>
             {cabecalho.demonstracao.rotulo}
           </BotaoLink>
         </div>
@@ -124,7 +124,7 @@ export function Cabecalho() {
             ))}
           </nav>
           <div className="mt-3 flex flex-col gap-3">
-            <BotaoLink href={HREF_DEMONSTRACAO} tamanho="lg">
+            <BotaoLink href={hrefOnboarding("cabecalho")} tamanho="lg">
               {CONTEUDO.acoes.demonstracao}
             </BotaoLink>
             <BotaoLink href={HREF_ENTRAR} tamanho="lg" variante="secundario-escuro">

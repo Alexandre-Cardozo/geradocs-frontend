@@ -1,32 +1,27 @@
 import { describe, expect, it } from "vitest"
 
 import {
-  ASSUNTO_DA_DEMONSTRACAO,
-  CAMPOS_DA_DEMONSTRACAO,
-  CORPO_DA_DEMONSTRACAO,
   CONTEUDO,
   EMAIL_CONTATO,
   HREF_CONTATO,
-  HREF_DEMONSTRACAO,
   HREF_ENTRAR,
   PRODUTOS,
+  ROTA_ONBOARDING,
+  WHATSAPP_GOVPRO,
+  hrefOnboarding,
 } from "./conteudo"
 
 describe("links da página", () => {
-  it("o pedido de demonstração é um mailto para a GovPro, com assunto", () => {
-    expect(EMAIL_CONTATO).toBe("contato@govpro.com.br")
-    expect(HREF_DEMONSTRACAO.startsWith("mailto:contato@govpro.com.br?subject=")).toBe(true)
-    const assunto = new URL(HREF_DEMONSTRACAO).searchParams.get("subject")
-    expect(assunto).toBe(ASSUNTO_DA_DEMONSTRACAO)
-    expect(HREF_CONTATO).toBe("mailto:contato@govpro.com.br")
+  it("o pedido de demonstração abre o onboarding da GovPri, com a origem (§130)", () => {
+    expect(ROTA_ONBOARDING).toBe("/onboarding")
+    expect(hrefOnboarding("cabecalho")).toBe("/onboarding?origem=cabecalho")
+    expect(hrefOnboarding("a b")).toBe("/onboarding?origem=a%20b")
   })
 
-  it("o e-mail da demonstração já vem escrito, com os campos de quem pede", () => {
-    const corpo = new URL(HREF_DEMONSTRACAO).searchParams.get("body") ?? ""
-    expect(corpo).toBe(CORPO_DA_DEMONSTRACAO)
-    for (const campo of ["Nome: ", "Setor: ", "Cargo: ", "Instituição pública: "]) expect(corpo).toContain(campo)
-    expect(corpo.split("\r\n").length).toBeGreaterThan(8)
-    expect(CAMPOS_DA_DEMONSTRACAO.every((c) => corpo.includes(`${c}: `))).toBe(true)
+  it("o contato por e-mail continua à mão; o WhatsApp espera o número da GovPro", () => {
+    expect(EMAIL_CONTATO).toBe("contato@govpro.com.br")
+    expect(HREF_CONTATO).toBe("mailto:contato@govpro.com.br")
+    expect(WHATSAPP_GOVPRO).toMatch(/^(\d{12,13})?$/)
   })
 
   it("entrar leva ao login do aplicativo", () => {

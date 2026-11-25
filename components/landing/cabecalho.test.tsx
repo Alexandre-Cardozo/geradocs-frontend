@@ -33,7 +33,7 @@ describe("Cabecalho", () => {
     expect(entrar).toHaveAttribute("href", "/login")
     const demonstracao = screen.getByRole("link", { name: "Solicitar demonstração" })
     expect(demonstracao).toHaveTextContent(/^Demonstração$/)
-    expect(demonstracao.getAttribute("href")).toMatch(/^mailto:contato@govpro\.com\.br\?subject=.*&body=/)
+    expect(demonstracao.getAttribute("href")).toBe("/onboarding?origem=cabecalho")
   })
 
   it("na página da GovPro, a marca rola até a abertura em vez de navegar", async () => {
@@ -63,7 +63,7 @@ describe("Cabecalho", () => {
     const menu = document.getElementById("menu-landing") as HTMLElement
     expect(menu).not.toBeNull()
     expect(menu.querySelector('a[href="/login"]')).toHaveTextContent("Acessar o GeraDocs")
-    expect(menu.querySelector('a[href^="mailto:contato@govpro.com.br"]')).toHaveTextContent("Solicitar Demonstração")
+    expect(menu.querySelector('a[href="/onboarding?origem=cabecalho"]')).toHaveTextContent("Solicitar Demonstração")
 
     await usuario.click(screen.getByRole("button", { name: "Menu" }))
     // Fechar toca a animação de saída; o menu só sai ao terminar.

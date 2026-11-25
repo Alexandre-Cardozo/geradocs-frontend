@@ -6,35 +6,27 @@
  */
 
 export const EMAIL_CONTATO = "contato@govpro.com.br"
-export const ASSUNTO_DA_DEMONSTRACAO = "Solicitação de demonstração do GeraDocs"
-/**
- * O e-mail que o pedido de demonstração abre já escrito (§126): quem pede só
- * preenche os campos. Linhas com CRLF, como pede o `mailto:` (RFC 6068).
- */
-export const CAMPOS_DA_DEMONSTRACAO = [
-  "Nome",
-  "Setor",
-  "Cargo",
-  "Instituição pública",
-  "Município/UF",
-  "Telefone para contato",
-] as const
-
-export const CORPO_DA_DEMONSTRACAO = [
-  "Olá, equipe GovPro.",
-  "",
-  "Gostaríamos de agendar uma demonstração do GeraDocs. Seguem os dados para contato:",
-  "",
-  ...CAMPOS_DA_DEMONSTRACAO.map((campo) => `${campo}: `),
-  "",
-  "O que gostaríamos de ver na demonstração (opcional): ",
-  "",
-  "Atenciosamente,",
-].join("\r\n")
-
-export const HREF_DEMONSTRACAO = `mailto:${EMAIL_CONTATO}?subject=${encodeURIComponent(ASSUNTO_DA_DEMONSTRACAO)}&body=${encodeURIComponent(CORPO_DA_DEMONSTRACAO)}`
 export const HREF_CONTATO = `mailto:${EMAIL_CONTATO}`
 export const HREF_ENTRAR = "/login"
+
+/** O onboarding da GovPri (§130). A origem diz de onde a pessoa veio (botão da página, Instagram...). */
+export const ROTA_ONBOARDING = "/onboarding"
+export function hrefOnboarding(origem: string): string {
+  return `${ROTA_ONBOARDING}?origem=${encodeURIComponent(origem)}`
+}
+
+/**
+ * O WhatsApp do onboarding, só dígitos com DDI e DDD. Provisório, para os testes,
+ * até a GovPro ter número próprio; vazio, o botão de WhatsApp não aparece.
+ */
+export const WHATSAPP_GOVPRO = "5527996495615"
+
+/**
+ * Para onde vão os leads do onboarding quando o envio automático falha e a
+ * pessoa manda por e-mail (§130). Provisório: a caixa de testes da GovPro, a
+ * mesma que recebe o aviso automático do back-end (ADR-082).
+ */
+export const EMAIL_DOS_LEADS = "govpro.admin@gmail.com"
 export const ENDERECO = "Av. Antônio Perutti, nº 281, Honório Fraga, Colatina/ES"
 
 /**
