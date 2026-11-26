@@ -281,10 +281,12 @@ export function textoDaAnaliseCritica(itens: ItemPesquisado[]): string {
  */
 export function textoDoPrecoDeReferencia(
   itens: ItemPesquisado[],
-  metodo: MetodoDeApuracao,
+  /** A forma de cálculo do processo; `null` enquanto ninguém a declarou. */
+  metodo: MetodoDeApuracao | null,
   /** A quantidade de cada item, quando a consolidação da demanda a conhece. */
   quantidadePor: (item: string) => number | undefined,
 ): string {
+  if (metodo == null) return textoSemMetodoDeclarado(itens)
   let total = 0
   const semQuantidade: string[] = []
   const linhas = itens.map((item) => {
@@ -312,6 +314,33 @@ export function textoDoPrecoDeReferencia(
     ]),
     ...semQuantidade.map((item) => `${item}: [Informar a quantidade deste item na consolidação da demanda.]`),
     `Preço de referência total da contratação: ${formatBRL(total)}.`,
+  ].join("\n")
+}
+
+/**
+ * A memória de cálculo enquanto a forma de cálculo não foi declarada (§134).
+ *
+ * <p>Antes, sem declaração, o texto saía "Adotou-se como método de apuração a média", e
+ * essa frase virava a forma de cálculo do processo quando o ETP a relia — o servidor
+ * nunca tinha escolhido. Agora o texto traz o preço de cada item pelas três formas que o
+ * Art. 6º admite e deixa a declaração entre colchetes, sem a frase que a estimativa relê.
+ */
+function textoSemMetodoDeclarado(itens: ItemPesquisado[]): string {
+  return [
+    "A forma de cálculo da estimativa ainda não foi declarada no processo. Os preços"
+      + " apurados por item, em cada forma que o Art. 6º da IN SEGES/ME nº 65/2021 admite, são:",
+    tabelaEmTexto([
+      ["Item", "Preços", "Média", "Mediana", "Menor preço"],
+      ...itens.map((item) => [
+        item.item,
+        String(item.precos.length),
+        formatBRL(apurar(item, "media")),
+        formatBRL(apurar(item, "mediana")),
+        formatBRL(apurar(item, "menor")),
+      ]),
+    ]),
+    "[Declarar a forma de cálculo da estimativa (média, mediana ou menor preço) e registrar o preço"
+      + " de referência de cada item e o total.]",
   ].join("\n")
 }
 

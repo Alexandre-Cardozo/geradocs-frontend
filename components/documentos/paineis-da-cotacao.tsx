@@ -677,7 +677,9 @@ export function PainelDoPrecoDeReferencia(props: PropsDoPainel) {
   // O método é do processo (ADR-051 do back-end): o ETP e o TR apuram por ele.
   const processo = useProcesso(props.processoId)
   const estimativa = processo.data?.estimativa
-  const metodo: MetodoDeApuracao = estimativa?.metodo ?? "media"
+  // Sem forma declarada, a tela mostra a média só como referência, e o texto não a declara (§134).
+  const metodoDeclaradoNoProcesso: MetodoDeApuracao | null = estimativa?.metodo ?? null
+  const metodo: MetodoDeApuracao = metodoDeclaradoNoProcesso ?? "media"
 
   if (coletas.isPending) {
     return (
@@ -774,7 +776,7 @@ export function PainelDoPrecoDeReferencia(props: PropsDoPainel) {
           onGerarComIa={props.onGerarComIa}
           texto={props.rascunho}
           setTexto={props.setRascunho}
-          preenchimentos={itens.length > 0 ? [dadosDoProcesso("escreve a memória de cálculo a partir da série de preços.", () => textoDoPrecoDeReferencia(itens, metodo, quantidadePor))] : []}
+          preenchimentos={itens.length > 0 ? [dadosDoProcesso("escreve a memória de cálculo a partir da série de preços.", () => textoDoPrecoDeReferencia(itens, metodoDeclaradoNoProcesso, quantidadePor))] : []}
         />
       </div>
     </SectionBlock>

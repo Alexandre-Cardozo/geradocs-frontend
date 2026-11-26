@@ -582,7 +582,8 @@ describe("o valor apurado na pesquisa", () => {
     const texto = setRascunho.mock.calls[0]?.[0] as string
     // Apresentar preço pesquisado e preço preliminar como a mesma coisa faria a
     // memória afirmar uma pesquisa que não houve.
-    expect(texto).toContain("média dos preços obtidos de 3 preço(s) coletado(s)")
+    // Sem forma de cálculo declarada, a origem não usa a frase do método (§134).
+    expect(texto).toContain("referência provisória: média simples de 3 preço(s) coletado(s)")
     expect(texto).toContain("preços unitários apurados na pesquisa de preços")
     // A origem vai na linha do item, dentro da tabela, e o método continua
     // legível para a estimativa: é dele que sai o aviso de memória desatualizada.
@@ -596,7 +597,8 @@ describe("o valor apurado na pesquisa", () => {
       "Valor total",
     ])
     expect(tabela?.tipo === "tabela" && tabela.linhas.at(-1)?.[0]).toBe("Total")
-    expect(metodoCitado(texto)).toBe("media")
+    expect(metodoCitado(texto)).toBeNull()
+    expect(texto).toContain("[Declarar a forma de cálculo da estimativa")
   })
 })
 

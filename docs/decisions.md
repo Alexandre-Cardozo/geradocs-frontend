@@ -1666,3 +1666,18 @@ Quem clicava num botão da página (o onboarding, §130, ou "Acessar") e voltava
 
 - **O que era.** O cartão de cada documento no painel do processo calculava o progresso das seções e, enquanto elas não chegavam, mostrava "0%" e "Elaborar …". Na homologação, com o Render frio, documentos já completos ficaram até 15 segundos assim (24/11/2026): a pessoa via o trabalho como perdido ou clicava em "Elaborar" achando que precisava começar.
 - **Agora.** Enquanto as seções do documento carregam, o cartão mostra "Carregando..." (`role="status"`) no lugar da porcentagem, e o botão diz "Abrir …", que leva ao mesmo editor sem afirmar o estado. Documento finalizado não depende das seções e continua "Finalizado" desde o início.
+
+## 134. Sem forma de cálculo declarada, o "Preencher" não declara a média
+
+- **O que era.** O painel da Cotação (Metodologia e Preço de Referência) e o do ETP (Estimativa do Valor) usavam a média quando o processo não tinha forma de cálculo (`estimativa?.metodo ?? "media"`). O "Preencher" da Cotação escrevia "Adotou-se como método de apuração a média dos preços obtidos", e o do ETP, "média dos preços obtidos de N preço(s)". A estimativa do processo relê essas frases (`metodoCitado`) como a escolha antiga e as gravava como forma de cálculo — o servidor nunca tinha escolhido. Na homologação (26/11/2026), a Cotação 4 dizia "a forma de cálculo ainda não foi declarada" e a 5 e o ETP diziam "média".
+- **Agora.** Sem forma declarada, o texto da Cotação traz o preço de cada item pelas três formas do Art. 6º da IN SEGES/ME nº 65/2021 (média, mediana, menor preço) e a lacuna "[Declarar a forma de cálculo da estimativa…]"; o do ETP chama o preço de "referência provisória: média simples…, forma de cálculo não declarada", com a mesma lacuna. Nenhum dos dois tem a frase que a estimativa relê. A tela continua mostrando a conta pela média, só como referência.
+
+## 135. Informar o item do PCA espera a verificação recarregar
+
+- **O que era.** Depois de "Registrar item informado", o formulário fechava antes de a verificação do PCA voltar do servidor. Nesse intervalo o item seguinte ainda aparecia como "Não encontrado no plano", e o mesmo item podia ser informado de novo: três registros com 200, dois efetivos (homologação, 26/11/2026).
+- **Agora.** A mutação só termina quando a verificação recarregou (`onSuccess` devolve a invalidação). Até lá o botão fica em "Registrando...".
+
+## 136. O aviso de encerramento chama de "ainda não gerados" os opcionais
+
+- **O que era.** "Opcionais sem elaborar" listava também documento 100% preenchido que só faltava gerar.
+- **Agora.** "Opcionais ainda não gerados", que é o que a lista confere.
