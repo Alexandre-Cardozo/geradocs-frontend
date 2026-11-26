@@ -1271,7 +1271,7 @@ No cartão "Gerar com IA" de cada seção, **Orientar a IA (opcional)**: um camp
 A empresa deixou de se chamar LAHHM e passou a ser **GovPro**; o GeraDocs é um produto dela. A marca aprovada em 28/10/2026 (opção A · Faceta, manual em `marcas-govpro-geradocs/marca-aprovada/`) substitui as artes antigas em todo o aplicativo.
 
 - **Logo oficial em SVG:** login, redefinir senha e barra lateral usam `public/geradocs-logo-white.svg` (símbolo + nome em Montserrat, já em curvas). O nome deixou de ser texto digitado em Plus Jakarta Sans ao lado do símbolo: a marca tem fonte própria, e redigitá-la em outra fonte seria uma segunda marca. O crédito da empresa usa `public/govpro-logo-white.svg` ("GeraDocs é uma solução GovPro").
-- **Favicon:** `app/icon.png` e `app/favicon.ico` com o símbolo em fundo totalmente transparente, miolo da folha inclusive — o selo azul-marinho virava um quadrado escuro na aba clara; `app/apple-icon.png` continua no selo, porque o iOS não aceita transparência.
+- **Favicon** (onde mora mudou no §137): `app/icon.png` e `app/favicon.ico` com o símbolo em fundo totalmente transparente, miolo da folha inclusive — o selo azul-marinho virava um quadrado escuro na aba clara; `app/apple-icon.png` continua no selo, porque o iOS não aceita transparência.
 - **Identificação:** login e redefinir senha com o logo, o slogan "Contratações públicas inteligentes" em Montserrat com a faixa da marca embaixo (azul, amarelo e verde, a do papel timbrado) e as faixas diagonais de canto; a referência à Lei 14.133/21 passou para o cartão. Na barra lateral, uma linha só, da altura do cabeçalho: o logo do GeraDocs (22 px), um filete e o logo da GovPro (12 px), sem texto entre eles, de ponta a ponta da barra — as mesmas pontas da faixa da marca —, centralizados na altura; a faixa da marca na linha do filete do cabeçalho — a marca identifica sem disputar atenção com a navegação. A Montserrat (`font-marca`) entra só nos textos que acompanham o logo.
 - **Carregamento:** **`MarcaCarregando`** (`components/shared/marca-carregando.tsx`) desenha o símbolo em varredura circular, o mesmo movimento do GIF da marca, mas em SVG transparente. Entra no `LoadingState` das telas e no splash do `GuardaSessao`; o `InlineSpinner` e os botões continuam com o giro discreto. Fica registrado como extensão aprovada do DS (§17).
 - **Tokens `--color-marca-*`:** as cores do símbolo, só para o desenho da marca; a interface continua nos tokens de antes.
@@ -1617,6 +1617,8 @@ A escala da abertura é de primeiro plano. Com a câmera da cena (vista aérea a
 
 Os mascotes são decorativos (`aria-hidden`): o texto de cada seção continua dizendo tudo. Sem JavaScript, eles não aparecem e nada da página se perde.
 
+> Revisto pelo §134: os mascotes saíram da página da GovPro. Continuam nas ações com IA (§129) e no onboarding (§130).
+
 ## 128. O QR do carimbo abre a página da GovPro em govpro.com.br, e o prefixo da publicação vem do Pages
 
 O carimbo de todo documento gerado traz um QR para `https://govpro.com.br/?documento={código}` (ADR-058 do back-end). O domínio ainda não aponta para lugar nenhum, então o QR dos documentos já gerados não abre nada. A decisão é fazer o domínio abrir a página da GovPro (§125, §126), e não trocar o endereço no back-end: assim os documentos já impressos passam a funcionar, o arquivo gerado não muda e a reprodutibilidade (ADR-020 do back-end) fica intacta.
@@ -1666,6 +1668,74 @@ Quem clicava num botão da página (o onboarding, §130, ou "Acessar") e voltava
 
 - **O que era.** O cartão de cada documento no painel do processo calculava o progresso das seções e, enquanto elas não chegavam, mostrava "0%" e "Elaborar …". Na homologação, com o Render frio, documentos já completos ficaram até 15 segundos assim (24/11/2026): a pessoa via o trabalho como perdido ou clicava em "Elaborar" achando que precisava começar.
 - **Agora.** Enquanto as seções do documento carregam, o cartão mostra "Carregando..." (`role="status"`) no lugar da porcentagem, e o botão diz "Abrir …", que leva ao mesmo editor sem afirmar o estado. Documento finalizado não depende das seções e continua "Finalizado" desde o início.
+
+## 134. A página da GovPro fica sem os mascotes
+
+Os sócios decidiram dar à página da GovPro um tom mais formal e sério, e a GovPri e o GovBô saem dela. A decisão vale só para a página: o GovBô continua nas ações com IA (§129) e a GovPri no onboarding (§130), para onde os botões de demonstração e contato ainda levam.
+
+- **Abertura, IA Responsável, Perguntas Frequentes, Compromissos e Contato** voltam ao desenho de antes do §127, sem personagem.
+- **Em Poucos Cliques, o cursor volta no lugar do GovBô.** A seta anda até o botão de cada tela, aperta e o clique fica marcado com o anel. O voo com a rolagem do §127 fica: com o palco preso, a seta faz o arco do botão anterior até o da etapa (`vooDoCursor`) e clica ao chegar; sem o palco, anda por transição a cada etapa. Não há mais comemoração no documento gerado.
+
+## 135. A abertura passa a ser uma foto realista da sede, ainda em paralaxe
+
+> As camadas e o movimento mudaram no §136; os enquadramentos e o céu extra do largo continuam valendo.
+
+A equipe achou a cena desenhada da abertura (§124) informal demais para o tom que a GovPro quer passar, o mesmo motivo do §134. A abertura passa a usar fotos realistas da sede, geradas pela equipe, e a paralaxe continua.
+
+- **Uma foto vira três camadas.** Para cada enquadramento há duas fotos da mesma cena: uma com galhos de árvore em primeiro plano e outra sem eles. `scripts/abertura-realista.mjs` acha o horizonte da foto limpa (coluna por coluna, onde o azul do céu acaba) e separa o **céu** (com o lugar da sede preenchido de céu, para ela poder se mover sobre ele) da **sede** (prédio, árvores e jardim). Os **galhos** saem da diferença entre as duas fotos onde a limpa mostra céu: a foto limpa é o fundo conhecido, e a cor do galho é recuperada sem o halo azul. As originais ficam fora do repositório; o script diz como gerar de novo.
+- **Três enquadramentos da mesma cena**: alto (9:16) para celular em pé, até a proporção 2:3; médio (3:4) para tablet em pé e telas quase quadradas, até 6:5; largo (16:9) para o resto. Na foto larga a sede começava a 36% da altura e cobria a frase do título; o script acrescenta 56 px de céu no alto e corta o mesmo tanto da calçada, e a copa que encosta na borda ganha o próprio alto espelhado.
+- **Ordem das camadas**: céu, galhos, título, sede. Os galhos só ocupam o céu, então ficar atrás do título não aparece na cena e o título é lido inteiro.
+- **Movimento mais contido.** A foto perde nitidez se ampliada, então a sede cresce 12% ao rolar (a cena desenhada crescia 16%); os galhos crescem 60% e sobem até sair do quadro, que é o que dá a sensação de passar sob a árvore. A entrada também é mais curta: o céu acende, a sede assenta 3% e os galhos descem do alto. As nuvens desenhadas e a deriva delas saem.
+
+As fotos têm de 941 a 1.670 px de largura, e em telas grandes o navegador as amplia. Fotos maiores (2.400 px ou mais no largo) entram sem mudar código: basta trocar as originais e rodar o script.
+
+## 136. A foto da abertura é fatiada por profundidade, sem os galhos do alto
+
+Na revisão da abertura realista (§135), a equipe pediu duas coisas: tirar a árvore do canto superior direito e levar a paralaxe a outros elementos da cena, fatiando a foto como na abertura da Wish Labs, em que fundo, castelo, nuvens e morros são recortes da mesma imagem, cada um numa velocidade.
+
+- **Só a foto sem galhos.** Os galhos do alto saem, e com eles a foto com galhos deixa de ser usada.
+- **Cinco fatias, do fundo para a frente**: **céu**; **sede** (prédio, palmeiras, bandeiras); **jardim** (da linha da praça para baixo: gramado, canteiros e caminho); a **árvore da esquerda** e a **da direita**. O título fica entre o céu e a sede, como antes: ao rolar, o prédio sobe por cima dele. No médio e no alto só há árvore à esquerda; a camada da direita vem vazia.
+- **Recorte feito por medidas escritas à mão.** `scripts/abertura-realista.mjs` guarda, para cada enquadramento:
+  - a linha da praça, abaixo do pé das palmeiras e dos mastros, para nada ser cortado ao meio;
+  - o eixo da fachada e a largura de um módulo das alas;
+  - dois pontos do telhado de cada ala;
+  - os retângulos das copas, da área a refazer e do que não serve de modelo.
+
+  Acima do telhado, tudo o que não é céu nem nuvem é árvore. Na frente da fachada, só o que tem cor de folha. O poste de luz e as cercas vivas do chão ficam fora.
+- **O que fica atrás das árvores.** Atrás das copas, o telhado segue a reta medida, em vez de ser adivinhado entre as folhas. A ala é refeita inteira, do telhado ao pé das colunas, a partir de uma única fonte por lado, para não deixar emenda entre andares:
+  - onde os vizinhos estão livres, ela repete o módulo vizinho;
+  - onde bandeiras e palmeiras tapam os vizinhos, ela vem do lado oposto, espelhado;
+  - a linha copiada acompanha a perspectiva entre o telhado e o chão;
+  - 16 px de transição a unem à ala real.
+
+  O céu atrás das copas é preenchido só com azul puro. Assim a borda clara das folhas e a do telhado não viram halo quando as camadas andam.
+- **Movimento como numa maquete**:
+  - o céu cresce 3% e fica;
+  - a sede cresce 6% e sobe 3%;
+  - o jardim cresce 14% e sobe 8%;
+  - as árvores crescem 20% a partir do próprio pé, na borda da tela e na linha do chão de cada enquadramento (85%, 70% e 67% da altura). O tronco fica preso ao chão e a copa avança sobre a cena, cobrindo mais do que revela.
+
+  O jardim sobe mais do que cresce para a borda dele nunca descer abaixo do pé da sede, e um teste confere isso em toda a rolagem. O mouse desloca o céu em 3 px, a sede em 8 px, e o jardim e as árvores juntos em 14 px, porque as árvores estão plantadas nele. Na entrada, a cena se monta de trás para a frente.
+
+O recorte depende das medidas de cada foto: se as fotos forem trocadas, as medidas do script precisam ser revistas.
+
+## 137. A aba mostra a GovPro nas páginas públicas e o GeraDocs do login para dentro
+
+A página da GovPro aparecia com o ícone do GeraDocs na aba do navegador. O ícone passa a dizer em que lugar a pessoa está:
+- **GovPro:** no site da empresa, no onboarding e nas demais páginas públicas, como a de página não encontrada.
+- **GeraDocs:** do login para dentro (login, redefinição de senha e todo o sistema).
+
+- **Onde mora cada ícone.** Os arquivos saem de `app/` (`icon.png`, `apple-icon.png`, `favicon.ico`). Ali o Next os aplica ao site inteiro e eles vencem a configuração. Agora ficam em `public/icones/govpro/` e `public/icones/geradocs/`, e quem escolhe é a metadata:
+  - o layout raiz declara a GovPro;
+  - os layouts do login, `app/(auth)`, e do sistema, `app/(app)`, trocam pelo GeraDocs. O Next substitui o campo `icons` inteiro no segmento mais interno.
+
+  `iconesDaAba` (`lib/marca/icones-da-aba.ts`) monta os endereços com o prefixo da publicação, que o Next não aplica à metadata. O `public/favicon.ico` é o da GovPro, para quem pede o endereço padrão.
+- **Os ícones da GovPro** saem do símbolo oficial do design system (`design_system/assets/govpro-mark.svg`) por `scripts/icones-govpro.mjs`, nas mesmas medidas dos do GeraDocs:
+  - 512 px em fundo transparente;
+  - `.ico` de 16, 32 e 48 px;
+  - 180 px no selo azul-marinho para o iPhone, que não aceita transparência.
+- **A troca acontece sem recarregar.** Do "Entrar" da página da GovPro para o login, a navegação é interna, e o ícone da aba muda junto. Ele segue no GeraDocs dentro do sistema e no login, ao sair. O e2e da marca confere o caminho inteiro, também sob o prefixo do GitHub Pages.
+- **Uma marca só na aba, mesmo com clique antes da hidratação.** O CI pegou o caso: numa máquina lenta, o clique em "Entrar" chega antes de a página hidratar, o React o repete como navegação interna, e os ícones da GovPro que vieram do servidor (ainda não eram do React) ficavam na aba ao lado dos do GeraDocs. `IconeDaAba` (`components/shared/icone-da-aba.tsx`), no layout raiz, observa o `<head>` e tira os ícones de outra marca que não a do último inserido (`iconesDeOutraMarca`). O e2e reproduz o caso com a CPU seis vezes mais lenta.
 
 ## 138. Sem forma de cálculo declarada, o "Preencher" não declara a média
 

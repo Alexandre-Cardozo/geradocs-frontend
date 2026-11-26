@@ -55,7 +55,7 @@ export function valorDoContador(alvo: number, progresso: number): number {
 export type Ponto = { x: number; y: number }
 
 /**
- * Onde o GovBô está na demonstração em poucos cliques (§127), em % da tela.
+ * Onde o cursor está na demonstração em poucos cliques (§127), em % da tela.
  * No começo do trecho de cada etapa (`fracaoDoVoo`) ele voa em arco do botão da
  * etapa anterior até o desta; no resto do trecho fica sobre o botão. Rolar aos
  * poucos leva o voo aos poucos, nos dois sentidos. `emVoo` diz se ainda não

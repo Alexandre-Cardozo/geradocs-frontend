@@ -1,20 +1,24 @@
 "use client"
 
 import { getImageProps, type StaticImageData } from "next/image"
-import { Fragment, useEffect, useRef, type CSSProperties, type ReactNode } from "react"
+import { Fragment, useEffect, useRef, type CSSProperties } from "react"
 
+import arvoreDireitaAlto from "@/public/landing/abertura/alto/arvore-direita.webp"
+import arvoreEsquerdaAlto from "@/public/landing/abertura/alto/arvore-esquerda.webp"
 import ceuAlto from "@/public/landing/abertura/alto/ceu.webp"
-import edificioAlto from "@/public/landing/abertura/alto/edificio.webp"
-import frenteAlto from "@/public/landing/abertura/alto/frente.webp"
-import meioAlto from "@/public/landing/abertura/alto/meio.webp"
-import nuvensAlto from "@/public/landing/abertura/alto/nuvens.webp"
+import jardimAlto from "@/public/landing/abertura/alto/jardim.webp"
+import sedeAlto from "@/public/landing/abertura/alto/sede.webp"
+import arvoreDireitaLargo from "@/public/landing/abertura/largo/arvore-direita.webp"
+import arvoreEsquerdaLargo from "@/public/landing/abertura/largo/arvore-esquerda.webp"
 import ceuLargo from "@/public/landing/abertura/largo/ceu.webp"
-import edificioLargo from "@/public/landing/abertura/largo/edificio.webp"
-import frenteLargo from "@/public/landing/abertura/largo/frente.webp"
-import meioLargo from "@/public/landing/abertura/largo/meio.webp"
-import nuvensLargo from "@/public/landing/abertura/largo/nuvens.webp"
+import jardimLargo from "@/public/landing/abertura/largo/jardim.webp"
+import sedeLargo from "@/public/landing/abertura/largo/sede.webp"
+import arvoreDireitaMedio from "@/public/landing/abertura/medio/arvore-direita.webp"
+import arvoreEsquerdaMedio from "@/public/landing/abertura/medio/arvore-esquerda.webp"
+import ceuMedio from "@/public/landing/abertura/medio/ceu.webp"
+import jardimMedio from "@/public/landing/abertura/medio/jardim.webp"
+import sedeMedio from "@/public/landing/abertura/medio/sede.webp"
 
-import { GovBo, GovPri } from "@/components/mascotes/mascotes"
 import { FaixaDaMarca } from "@/components/shared/marca"
 import { CONTEUDO } from "@/lib/landing/conteudo"
 import {
@@ -27,41 +31,66 @@ import {
   type NomeDaCamada,
 } from "@/lib/landing/paralaxe"
 
-/** Enquadramento alto para tela em pé (até 4:5); largo para o resto. */
-const MIDIA_ALTA = "(max-aspect-ratio: 4/5)"
+/**
+ * Três enquadramentos da mesma foto (§135): alto (9:16) para celular em pé, médio
+ * (3:4) para tablet em pé e telas quase quadradas, largo (16:9) para o resto. A
+ * primeira fonte que casa vence, por isso o alto vem antes.
+ */
+const MIDIA_ALTA = "(max-aspect-ratio: 2/3)"
+const MIDIA_MEDIA = "(max-aspect-ratio: 6/5)"
 
-/** Tamanho das renderizações. Fixo aqui porque o teste importa a imagem como texto. */
-const LARGO = { width: 2400, height: 1350 }
-const ALTO = { width: 1080, height: 1920 }
+/** Tamanho das fotos. Fixo aqui porque o teste importa a imagem como texto. */
+const LARGO = { width: 1670, height: 939 }
+const MEDIO = { width: 1085, height: 1447 }
+const ALTO = { width: 941, height: 1673 }
 
-const IMAGENS: Record<NomeDaCamada, { largo: StaticImageData; alto: StaticImageData }> = {
-  ceu: { largo: ceuLargo, alto: ceuAlto },
-  nuvens: { largo: nuvensLargo, alto: nuvensAlto },
-  edificio: { largo: edificioLargo, alto: edificioAlto },
-  meio: { largo: meioLargo, alto: meioAlto },
-  frente: { largo: frenteLargo, alto: frenteAlto },
+const IMAGENS: Record<NomeDaCamada, { largo: StaticImageData; medio: StaticImageData; alto: StaticImageData }> = {
+  ceu: { largo: ceuLargo, medio: ceuMedio, alto: ceuAlto },
+  sede: { largo: sedeLargo, medio: sedeMedio, alto: sedeAlto },
+  jardim: { largo: jardimLargo, medio: jardimMedio, alto: jardimAlto },
+  arvoreEsquerda: { largo: arvoreEsquerdaLargo, medio: arvoreEsquerdaMedio, alto: arvoreEsquerdaAlto },
+  arvoreDireita: { largo: arvoreDireitaLargo, medio: arvoreDireitaMedio, alto: arvoreDireitaAlto },
 }
 
-/** De onde cada camada parte na entrada, e com que atraso (ms). */
+/**
+ * De onde cada camada parte na entrada, e com que atraso (ms). Monta-se a maquete
+ * de trás para a frente: o céu acende, a sede assenta, o jardim sobe e as árvores
+ * se fecham dos lados.
+ */
 const ENTRADA: Record<NomeDaCamada, { estilo: Record<string, string>; atraso: number }> = {
-  ceu: { estilo: { "--landing-escala-de": "1.08", "--landing-opacidade-de": "0" }, atraso: 0 },
-  nuvens: { estilo: { "--landing-de": "2%", "--landing-opacidade-de": "0" }, atraso: 50 },
-  edificio: { estilo: { "--landing-de": "7%", "--landing-opacidade-de": "0" }, atraso: 150 },
-  meio: { estilo: { "--landing-de": "12%" }, atraso: 250 },
-  frente: { estilo: { "--landing-de": "18%" }, atraso: 300 },
+  ceu: { estilo: { "--landing-escala-de": "1.06", "--landing-opacidade-de": "0" }, atraso: 0 },
+  sede: { estilo: { "--landing-de": "3%", "--landing-opacidade-de": "0" }, atraso: 120 },
+  jardim: { estilo: { "--landing-de": "8%", "--landing-opacidade-de": "0" }, atraso: 220 },
+  arvoreEsquerda: { estilo: { "--landing-escala-de": "1.15", "--landing-opacidade-de": "0" }, atraso: 320 },
+  arvoreDireita: { estilo: { "--landing-escala-de": "1.15", "--landing-opacidade-de": "0" }, atraso: 320 },
 }
 
-function Camada({ nome, alt, children }: { nome: NomeDaCamada; alt: string; children?: ReactNode }) {
-  const { largo, alto } = IMAGENS[nome]
+/**
+ * De onde cada camada cresce ao rolar. As árvores crescem a partir do pé, na
+ * borda da tela e na linha do chão de cada enquadramento (85% no largo, 70% no
+ * médio, 67% no alto): o tronco fica preso ao chão e a copa avança sobre a cena.
+ * As outras crescem a partir do centro.
+ */
+const ORIGEM: Partial<Record<NomeDaCamada, string>> = {
+  arvoreEsquerda:
+    "origin-[0%_85%] [@media(min-aspect-ratio:2/3)_and_(max-aspect-ratio:6/5)]:origin-[0%_70%] [@media(max-aspect-ratio:2/3)]:origin-[0%_67%]",
+  arvoreDireita:
+    "origin-[100%_85%] [@media(min-aspect-ratio:2/3)_and_(max-aspect-ratio:6/5)]:origin-[100%_70%] [@media(max-aspect-ratio:2/3)]:origin-[100%_67%]",
+}
+
+function Camada({ nome, alt }: { nome: NomeDaCamada; alt: string }) {
+  const { largo, medio, alto } = IMAGENS[nome]
   const comum = { alt, sizes: "100vw", loading: "eager" as const, fetchPriority: "high" as const }
   const fonteAlta = getImageProps({ ...comum, ...ALTO, src: alto }).props
+  const fonteMedia = getImageProps({ ...comum, ...MEDIO, src: medio }).props
   const { srcSet, ...img } = getImageProps({ ...comum, ...LARGO, src: largo }).props
   const { estilo, atraso } = ENTRADA[nome]
 
   const imagem = (
     <picture>
       <source media={MIDIA_ALTA} srcSet={fonteAlta.srcSet ?? fonteAlta.src} />
-      {/* `<picture>` com dois enquadramentos é o caso que o next/image deixa para getImageProps. */}
+      <source media={MIDIA_MEDIA} srcSet={fonteMedia.srcSet ?? fonteMedia.src} />
+      {/* `<picture>` com vários enquadramentos é o caso que o next/image deixa para getImageProps. */}
       <img
         {...img}
         srcSet={srcSet}
@@ -73,14 +102,13 @@ function Camada({ nome, alt, children }: { nome: NomeDaCamada; alt: string; chil
   )
 
   return (
-    <div data-camada={nome} className="absolute inset-0 will-change-transform">
+    <div data-camada={nome} className={`absolute inset-0 will-change-transform ${ORIGEM[nome] ?? ""}`}>
       <div data-ponteiro className="absolute -inset-[3%] will-change-transform">
         <div
           className="absolute inset-0 animate-landing-camada"
           style={{ ...estilo, animationDelay: `${atraso}ms` } as CSSProperties}
         >
-          {nome === "nuvens" ? <div className="absolute inset-0 animate-landing-deriva">{imagem}</div> : imagem}
-          {children}
+          {imagem}
         </div>
       </div>
     </div>
@@ -88,7 +116,8 @@ function Camada({ nome, alt, children }: { nome: NomeDaCamada; alt: string; chil
 }
 
 /**
- * Abertura da landing (§124): a sede da GovPro em cinco camadas que se movem em
+ * Abertura da landing (§124, §135, §136): a foto da sede da GovPro fatiada em
+ * camadas (céu, sede, jardim e as árvores de cada lateral) que se movem em
  * profundidades diferentes. Rolar aproxima a câmera e traz o manifesto; o mouse
  * desloca as camadas de leve.
  *
@@ -201,7 +230,6 @@ export function Abertura() {
     >
       <div className="relative h-svh overflow-hidden bg-navy group-data-[movimento=ativo]/abertura:sticky group-data-[movimento=ativo]/abertura:top-0">
         <Camada nome="ceu" alt="" />
-        <Camada nome="nuvens" alt="" />
 
         <div data-titulo className="pointer-events-none absolute inset-0 z-10">
           <div
@@ -234,25 +262,11 @@ export function Abertura() {
           </div>
         </div>
 
-        <Camada nome="edificio" alt={abertura.altSede} />
-        <Camada nome="meio" alt="" />
-        <Camada nome="frente" alt="">
-          {/* Os mascotes (§127) no gramado, na camada da frente: andam com a paralaxe da cena. A escala é de
-              primeiro plano: a GovPri com a cabeça na linha do térreo da sede, o GovBô com uns 40% da altura dela. */}
-          <GovPri
-            corpo="inteiro"
-            expressao="alegre"
-            acao="acenar"
-            manter
-            className="absolute bottom-[3%] left-[14%] aspect-[480/910] h-[26%] portrait:bottom-[9%] portrait:left-[7%] portrait:h-[16%]"
-          />
-          <GovBo
-            expressao="alegre"
-            acao="pular"
-            repetir
-            className="absolute right-[16%] bottom-[14%] aspect-[320/340] h-[11%] portrait:right-[9%] portrait:bottom-[19%] portrait:h-[7%]"
-          />
-        </Camada>
+        {/* O título fica atrás da sede: ao rolar, o prédio sobe por cima dele (§136). */}
+        <Camada nome="sede" alt={abertura.altSede} />
+        <Camada nome="jardim" alt="" />
+        <Camada nome="arvoreEsquerda" alt="" />
+        <Camada nome="arvoreDireita" alt="" />
 
         {/* Escurece o alto para o cabeçalho e o título, e a cena inteira antes do manifesto. */}
         <div

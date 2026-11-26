@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test"
 
 import type { Locator, Page } from "@playwright/test"
 
-import { comSessao, rota, semSessao } from "./api"
+import { comSessao, prestesALogar, rota, semSessao } from "./api"
 
 /**
  * A marca GovPro + GeraDocs (opção A · Faceta, decisão §92). O que se cobra aqui
@@ -79,15 +79,85 @@ test("enquanto a sessão resolve, o símbolo animado da marca aparece", async ({
   await expect(page).toHaveURL(/\/login\/?$/)
 })
 
-test("favicon, ícone e ícone da Apple são servidos", async ({ request }) => {
+test("os ícones da GovPro e do GeraDocs são servidos", async ({ request }) => {
   for (const [caminho, tipo] of [
     ["/favicon.ico", /image\/(x-icon|vnd\.microsoft\.icon)/],
-    ["/icon.png", /image\/png/],
-    ["/apple-icon.png", /image\/png/],
+    ["/icones/govpro/favicon.ico", /image\/(x-icon|vnd\.microsoft\.icon)/],
+    ["/icones/govpro/icon.png", /image\/png/],
+    ["/icones/govpro/apple-icon.png", /image\/png/],
+    ["/icones/geradocs/favicon.ico", /image\/(x-icon|vnd\.microsoft\.icon)/],
+    ["/icones/geradocs/icon.png", /image\/png/],
+    ["/icones/geradocs/apple-icon.png", /image\/png/],
   ] as const) {
     const resposta = await request.get(rota(caminho))
     expect(resposta.status(), caminho).toBe(200)
     expect(resposta.headers()["content-type"], caminho).toMatch(tipo)
     expect((await resposta.body()).byteLength, caminho).toBeGreaterThan(500)
   }
+})
+
+/** De que marca são os ícones que a página declara na aba (§137). */
+async function marcaDaAba(page: Page) {
+  const enderecos = await page
+    .locator('head link[rel="icon"], head link[rel="apple-touch-icon"]')
+    .evaluateAll((links) => links.map((l) => l.getAttribute("href") ?? ""))
+  const marcas = new Set(enderecos.map((e) => e.match(/\/icones\/(govpro|geradocs)\//)?.[1] ?? e))
+  return [...marcas].join(",")
+}
+
+test("as páginas públicas mostram a GovPro na aba; login e senha, o GeraDocs", async ({ page }) => {
+  await semSessao(page)
+  for (const [caminho, marca] of [
+    ["/", "govpro"],
+    ["/onboarding", "govpro"],
+    ["/pagina-que-nao-existe", "govpro"],
+    ["/login", "geradocs"],
+    ["/redefinir-senha", "geradocs"],
+  ] as const) {
+    await page.goto(rota(caminho))
+    await expect.poll(() => marcaDaAba(page), caminho).toBe(marca)
+  }
+})
+
+test("da página da GovPro ao login a aba passa ao GeraDocs, e segue nele no sistema", async ({ page }) => {
+  await prestesALogar(page)
+  await page.route("**/api/v1/auth/logout", (r) => r.fulfill({ status: 204, body: "" }))
+  await page.goto(rota("/"))
+  await expect.poll(() => marcaDaAba(page)).toBe("govpro")
+  // O "Entrar" do cabeçalho leva ao login sem recarregar a página.
+  await page.getByRole("link", { name: /^Entrar/ }).first().click()
+  await expect(page).toHaveURL(/\/login\/?$/)
+  await expect.poll(() => marcaDaAba(page)).toBe("geradocs")
+
+  await page.getByPlaceholder("000.000.000-00").fill("333.333.333-33")
+  await page.getByPlaceholder("Sua senha").fill("UmaSenhaSegura!2026")
+  await page.getByRole("button", { name: "Entrar" }).click()
+  await expect(page).not.toHaveURL(/\/login\/?$/)
+  await expect.poll(() => marcaDaAba(page)).toBe("geradocs")
+
+  await page.getByRole("button", { name: "Abrir menu do usuário" }).click()
+  await page.getByRole("button", { name: "Sair da conta" }).click()
+  await expect(page).toHaveURL(/\/login\/?$/)
+  await expect.poll(() => marcaDaAba(page)).toBe("geradocs")
+})
+
+test("clicar em Entrar antes de a página hidratar não deixa duas marcas na aba", async ({ page }) => {
+  // O CI pegou este caso: com a máquina lenta, o clique chega antes da
+  // hidratação, o React o repete como navegação interna e os ícones que vieram
+  // do servidor ficavam na aba ao lado dos novos. A CPU lenta o reproduz.
+  const erros: string[] = []
+  page.on("pageerror", (erro) => erros.push(erro.message))
+  page.on("console", (m) => m.type() === "error" && erros.push(m.text()))
+  await prestesALogar(page)
+  const cdp = await page.context().newCDPSession(page)
+  await cdp.send("Emulation.setCPUThrottlingRate", { rate: 6 })
+
+  await page.goto(rota("/"), { waitUntil: "commit" })
+  await page.getByRole("link", { name: /^Entrar/ }).first().click()
+  await expect(page).toHaveURL(/\/login\/?$/)
+  await expect.poll(() => marcaDaAba(page), { timeout: 15_000 }).toBe("geradocs")
+  // O login termina de montar sem o React reclamar dos ícones que saíram.
+  await expect(page.getByRole("heading", { name: "Acesse sua conta" })).toBeVisible()
+  await expect.poll(() => marcaDaAba(page)).toBe("geradocs")
+  expect(erros.filter((e) => /removeChild|hydrat|NotFoundError/i.test(e))).toEqual([])
 })

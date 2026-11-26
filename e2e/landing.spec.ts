@@ -58,11 +58,13 @@ test.describe("abertura em paralaxe (§124)", () => {
     expect(topo).toBeLessThanOrEqual(0);
   });
 
-  test("em tela em pé usa o enquadramento alto", async ({ page }) => {
+  test("o enquadramento da foto segue a tela: alto no celular, médio no tablet em pé", async ({ page }) => {
+    const sede = page.getByRole("img", { name: /Sede da GovPro/ });
     await page.setViewportSize({ width: 390, height: 844 });
     await abrir(page);
-    const sede = page.getByRole("img", { name: /Sede da GovPro/ });
-    await expect.poll(() => sede.evaluate((img) => (img as HTMLImageElement).naturalWidth)).toBe(1080);
+    await expect.poll(() => sede.evaluate((img) => (img as HTMLImageElement).naturalWidth)).toBe(941);
+    await page.setViewportSize({ width: 820, height: 1180 });
+    await expect.poll(() => sede.evaluate((img) => (img as HTMLImageElement).naturalWidth)).toBe(1085);
   });
 
   test("ao rolar, a câmera avança, o título sai e o manifesto aparece", async ({ page }) => {
@@ -75,8 +77,8 @@ test.describe("abertura em paralaxe (§124)", () => {
     await expect(page.getByText(/A GovPro nasceu para estar ao lado dessas pessoas/)).toBeInViewport();
     await expect.poll(() => page.locator("[data-manifesto]").evaluate((el) => Number(getComputedStyle(el).opacity))).toBeGreaterThan(0.9);
     await expect.poll(() => page.locator("[data-titulo]").evaluate((el) => Number(getComputedStyle(el).opacity))).toBe(0);
-    const escala = await page.locator('[data-camada="frente"]').evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).a);
-    expect(escala).toBeGreaterThan(1.3);
+    const escala = await page.locator('[data-camada="arvoreEsquerda"]').evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).a);
+    expect(escala).toBeGreaterThan(1.1);
   });
 
   test("sem JavaScript, a cena aparece parada e o manifesto vem no fluxo", async ({ browser }) => {

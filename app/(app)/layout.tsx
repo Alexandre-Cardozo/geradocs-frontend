@@ -1,8 +1,13 @@
+import type { Metadata } from "next"
 import type { ReactNode } from "react"
 
 import AppShell from "@/components/layout/AppShell"
 import GuardaSessao from "@/components/layout/GuardaSessao"
 import { PalcoDaIa } from "@/components/mascotes/palco-da-ia"
+import { iconesDaAba } from "@/lib/marca/icones-da-aba"
+
+/** Dentro do sistema a aba mostra o GeraDocs, como no login (§137). */
+export const metadata: Metadata = { icons: iconesDaAba("geradocs") }
 
 /** Shell autenticado: guarda de sessão/RBAC + sidebar 240px navy + header 60px + conteúdo. */
 export default function AppLayout({ children }: { children: ReactNode }) {

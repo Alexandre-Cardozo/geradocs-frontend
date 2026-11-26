@@ -1,31 +1,48 @@
 /**
- * A conta da abertura em paralaxe (§124): onde está a rolagem e onde fica cada
- * camada. Sem DOM e sem React, para que o componente só aplique o quadro.
+ * A conta da abertura em paralaxe (§124, §135, §136): onde está a rolagem e onde fica
+ * cada camada. Sem DOM e sem React, para que o componente só aplique o quadro.
  */
 
-export type NomeDaCamada = "ceu" | "nuvens" | "edificio" | "meio" | "frente"
+/**
+ * As fatias da foto da sede, do fundo para a frente (§136): o céu, a sede com as
+ * palmeiras, o jardim e as árvores das laterais, uma camada por lado.
+ */
+export type NomeDaCamada = "ceu" | "sede" | "jardim" | "arvoreEsquerda" | "arvoreDireita"
 
 export type Camada = {
   nome: NomeDaCamada
   /** Deslocamento máximo, em px, que o ponteiro provoca. A mais próxima move mais. */
   profundidade: number
-  /** Escala no fim da rolagem: a câmera avança e o que está perto cresce mais. */
+  /**
+   * Escala no fim da rolagem: a câmera avança e o que está perto cresce mais. As
+   * árvores crescem a partir do próprio pé, que o componente fixa no chão.
+   */
   escala: number
   /** Deslocamento vertical no fim da rolagem, em % da altura da camada. */
   subida: number
 }
 
-/** Do fundo para a frente, na ordem em que são empilhadas. */
+/**
+ * Do fundo para a frente, na ordem em que são empilhadas. Como numa maquete, o
+ * que está longe quase não se move e o que está perto corre: o céu fica, a sede
+ * avança devagar, o jardim sobe por cima do pé dela e as árvores crescem a
+ * partir do pé, cobrindo mais da cena em vez de revelar o que estava atrás delas.
+ * Elas andam com o ponteiro na mesma profundidade do jardim, o chão em que estão
+ * plantadas. A foto aguenta pouca ampliação, então tudo cresce pouco.
+ *
+ * O jardim sobe mais do que cresce: assim a borda dele nunca desce abaixo do pé
+ * da sede e não abre fresta entre as duas (o teste confere).
+ */
 export const CAMADAS: readonly Camada[] = [
-  { nome: "ceu", profundidade: 4, escala: 1.05, subida: -2 },
-  { nome: "nuvens", profundidade: 7, escala: 1.1, subida: -6 },
-  { nome: "edificio", profundidade: 12, escala: 1.16, subida: -3 },
-  { nome: "meio", profundidade: 22, escala: 1.32, subida: -2 },
-  { nome: "frente", profundidade: 38, escala: 1.7, subida: 0 },
+  { nome: "ceu", profundidade: 3, escala: 1.03, subida: 0 },
+  { nome: "sede", profundidade: 8, escala: 1.06, subida: -3 },
+  { nome: "jardim", profundidade: 14, escala: 1.14, subida: -8 },
+  { nome: "arvoreEsquerda", profundidade: 14, escala: 1.2, subida: 0 },
+  { nome: "arvoreDireita", profundidade: 14, escala: 1.2, subida: 0 },
 ]
 
-/** O título fica entre o céu e a sede, e o ponteiro o move como uma camada. */
-export const PROFUNDIDADE_DO_TITULO = 10
+/** O título fica entre o céu e a sede, e o ponteiro o move como uma camada distante. */
+export const PROFUNDIDADE_DO_TITULO = 6
 
 /** Fração de `valor` entre `inicio` e `fim`, presa entre 0 e 1. */
 export function trecho(valor: number, inicio: number, fim: number): number {
