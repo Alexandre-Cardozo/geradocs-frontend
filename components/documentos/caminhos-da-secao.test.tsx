@@ -46,6 +46,33 @@ describe("caminhos da seção", () => {
     expect(screen.getByText("Indisponível")).toBeInTheDocument()
   })
 
+  it("seção maior do que a IA lê: botão desabilitado com o motivo, e o texto pequeno segue liberado (ADR 132)", async () => {
+    // Homologação, 23/11/2026: a minuta da AGU de "Critérios de Medição e Pagamento" (TR de serviços) tinha
+    // 36 mil caracteres, e o clique voltava "400 Existem campos inválidos".
+    comIa(true)
+    const { gerar } = renderizarCaminhos({ texto: "x".repeat(36_298) })
+
+    const botao = await screen.findByRole("button", { name: /Gerar com IA/ })
+    await waitFor(() =>
+      expect(document.getElementById(botao.getAttribute("aria-describedby") as string)).toHaveTextContent(
+        "A IA lê seções de até 20.000 caracteres, e esta tem 36.298.",
+      ),
+    )
+    expect(botao).toBeDisabled()
+    // Não é indisponibilidade da IA: o selo fica para o caso de não haver modelo.
+    expect(screen.queryByText("Indisponível")).not.toBeInTheDocument()
+    await userEvent.click(botao)
+    expect(gerar).not.toHaveBeenCalled()
+  })
+
+  it("no limite exato, a IA ainda recebe a seção", async () => {
+    comIa(true)
+    renderizarCaminhos({ texto: "x".repeat(20_000) })
+
+    await waitFor(async () => expect(await screen.findByRole("button", { name: /Gerar com IA/ })).toBeEnabled())
+    expect(screen.queryByText(/A IA lê seções de até/)).not.toBeInTheDocument()
+  })
+
   it("não há um cartão para anunciar que dá para escrever à mão", async () => {
     comIa(false)
     renderizarCaminhos()

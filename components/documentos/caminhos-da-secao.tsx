@@ -10,6 +10,8 @@ import { useEstadoDaIa } from "@/lib/api/hooks"
 import { semLinhasEmBranco } from "@/lib/dominio/tabela"
 import { ETAPAS_DA_REDACAO } from "@/lib/dominio/revelacao"
 import { FONTES_PADRAO } from "@/lib/documentos/fontes-da-ia"
+import { LIMITE_DO_TEXTO_PARA_A_IA, textoGrandeDemaisParaAIa } from "@/lib/documentos/orientacao"
+import { formatContagemBR } from "@/lib/format"
 
 import { CampoDeOrientacao, OrientacaoDaIaContexto } from "@/components/documentos/orientacao-da-ia"
 
@@ -86,6 +88,9 @@ export function CaminhosDaSecao({
   const semModelo = estado === "sem-modelo"
   const semTeto = estado === "sem-teto"
   const origens = setTexto ? [...preenchimentos, ...(editor?.preenchimentos ?? [])] : []
+  // A minuta da AGU de uma seção chega a 36 mil caracteres, e a IA recebe até
+  // 20 mil (ADR 132): o botão avisa antes, em vez de devolver "campos inválidos".
+  const grandeDemais = textoGrandeDemaisParaAIa(texto)
 
   // Enquanto a resposta não chega, o botão fica desabilitado com o motivo. O
   // contrário (habilitar por otimismo) devolveria o clique que dá erro.
@@ -96,7 +101,9 @@ export function CaminhosDaSecao({
         ? "Nenhum modelo de IA configurado nesta instalação."
         : semTeto
           ? "A IA não está liberada para esta entidade. Fale com o administrador da plataforma."
-          : null
+          : grandeDemais
+            ? `A IA lê seções de até ${formatContagemBR(LIMITE_DO_TEXTO_PARA_A_IA)} caracteres, e esta tem ${formatContagemBR(texto?.length ?? 0)}. Edite o texto à mão ou tire as alternativas da minuta que não se aplicam.`
+            : null
   // De onde a IA tira o rascunho fica na dica do botão (§111): escrito no
   // cartão, repetia o que o próprio botão já diz.
   const dicaDoBotao = `Rascunho com base ${fontes}. Revise antes de salvar.`
@@ -144,7 +151,7 @@ export function CaminhosDaSecao({
           size="sm"
           variant="dark"
           icon={<IconSparkles size={13} />}
-          disabled={estado !== "disponivel" || gerando}
+          disabled={estado !== "disponivel" || gerando || grandeDemais}
           // O guarda-corpo nº 7: botão desabilitado sem motivo anunciado é
           // motivo que só existe para quem enxerga a tela.
           ariaDescribedBy={motivo ? "motivo-da-ia" : undefined}
