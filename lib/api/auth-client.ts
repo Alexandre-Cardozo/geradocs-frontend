@@ -75,7 +75,8 @@ async function erroDa(response: Response, fallback: string): Promise<ApiError> {
   return new ApiError(mensagem, response.status, problema.code, campos)
 }
 
-async function requisicaoPublica<T>(path: string, init: RequestInit): Promise<T> {
+/** Chamada sem sessão: login, recuperação de senha e o lead do onboarding (§130). */
+export async function requisicaoPublica<T>(path: string, init: RequestInit): Promise<T> {
   let response: Response
   try {
     response = await fetch(`${API_URL}${path}`, {

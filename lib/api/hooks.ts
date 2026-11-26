@@ -28,6 +28,9 @@ import { definirTetoDeIa, lerTetoDeIa } from "@/lib/api/ai-budget-client"
 import { lerAproveitamentoDaIa } from "@/lib/api/ai-proposal-summary-client"
 import { melhorarSituacaoProblema } from "@/lib/api/text-improvement-client"
 import { iaDisponivel } from "@/lib/api/ai-client"
+import { enviarLead, municipiosDaUf } from "@/lib/api/onboarding-client"
+import type { Respostas } from "@/lib/onboarding/respostas"
+import { acompanharIa } from "@/lib/api/acompanhar-ia"
 import { revisarAta } from "@/lib/api/ata-client"
 import {
   analisarClausulasCondicionais,
@@ -435,7 +438,9 @@ export function useRejeitarPropostaDeIa(processoId: string, tipo: TipoDocumento)
 export function useGerarRascunhoDaSecao(processoId: string, tipo: TipoDocumento) {
   return useMutation({
     mutationFn: (input: { secaoId: string; rascunho: string; orientacao?: string }) =>
-      gerarRascunhoDaSecaoComFontes(processoId, tipo, input.secaoId, input.rascunho, input.orientacao),
+      acompanharIa(() =>
+        gerarRascunhoDaSecaoComFontes(processoId, tipo, input.secaoId, input.rascunho, input.orientacao),
+      ),
   })
 }
 
@@ -464,13 +469,13 @@ export function useClausulasCondicionais(
 export function useSugerirClausulas(processoId: string, tipo: TipoDocumento) {
   return useMutation({
     mutationFn: (input: { secaoId: string; texto: string }) =>
-      sugerirClausulasCondicionais(processoId, tipo, input.secaoId, input.texto),
+      acompanharIa(() => sugerirClausulasCondicionais(processoId, tipo, input.secaoId, input.texto)),
   })
 }
 
 /** A IA lê a ATA anexada na adesão e a compara com o processo. Não grava nada, e não é parecer. */
 export function useRevisarAta(processoId: string) {
-  return useMutation({ mutationFn: (arquivo: File) => revisarAta(processoId, arquivo) })
+  return useMutation({ mutationFn: (arquivo: File) => acompanharIa(() => revisarAta(processoId, arquivo)) })
 }
 
 /** O texto sem as cláusulas escolhidas. Não grava: quem escolheu confere e salva pelo caminho de sempre. */
@@ -510,7 +515,7 @@ export function useJustificarDesvio(processoId: string, tipo: TipoDocumento) {
 export function useRevisarSecao(processoId: string, tipo: TipoDocumento) {
   return useMutation({
     mutationFn: (input: { secaoId: string; texto: string }) =>
-      api.revisarSecao(processoId, tipo, input.secaoId, input.texto),
+      acompanharIa(() => api.revisarSecao(processoId, tipo, input.secaoId, input.texto)),
   })
 }
 
@@ -1357,7 +1362,7 @@ export function useEstadoDaIa(): EstadoDaIa {
  */
 export function useMelhorarSituacaoProblema(processoId: string) {
   return useMutation({
-    mutationFn: (texto: string) => melhorarSituacaoProblema(processoId, texto),
+    mutationFn: (texto: string) => acompanharIa(() => melhorarSituacaoProblema(processoId, texto)),
   })
 }
 
@@ -1440,5 +1445,25 @@ export function useVersoesDaNorma(id: string, aberto: boolean) {
     queryKey: [...CHAVE_NORMAS, id, "versoes"],
     queryFn: () => versoesDaNorma(id),
     enabled: aberto,
+  })
+}
+
+/* ── Onboarding da GovPri (§130) ────────────────────────────────────────────── */
+
+/** Os municípios da UF (IBGE). Lista estável: fica em cache a sessão inteira. */
+export function useMunicipiosDaUf(uf: string | undefined) {
+  return useQuery({
+    queryKey: ["municipios-da-uf", uf],
+    queryFn: () => municipiosDaUf(uf as string),
+    enabled: Boolean(uf),
+    staleTime: Infinity,
+    retry: 1,
+  })
+}
+
+/** Envia o lead do onboarding. Sem sessão e sem cache para invalidar. */
+export function useEnviarLead() {
+  return useMutation({
+    mutationFn: (input: { respostas: Respostas; origem: string }) => enviarLead(input.respostas, input.origem),
   })
 }

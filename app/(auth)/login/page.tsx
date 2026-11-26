@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -11,6 +12,7 @@ import { FaixaDaMarca, FaixasDeCanto } from "@/components/shared/marca";
 import { Button, FormField, Input, ValidationMsg } from "@/components/ui";
 import { IconArrowRight, IconCheckCircle } from "@/components/ui/icons";
 import { useLogin, useRecuperarSenha, useSessao } from "@/lib/api/hooks";
+import { ROTA_PAINEL } from "@/lib/auth/acesso";
 import { IDENTIFICADOR, mensagemCredencialRecusada } from "@/lib/auth/identificador";
 
 export default function Login() {
@@ -29,7 +31,7 @@ export default function Login() {
   // Já logado → vai direto para o app (efeito, nunca durante o render).
   const jaLogado = sessao.isSuccess && sessao.data != null;
   useEffect(() => {
-    if (jaLogado) router.replace("/");
+    if (jaLogado) router.replace(ROTA_PAINEL);
   }, [jaLogado, router]);
 
   const entrar = () => {
@@ -37,7 +39,7 @@ export default function Login() {
     login.mutate(
       { identificador, senha },
       {
-        onSuccess: () => router.replace("/"),
+        onSuccess: () => router.replace(ROTA_PAINEL),
         onError: (e) =>
           setErro(e instanceof Error ? e.message : mensagemCredencialRecusada()),
       },
@@ -217,7 +219,11 @@ export default function Login() {
 
       {/* Rodapé — proporcional, ancorado ao fim da tela */}
       <footer className="relative z-10 flex flex-col items-center gap-1 px-4 pb-5 text-center">
-        <div className="flex items-center gap-2 text-sm text-on-dark-55">
+        {/* O endosso leva ao site da GovPro, na raiz (§126): o login deixa de ser beco sem saída. */}
+        <Link
+          href="/"
+          className="flex items-center gap-2 rounded-sm text-sm text-on-dark-55 no-underline hover:text-on-dark"
+        >
           GeraDocs é uma solução
           <Image
             src={govproLogo}
@@ -226,7 +232,7 @@ export default function Login() {
             height={22}
             className="h-5.5 w-auto object-contain opacity-90"
           />
-        </div>
+        </Link>
         <div className="text-xs text-on-dark-40">
           Precisa de ajuda?{" "}
           <a

@@ -34,6 +34,7 @@ jobs:
       # (08/10/2026) passou no CI e não chegou ao Pages. O next.config.ts já
       # declara tudo o que a action injetava; o prefixo vem do env abaixo.
       - name: Setup Pages
+        id: pages
         uses: actions/configure-pages@v5
 
       - name: Install dependencies
@@ -41,17 +42,25 @@ jobs:
         
       - name: Build with Next.js
         env:
-          # O Pages serve o projeto sob o nome do repositório, e não na raiz do
-          # domínio. Quem publica é que declara o prefixo: fixá-lo no
-          # next.config.ts o fazia valer também em desenvolvimento, onde ele só
-          # sujava a URL de quem desenvolve. O caminho é o do repositório,
-          # minúsculo — o antigo "/GeraDocsFrontend" só resolvia porque o Pages
-          # é tolerante com a caixa do segmento do repositório.
-          NEXT_PUBLIC_BASE_PATH: /geradocs-frontend
+          # O prefixo vem do próprio Pages (§128): `/geradocs-frontend` enquanto
+          # o site é servido em alexandre-cardozo.github.io, e vazio quando o
+          # domínio próprio (govpro.com.br) está configurado nas Settings do
+          # repositório. Assim ativar o domínio não pede mudança de código: basta
+          # publicar de novo. Fixá-lo no next.config.ts o fazia valer também em
+          # desenvolvimento, onde ele só sujava a URL de quem desenvolve.
+          NEXT_PUBLIC_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+          HOST_DO_PAGES: ${{ steps.pages.outputs.host }}
           # Repository variable configured in GitHub, never hardcode a local API.
           NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
         run: |
           test -n "$NEXT_PUBLIC_API_URL"
+          echo "Publicação em ${HOST_DO_PAGES}, prefixo '${NEXT_PUBLIC_BASE_PATH}'"
+          # Em github.io o site vive sob o nome do repositório: prefixo vazio ali
+          # quebraria todos os arquivos estáticos.
+          if [[ "$HOST_DO_PAGES" == *github.io && -z "$NEXT_PUBLIC_BASE_PATH" ]]; then
+            echo "::error::Pages em ${HOST_DO_PAGES} sem prefixo: o configure-pages não informou o base_path"
+            exit 1
+          fi
           npm run build
 
       # `login/index.html` só existe com o `trailingSlash` do next.config.ts. Se

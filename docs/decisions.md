@@ -1535,6 +1535,127 @@ A tentativa de pôr os botões numa coluna ao lado do campo (botão alinhado ao 
 - **Por que a busca não entra.** Um modelo de linguagem não consulta o PNCP: ele escreveria ATAs plausíveis, com órgão, número e vigência inventados, e a pessoa poderia aderir a uma ata que não existe. É o mesmo risco do parecer falso (ADR 118), em outra forma. A busca real exigiria uma fonte oficial consultada pelo servidor, o que é decisão própria do back-end.
 - **Agora.** O painel da ATA (Levantamento de Mercado, Art. 18, § 1º, V) fica só com o que funciona: **Anexar ATA** e **Revisar a ATA com IA** (ADR 119), e diz que a ATA vem do PNCP ou do órgão gerenciador e que a escolha é de quem decide. Sem os três modos e sem o botão de confirmar. No assistente, o bloco de adesão sai: o processo se abre como os demais, e a ATA é anexada e lida no painel, onde existe processo para a leitura se apoiar. Os tipos `ModoATA` e `ConfigATA` saem junto.
 
+## 121. A landing tem entrada animada, e só ela
+
+O design system diz "sem animações de entrada", e continua valendo para o aplicativo. A landing é uma página de apresentação, lida uma vez por quem ainda não usa o produto, e ali uma entrada discreta ajuda a ler. A exceção é estreita:
+
+- **Só na rota `/landing-page`.** As telas do aplicativo não ganham nenhum efeito novo.
+- **Só estes efeitos:** entrada escalonada no hero (opacidade, blur de 4px e deslocamento de 12px, 300ms, `cubic-bezier(0.2, 0, 0, 1)`, 100ms entre elementos) e a mesma revelação, uma vez, ao rolar. O menu móvel abre em 250ms e fecha em 150ms.
+- **Só `transform`, `opacity` e `filter`.** Nunca `transition: all`, nunca loop, nunca parallax.
+- **Sem JavaScript o conteúdo aparece.** O estado escondido só é aplicado depois que o componente monta no navegador, e só em elementos abaixo da dobra.
+- **Movimento reduzido:** nenhum elemento é escondido, e a regra global de `globals.css` já zera as durações.
+- Keyframes e curva vivem no `@theme` (`--animate-landing-*`, `--ease-landing`), como `--animate-marca-varredura`.
+
+## 122. A landing tem escala tipográfica e contêiner próprios
+
+A escala do aplicativo tem corpo de 13px e tamanhos fixos em px: serve a uma interface densa e é pequena demais para uma página de leitura. A landing ganha tokens próprios no `@theme`, em vez de valores soltos nas classes:
+
+- `--text-landing-h1` e `--text-landing-h2` fluidos com `clamp()`, `--text-landing-lead` (18px) e `--text-landing-body` (16px), cada um com `line-height` e, nos títulos, `letter-spacing` negativo.
+- `--container-landing` (70rem), porque o aplicativo não tem teto de largura e uma página de leitura precisa dele.
+- Os tokens do aplicativo não mudam, e o aplicativo não usa os da landing.
+
+## 123. A landing vive em `app/landing-page/`, sem sessão e sem fetch
+
+A rota `/landing-page` fica fora de `(app)` e de `(auth)`, portanto não herda a barra lateral nem a guarda de sessão. É um componente de servidor que exporta `metadata` próprio; é estática, sem chamada à API, sem hook de dados. Os componentes ficam em `components/landing/`, e a copy em `lib/landing/conteudo.ts`. A ordem dos documentos é lida de `lib/documentos/catalogo.ts`, a fonte única. A ação principal é um `mailto:` para `contato@govpro.com.br`; não há formulário nem backend novo. A rota `/` não muda.
+
+## 124. A landing abre com a sede da GovPro em paralaxe
+
+A primeira coisa que a landing mostra passa a ser a instituição: a sede da GovPro, com a marca na fachada e um jardim à frente, em camadas que se movem em profundidades diferentes. O slogan "Inteligência para Gestão Pública" vira o `h1` da página, e o título do GeraDocs desce para `h2` no hero logo abaixo. Esta decisão abre duas exceções no §121, que proibia parallax e loop, e só dentro da abertura (`components/landing/abertura.tsx`):
+
+- **Paralaxe de rolagem.** A seção tem 270svh e um palco preso no topo. Rolar aproxima a câmera da sede: cada camada cresce conforme a profundidade, o título sobe e some, a cena escurece e entra o manifesto, que fica até a seção terminar. É `transform` e `opacity`, nada mais, aplicado direto no elemento a cada quadro (`requestAnimationFrame`), sem estado do React.
+- **Paralaxe de ponteiro.** Com mouse (`pointer: fine`), as camadas se deslocam até 38px, a mais próxima mais. No toque não há nada.
+- **Dois loops lentos:** as nuvens derivam 2,5% para cada lado em 38s, e a seta de rolar pinga. Nada mais repete.
+- **Sem biblioteca nova.** O protótipo usou GSAP; aqui o mesmo comportamento sai de uma função pura (`lib/landing/paralaxe.ts`, coberta por teste) e de um efeito de 60 linhas. Uma dependência para mover cinco camadas não se paga.
+
+**Movimento reduzido:** nenhuma camada se move e o ponteiro é ignorado. A rolagem ainda escurece a cena e mostra o manifesto, porque isso é opacidade, não deslocamento. A regra global de `globals.css` zera a entrada e os dois loops.
+
+**Sem JavaScript:** a cena, o título e a frase aparecem parados, a seção tem a altura da tela e o manifesto vem no fluxo, logo abaixo. O palco de 270svh só existe depois que o componente monta (`data-movimento="ativo"`).
+
+**As imagens** são cinco camadas transparentes em WebP (`public/landing/abertura/`), em dois enquadramentos: largo (2400x1350) e alto (1080x1920, para tela com proporção até 4:5, escolhido por `<picture>`). São importadas, não referenciadas por caminho, para que o `basePath` do GitHub Pages entre na URL. Foram renderizadas de uma cena 3D procedural; trocar por imagens fotográficas é só substituir os arquivos, desde que as cinco camadas saiam da mesma câmera.
+
+O cabeçalho fica transparente enquanto a página está no topo, sobre o céu da abertura, e volta ao navy assim que a página rola.
+
+## 125. A landing passa a ser a página da GovPro, com o GeraDocs em foco
+
+A landing deixa de ser a página de um produto com a empresa no rodapé e passa a ser a página da empresa: a GovPro se apresenta (manifesto, quem somos, propósito, valores, método, compromissos) e o GeraDocs ocupa o centro, como a primeira solução do portfólio. A rota continua `/landing-page`, estática e sem sessão (§123), e a abertura em paralaxe (§124) continua sendo a primeira tela.
+
+- **Portfólio por dados.** As soluções vivem em `PRODUTOS`, em `lib/landing/conteudo.ts`. A seção Soluções, o menu e o rodapé leem dessa lista: uma solução nova é uma entrada nova, sem componente novo. Com uma solução só, ela ocupa o cartão largo e o espaço ao lado diz que o portfólio cresce com o mesmo método, sem anunciar produto que não existe.
+- **Nada inventado.** Sem número de clientes, logos, depoimentos ou ano de fundação. Os números da página são do produto (documentos, modalidades, minutas, seções, tópicos) e a produtividade aparece como estimativa da GovPro. Missão, visão e valores vêm da apresentação institucional.
+- **Os documentos são desenhados, não fotografados.** A vitrine mostra os sete documentos como folhas em HTML, cada uma com o miolo do seu tipo (série de preços, incisos do Art. 18, matriz de riscos, alíneas, anexos, cláusulas, aviso) e com a identificação do documento gerado: marca d'água, tarja na margem e carimbo com QR Code. Título, fundamento e cor vêm de `lib/documentos/catalogo.ts`.
+- **Poucos cliques, mostrado.** Uma janela do aplicativo desenhada em HTML percorre cinco etapas (abrir o processo, trazer a demanda, gerar com IA, revisar e gerar o arquivo). O seletor de modalidade lê `regraDe` e mostra o que é obrigatório, recomendado e opcional, sem regra copiada para a página.
+
+**Movimento.** Esta decisão estende as exceções do §124 a três seções, sempre em `transform` e `opacity`, aplicadas por `requestAnimationFrame` a partir de funções puras em `lib/landing/rolagem.ts`:
+
+- **Palco preso na demonstração e na vitrine**, só em tela larga (`lg`) e sem movimento reduzido. A rolagem avança as etapas da demonstração e desliza as folhas da vitrine na horizontal. Abaixo de `lg`, a demonstração é um seletor de etapas por clique e a vitrine é uma faixa com rolagem horizontal própria, com encaixe.
+- **Manifesto palavra por palavra** em Quem Somos: cada palavra acende conforme a rolagem. Com movimento reduzido, o texto aparece inteiro.
+- **Contadores** dos números do GeraDocs sobem uma vez ao entrar na tela.
+
+Sem JavaScript, ou com movimento reduzido, nada fica escondido: a demonstração mostra a última etapa e a lista das cinco, a vitrine é a faixa com rolagem, e os contadores mostram o valor final. Continua sem biblioteca de animação.
+
+## 126. A página da GovPro é a raiz do site; o painel vai para `/painel`
+
+Quem acessa govpro.com.br chega à página da GovPro (§125), e não ao login. A página sai de `app/landing-page/` para `app/page.tsx`, fora de `(app)` e de `(auth)`, ainda sem sessão e sem fetch (§123). O painel do aplicativo, que ocupava a raiz, passa a `/painel` (`app/(app)/painel/`). A rota vive numa constante só, `ROTA_PAINEL` em `lib/auth/acesso.ts`: o login, a guarda de sessão (RBAC), o menu lateral, o título do cabeçalho e a página não encontrada leem dela. A rota `/landing-page` deixa de existir. Esta decisão substitui o "a rota `/` não muda" do §123.
+
+Todas as seções têm o mesmo respiro vertical (`py-16`, `lg:py-28`), inclusive as que prendem o palco: nelas o respiro fica fora de um trilho interno, e o palco preso começa logo abaixo do cabeçalho (`top-16`, altura da janela menos o cabeçalho). A ordem da página passa a ser Quem Somos, O Desafio e então Soluções.
+
+As âncoras do cabeçalho param a seção logo abaixo dele: só o `scroll-padding-top` de 4rem (a altura do cabeçalho) conta, e as seções não têm margem de rolagem própria. Quem abre a página já com uma âncora é levado à seção de novo depois que os palcos de rolagem crescem (`AncoraAoAbrir`).
+
+**As imagens são telas reais do aplicativo.** A seção do GeraDocs, a demonstração em poucos cliques e a seção da IA mostram capturas da tela inteira do aplicativo (menu, cabeçalho e conteúdo), com dados ilustrativos, em `public/landing/telas/`. Quem as gera é `e2e/capturas-landing.spec.ts` (`CAPTURAS_LANDING=1`), seguido de `node scripts/capturas-para-webp.mjs`. O mesmo gerador mede, em cada tela da demonstração, onde fica o botão que a etapa clica e grava em `lib/landing/alvos-das-telas.json`: o cursor anda até ali, aperta e marca o clique. Quando o aplicativo mudar, basta gerar de novo.
+
+O pedido de demonstração continua sendo um `mailto:` (§123), agora com o corpo pronto: nome, setor, cargo, instituição pública, telefone e o que a entidade quer ver, para quem escreve só preencher.
+
+## 127. Os mascotes GovPri e GovBô entram na página da GovPro
+
+A GovPro passa a ter dois personagens de identidade: a **GovPri**, Assistente de Relações, a cara humana nos pontos de contato com o cliente, e o **GovBô**, Agente Técnico, um robô de estimação que representa a automação e a IA. As folhas de personagem foram aprovadas em 24/11/2026; o sistema usa as versões 2D.
+
+- **Desenhados e animados em código.** Os dois são SVG gerados em `components/mascotes/`, sem imagem nem biblioteca de animação: cada um é uma classe imperativa (`GovPri`, `GovBo`) com um laço de `requestAnimationFrame` que escreve `transform` e `opacity` direto nos elementos, e um componente React do mesmo nome só cria, repassa as ordens e destrói. O laço pausa quando o mascote sai da tela (`IntersectionObserver`), e o movimento encolhe com `prefers-reduced-motion`.
+- **Uma API para os dois.** `expressar(id)` e `agir(id, { repetir, manter })`, com os ids em `components/mascotes/catalogo.ts`; cada personagem ignora o que não sabe fazer. A GovPri tem 12 expressões, 8 ações e fala por fonemas (`falando`); o GovBô tem 15 expressões e 9 ações, inclusive `clicar`. O olhar dos dois segue o cursor.
+- **Cores por token.** A paleta das folhas vive em `--color-mascote-*`, num bloco `@theme static` de `app/globals.css`: os tokens só aparecem dentro dos SVG, como `var(--color-...)`, e sem `static` o Tailwind não emitiria as variáveis. O que já existe na marca (azuis, verde, amarelo) é reaproveitado, e o símbolo completo no peito ganhou as duas faces de sombra da seta (`marca-amarelo-sombra`, `marca-verde-sombra`).
+- **Onde aparecem.** Na abertura, os dois estão no gramado, dentro da camada da frente, e andam com a paralaxe: a GovPri de corpo inteiro acenando, o GovBô pulando do outro lado. Em Poucos Cliques, o GovBô substitui o cursor e voa com a rolagem: no começo do trecho de cada etapa ele faz um arco do botão anterior até o da tela atual, a posição sai do progresso a cada quadro (`vooDoCursor`, em `lib/landing/rolagem.ts`), e ao chegar ele mergulha para clicar; no documento gerado, comemora. Rolar para trás desfaz o voo sem clicar. Sem o palco preso, ele anda por transição a cada etapa, como o cursor fazia. Na IA Responsável, o GovBô pensa junto do título; nas Perguntas Frequentes, ele aparece em dúvida; em Compromissos, a GovPri fica de pé atrás da última coluna de cartões, que escondem a cintura; no Contato, a GovPri acena e o GovBô pula nos cantos. Fora da abertura e da demonstração, os mascotes só aparecem em tela larga.
+
+A escala da abertura é de primeiro plano. Com a câmera da cena (vista aérea a 13,5 m de altura), uma pessoa de 1,65 m no gramado visível ocuparia uns 4% da altura da tela e ficaria ilegível. A GovPri ocupa 26% (16% no celular), com a cabeça na linha do térreo da sede, menor que as árvores e as palmeiras; o GovBô tem uns 40% da altura dela.
+
+Os mascotes são decorativos (`aria-hidden`): o texto de cada seção continua dizendo tudo. Sem JavaScript, eles não aparecem e nada da página se perde.
+
+## 128. O QR do carimbo abre a página da GovPro em govpro.com.br, e o prefixo da publicação vem do Pages
+
+O carimbo de todo documento gerado traz um QR para `https://govpro.com.br/?documento={código}` (ADR-058 do back-end). O domínio ainda não aponta para lugar nenhum, então o QR dos documentos já gerados não abre nada. A decisão é fazer o domínio abrir a página da GovPro (§125, §126), e não trocar o endereço no back-end: assim os documentos já impressos passam a funcionar, o arquivo gerado não muda e a reprodutibilidade (ADR-020 do back-end) fica intacta.
+
+- **O prefixo vem do Pages.** O build lê `steps.pages.outputs.base_path` do `configure-pages`: `/geradocs-frontend` enquanto o site é servido em `alexandre-cardozo.github.io`, e vazio quando o domínio próprio está configurado. Ativar o domínio não pede mudança de código, só publicar de novo. Uma trava para o deploy se o host for `github.io` e o prefixo vier vazio.
+- **O código no endereço é inofensivo.** A página abre normalmente com `?documento=`. A consulta pública do código, quando o back-end a oferecer, entra aqui sem reimprimir nada.
+- **Saídas para o site.** A página não encontrada oferece o início (a página da GovPro) e o painel, e o endosso "GeraDocs é uma solução GovPro" do login leva ao site.
+- **Ativação:** o passo a passo (DNS, domínio no Pages, HTTPS, nova publicação e as variáveis do back-end) está em `docs/dominio-proprio.md`.
+
+
+## 129. O GovBô acompanha cada ação com IA
+
+Toda ação que chama o modelo de IA traz o GovBô (§127): **Gerar com IA** na seção, **Revisar com IA** o documento (o lote inteiro é uma ação só), **Sugerir com IA** as cláusulas condicionais, **Revisar a ATA com IA** e **Melhorar a redação** da situação-problema. As demais ações, inclusive tirar cláusulas, continuam só com o carregamento padrão.
+
+- **A sequência.** Começou o pedido, o Bô entra voando em arco de uma borda sorteada e para ao lado do botão apertado (do lado com espaço; sem botão, no canto de baixo à direita), flutuando com o balão de pensamento. A resposta chegou, ele faz uma ação e uma expressão sorteadas (pular, girar, acenar, comemorar ou inclinar; alegre, animado, rindo, piscando, confiante, apaixonado ou sorridente) e, no pico, solta confetes nas cores da marca. Só então a resposta é entregue e escrita no campo, e o Bô vai embora por outra borda. Com erro, a mensagem aparece na hora, sem esperar a animação, e o Bô sai triste, sem confetes.
+- **O tempo.** Com resposta imediata, a sequência dura uns 4 segundos: entrada (0,7 s), pensando (1 s), comemoração (1,6 s) e saída (0,65 s). Com resposta demorada, o Bô fica pensando o tempo que for, e a comemoração começa assim que a resposta chega. Com movimento reduzido, ele aparece e some no lugar, sem voo nem confetes, e o atraso total cai para pouco mais de 1 segundo.
+- **Quem sincroniza.** `acompanharIa`, em `lib/api/acompanhar-ia.ts`, envolve a chamada ao modelo nos hooks de `lib/api/hooks.ts` e avisa o palco de cada momento; os tempos vêm do palco. Sem palco registrado (testes, telas fora do aplicativo), a chamada passa direto, sem atraso. Uma ação dentro de outra não chama o Bô de novo.
+- **Leve.** O palco (`components/mascotes/palco-da-ia.tsx`, montado no layout do aplicativo) não desenha nada fora de uma ação: a camada, o Bô e o laço de quadros nascem quando a ação começa e somem no fim do voo de saída. Os confetes são um `<canvas>` que só existe durante a explosão (cerca de 2 s), com menos partículas em máquina de poucos núcleos ou tela estreita.
+
+O carregamento de cada tela continua (o texto do botão e o indicador da IA trabalhando, §107): é ele que o leitor de tela anuncia. O Bô e os confetes são decorativos (`aria-hidden`) e não recebem clique.
+
+## 130. O onboarding da GovPri substitui o e-mail de demonstração
+
+Quem quer conhecer o GeraDocs responde a perguntas rápidas com a GovPri (§127), em `/onboarding`, no formato de assistente conversacional: a Pri no alto, com um balão escrito aos poucos, e as perguntas num cartão branco com voltar e o progresso em quatro fases (Seu órgão, Seu papel, Sua rotina, Contato). Os botões de demonstração e de contato da página da GovPro levam para lá, cada um com a sua origem (`?origem=cabecalho`, `geradocs`, `contato`, `contato-demonstracao`); a mesma rota serve ao Instagram (`?origem=instagram`). O `mailto:` de demonstração pronto (§126) sai; o e-mail de contato continua visível no Contato e no rodapé.
+
+- **As perguntas** são as que a equipe comercial precisa para identificar e priorizar o lead: tipo de órgão (prefeitura, câmara, autarquia, consórcio, governo do estado, outro, ou fora do setor público), UF e município (da lista do IBGE, que leva o código do município; sem ela, o nome digitado), papel nas contratações (quem decide), tamanho da equipe, contratações por ano, unidades que pedem compras (a abrangência se virar cliente), como os documentos são feitos hoje, o que mais pesa e quando quer começar. Por último, nome, e-mail, telefone, nome do órgão, setor e o consentimento. Os campos chegam em branco: os exemplos ficam só no placeholder (o do órgão tem exemplo para todo tipo e segue a cidade ou o estado, como "Ex.: Prefeitura Municipal de Colatina", "Ex.: SAAE de Colatina" ou "Ex.: Casa Civil do Espírito Santo", curto o bastante para caber no campo do celular).
+- **Formato.** Escolha única avança sozinha; como os documentos são feitos hoje (Word e modelos próprios, processos anteriores, modelos da AGU ou do Tribunal de Contas, outro sistema, consultoria, IA genérica, sem padrão) e as dores aceitam várias e avançam pelo botão, que na rotina só libera com uma marcada. Depois do papel, uma tela mostra o que o GeraDocs entrega a quem tem aquele papel, com os textos da seção Perfis e os números do GeraDocs (§125): nada inventado. No fim, "Entendi que você" resume as respostas em até seis linhas, que acendem uma a cada 0,9 s; a tela fica mais 2,5 s depois da última, para dar tempo de ler (cerca de 8 s com o resumo completo), mesmo com o servidor respondendo na hora. A tela final diz os próximos passos.
+- **A faixa da Pri tem altura fixa** (184px no celular, 208px a partir de `sm`), para não pular de uma pergunta para outra conforme o número de linhas da fala. Em telas abaixo de 360px a Pri fica menor, para o balão caber.
+- **Envio.** O lead vai para `POST /api/v1/public/leads` (ADR-082 do back-end), que guarda, classifica (potencial Alto, Médio, Baixo ou Parceiro) e avisa a GovPro por e-mail. Se o envio falhar, as respostas ficam na tela, com Tentar de Novo e um e-mail já escrito com tudo, para `EMAIL_DOS_LEADS`. Um campo-armadilha escondido barra robôs. No fim, o botão Falar no WhatsApp abre a conversa com a mensagem pronta (nome e órgão), para `WHATSAPP_GOVPRO`; vazio, o botão não aparece. Por enquanto, os dois são provisórios, para os testes: a caixa `govpro.admin@gmail.com` e um número pessoal, até a GovPro ter os próprios.
+- **Voz e acessibilidade.** A Pri pode falar em voz alta pela voz do próprio navegador (o botão de alto-falante só aparece quando ela existe), com a boca acompanhando. O leitor de tela ouve a frase inteira, não letra por letra; a cada etapa o foco vai à pergunta, e com erro no contato, ao primeiro campo a corrigir. A pílula LGPD explica o uso dos dados. Com movimento reduzido, o balão aparece de uma vez.
+
+## 131. Quem sai por um botão da página da GovPro e volta pelo navegador cai na mesma seção
+
+Quem clicava num botão da página (o onboarding, §130, ou "Acessar") e voltava pelo navegador caía em outra seção. O navegador devolve a rolagem antes de os palcos de rolagem crescerem (a abertura passa a 270svh só depois de montar, §126), e quando a página monta do zero na volta (o onboarding recarregado, ou a cópia da página já descartada da memória do Next) a mesma rolagem aponta para outro lugar.
+
+- **A marca é a seção, não a rolagem.** Ao sair por um link para outra rota do site, `RetornoASecao` guarda o bloco de `main` que estava no alto da janela e quanto dele já tinha passado. Na volta, com a altura final, o mesmo bloco vai ao mesmo lugar, cresça o que crescer acima dele. A lógica fica em `lib/landing/retorno.ts`.
+- **Guardada no `history.state` da entrada da página**, ao lado do que o Next guarda. Só o voltar (ou o avançar) reencontra essa entrada; quem entra de novo pelo logotipo ou por um link cria outra entrada e começa do alto. Âncoras e `mailto:` não marcam nada. Na volta, a seção de origem prevalece sobre a âncora do endereço (`AncoraAoAbrir`).
+- **Reaplicada por timers**, nos primeiros 1,6 s, enquanto a página acomoda, e não por quadro de pintura: logo depois do voltar o navegador pode segurar a pintura, e o `requestAnimationFrame` não chega. Se a pessoa mexe na rolagem (roda, toque, tecla), a volta para de insistir.
+
 ## 132. O "Gerar com IA" avisa antes quando a seção passa do que a IA lê
 
 - **O que era.** O back-end recebe da tela até 20.000 caracteres de texto da seção (`GenerateSectionRequest.draft`). No TR e no Edital de serviços, o "Preencher com o texto da minuta" põe a minuta da AGU inteira na seção, e algumas passam muito disso: "Critérios de Medição e Pagamento" tem 36 mil caracteres. O clique em "Gerar com IA" voltava `400 Existem campos inválidos`, em um segundo, sem dizer o que estava errado (homologação, 23/11/2026, TR seções 6, 7 e 9).

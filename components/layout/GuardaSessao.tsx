@@ -6,13 +6,13 @@ import { useEffect, type ReactNode } from "react"
 import { MarcaCarregando } from "@/components/shared/marca-carregando"
 import { Button } from "@/components/ui"
 import { useSessao } from "@/lib/api/hooks"
-import { rotaPermitida } from "@/lib/auth/acesso"
+import { ROTA_PAINEL, rotaPermitida } from "@/lib/auth/acesso"
 
 import { useRotaAtual } from "./use-rota-atual"
 
 /**
  * Guarda do shell autenticado. Sem sessão → /login. Com sessão mas sem acesso à
- * rota (RBAC) → volta para "/". Enquanto resolve a sessão, mostra um splash.
+ * rota (RBAC) → volta para o painel. Enquanto resolve a sessão, mostra um splash.
  * É client-side porque o access token vive somente na memória do navegador.
  */
 export default function GuardaSessao({ children }: { children: ReactNode }) {
@@ -26,7 +26,7 @@ export default function GuardaSessao({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (semSessao) router.replace("/login")
-    else if (semAcesso) router.replace("/")
+    else if (semAcesso) router.replace(ROTA_PAINEL)
   }, [semSessao, semAcesso, router])
 
   if (sessao.isPending || semSessao || semAcesso) {

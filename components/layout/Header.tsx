@@ -7,12 +7,13 @@ import { useEffect, useRef, useState } from "react"
 import { SearchInput, StatusBadge } from "@/components/ui"
 import { IconMenu, IconPlus } from "@/components/ui/icons"
 import { usePerfil, useProcessos } from "@/lib/api/hooks"
+import { ROTA_PAINEL } from "@/lib/auth/acesso"
 
 import { useRotaAtual } from "./use-rota-atual"
 
 /** Título do header por rota (equivalente ao viewTitles do protótipo). */
 function tituloDaRota(pathname: string): string {
-  if (pathname === "/") return "Dashboard"
+  if (pathname === ROTA_PAINEL) return "Dashboard"
   if (pathname === "/processos") return "Processos de Contratação"
   if (pathname === "/processos/novo") return "Novo Processo"
   if (pathname === "/processos/etp") return "Estudo Técnico Preliminar"

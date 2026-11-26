@@ -5,6 +5,7 @@ import { useEffect, useId, useRef, useState } from "react"
 import { Button, InfoBanner } from "@/components/ui"
 import { IaTrabalhando } from "@/components/shared/ia-magica"
 import { useToast } from "@/components/shared/providers"
+import { acompanharIa } from "@/lib/api/acompanhar-ia"
 import { useAtualizarSecao, useIaDisponivel, useRevisarSecao } from "@/lib/api/hooks"
 import { ehLimiteDaIa, MOTIVO_DO_LIMITE_ESGOTADO } from "@/lib/api/limite-da-ia"
 import { compararRevisao, revisaoMudouOTexto } from "@/lib/documentos/revisao"
@@ -59,9 +60,19 @@ export function RevisaoComIa({
         ? "Nenhuma seção escrita."
         : null
 
+  // O lote inteiro é uma ação só para o GovBô (§129): ele entra no começo, fica
+  // enquanto as seções são revisadas e comemora no fim, se alguma deu certo.
   const iniciar = async () => {
     parar.current = false
     setResultado(null)
+    const parcial = await acompanharIa(revisarTodas, {
+      deuCerto: (r) => r.sugestoes.length > 0 || r.semMudanca > 0,
+    })
+    setAndamento(null)
+    setResultado(parcial)
+  }
+
+  const revisarTodas = async () => {
     const parcial: Resultado = { sugestoes: [], semMudanca: 0, falhas: [] }
     for (const [indice, secao] of escritas.entries()) {
       if (parar.current) break
@@ -90,8 +101,7 @@ export function RevisaoComIa({
         parcial.erro ??= erro instanceof Error ? erro.message : undefined
       }
     }
-    setAndamento(null)
-    setResultado(parcial)
+    return parcial
   }
 
   const retirar = (secaoId: string) =>

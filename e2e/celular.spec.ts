@@ -30,7 +30,7 @@ test.describe("no celular", () => {
 
   test("a navegação continua alcançável", async ({ page }) => {
     await comSessao(page)
-    await page.goto(rota("/"))
+    await page.goto(rota("/painel"))
 
     // Abaixo de lg a sidebar vira gaveta: o botão precisa existir, senão o
     // celular fica sem navegação nenhuma.

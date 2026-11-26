@@ -63,7 +63,7 @@ describe("resolução do prefixo", () => {
 describe("navegação por perfil", () => {
   it("o administrador geral não vê processos nem documentos", () => {
     const hrefs = navPrincipal("admin_geral").map((item) => item.href)
-    expect(hrefs).toEqual(["/", "/admin/entidades", "/admin/servidores"])
+    expect(hrefs).toEqual(["/painel", "/admin/entidades", "/admin/servidores"])
   })
 
   it("normas e modelos do órgão ficam nas configurações, à frente do resto (§89)", () => {

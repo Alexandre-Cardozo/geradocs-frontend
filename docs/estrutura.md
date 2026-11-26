@@ -23,10 +23,12 @@ GeraDocs/
 │   ├── (auth)/                   # Route group SEM shell — telas de autenticação
 │   │   ├── layout.tsx            # Shell mínimo (sem sidebar/header)
 │   │   └── login/page.tsx        # Login CPF + senha .......................... rota  /login
+│   ├── page.tsx                  # Página da GovPro com o GeraDocs: estática, sem sessão, sem fetch . rota  / (§123, §126)
+│   ├── onboarding/page.tsx       # Onboarding da GovPri: perguntas e envio do lead, sem sessão ... rota  /onboarding (§130)
 │   └── (app)/                    # Route group do shell autenticado (guarda de sessão + RBAC)
 │       ├── layout.tsx            # GuardaSessao + AppShell (sidebar + header)
 │       ├── error.tsx             # Error boundary das telas
-│       ├── page.tsx              # Dashboard (ou Painel do Sistema p/ admin) . rota  /
+│       ├── painel/page.tsx       # Dashboard (ou Painel do Sistema p/ admin) . rota  /painel (§126)
 │       ├── processos/            # O id do processo é query param (?id=), não segmento — ver §22 de decisions.md
 │       │   ├── page.tsx          # Lista de processos ........................ rota  /processos
 │       │   ├── novo/page.tsx     # Wizard de novo processo ................... rota  /processos/novo
@@ -63,6 +65,9 @@ GeraDocs/
 │   ├── documentos/               # Componentes de DOMÍNIO dos documentos (não são do DS)
 │   │   └── paineis.tsx           # Painéis especiais do editor, acionados por SecaoDocumento.painel:
 │   │                             #   PainelATA (adesão a ARP), quantidades e valor (ETP, incisos IV e VI)
+│   ├── landing/                  # Seções, cabeçalho, rodapé e peças de movimento da página da GovPro, na raiz (§123, §126)
+│   ├── onboarding/               # O onboarding da GovPri: perguntas, balão com voz, envio do lead (§130)
+│   ├── mascotes/                 # GovPri e GovBô: desenho SVG e animação em código, com componente React (§127); o palco do Bô nas ações com IA (§129)
 │   └── shared/                   # Componentes de apoio usados por várias telas (não são do DS)
 │       ├── providers.tsx         # QueryClientProvider (TanStack Query) + Toast global
 │       ├── estados.tsx           # LoadingState, SkeletonRows, ErrorState, EmptyState, InlineSpinner
@@ -77,6 +82,8 @@ GeraDocs/
 │   │   │                         #   pendencias, totalSecoes). Metadados por tipo vivem SÓ aqui.
 │   │   ├── secoes.ts             # Estrutura seccional de cada documento, com fundamento legal e hint
 │   │   └── index.ts              # Barrel — importe daqui: import { CATALOGO } from "@/lib/documentos"
+│   ├── landing/                  # Copy e links da landing, como dados (sem JSX)
+│   ├── onboarding/               # Roteiro do onboarding da GovPri e a montagem do lead (§130)
 │   ├── dominio/                  # REGRAS DE NEGÓCIO — funções puras, sem React e sem fetch
 │   │   ├── escopo.ts             # quem enxerga qual entidade
 │   │   ├── indicadores.ts        # indicadores do painel e resumo do repositório
@@ -149,6 +156,10 @@ Tudo que forma a "casca" constante em volta do conteúdo: sidebar de navegação
 ### `components/shared/` — Apoios compartilhados
 
 Componentes reutilizáveis que **não são primitivos do DS** nem moldura: estados de carregamento/erro/vazio, o cabeçalho de tabela `Th`, e os providers globais (TanStack Query, Toast). Critério de entrada: usado por **2+ telas** e sem regra de negócio. Se for específico de uma tela só, fica na própria página; se for um padrão visual do DS, vai para `ui/`.
+
+### `components/landing/` — A landing
+
+**`components/landing/`** guarda a landing: cada seção é um componente sem fetch; a abertura em paralaxe (§124) lê as camadas de `public/landing/abertura/` e a conta da rolagem de `lib/landing/paralaxe.ts`; a copy e o portfólio (`PRODUTOS`) vêm de `lib/landing/conteudo.ts`, os documentos desenhados e o seletor de modalidade de `lib/landing/documentos.ts`, e as contas dos palcos de rolagem (§125) de `lib/landing/rolagem.ts`; a volta à seção de origem pelo navegador (§131) fica em `retorno-a-secao.tsx`, com a conta em `lib/landing/retorno.ts`; a rota é a raiz (`app/page.tsx`), fora de `(app)` e `(auth)`, e o painel do aplicativo fica em `/painel` (§126).
 
 ### `lib/` — Dados e domínio
 
