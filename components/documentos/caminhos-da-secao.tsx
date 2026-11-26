@@ -89,7 +89,7 @@ export function CaminhosDaSecao({
   const semTeto = estado === "sem-teto"
   const origens = setTexto ? [...preenchimentos, ...(editor?.preenchimentos ?? [])] : []
   // A minuta da AGU de uma seção chega a 36 mil caracteres, e a IA recebe até
-  // 20 mil (ADR 121): o botão avisa antes, em vez de devolver "campos inválidos".
+  // 20 mil (ADR 132): o botão avisa antes, em vez de devolver "campos inválidos".
   const grandeDemais = textoGrandeDemaisParaAIa(texto)
 
   // Enquanto a resposta não chega, o botão fica desabilitado com o motivo. O

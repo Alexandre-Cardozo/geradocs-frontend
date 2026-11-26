@@ -1535,13 +1535,13 @@ A tentativa de pôr os botões numa coluna ao lado do campo (botão alinhado ao 
 - **Por que a busca não entra.** Um modelo de linguagem não consulta o PNCP: ele escreveria ATAs plausíveis, com órgão, número e vigência inventados, e a pessoa poderia aderir a uma ata que não existe. É o mesmo risco do parecer falso (ADR 118), em outra forma. A busca real exigiria uma fonte oficial consultada pelo servidor, o que é decisão própria do back-end.
 - **Agora.** O painel da ATA (Levantamento de Mercado, Art. 18, § 1º, V) fica só com o que funciona: **Anexar ATA** e **Revisar a ATA com IA** (ADR 119), e diz que a ATA vem do PNCP ou do órgão gerenciador e que a escolha é de quem decide. Sem os três modos e sem o botão de confirmar. No assistente, o bloco de adesão sai: o processo se abre como os demais, e a ATA é anexada e lida no painel, onde existe processo para a leitura se apoiar. Os tipos `ModoATA` e `ConfigATA` saem junto.
 
-## 121. O "Gerar com IA" avisa antes quando a seção passa do que a IA lê
+## 132. O "Gerar com IA" avisa antes quando a seção passa do que a IA lê
 
 - **O que era.** O back-end recebe da tela até 20.000 caracteres de texto da seção (`GenerateSectionRequest.draft`). No TR e no Edital de serviços, o "Preencher com o texto da minuta" põe a minuta da AGU inteira na seção, e algumas passam muito disso: "Critérios de Medição e Pagamento" tem 36 mil caracteres. O clique em "Gerar com IA" voltava `400 Existem campos inválidos`, em um segundo, sem dizer o que estava errado (homologação, 23/11/2026, TR seções 6, 7 e 9).
 - **Agora.** Com o texto acima de 20.000 caracteres (`LIMITE_DO_TEXTO_PARA_A_IA`), o botão fica desabilitado e o motivo vem escrito antes do clique, ligado ao botão por `aria-describedby`: "A IA lê seções de até 20.000 caracteres, e esta tem 36.298. Edite o texto à mão ou tire as alternativas da minuta que não se aplicam." A escrita à mão e o "Preencher" seguem livres, e o botão volta assim que o texto cabe.
 - **Por que não subir o limite do back-end.** O modelo devolve no máximo 8.192 tokens (uns 30 mil caracteres) em até 25 segundos: uma seção de 36 mil voltaria cortada (`MAX_TOKENS`) ou estouraria o tempo. Dividir a seção em partes para a IA é decisão maior, que fica para quando houver uso real que peça.
 
-## 122. O cartão do documento não afirma "0%" enquanto as seções carregam
+## 133. O cartão do documento não afirma "0%" enquanto as seções carregam
 
 - **O que era.** O cartão de cada documento no painel do processo calculava o progresso das seções e, enquanto elas não chegavam, mostrava "0%" e "Elaborar …". Na homologação, com o Render frio, documentos já completos ficaram até 15 segundos assim (24/11/2026): a pessoa via o trabalho como perdido ou clicava em "Elaborar" achando que precisava começar.
 - **Agora.** Enquanto as seções do documento carregam, o cartão mostra "Carregando..." (`role="status"`) no lugar da porcentagem, e o botão diz "Abrir …", que leva ao mesmo editor sem afirmar o estado. Documento finalizado não depende das seções e continua "Finalizado" desde o início.

@@ -11,7 +11,7 @@ export function sobraDaOrientacao(texto: string): number {
 }
 
 /**
- * O maior texto de seção que a IA recebe (ADR 121): é o limite do campo `draft`
+ * O maior texto de seção que a IA recebe (ADR 132): é o limite do campo `draft`
  * no back-end (`GenerateSectionRequest`). Passado dele, o "Gerar com IA" voltava
  * `400 Existem campos inválidos` — visto no TR e no Edital de serviços, em que a
  * minuta da AGU de uma seção chega a 36 mil caracteres.

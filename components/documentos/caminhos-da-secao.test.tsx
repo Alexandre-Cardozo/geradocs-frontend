@@ -46,7 +46,7 @@ describe("caminhos da seção", () => {
     expect(screen.getByText("Indisponível")).toBeInTheDocument()
   })
 
-  it("seção maior do que a IA lê: botão desabilitado com o motivo, e o texto pequeno segue liberado (ADR 121)", async () => {
+  it("seção maior do que a IA lê: botão desabilitado com o motivo, e o texto pequeno segue liberado (ADR 132)", async () => {
     // Homologação, 23/11/2026: a minuta da AGU de "Critérios de Medição e Pagamento" (TR de serviços) tinha
     // 36 mil caracteres, e o clique voltava "400 Existem campos inválidos".
     comIa(true)
