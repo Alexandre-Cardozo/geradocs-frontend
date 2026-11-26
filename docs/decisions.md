@@ -1735,4 +1735,5 @@ A página da GovPro aparecia com o ícone do GeraDocs na aba do navegador. O íc
   - `.ico` de 16, 32 e 48 px;
   - 180 px no selo azul-marinho para o iPhone, que não aceita transparência.
 - **A troca acontece sem recarregar.** Do "Entrar" da página da GovPro para o login, a navegação é interna, e o ícone da aba muda junto. Ele segue no GeraDocs dentro do sistema e no login, ao sair. O e2e da marca confere o caminho inteiro, também sob o prefixo do GitHub Pages.
+- **Uma marca só na aba, mesmo com clique antes da hidratação.** O CI pegou o caso: numa máquina lenta, o clique em "Entrar" chega antes de a página hidratar, o React o repete como navegação interna, e os ícones da GovPro que vieram do servidor (ainda não eram do React) ficavam na aba ao lado dos do GeraDocs. `IconeDaAba` (`components/shared/icone-da-aba.tsx`), no layout raiz, observa o `<head>` e tira os ícones de outra marca que não a do último inserido (`iconesDeOutraMarca`). O e2e reproduz o caso com a CPU seis vezes mais lenta.
 

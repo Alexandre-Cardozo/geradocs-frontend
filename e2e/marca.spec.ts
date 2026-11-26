@@ -140,3 +140,24 @@ test("da página da GovPro ao login a aba passa ao GeraDocs, e segue nele no sis
   await expect(page).toHaveURL(/\/login\/?$/)
   await expect.poll(() => marcaDaAba(page)).toBe("geradocs")
 })
+
+test("clicar em Entrar antes de a página hidratar não deixa duas marcas na aba", async ({ page }) => {
+  // O CI pegou este caso: com a máquina lenta, o clique chega antes da
+  // hidratação, o React o repete como navegação interna e os ícones que vieram
+  // do servidor ficavam na aba ao lado dos novos. A CPU lenta o reproduz.
+  const erros: string[] = []
+  page.on("pageerror", (erro) => erros.push(erro.message))
+  page.on("console", (m) => m.type() === "error" && erros.push(m.text()))
+  await prestesALogar(page)
+  const cdp = await page.context().newCDPSession(page)
+  await cdp.send("Emulation.setCPUThrottlingRate", { rate: 6 })
+
+  await page.goto(rota("/"), { waitUntil: "commit" })
+  await page.getByRole("link", { name: /^Entrar/ }).first().click()
+  await expect(page).toHaveURL(/\/login\/?$/)
+  await expect.poll(() => marcaDaAba(page), { timeout: 15_000 }).toBe("geradocs")
+  // O login termina de montar sem o React reclamar dos ícones que saíram.
+  await expect(page.getByRole("heading", { name: "Acesse sua conta" })).toBeVisible()
+  await expect.poll(() => marcaDaAba(page)).toBe("geradocs")
+  expect(erros.filter((e) => /removeChild|hydrat|NotFoundError/i.test(e))).toEqual([])
+})
