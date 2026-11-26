@@ -1271,7 +1271,7 @@ No cartão "Gerar com IA" de cada seção, **Orientar a IA (opcional)**: um camp
 A empresa deixou de se chamar LAHHM e passou a ser **GovPro**; o GeraDocs é um produto dela. A marca aprovada em 28/10/2026 (opção A · Faceta, manual em `marcas-govpro-geradocs/marca-aprovada/`) substitui as artes antigas em todo o aplicativo.
 
 - **Logo oficial em SVG:** login, redefinir senha e barra lateral usam `public/geradocs-logo-white.svg` (símbolo + nome em Montserrat, já em curvas). O nome deixou de ser texto digitado em Plus Jakarta Sans ao lado do símbolo: a marca tem fonte própria, e redigitá-la em outra fonte seria uma segunda marca. O crédito da empresa usa `public/govpro-logo-white.svg` ("GeraDocs é uma solução GovPro").
-- **Favicon:** `app/icon.png` e `app/favicon.ico` com o símbolo em fundo totalmente transparente, miolo da folha inclusive — o selo azul-marinho virava um quadrado escuro na aba clara; `app/apple-icon.png` continua no selo, porque o iOS não aceita transparência.
+- **Favicon** (onde mora mudou no §137): `app/icon.png` e `app/favicon.ico` com o símbolo em fundo totalmente transparente, miolo da folha inclusive — o selo azul-marinho virava um quadrado escuro na aba clara; `app/apple-icon.png` continua no selo, porque o iOS não aceita transparência.
 - **Identificação:** login e redefinir senha com o logo, o slogan "Contratações públicas inteligentes" em Montserrat com a faixa da marca embaixo (azul, amarelo e verde, a do papel timbrado) e as faixas diagonais de canto; a referência à Lei 14.133/21 passou para o cartão. Na barra lateral, uma linha só, da altura do cabeçalho: o logo do GeraDocs (22 px), um filete e o logo da GovPro (12 px), sem texto entre eles, de ponta a ponta da barra — as mesmas pontas da faixa da marca —, centralizados na altura; a faixa da marca na linha do filete do cabeçalho — a marca identifica sem disputar atenção com a navegação. A Montserrat (`font-marca`) entra só nos textos que acompanham o logo.
 - **Carregamento:** **`MarcaCarregando`** (`components/shared/marca-carregando.tsx`) desenha o símbolo em varredura circular, o mesmo movimento do GIF da marca, mas em SVG transparente. Entra no `LoadingState` das telas e no splash do `GuardaSessao`; o `InlineSpinner` e os botões continuam com o giro discreto. Fica registrado como extensão aprovada do DS (§17).
 - **Tokens `--color-marca-*`:** as cores do símbolo, só para o desenho da marca; a interface continua nos tokens de antes.
@@ -1718,3 +1718,21 @@ Na revisão da abertura realista (§135), a equipe pediu duas coisas: tirar a á
   O jardim sobe mais do que cresce para a borda dele nunca descer abaixo do pé da sede, e um teste confere isso em toda a rolagem. O mouse desloca o céu em 3 px, a sede em 8 px, e o jardim e as árvores juntos em 14 px, porque as árvores estão plantadas nele. Na entrada, a cena se monta de trás para a frente.
 
 O recorte depende das medidas de cada foto: se as fotos forem trocadas, as medidas do script precisam ser revistas.
+
+## 137. A aba mostra a GovPro nas páginas públicas e o GeraDocs do login para dentro
+
+A página da GovPro aparecia com o ícone do GeraDocs na aba do navegador. O ícone passa a dizer em que lugar a pessoa está:
+- **GovPro:** no site da empresa, no onboarding e nas demais páginas públicas, como a de página não encontrada.
+- **GeraDocs:** do login para dentro (login, redefinição de senha e todo o sistema).
+
+- **Onde mora cada ícone.** Os arquivos saem de `app/` (`icon.png`, `apple-icon.png`, `favicon.ico`). Ali o Next os aplica ao site inteiro e eles vencem a configuração. Agora ficam em `public/icones/govpro/` e `public/icones/geradocs/`, e quem escolhe é a metadata:
+  - o layout raiz declara a GovPro;
+  - os layouts do login, `app/(auth)`, e do sistema, `app/(app)`, trocam pelo GeraDocs. O Next substitui o campo `icons` inteiro no segmento mais interno.
+
+  `iconesDaAba` (`lib/marca/icones-da-aba.ts`) monta os endereços com o prefixo da publicação, que o Next não aplica à metadata. O `public/favicon.ico` é o da GovPro, para quem pede o endereço padrão.
+- **Os ícones da GovPro** saem do símbolo oficial do design system (`design_system/assets/govpro-mark.svg`) por `scripts/icones-govpro.mjs`, nas mesmas medidas dos do GeraDocs:
+  - 512 px em fundo transparente;
+  - `.ico` de 16, 32 e 48 px;
+  - 180 px no selo azul-marinho para o iPhone, que não aceita transparência.
+- **A troca acontece sem recarregar.** Do "Entrar" da página da GovPro para o login, a navegação é interna, e o ícone da aba muda junto. Ele segue no GeraDocs dentro do sistema e no login, ao sair. O e2e da marca confere o caminho inteiro, também sob o prefixo do GitHub Pages.
+
