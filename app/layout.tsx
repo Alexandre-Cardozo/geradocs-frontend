@@ -3,6 +3,7 @@ import localFont from "next/font/local"
 import type { ReactNode } from "react"
 
 import { Providers } from "@/components/shared/providers"
+import { iconesDaAba } from "@/lib/marca/icones-da-aba"
 
 import "./globals.css"
 
@@ -59,6 +60,8 @@ export const metadata: Metadata = {
   },
   description:
     "Plataforma GovTech da GovPro para automação dos documentos de planejamento da contratação pública sob a Lei 14.133/2021.",
+  // A GovPro na aba das páginas públicas; login e sistema trocam pelo GeraDocs (§137).
+  icons: iconesDaAba("govpro"),
 }
 
 export default function RootLayout({ children }: { children: ReactNode }) {
