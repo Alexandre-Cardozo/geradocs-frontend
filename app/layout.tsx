@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import localFont from "next/font/local"
 import type { ReactNode } from "react"
 
+import { IconeDaAba } from "@/components/shared/icone-da-aba"
 import { Providers } from "@/components/shared/providers"
 import { iconesDaAba } from "@/lib/marca/icones-da-aba"
 
@@ -69,6 +70,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="pt-BR" className={`${jakarta.variable} ${inter.variable} ${montserrat.variable} ${jetbrains.variable}`}>
       <body>
         <Providers>{children}</Providers>
+        <IconeDaAba />
       </body>
     </html>
   )
