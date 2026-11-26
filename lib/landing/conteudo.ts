@@ -111,7 +111,7 @@ export const CONTEUDO = {
     titulo: ["Inteligência para", "Gestão Pública"],
     frase: "Tecnologia a serviço da Administração Pública.",
     altSede:
-      "Sede da GovPro: fachada branca em arco com a marca no pórtico central, palmeiras e um jardim com canteiros amarelos e verdes à frente.",
+      "Sede da GovPro: edifício branco com fachada de vidro e a marca no alto, palmeiras, as bandeiras do Brasil e da GovPro e um jardim com canteiros floridos à frente.",
     manifesto: {
       inicio: "Por trás de cada contratação pública existe um servidor que precisou planejá-la.",
       destaque: "A GovPro nasceu para estar ao lado dessas pessoas.",
