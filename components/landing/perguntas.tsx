@@ -2,7 +2,6 @@ import { Revelar } from "@/components/landing/revelar"
 import { TituloDeSecao } from "@/components/landing/titulo-de-secao"
 import { IconPlus } from "@/components/ui/icons"
 import { CONTEUDO } from "@/lib/landing/conteudo"
-import { GovBo } from "@/components/mascotes/mascotes"
 
 /** Perguntas frequentes em `<details>`: abrem sem JavaScript e pelo teclado (§125). */
 export function Perguntas() {
@@ -10,11 +9,7 @@ export function Perguntas() {
   return (
     <section id={faq.id} className="bg-surface py-16 lg:py-28">
       <div className="mx-auto grid max-w-landing gap-10 px-4 sm:px-6 lg:px-10 xl:px-14 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
-        <div>
-          <TituloDeSecao titulo={faq.titulo} />
-          {/* O GovBô com a dúvida de quem chega (§127), no espaço ao lado das perguntas. */}
-          <GovBo expressao="em-duvida" acao="inclinar" repetir className="mt-12 hidden size-44 lg:block" />
-        </div>
+        <TituloDeSecao titulo={faq.titulo} />
         <Revelar className="border-t border-border">
           {faq.itens.map((item) => (
             <details key={item.pergunta} className="group border-b border-border">

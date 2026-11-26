@@ -3,7 +3,6 @@ import { Revelar } from "@/components/landing/revelar"
 import { TituloDeSecao } from "@/components/landing/titulo-de-secao"
 import { FaixasDeCanto } from "@/components/shared/marca"
 import { CONTEUDO, EMAIL_CONTATO, HREF_CONTATO, hrefOnboarding } from "@/lib/landing/conteudo"
-import { GovBo, GovPri } from "@/components/mascotes/mascotes"
 
 /** A chamada final: três passos e o pedido de demonstração (§125). */
 export function Contato() {
@@ -12,19 +11,6 @@ export function Contato() {
     <section id={contato.id} className="on-dark relative overflow-hidden gradient-hero py-20 lg:py-28">
       <div className="pointer-events-none absolute inset-0 landing-grade" aria-hidden />
       <FaixasDeCanto posicao="absolute" />
-      {/* No convite final, a GovPri acena de um canto e o GovBô pula no outro (§127). Só em tela larga. */}
-      <GovPri
-        expressao="sorridente"
-        acao="acenar"
-        manter
-        className="absolute bottom-0 left-[3%] hidden aspect-[480/496] h-60 lg:block xl:left-[6%]"
-      />
-      <GovBo
-        expressao="alegre"
-        acao="pular"
-        repetir
-        className="absolute right-[4%] bottom-6 hidden size-36 lg:block xl:right-[7%]"
-      />
       <div className="relative mx-auto flex max-w-landing flex-col items-center px-4 text-center sm:px-6 lg:px-10 xl:px-14">
         <TituloDeSecao tom="escuro" centro rotulo={contato.rotulo} titulo={contato.titulo} texto={contato.texto} />
 

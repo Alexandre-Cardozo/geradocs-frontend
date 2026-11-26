@@ -12,7 +12,6 @@ import telaProposta from "@/public/landing/telas/proposta.webp"
 
 import { ALTURA_DO_CABECALHO, assinarRolagem, palcoPermitido, progressoDoTrilho } from "@/components/landing/rolagem"
 import { TituloDeSecao } from "@/components/landing/titulo-de-secao"
-import { GovBo, type AcaoDoBo, type ControleDoMascote } from "@/components/mascotes/mascotes"
 import { IconCheck } from "@/components/ui/icons"
 import { CONTEUDO } from "@/lib/landing/conteudo"
 import { etapaDoProgresso, progressoDaEtapa, vooDoCursor } from "@/lib/landing/rolagem"
@@ -38,7 +37,6 @@ export function PoucosCliques() {
   const [etapa, setEtapa] = useState(ULTIMA)
   const [palco, setPalco] = useState(false)
   const cursor = useRef<HTMLDivElement>(null)
-  const bo = useRef<ControleDoMascote<AcaoDoBo>>(null)
   const [cliques, setCliques] = useState(0)
 
   useEffect(() => {
@@ -51,10 +49,9 @@ export function PoucosCliques() {
       return () => cancelAnimationFrame(quadro)
     }
     elemento.dataset.movimento = "ativo"
-    // O GovBô voa com a rolagem (§127): a posição sai do progresso a cada quadro,
+    // O cursor anda com a rolagem: a posição sai do progresso a cada quadro,
     // e ele clica ao chegar ao botão, só rolando para a frente.
     let anterior: { etapa: number; emVoo: boolean } | null = null
-    let depois = 0
     const desligar = assinarRolagem(() => {
       setPalco(true)
       const p = progressoDoTrilho(percurso)
@@ -65,15 +62,10 @@ export function PoucosCliques() {
       const chegou =
         anterior !== null && !voo.emVoo && voo.etapa >= anterior.etapa && (anterior.emVoo || voo.etapa !== anterior.etapa)
       anterior = voo
-      if (chegou) {
-        setCliques((n) => n + 1)
-        window.clearTimeout(depois)
-        depois = clicar(bo.current, voo.etapa)
-      }
+      if (chegou) setCliques((n) => n + 1)
     })
     return () => {
       desligar()
-      window.clearTimeout(depois)
       delete elemento.dataset.movimento
     }
   }, [])
@@ -149,7 +141,7 @@ export function PoucosCliques() {
             <p className="m-0 mt-6 text-sm text-text-muted">{exemplo.nota}</p>
           </div>
 
-          <JanelaDoApp etapa={etapa} palco={palco} cliques={cliques} cursor={cursor} bo={bo} />
+          <JanelaDoApp etapa={etapa} palco={palco} cliques={cliques} cursor={cursor} />
         </div>
       </div>
       </div>
@@ -172,55 +164,23 @@ const TELAS: { imagem: StaticImageData; alvo: { x: number; y: number } }[] = [
 
 const ALVOS_DAS_ETAPAS = TELAS.map((tela) => tela.alvo)
 
-/** Quando o GovBô mergulha, sem palco: o toque cai junto do anel do clique (700ms). */
-const ATRASO_DO_CLIQUE = 450
-
-/**
- * O clique do GovBô: animado, mergulha e volta a sorrir; no documento gerado,
- * comemora. Devolve o temporizador da volta, para quem precisar cancelar.
- */
-function clicar(bo: ControleDoMascote<AcaoDoBo> | null, etapa: number): number {
-  bo?.expressar("animado")
-  bo?.agir("clicar")
-  return window.setTimeout(() => {
-    bo?.expressar(etapa === ULTIMA ? "alegre" : "sorridente")
-    if (etapa === ULTIMA) bo?.agir("comemorar")
-  }, 650)
-}
-
 /**
  * A janela do aplicativo com a tela da etapa. Decorativa: o que ela mostra está
- * na lista de etapas. A cada etapa o GovBô (§127), no lugar do cursor, voa até o
- * botão (700ms), mergulha para clicar e o clique fica marcado com um anel; a
- * tela troca por opacidade. No documento gerado, ele comemora.
+ * na lista de etapas. A cada etapa o cursor anda até o botão (700ms), aperta e o
+ * clique fica marcado com um anel; a tela troca por opacidade.
  */
 function JanelaDoApp({
   etapa,
   palco,
   cliques,
   cursor,
-  bo,
 }: {
   etapa: number
   palco: boolean
   cliques: number
   cursor: RefObject<HTMLDivElement | null>
-  bo: RefObject<ControleDoMascote<AcaoDoBo> | null>
 }) {
   const alvo = (TELAS[etapa] ?? TELAS[ULTIMA])?.alvo ?? { x: 50, y: 50 }
-
-  // Sem palco preso (tela estreita, movimento reduzido), o clique segue a troca de etapa.
-  useEffect(() => {
-    if (palco) return
-    let depois = 0
-    const clique = window.setTimeout(() => {
-      depois = clicar(bo.current, etapa)
-    }, ATRASO_DO_CLIQUE)
-    return () => {
-      window.clearTimeout(clique)
-      window.clearTimeout(depois)
-    }
-  }, [etapa, palco, bo])
 
   return (
     <div aria-hidden data-etapa={etapa} className="relative overflow-hidden rounded-card border border-border bg-surface">
@@ -247,7 +207,7 @@ function JanelaDoApp({
           />
         ))}
 
-        {/* O GovBô vai até o alvo; o ponto do clique fica logo abaixo dele, no centro do anel.
+        {/* A ponta da seta vai até o alvo, no centro do anel do clique.
             Sem palco, a camada de fora anda por transição a cada etapa; com o palco preso, a
             de dentro recebe a posição do voo a cada quadro de rolagem. */}
         <div
@@ -260,13 +220,21 @@ function JanelaDoApp({
               className="absolute -top-4 -left-4 size-8 animate-landing-clique rounded-full border-2 border-royal bg-royal/15"
               style={palco ? { animationDelay: "0ms" } : undefined}
             />
-            <GovBo
-              ref={bo}
-              expressao="sorridente"
-              olharCursor={false}
-              sombra={false}
-              className="absolute -top-20 -left-10 size-20"
-            />
+            <span
+              key={palco ? `seta-${cliques}` : `seta-${etapa}`}
+              className="block origin-top-left animate-landing-pressiona"
+              style={palco ? { animationDelay: "0ms" } : undefined}
+            >
+              <svg width="20" height="24" viewBox="0 0 18 22" className="-translate-x-px -translate-y-px text-navy">
+                <path
+                  d="M1 1v17l4.5-4.2 3 6.7 3-1.4-3-6.6H15L1 1z"
+                  fill="currentColor"
+                  className="stroke-surface"
+                  strokeWidth="1.5"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </span>
           </div>
         </div>
       </div>
