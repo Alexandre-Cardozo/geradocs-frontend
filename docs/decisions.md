@@ -1617,6 +1617,8 @@ A escala da abertura é de primeiro plano. Com a câmera da cena (vista aérea a
 
 Os mascotes são decorativos (`aria-hidden`): o texto de cada seção continua dizendo tudo. Sem JavaScript, eles não aparecem e nada da página se perde.
 
+> Revisto pelo §134: os mascotes saíram da página da GovPro. Continuam nas ações com IA (§129) e no onboarding (§130).
+
 ## 128. O QR do carimbo abre a página da GovPro em govpro.com.br, e o prefixo da publicação vem do Pages
 
 O carimbo de todo documento gerado traz um QR para `https://govpro.com.br/?documento={código}` (ADR-058 do back-end). O domínio ainda não aponta para lugar nenhum, então o QR dos documentos já gerados não abre nada. A decisão é fazer o domínio abrir a página da GovPro (§125, §126), e não trocar o endereço no back-end: assim os documentos já impressos passam a funcionar, o arquivo gerado não muda e a reprodutibilidade (ADR-020 do back-end) fica intacta.
@@ -1666,3 +1668,10 @@ Quem clicava num botão da página (o onboarding, §130, ou "Acessar") e voltava
 
 - **O que era.** O cartão de cada documento no painel do processo calculava o progresso das seções e, enquanto elas não chegavam, mostrava "0%" e "Elaborar …". Na homologação, com o Render frio, documentos já completos ficaram até 15 segundos assim (24/11/2026): a pessoa via o trabalho como perdido ou clicava em "Elaborar" achando que precisava começar.
 - **Agora.** Enquanto as seções do documento carregam, o cartão mostra "Carregando..." (`role="status"`) no lugar da porcentagem, e o botão diz "Abrir …", que leva ao mesmo editor sem afirmar o estado. Documento finalizado não depende das seções e continua "Finalizado" desde o início.
+
+## 134. A página da GovPro fica sem os mascotes
+
+Os sócios decidiram dar à página da GovPro um tom mais formal e sério, e a GovPri e o GovBô saem dela. A decisão vale só para a página: o GovBô continua nas ações com IA (§129) e a GovPri no onboarding (§130), para onde os botões de demonstração e contato ainda levam.
+
+- **Abertura, IA Responsável, Perguntas Frequentes, Compromissos e Contato** voltam ao desenho de antes do §127, sem personagem.
+- **Em Poucos Cliques, o cursor volta no lugar do GovBô.** A seta anda até o botão de cada tela, aperta e o clique fica marcado com o anel. O voo com a rolagem do §127 fica: com o palco preso, a seta faz o arco do botão anterior até o da etapa (`vooDoCursor`) e clica ao chegar; sem o palco, anda por transição a cada etapa. Não há mais comemoração no documento gerado.
