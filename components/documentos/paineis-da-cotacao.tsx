@@ -677,7 +677,7 @@ export function PainelDoPrecoDeReferencia(props: PropsDoPainel) {
   // O método é do processo (ADR-051 do back-end): o ETP e o TR apuram por ele.
   const processo = useProcesso(props.processoId)
   const estimativa = processo.data?.estimativa
-  // Sem forma declarada, a tela mostra a média só como referência, e o texto não a declara (§134).
+  // Sem forma declarada, a tela mostra a média só como referência, e o texto não a declara (§138).
   const metodoDeclaradoNoProcesso: MetodoDeApuracao | null = estimativa?.metodo ?? null
   const metodo: MetodoDeApuracao = metodoDeclaradoNoProcesso ?? "media"
 

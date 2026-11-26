@@ -582,7 +582,7 @@ describe("o valor apurado na pesquisa", () => {
     const texto = setRascunho.mock.calls[0]?.[0] as string
     // Apresentar preço pesquisado e preço preliminar como a mesma coisa faria a
     // memória afirmar uma pesquisa que não houve.
-    // Sem forma de cálculo declarada, a origem não usa a frase do método (§134).
+    // Sem forma de cálculo declarada, a origem não usa a frase do método (§138).
     expect(texto).toContain("referência provisória: média simples de 3 preço(s) coletado(s)")
     expect(texto).toContain("preços unitários apurados na pesquisa de preços")
     // A origem vai na linha do item, dentro da tabela, e o método continua

@@ -287,7 +287,7 @@ describe("a memória de cálculo do preço de referência", () => {
     expect(tabela?.at(-1)).toEqual(["Total", "", "", "", "R$ 97.940,00"])
   })
 
-  it("sem forma de cálculo declarada, não declara a média: mostra as três e deixa a lacuna (§134)", () => {
+  it("sem forma de cálculo declarada, não declara a média: mostra as três e deixa a lacuna (§138)", () => {
     // Homologação, 26/11/2026: o "Preencher" escrevia "Adotou-se como método de apuração a média", e o
     // ETP relia essa frase como a forma de cálculo do processo, que ninguém tinha escolhido.
     const texto = textoDoPrecoDeReferencia(serie, null, () => 100)

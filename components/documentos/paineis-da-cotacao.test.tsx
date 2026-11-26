@@ -412,7 +412,7 @@ describe("metodologia e preço de referência", () => {
 
     const texto = setRascunho.mock.calls[0]?.[0] as string
     expect(texto).toContain("Art. 6º da IN SEGES/ME nº 65/2021")
-    // Processo sem forma de cálculo declarada: o texto não a declara (§134).
+    // Processo sem forma de cálculo declarada: o texto não a declara (§138).
     expect(texto).not.toContain("Adotou-se")
     expect(texto).toContain("[Declarar a forma de cálculo da estimativa")
   })

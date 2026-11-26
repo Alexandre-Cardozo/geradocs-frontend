@@ -882,7 +882,7 @@ export default function HubProcesso() {
                 ? "Obrigatórios gerados. Protocole os arquivos no sistema da entidade."
                 : `Faltam: ${pendentes.map((t) => CATALOGO[t].titulo).join(", ")}. Encerrar exige justificativa.`}
               {/* O opcional por fazer não é cobrado, mas fica dito: encerrar sem ele é escolha.
-                  "Sem elaborar" chamava assim documento 100% preenchido que só faltava gerar (§136). */}
+                  "Sem elaborar" chamava assim documento 100% preenchido que só faltava gerar (§140). */}
               {semCobranca.length > 0 &&
                 ` Opcionais ainda não gerados: ${semCobranca
                   .map((t) => CATALOGO[t].titulo)

@@ -388,7 +388,7 @@ function PainelValor({
     escrita à mão, a memória não a tinha, e a escolha se perdia ao salvar.
   */
   const estimativa = processo.data?.estimativa
-  // A conta da tela usa a média enquanto ninguém declara a forma; o texto não a declara (§134).
+  // A conta da tela usa a média enquanto ninguém declara a forma; o texto não a declara (§138).
   const metodoDoProcesso = estimativa?.metodo ?? null
   const metodo = metodoDoProcesso ?? "media"
   const fonte = estimativa?.fonte ?? ""
@@ -607,7 +607,7 @@ export function memoriaDoValor(
   total: number,
   declarado: number,
   fonte: string,
-  /** `null` enquanto a forma de cálculo não foi declarada (§134). */
+  /** `null` enquanto a forma de cálculo não foi declarada (§138). */
   metodo: MetodoDeApuracao | null = "media",
 ): string {
   // Em tabela (§100). A origem de cada preço fica na linha dele, com a frase
@@ -621,7 +621,7 @@ export function memoriaDoValor(
       item.precoApurado == null
         ? "estimativa preliminar do DFD"
         : metodo == null
-          // Sem a frase do método: é ela que a estimativa relê e grava como escolha do processo (§134).
+          // Sem a frase do método: é ela que a estimativa relê e grava como escolha do processo (§138).
           ? `referência provisória: média simples de ${item.precosColetados} preço(s) coletado(s), forma de cálculo não declarada`
           : `${ROTULO_DO_METODO[metodo].toLowerCase()} de ${item.precosColetados} preço(s) coletado(s)`
     return [

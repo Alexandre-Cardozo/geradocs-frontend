@@ -318,7 +318,7 @@ export function textoDoPrecoDeReferencia(
 }
 
 /**
- * A memória de cálculo enquanto a forma de cálculo não foi declarada (§134).
+ * A memória de cálculo enquanto a forma de cálculo não foi declarada (§138).
  *
  * <p>Antes, sem declaração, o texto saía "Adotou-se como método de apuração a média", e
  * essa frase virava a forma de cálculo do processo quando o ETP a relia — o servidor
