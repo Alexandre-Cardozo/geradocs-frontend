@@ -13,16 +13,18 @@ describe("Abertura", () => {
 
   it("só a camada da sede descreve a cena; as outras são decorativas", () => {
     const { container } = render(<Abertura />)
-    expect(screen.getByRole("img", { name: /Sede da GovPro: fachada branca em arco/ })).toBeInTheDocument()
+    expect(screen.getByRole("img", { name: /Sede da GovPro: edifício branco/ })).toBeInTheDocument()
     const imagens = Array.from(container.querySelectorAll("img"))
     expect(imagens).toHaveLength(5)
     expect(imagens.filter((img) => img.getAttribute("alt") === "")).toHaveLength(4)
   })
 
-  it("cada camada tem o enquadramento alto para tela em pé", () => {
+  it("cada camada tem o enquadramento alto (celular) e o médio (tablet), nessa ordem", () => {
     const { container } = render(<Abertura />)
-    const fontes = container.querySelectorAll('picture > source[media="(max-aspect-ratio: 4/5)"]')
-    expect(fontes).toHaveLength(5)
+    for (const picture of container.querySelectorAll("picture")) {
+      const midias = Array.from(picture.querySelectorAll("source")).map((s) => s.getAttribute("media"))
+      expect(midias).toEqual(["(max-aspect-ratio: 2/3)", "(max-aspect-ratio: 6/5)"])
+    }
   })
 
   it("traz o manifesto", () => {
@@ -43,8 +45,8 @@ describe("Abertura", () => {
     expect(secao).toHaveAttribute("data-movimento", "ativo")
     // O primeiro quadro é pedido ao requestAnimationFrame.
     await new Promise((resolve) => requestAnimationFrame(() => resolve(null)))
-    const frente = container.querySelector('[data-camada="frente"]') as HTMLElement
-    expect(frente.style.transform).toBe("translate3d(0, 0%, 0) scale(1)")
+    const arvores = container.querySelector('[data-camada="arvoreEsquerda"]') as HTMLElement
+    expect(arvores.style.transform).toBe("translate3d(0, 0%, 0) scale(1)")
     expect((container.querySelector("[data-veu]") as HTMLElement).style.opacity).toBe("0")
   })
 })

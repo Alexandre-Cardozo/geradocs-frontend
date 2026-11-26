@@ -47,8 +47,19 @@ describe("quadroDaRolagem", () => {
     const q = quadroDaRolagem(1, { movimento: true })
     const escalas = CAMADAS.map((c) => q.camadas[c.nome].escala)
     expect(escalas).toEqual([...escalas].sort((a, b) => a - b))
-    expect(q.camadas.frente.escala).toBeCloseTo(1.7)
-    expect(q.camadas.nuvens.subida).toBeCloseTo(-6)
+    expect(q.camadas.arvoreEsquerda.escala).toBeCloseTo(1.2)
+    expect(q.camadas.arvoreEsquerda.subida).toBe(0)
+    expect(q.camadas.ceu.subida).toBe(0)
+  })
+
+  it("o jardim nunca desce abaixo do pé da sede: não abre fresta entre os dois", () => {
+    // Um ponto à fração `f` da altura, com escala a partir do centro, vai para
+    // 0,5 + (f - 0,5)·escala + subida. O pé da sede fica entre 60% e 100% da tela.
+    const onde = (c: { escala: number; subida: number }, f: number) => 0.5 + (f - 0.5) * c.escala + c.subida / 100
+    for (let p = 0; p <= 1; p += 0.05) {
+      const { sede, jardim } = quadroDaRolagem(p, { movimento: true }).camadas
+      for (let f = 0.6; f <= 1; f += 0.05) expect(onde(jardim, f)).toBeLessThanOrEqual(onde(sede, f) + 1e-9)
+    }
   })
 
   it("no meio do percurso o título já saiu e o manifesto está à vista sobre a cena escura", () => {

@@ -1675,3 +1675,46 @@ Os sócios decidiram dar à página da GovPro um tom mais formal e sério, e a G
 
 - **Abertura, IA Responsável, Perguntas Frequentes, Compromissos e Contato** voltam ao desenho de antes do §127, sem personagem.
 - **Em Poucos Cliques, o cursor volta no lugar do GovBô.** A seta anda até o botão de cada tela, aperta e o clique fica marcado com o anel. O voo com a rolagem do §127 fica: com o palco preso, a seta faz o arco do botão anterior até o da etapa (`vooDoCursor`) e clica ao chegar; sem o palco, anda por transição a cada etapa. Não há mais comemoração no documento gerado.
+
+## 135. A abertura passa a ser uma foto realista da sede, ainda em paralaxe
+
+> As camadas e o movimento mudaram no §136; os enquadramentos e o céu extra do largo continuam valendo.
+
+A equipe achou a cena desenhada da abertura (§124) informal demais para o tom que a GovPro quer passar, o mesmo motivo do §134. A abertura passa a usar fotos realistas da sede, geradas pela equipe, e a paralaxe continua.
+
+- **Uma foto vira três camadas.** Para cada enquadramento há duas fotos da mesma cena: uma com galhos de árvore em primeiro plano e outra sem eles. `scripts/abertura-realista.mjs` acha o horizonte da foto limpa (coluna por coluna, onde o azul do céu acaba) e separa o **céu** (com o lugar da sede preenchido de céu, para ela poder se mover sobre ele) da **sede** (prédio, árvores e jardim). Os **galhos** saem da diferença entre as duas fotos onde a limpa mostra céu: a foto limpa é o fundo conhecido, e a cor do galho é recuperada sem o halo azul. As originais ficam fora do repositório; o script diz como gerar de novo.
+- **Três enquadramentos da mesma cena**: alto (9:16) para celular em pé, até a proporção 2:3; médio (3:4) para tablet em pé e telas quase quadradas, até 6:5; largo (16:9) para o resto. Na foto larga a sede começava a 36% da altura e cobria a frase do título; o script acrescenta 56 px de céu no alto e corta o mesmo tanto da calçada, e a copa que encosta na borda ganha o próprio alto espelhado.
+- **Ordem das camadas**: céu, galhos, título, sede. Os galhos só ocupam o céu, então ficar atrás do título não aparece na cena e o título é lido inteiro.
+- **Movimento mais contido.** A foto perde nitidez se ampliada, então a sede cresce 12% ao rolar (a cena desenhada crescia 16%); os galhos crescem 60% e sobem até sair do quadro, que é o que dá a sensação de passar sob a árvore. A entrada também é mais curta: o céu acende, a sede assenta 3% e os galhos descem do alto. As nuvens desenhadas e a deriva delas saem.
+
+As fotos têm de 941 a 1.670 px de largura, e em telas grandes o navegador as amplia. Fotos maiores (2.400 px ou mais no largo) entram sem mudar código: basta trocar as originais e rodar o script.
+
+## 136. A foto da abertura é fatiada por profundidade, sem os galhos do alto
+
+Na revisão da abertura realista (§135), a equipe pediu duas coisas: tirar a árvore do canto superior direito e levar a paralaxe a outros elementos da cena, fatiando a foto como na abertura da Wish Labs, em que fundo, castelo, nuvens e morros são recortes da mesma imagem, cada um numa velocidade.
+
+- **Só a foto sem galhos.** Os galhos do alto saem, e com eles a foto com galhos deixa de ser usada.
+- **Cinco fatias, do fundo para a frente**: **céu**; **sede** (prédio, palmeiras, bandeiras); **jardim** (da linha da praça para baixo: gramado, canteiros e caminho); a **árvore da esquerda** e a **da direita**. O título fica entre o céu e a sede, como antes: ao rolar, o prédio sobe por cima dele. No médio e no alto só há árvore à esquerda; a camada da direita vem vazia.
+- **Recorte feito por medidas escritas à mão.** `scripts/abertura-realista.mjs` guarda, para cada enquadramento:
+  - a linha da praça, abaixo do pé das palmeiras e dos mastros, para nada ser cortado ao meio;
+  - o eixo da fachada e a largura de um módulo das alas;
+  - dois pontos do telhado de cada ala;
+  - os retângulos das copas, da área a refazer e do que não serve de modelo.
+
+  Acima do telhado, tudo o que não é céu nem nuvem é árvore. Na frente da fachada, só o que tem cor de folha. O poste de luz e as cercas vivas do chão ficam fora.
+- **O que fica atrás das árvores.** Atrás das copas, o telhado segue a reta medida, em vez de ser adivinhado entre as folhas. A ala é refeita inteira, do telhado ao pé das colunas, a partir de uma única fonte por lado, para não deixar emenda entre andares:
+  - onde os vizinhos estão livres, ela repete o módulo vizinho;
+  - onde bandeiras e palmeiras tapam os vizinhos, ela vem do lado oposto, espelhado;
+  - a linha copiada acompanha a perspectiva entre o telhado e o chão;
+  - 16 px de transição a unem à ala real.
+
+  O céu atrás das copas é preenchido só com azul puro. Assim a borda clara das folhas e a do telhado não viram halo quando as camadas andam.
+- **Movimento como numa maquete**:
+  - o céu cresce 3% e fica;
+  - a sede cresce 6% e sobe 3%;
+  - o jardim cresce 14% e sobe 8%;
+  - as árvores crescem 20% a partir do próprio pé, na borda da tela e na linha do chão de cada enquadramento (85%, 70% e 67% da altura). O tronco fica preso ao chão e a copa avança sobre a cena, cobrindo mais do que revela.
+
+  O jardim sobe mais do que cresce para a borda dele nunca descer abaixo do pé da sede, e um teste confere isso em toda a rolagem. O mouse desloca o céu em 3 px, a sede em 8 px, e o jardim e as árvores juntos em 14 px, porque as árvores estão plantadas nele. Na entrada, a cena se monta de trás para a frente.
+
+O recorte depende das medidas de cada foto: se as fotos forem trocadas, as medidas do script precisam ser revistas.
