@@ -388,7 +388,9 @@ function PainelValor({
     escrita à mão, a memória não a tinha, e a escolha se perdia ao salvar.
   */
   const estimativa = processo.data?.estimativa
-  const metodo = estimativa?.metodo ?? "media"
+  // A conta da tela usa a média enquanto ninguém declara a forma; o texto não a declara (§138).
+  const metodoDoProcesso = estimativa?.metodo ?? null
+  const metodo = metodoDoProcesso ?? "media"
   const fonte = estimativa?.fonte ?? ""
   // Só para trazer ao processo a escolha antiga, que vivia no texto da Cotação.
   const temCotacao = processo.data?.documentos.includes("Cotação") ?? false
@@ -549,7 +551,7 @@ function PainelValor({
                       total,
                       valorDeclarado,
                       fonte,
-                      metodo,
+                      metodoDoProcesso,
                     )
                     showToast("Memória de cálculo preenchida a partir dos itens. Revise antes de salvar.")
                     return texto
@@ -605,7 +607,8 @@ export function memoriaDoValor(
   total: number,
   declarado: number,
   fonte: string,
-  metodo: MetodoDeApuracao = "media",
+  /** `null` enquanto a forma de cálculo não foi declarada (§138). */
+  metodo: MetodoDeApuracao | null = "media",
 ): string {
   // Em tabela (§100). A origem de cada preço fica na linha dele, com a frase
   // do método por extenso: é ela que a estimativa relê (metodoCitado) e troca
@@ -615,9 +618,12 @@ export function memoriaDoValor(
     const unitario = item.precoApurado ?? parseValorBR(item.valorUnitario ?? "0")
     const subtotal = parseValorBR(item.quantidade) * unitario
     const origem =
-      item.precoApurado != null
-        ? `${ROTULO_DO_METODO[metodo].toLowerCase()} de ${item.precosColetados} preço(s) coletado(s)`
-        : "estimativa preliminar do DFD"
+      item.precoApurado == null
+        ? "estimativa preliminar do DFD"
+        : metodo == null
+          // Sem a frase do método: é ela que a estimativa relê e grava como escolha do processo (§138).
+          ? `referência provisória: média simples de ${item.precosColetados} preço(s) coletado(s), forma de cálculo não declarada`
+          : `${ROTULO_DO_METODO[metodo].toLowerCase()} de ${item.precosColetados} preço(s) coletado(s)`
     return [
       item.descricao,
       ...(comCodigo ? [item.codigoCatalogo ?? ""] : []),
@@ -650,6 +656,12 @@ export function memoriaDoValor(
       ["Total", ...(comCodigo ? [""] : []), "", "", "", "", formatBRL(total)],
     ]),
     `Valor total estimado: ${formatBRL(total)}.`,
+    ...(metodo == null && daPesquisa > 0
+      ? [
+          "[Declarar a forma de cálculo da estimativa (média, mediana ou menor preço): até lá, o preço"
+            + " apurado acima é a média simples, só como referência.]",
+        ]
+      : []),
     ...(daPesquisa < itens.length
       ? [
           "[Concluir a pesquisa de preços dos itens ainda apoiados na estimativa preliminar do"

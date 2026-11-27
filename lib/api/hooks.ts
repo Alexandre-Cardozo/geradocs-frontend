@@ -669,9 +669,9 @@ export function usePrevisaoNoPca(processoId: string) {
   const marcar = useMutation({
     mutationFn: (entrada: { demanda: string; codigo: string; nota?: string }) =>
       api.declararPrevisaoNoPca(processoId, entrada),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: chave })
-    },
+    // Aguarda a verificação recarregar (§139): sem isso o formulário fechava com a lista
+    // ainda antiga, e o mesmo item podia ser informado de novo nesse intervalo.
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: chave }),
   })
   return { verificacao, marcar }
 }

@@ -1737,3 +1737,17 @@ A página da GovPro aparecia com o ícone do GeraDocs na aba do navegador. O íc
 - **A troca acontece sem recarregar.** Do "Entrar" da página da GovPro para o login, a navegação é interna, e o ícone da aba muda junto. Ele segue no GeraDocs dentro do sistema e no login, ao sair. O e2e da marca confere o caminho inteiro, também sob o prefixo do GitHub Pages.
 - **Uma marca só na aba, mesmo com clique antes da hidratação.** O CI pegou o caso: numa máquina lenta, o clique em "Entrar" chega antes de a página hidratar, o React o repete como navegação interna, e os ícones da GovPro que vieram do servidor (ainda não eram do React) ficavam na aba ao lado dos do GeraDocs. `IconeDaAba` (`components/shared/icone-da-aba.tsx`), no layout raiz, observa o `<head>` e tira os ícones de outra marca que não a do último inserido (`iconesDeOutraMarca`). O e2e reproduz o caso com a CPU seis vezes mais lenta.
 
+## 138. Sem forma de cálculo declarada, o "Preencher" não declara a média
+
+- **O que era.** O painel da Cotação (Metodologia e Preço de Referência) e o do ETP (Estimativa do Valor) usavam a média quando o processo não tinha forma de cálculo (`estimativa?.metodo ?? "media"`). O "Preencher" da Cotação escrevia "Adotou-se como método de apuração a média dos preços obtidos", e o do ETP, "média dos preços obtidos de N preço(s)". A estimativa do processo relê essas frases (`metodoCitado`) como a escolha antiga e as gravava como forma de cálculo — o servidor nunca tinha escolhido. Na homologação (26/11/2026), a Cotação 4 dizia "a forma de cálculo ainda não foi declarada" e a 5 e o ETP diziam "média".
+- **Agora.** Sem forma declarada, o texto da Cotação traz o preço de cada item pelas três formas do Art. 6º da IN SEGES/ME nº 65/2021 (média, mediana, menor preço) e a lacuna "[Declarar a forma de cálculo da estimativa…]"; o do ETP chama o preço de "referência provisória: média simples…, forma de cálculo não declarada", com a mesma lacuna. Nenhum dos dois tem a frase que a estimativa relê. A tela continua mostrando a conta pela média, só como referência.
+
+## 139. Informar o item do PCA espera a verificação recarregar
+
+- **O que era.** Depois de "Registrar item informado", o formulário fechava antes de a verificação do PCA voltar do servidor. Nesse intervalo o item seguinte ainda aparecia como "Não encontrado no plano", e o mesmo item podia ser informado de novo: três registros com 200, dois efetivos (homologação, 26/11/2026).
+- **Agora.** A mutação só termina quando a verificação recarregou (`onSuccess` devolve a invalidação). Até lá o botão fica em "Registrando...".
+
+## 140. O aviso de encerramento chama de "ainda não gerados" os opcionais
+
+- **O que era.** "Opcionais sem elaborar" listava também documento 100% preenchido que só faltava gerar.
+- **Agora.** "Opcionais ainda não gerados", que é o que a lista confere.
